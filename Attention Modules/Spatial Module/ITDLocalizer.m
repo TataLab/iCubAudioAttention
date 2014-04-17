@@ -7,7 +7,7 @@
 %2) compute simple beamforming to supress noise (a little bit)
 %and write the resulting (one channel) signal to the SpatialAudio.data file
 
-ConfigureAudioParameters;  %call the script that sets up the P parameter structure
+ITDConfigureAudioParameters;  %call the script that sets up the P parameter structure
 
 if (P.sendAngleToYarp==1)   %remember to add yarp to the MATLAB java path:  javaaddpath('/Applications/yarp/MATLAB Java Classes/jyarp');
     %connect with Yarp network
@@ -15,8 +15,6 @@ if (P.sendAngleToYarp==1)   %remember to add yarp to the MATLAB java path:  java
     display('press any key when ready');
     waitforbuttonpress;
 end
-
-
 
 doneLooping=0;
 exceedsThreshold=0;
@@ -42,47 +40,56 @@ global audioD;
 global sampleD;
 [audioD,sampleD]=OpenAudioInputData;
 tempMostRecentSample=sampleD.Data(1,1).f;
+%tempMostRecentSample=48000;  %uncomment if you want to work "offline" by reading data from the 2nd seconde of the audio dump file
 currentFrameIndex = tempMostRecentSample - (P.frameDuration_samples - 1) - P.fixedLag_samples;  %set the read index to the first sample in the next frame to be read...here we need to be careful to lag the audio data dump by some small by non-trivial time
 currentFrameTime = tic;  %grab the current time
+
+%Mostly this is useful for streaming output
+%silentFrame=zeros(P.outputNumChans,P.frameDuration_samples);  %we'll dump these zeros into a frame if it's below threshold and then stream this out
+
 
 while (~doneLooping)  %loop continuously handling audio in a spatialy sort of way
     
     %update our local copy of the audio data frame and its coordinates
     [frame,currentFrameIndex, currentFrameTime]=GetNextFrame(currentFrameIndex,currentFrameTime);
     
-    t=tic;
-    
     %a simple trigger
     %check if this frame exceeds amplitude threshold, if it doesn't don't
     %do anything with it
     exceedsThreshold=0;
     if(max(frame(1,:) > P.peakThreshold) || max(frame(2,:))>P.peakThreshold)
-        exceedsThreshold=1;  
+        exceedsThreshold=1;
     end
+    
+    
     
     %check and update the angle to the source if necesasary
     if exceedsThreshold==1 
         [newAngle,gcc_inv_shifted]=ComputeAngle(frame,P.sampleRate,1);  %compute the angle using a GCC-PHAT approach
         
         newAngle_deg=newAngle/pi  * (180);
-        
-        display(['computed angle in ' num2str(toc(t)) ' seconds']);
-        
+                
         if (P.sendAngleToYarp==1)
-            SendAngleToYarp(newAngle_deg,port);
+            if(newAngle_deg>=-90.0 && newAngle_deg<=90.0)
+                SendAngleToYarp(newAngle_deg,port);
+            else
+                display('The value of newAngle_deg was out of the range +/- 90.0 degrees');
+            end
         end
+     
         
-      %make some pretty pictures
-    %display(['current angle to audio source = ' num2str(newAngle_deg)]);
-    [x,y] = pol2cart(newAngle,1); %convert angle and unit radius to cartesian
-    figure(1);
-    hold off;
-    compass(x,y);
-    drawnow;    
-        
-    
-        
+        %make some pretty pictures
+        %display(['current angle to audio source = ' num2str(newAngle_deg)]);
+        [x,y] = pol2cart(newAngle,1); %convert angle and unit radius to cartesian
+        figure(1);
+        hold off;
+        compass(x,y);
+        drawnow;
+       
     end
  
+ 
+   
+   
     
 end

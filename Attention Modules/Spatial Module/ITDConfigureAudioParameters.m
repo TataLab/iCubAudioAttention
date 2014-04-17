@@ -4,7 +4,7 @@
 
 global P;
 
-P.sendAngleToYarp = 0;  %set to 1 to send angle over yarp network %remember to add yarp to the MATLAB java path:  javaaddpath('/Applications/yarp/MATLAB Java Classes/jyarp');
+P.sendAngleToYarp = 1;  %set to 1 to send angle over yarp network %remember to add yarp to the MATLAB java path:  javaaddpath('/Applications/yarp/MATLAB Java Classes/jyarp');
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %set up some timing parameters regarding reading audio
@@ -35,5 +35,16 @@ P.mostRecentSampleFilename='/tmp/lastSampleIndex.dat';
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%
 %threshold detection
-P.peakThreshold = 0.025 * 2^15;  %only adjust angle if peak sound level over the frame was greater than this...2^15 because the samples are coming in as signed 16-bit ints (but GetNextFrame casts them as doubles)
+P.peakThreshold = 0.015 * 2^15;  %only adjust angle if peak sound level over the frame was greater than this...2^15 because the samples are coming in as signed 16-bit ints (but GetNextFrame casts them as doubles)
 
+
+%%%%%%%%%
+%Parameters for streaming sound output
+P.streamOutput=1;  %toggle  output streaming
+P.outputDeviceID=[];
+P.outputMode=1;
+P.outputReqLatencyClass = 1;
+P.outputSampleRate=48000;
+P.outputNumChans = 2;
+P.outputFrameSize = 1024;  %note that the input and output frames are different sizes...keep this integer multiples of the input frame size or all heck will break loose
+P.outputBufferSize=P.outputFrameSize*2;

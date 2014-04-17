@@ -4,6 +4,7 @@ function [ port ] = OpenYarpWritePort(  )
 
 %setup
 
+
 LoadYarp;
 import yarp.Port;
 import yarp.Bottle;
