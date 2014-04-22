@@ -59,6 +59,7 @@ while (~doneLooping)  %loop continuously handling audio in a spatialy sort of wa
     exceedsThreshold=0;
     if(max(frame(1,:) > P.peakThreshold) || max(frame(2,:))>P.peakThreshold)
         exceedsThreshold=1;
+        display('That frame exceeded threshold');
     end
     
     

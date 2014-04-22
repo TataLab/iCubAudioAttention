@@ -4,7 +4,7 @@
 
 global P;
 
-P.sendAngleToYarp = 1;  %set to 1 to send angle over yarp network %remember to add yarp to the MATLAB java path:  javaaddpath('/Applications/yarp/MATLAB Java Classes/jyarp');
+P.sendAngleToYarp = 0;  %set to 1 to send angle over yarp network %remember to add yarp to the MATLAB java path:  javaaddpath('/Applications/yarp/MATLAB Java Classes/jyarp');
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %set up some timing parameters regarding reading audio
@@ -35,7 +35,7 @@ P.mostRecentSampleFilename='/tmp/lastSampleIndex.dat';
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%
 %threshold detection
-P.peakThreshold = 0.015 * 2^15;  %only adjust angle if peak sound level over the frame was greater than this...2^15 because the samples are coming in as signed 16-bit ints (but GetNextFrame casts them as doubles)
+P.peakThreshold = 0.055 * 2^15;  %only adjust angle if peak sound level over the frame was greater than this...2^15 because the samples are coming in as signed 16-bit ints (but GetNextFrame casts them as doubles)
 
 
 %%%%%%%%%

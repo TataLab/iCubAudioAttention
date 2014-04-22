@@ -4,7 +4,7 @@
 %than the spatial module...because it's running in a different instance of
 %MATLAB
 
-ConfigureAudioParameters;
+FrequencyConfigureAudioParameters;
 
 %memory map some files
 global audioD;
