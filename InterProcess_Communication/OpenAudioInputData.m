@@ -11,8 +11,8 @@ f=dir(P.audioDataDumpFilename);
 P.sessionDuration_bytes = f.bytes;
 P.sessionDuration_samples=P.sessionDuration_bytes/P.numChannels/P.bitDepth_bytes;
 
-audioD  = memmapfile(P.audioDataDumpFilename,'format',{'int16' [P.numChannels P.sessionDuration_samples] 'd'});
-sampleD = memmapfile(P.mostRecentSampleFilename,'format',{'int32' [1 1] 'f'});
+audioD  = memmapfile(P.audioDataDumpFilename, 'Writable', true, 'format',{'int16' [P.numChannels P.sessionDuration_samples] 'd'});
+sampleD = memmapfile(P.mostRecentSampleFilename, 'Writable', true, 'format',{'int32' [1 1] 'f'});
 end
 
 
