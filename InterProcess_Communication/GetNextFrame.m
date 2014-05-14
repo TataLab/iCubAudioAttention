@@ -12,11 +12,14 @@ function [frame, updatedFrameIndex,updatedTime] = GetNextFrame( currentFrameInde
 global P;
 global audioD;
 
-
+timingProblem=1;
 while(toc(currentTime)<(1/P.frameRate)) %check the time elapsed since the last frame was read
-    %block the thread to wait
+    timingProblem=0;  %a simple check to make sure you're having to wait for each frame
 end
 
+if(timingProblem==1)
+    display('Timing problem! Your audio may be lagging.')
+end
 %grab the audio data
 blah=audioD.Data(1,1).d;  %get the next frame
 frame=double(blah(:,currentFrameIndex:currentFrameIndex+P.frameDuration_samples*P.numChannels-1));

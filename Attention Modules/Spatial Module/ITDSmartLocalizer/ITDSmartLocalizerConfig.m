@@ -35,8 +35,11 @@ P.mostRecentSampleFilename='/tmp/lastSampleIndex.dat';
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%
 %threshold detection
-P.peakThreshold = -0.1;  %only adjust angle if peak sound level over the frame was greater than this...2^15 because the samples are coming in as signed 16-bit ints (but GetNextFrame casts them as doubles)
+P.peakThreshold = 0.05 * 2^15;  %only adjust angle if peak sound level over the frame was greater than this...2^15 because the samples are coming in as signed 16-bit ints (but GetNextFrame casts them as doubles)
 
+%%%%%%%%%%%%%%%%%%%%%%%%%
+%SmartLocalizer can boost individual frequecies by this gain
+P.gain=100;
 
 %%%%%%%%%
 %Parameters for streaming sound output

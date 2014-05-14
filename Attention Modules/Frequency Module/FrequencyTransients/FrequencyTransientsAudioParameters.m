@@ -21,7 +21,7 @@ P.numChannels=2; %stereo
 P.frameDuration_samples = 10240; %@48000 hz stereo 16-bit samples 10240 =  213 ms
 P.frameDuration_seconds = P.frameDuration_samples/P.sampleRate; 
 P.frameRate = 1/P.frameDuration_seconds; %how often to compute angle in hz
-P.fixedLag_samples =0;% P.frameDuration_samples;  %how much this process should lag the audio write process
+P.fixedLag_samples = P.frameDuration_samples;  %how much this process should lag the audio write process
 %%%%%%%%%%%%%%%%%%%%%%%%%%
 %set up some parameters of the audio data file that is streaming from the
 %iCub.  This is necessary for memory mapping.  It works to map a smaller
@@ -35,16 +35,6 @@ P.mostRecentSampleFilename='/tmp/lastSampleIndex.dat';
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%
 %threshold detection
-P.peakThreshold = -0.1;  %only adjust angle if peak sound level over the frame was greater than this...2^15 because the samples are coming in as signed 16-bit ints (but GetNextFrame casts them as doubles)
+P.peakThreshold = 200;  
+P.thresholdBounds = [500 1000]; %in hz, range of the periodogram to look for peaks above threshold
 
-
-%%%%%%%%%
-%Parameters for streaming sound output
-P.streamOutput=1;  %toggle  output streaming
-P.outputDeviceID=[];
-P.outputMode=1;
-P.outputReqLatencyClass = 1;
-P.outputSampleRate=48000;
-P.outputNumChans = 2;
-P.outputFrameSize = 1024;  %note that the input and output frames are different sizes...keep this integer multiples of the input frame size or all heck will break loose
-P.outputBufferSize=P.outputFrameSize*2;

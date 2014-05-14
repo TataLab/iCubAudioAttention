@@ -1,8 +1,9 @@
-%Simple code to grab audio and display its current fft
+%a utility to localize the peaks in the fft for an individual speaker:
+%this is a crude way to do simple recognition and noise rejection
 
-%set our parameters (notice this calls a differen "configure" script that
-%than the spatial module...because it's running in a different instance of
-%MATLAB
+%over successive frames, gather 5 highest peaks in the fft
+numPeaks=500;
+numFrames=100; %number of frames to sample the fft over
 
 FrequencyConfigureAudioParameters;
 
@@ -15,24 +16,25 @@ currentFrameIndex = tempMostRecentSample - (P.frameDuration_samples - 1) - P.fix
 currentFrameTime = tic;  %grab the current time
 
 nFFT=2 ^ nextpow2(P.frameDuration_samples);
-leftP=zeros(1,nFFT/2-1);  %-2 because we won't plot the points corresponding to the DC (first) or the nyquist (last)
-rightP=zeros(1,nFFT/2-1);
-freqs=zeros(1,nFFT/2-1);
 
 %preset some graphing stuff
-subplot(2,1,1);
-plot(freqs(1:2000),leftP(1:2000)); %only plot frequencies up to some upper bound...this is hardcoded but could be initialized...but it depends on the frame size
-subplot(2,1,2);
-plot(freqs(1:2000),rightP(1:2000));
-drawnow;
+% subplot(2,1,1);
+% plot(freqs(1:2000),leftP(1:2000)); %only plot frequencies up to some upper bound...this is hardcoded but could be initialized...but it depends on the frame size
+% subplot(2,1,2);
+% plot(freqs(1:2000),rightP(1:2000));
+% drawnow;
 
 
 doneLooping=0;
 exceedsThreshold=0;
 
+leftPs=zeros(numFrames, nFFT/2+1);
+rightPs=zeros(numFrames,nFFT/2+1);
+loopIndex=1;
 
 
-while (~doneLooping)  %loop continuously handling audio in a pitchy sort of way
+
+while (loopIndex<numFrames)  %loop continuously handling audio in a pitchy sort of way
     
     %update our local copy of the audio data frame and its coordinates
     [frame,currentFrameIndex, currentFrameTime]=GetNextFrame(currentFrameIndex,currentFrameTime);
@@ -45,20 +47,26 @@ while (~doneLooping)  %loop continuously handling audio in a pitchy sort of way
         exceedsThreshold=1;  
     end
     
-    %check and update the angle to the source if necesasary
+   
     if exceedsThreshold==1 
     
         [leftP,rightP,freqs]=ComputePeriodogram(frame,P.sampleRate,nFFT);
+       
+        t=tic;
         
-        display(['computed ffts in ' num2str(toc(t)) ' seconds']);  
+        leftPs(loopIndex,:)=leftP;
+        rightPs(loopIndex,:)=rightP;
+        
+        display('saved periodograms');
         
         subplot(2,1,1);
         plot(freqs(1:2000),leftP(1:2000)); %only plot frequencies up to some upper bound...this is hardcoded but could be initialized...but it depends on the frame size
         subplot(2,1,2);
         plot(freqs(1:2000),rightP(1:2000));
         drawnow;
-        
-         
+        display(toc(t));
+      
+        loopIndex=loopIndex+1;
     end
   
     

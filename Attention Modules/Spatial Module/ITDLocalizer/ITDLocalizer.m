@@ -47,6 +47,7 @@ currentFrameTime = tic;  %grab the current time
 %Mostly this is useful for streaming output
 %silentFrame=zeros(P.outputNumChans,P.frameDuration_samples);  %we'll dump these zeros into a frame if it's below threshold and then stream this out
 
+display('waiting for above-threshold sound');
 
 while (~doneLooping)  %loop continuously handling audio in a spatialy sort of way
     
@@ -59,7 +60,7 @@ while (~doneLooping)  %loop continuously handling audio in a spatialy sort of wa
     exceedsThreshold=0;
     if(max(frame(1,:) > P.peakThreshold) || max(frame(2,:))>P.peakThreshold)
         exceedsThreshold=1;
-        display('That frame exceeded threshold');
+        %display('That frame exceeded threshold');
     end
     
     
@@ -69,6 +70,7 @@ while (~doneLooping)  %loop continuously handling audio in a spatialy sort of wa
         [newAngle,gcc_inv_shifted]=ComputeAngle(frame,P.sampleRate,1);  %compute the angle using a GCC-PHAT approach
         
         newAngle_deg=newAngle/pi  * (180);
+        display(['Angle to source is aproximately: ' num2str(newAngle_deg) ' degrees']);
                 
         if (P.sendAngleToYarp==1)
             if(newAngle_deg>=-90.0 && newAngle_deg<=90.0)
