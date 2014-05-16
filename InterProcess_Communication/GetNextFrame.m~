@@ -17,18 +17,16 @@ timingProblem=1;
 while(toc(currentTime)<(1/P.frameRate)) %check the time elapsed since the last frame was read
     timingProblem=0;  %a simple check to make sure you're having to wait for each frame
 end
-%grab when we read the data
-updatedTime=tic;
-
+display(toc
 if(timingProblem==1)
     display('Timing problem! Your audio may be lagging.')
 end
-
 %grab the audio data
 blah=audioD.Data(1,1).d;  %get the next frame
-frame=double(blah(:,currentFrameIndex:currentFrameIndex+P.frameDuration_samples-1));
+frame=double(blah(:,currentFrameIndex:currentFrameIndex+P.frameDuration_samples*P.numChannels-1));
 
-
+%grab when we read the data
+updatedTime=tic;
 
 %update the frame index for the next frame
 updatedFrameIndex=currentFrameIndex+ P.frameDuration_samples ; %figure out where the next frame will start

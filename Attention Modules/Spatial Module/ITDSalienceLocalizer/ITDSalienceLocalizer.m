@@ -34,6 +34,8 @@ currentFrameTime = tic;  %grab the current time
 %initialize a lag space vector
 currentLagSpace=zeros(1,2*P.frameDuration_samples);
 
+timeOfLastObject=uint64(0); %keep track of the timestamp of the previous object registered.  Compare new objects against this.  Don't register new objects unless they are P.minTimeDelta seconds old.
+
 while (~doneLooping)  %loop continuously handling audio in a spatialy sort of way
 
     %update our local copy of the audio data frame and its coordinates
@@ -41,17 +43,25 @@ while (~doneLooping)  %loop continuously handling audio in a spatialy sort of wa
     
     [newAngle,currentLagSpace,trigger]=ComputeAngleUsingITDSalience(frame,currentLagSpace,P.sampleRate);  %compute the angle using a GCC-PHAT approach
     
-   
-    if(trigger==1) % update the angle if there's a positive transient (positive could be movement or onset...should do something with offsets eventually...but hmmm, not the same as onsets according to our EEG data)
+    
+
+    t=tic;
+    if((trigger==1) && (t-timeOfLastObject)>P.minTimeDelta_nanos) % update the angle if there's a positive transient (positive could be movement or onset...should do something with offsets eventually...but hmmm, not the same as onsets according to our EEG data)
        
+        timeOfLastObject=t;
         new=GetNewEmptyObject;
         new.onsetAzimuth=newAngle;
-        new.timeStamp=currentFrameTime;
+        %display(['New object has onset azimuth of ' num2str(newAngle) ' degrees']);
+        new.timeStamp=t;
         new.name='ITDObjxx';
-        AddNewObject(new);
-        
+        new.isSelected=0;  %setting this to 1 forces this object onto the
+        %top of the stack
+        [result]=AddNewObject(new);
+    else
+        display('bugger');
        
     end
+    
    
 
 end

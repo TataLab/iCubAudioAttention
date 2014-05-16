@@ -32,7 +32,7 @@ function MakeNewObjectFile(stackSize_objects)
 
 [o,~,sizeO_bytes]=GetNewEmptyObject;
 
-headerBytes=8;  %a double at the front of the object file tells how many objects are on the stack (including the default object)
+headerBytes=16;  %a double at the front of the object file tells how many objects are on the stack (including the default object), a second double acts as a semaphore to prevent race conditions
 
 %dummy variable to fill with zeros
 temp=uint8(zeros(1,headerBytes + stackSize_objects*sizeO_bytes));
@@ -51,13 +51,13 @@ fid=fopen('/tmp/ObjectFiles/objects.dat','w');
 fwrite(fid,temp);
 fclose(fid);
 
-%immediately add the default object as a special cas
+%immediately add the default object as a special case
 
 numObjectsMap=memmapfile('/tmp/ObjectFiles/objects.dat','format',{'double' [1 1] 'numObjects'},'writable',true);
 numObjectsMap.Data(1,1).numObjects=1;
 
 
-[objFileMap,x,y]=MapObjectFile;
+[objFileMap,~,~]=MapObjectFile;
 
 
 %get a list of all the features stored in the objects
@@ -65,7 +65,7 @@ features=fieldnames(objFileMap.Data(1,1)); %size of this cell array tells you ho
 
 o.name='default1';
 o.timeStamp=tic; %a useful reference, perhaps?
-
+o.isDefault=1;
 for i=1:length(features) %run through all the feature fields
         if(strcmp(features{i},'name'))
             objFileMap.Data(1,1).(features{i})=cast(o.(features{i}),'uint16'); %a hoop I jumped through so that you can assign with object names as strings...thank me later...-matt

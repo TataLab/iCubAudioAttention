@@ -1,9 +1,9 @@
-function [  ] = RemoveOldObject( numToRemove )
+function [  ] = RemoveOldObject( objFileMap,numObjectsMap,numToRemove )
 %REMOVEOLDOBJECT takes an object number and removes it from the stack
 %note this is probably a really inefficient way to sort a list, but it is
 %straightforward
 
-[objFileMap,numObjectsMap,~]=MapObjectFile;
+%[objFileMap,numObjectsMap,~]=MapObjectFile;
 
 
 if (objFileMap.Data(numToRemove,1).isDefault==1)

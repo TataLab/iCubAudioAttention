@@ -10,7 +10,7 @@ rate=4; %hz...how fast to update this view of the object
 %                                             'uint8' [1 1] 'isNew';
 %                                             'uint8' [1 1] 'isSelected'}, 'writable',true, 'offset',1);
       
-[objFileMap,numObjMap,nObjectsInStack]=MapObjectFile;
+[objFileMap,numObjMap,nObjectsInStack,isBusyMap]=MapObjectFile;
 done=0;
 
 while(~done)
@@ -34,6 +34,10 @@ while(~done)
 %     compass(x0,y0);
 %     drawnow;
     
+    %call MaintainObjectStackOnce to clear out any old objects
+   MaintainObjectStackOnce(objFileMap,numObjMap,currentNumObjects,isBusyMap);
+    
+
     
     while(toc(t) < 1/rate)
         %block

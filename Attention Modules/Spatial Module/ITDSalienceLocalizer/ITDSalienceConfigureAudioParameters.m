@@ -21,7 +21,10 @@ P.numChannels=2; %stereo
 P.frameDuration_samples = 10240; %@48000 hz stereo 16-bit samples 10240 =  213 ms
 P.frameDuration_seconds = P.frameDuration_samples/P.sampleRate; 
 P.frameRate = 1/P.frameDuration_seconds; %how often to compute angle in hz
-P.fixedLag_samples =0;% P.frameDuration_samples;  %how much this process should lag the audio write process
+P.fixedLag_samples =P.frameDuration_samples;% P.frameDuration_samples;  %how much this process should lag the audio write process
+P.c=340.29;%define speed of sound in m/s
+P.D=0.145; %define distance between microphones in m
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%
 %set up some parameters of the audio data file that is streaming from the
 %iCub.  This is necessary for memory mapping.  It works to map a smaller
@@ -35,8 +38,11 @@ P.mostRecentSampleFilename='/tmp/lastSampleIndex.dat';
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%
 %threshold detection
-P.peakThreshold = -0.1;  %only adjust angle if peak sound level over the frame was greater than this...2^15 because the samples are coming in as signed 16-bit ints (but GetNextFrame casts them as doubles)
+P.peakThreshold = 0.005;  %only adjust angle if signal exceeds this 
 
+%handle object integration/substitution
+P.minTimeDelta=1.0; %seconds, how long between transients should we wait before a transient is registered as a new object
+P.minTimeDelta_nanos=P.minTimeDelta*1000000000;
 
 %%%%%%%%%
 %Parameters for streaming sound output

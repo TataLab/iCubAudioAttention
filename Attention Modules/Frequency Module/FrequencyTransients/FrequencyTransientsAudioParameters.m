@@ -35,6 +35,13 @@ P.mostRecentSampleFilename='/tmp/lastSampleIndex.dat';
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%
 %threshold detection
-P.peakThreshold = 200;  
-P.thresholdBounds = [500 1000]; %in hz, range of the periodogram to look for peaks above threshold
+P.peakThreshold = 1e5;  
+P.thresholdBounds = [1000 2000]; %in hz, range of the periodogram to look for peaks above threshold
+
+%%%%%%%%%%%%%%%%%%
+%handle object integration/substitution
+P.minTimeDelta=1.0; %seconds, how long between transients should we wait before a transient is registered as a new object
+P.minTimeDelta_nanos=P.minTimeDelta*1000000000;
+
+
 

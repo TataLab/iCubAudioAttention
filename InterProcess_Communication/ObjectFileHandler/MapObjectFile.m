@@ -1,10 +1,15 @@
-function [ objectFileMap,numObjectsMap,numObjects ] = MapObjectFile()
+function [ objectFileMap,numObjectsMap,numObjects,isBusyMap ] = MapObjectFile()
 
 %handles memory mapping of an object file and returns the mapped file
-sizeOfHeader_bytes=8;  %a double at the front of the object file tells how many objects are on the stack (including the default object)
-
+sizeOfHeader_bytes=16;  %first double at the front of the object file tells how many objects are on the stack (including the default object)
+                                        %second double at the front of
+                                        %object file acts as a semephore to
+                                        %prevent race conditions
+                                        
 numObjectsMap=memmapfile('/tmp/ObjectFiles/objects.dat','format',{'double' [1 1] 'numObjects'},'writable',true);
 numObjects=numObjectsMap.Data(1,1).numObjects;
+
+isBusyMap=memmapfile('/tmp/ObjectFiles/objects.dat','format',{'double' [1 1] 'isBusy'},'writable',true,'offset',8);
 
 %using the template returned by GetNewEmptyObject we can find out what we
 %need to set up a file full of objects, this is so we only have one place
