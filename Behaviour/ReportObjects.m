@@ -25,14 +25,25 @@ while(~done)
         tempObj.name=cast(tempObj.name,'char');
         display(tempObj);
     end
+    
+    
+    
     %you could plot the azimuth
-%    hold off;
-%     [x,y] = pol2cart(tempObj.azimuth/360.0*2*pi,1); %convert angle and unit radius to cartesian
-%     compass(x,y);
-%     hold on;
-%     [x0,y0] = pol2cart(tempObj.onsetAzimuth/360.0*2*pi,1); %convert angle and unit radius to cartesian
-%     compass(x0,y0);
-%     drawnow;
+
+    if(objFileMap.Data(1,1).isSelected==1)
+        azimuth=objFileMap.Data(1,1).onsetAzimuth;      
+        hold off;
+        [x,y] = pol2cart(azimuth/360.0*2*pi,1); %convert angle and unit radius to cartesian
+        compass(x,y);
+        drawnow;
+    else
+        %draw a blank compass plot
+        display('No object is selected');
+        [x,y] = pol2cart(0,0); %convert angle and unit radius to cartesian
+        compass(x,y);
+        drawnow;
+    end
+    
     
     %call MaintainObjectStackOnce to clear out any old objects
    MaintainObjectStackOnce(objFileMap,numObjMap,currentNumObjects,isBusyMap);

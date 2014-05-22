@@ -32,7 +32,7 @@ currentFrameTime = tic;  %grab the current time
 
 
 %initialize a lag space vector
-currentLagSpace=zeros(1,2*P.frameDuration_samples);
+currentLagSpace=zeros(1,P.frameDuration_samples);
 
 timeOfLastObject=uint64(0); %keep track of the timestamp of the previous object registered.  Compare new objects against this.  Don't register new objects unless they are P.minTimeDelta seconds old.
 
@@ -40,10 +40,24 @@ while (~doneLooping)  %loop continuously handling audio in a spatialy sort of wa
 
     %update our local copy of the audio data frame and its coordinates
     [frame,currentFrameIndex, currentFrameTime]=GetNextFrame(currentFrameIndex,currentFrameTime);
+    %plot(frame(1,:));
+    %drawnow
+    
+    %      for lowpass butterworth filter
+%         frame_filtered(1,:)=filtfilt(P.Hlow.sosMatrix,P.Hlow.ScaleValues,frame(1,:));
+%         frame_filtered(2,:)=filtfilt(P.Hlow.sosMatrix,P.Hlow.ScaleValues,frame(2,:));
+%     
+    
+    %      for bandpass equiripple filter
+%         frame_filtered(1,:)=filtfilt(P.Hband.Numerator,1,frame(1,:));
+%         frame_filtered(2,:)=filtfilt(P.Hband.Numerator,1,frame(2,:));
+    
+    %[newAngle,currentLagSpace,trigger]=ComputeAngleUsingITDSalience(frame_filtered,currentLagSpace,P.sampleRate);  %compute the angle using a GCC-PHAT approach with pre-filtering
     
     [newAngle,currentLagSpace,trigger]=ComputeAngleUsingITDSalience(frame,currentLagSpace,P.sampleRate);  %compute the angle using a GCC-PHAT approach
     
-    
+    %[newAngle,currentLagSpace,trigger]=ComputeAngleUsingITDSalienceXCor(frame,currentLagSpace,P.sampleRate); %%compute the angle using a cross-corr approach
+
 
     t=tic;
     if((trigger==1) && (t-timeOfLastObject)>P.minTimeDelta_nanos) % update the angle if there's a positive transient (positive could be movement or onset...should do something with offsets eventually...but hmmm, not the same as onsets according to our EEG data)
@@ -58,7 +72,7 @@ while (~doneLooping)  %loop continuously handling audio in a spatialy sort of wa
         %top of the stack
         [result]=AddNewObject(new);
     else
-        display('bugger');
+    %nothing
        
     end
     

@@ -29,7 +29,8 @@ while (~doneLooping)  %loop continuously handling audio in a spatialy sort of wa
     
     %update our local copy of the audio data frame and its coordinates
     [frame,currentFrameIndex, currentFrameTime]=GetNextFrame(currentFrameIndex,currentFrameTime);
-    
+%     frame_filtered(1,:)=filtfilt(P.H.sosMatrix,P.H.scaleValues,frame(1,:));
+%     frame_filtered(2,:)=filtfilt(P.H.sosMatrix,P.H.scaleValues,frame(2,:));
 
     [leftP,rightP,leftDeltaP,rightDeltaP,freqs, exceedsThreshold]=ComputePeriodogramTransients(frame,leftP,rightP,P.sampleRate,nFFT);
  
@@ -55,10 +56,12 @@ while (~doneLooping)  %loop continuously handling audio in a spatialy sort of wa
     
     subplot(2,1,1);
     plot(freqs(1:1000),leftDeltaP(1:1000)); %only plot frequencies up to some upper bound...this is hardcoded but could be initialized...but it depends on the frame size
-    ylim([-5000 5000]);
+    %plot(frame(1,:));
+    ylim([-500 500]);
     subplot(2,1,2);
     plot(freqs(1:1000),rightDeltaP(1:1000));
-    ylim([-5000 5000]);
+    %plot(frame(2,:));
+    ylim([-500 500]);
     
     drawnow;
 

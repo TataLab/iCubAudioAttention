@@ -11,10 +11,7 @@ global P;
 %define the width of the window over which to inspect lags (we're only
 %interested in lags of a few 10's- the rest would be reverberation
 
-window=40; %should be divisible by 2...this is how many samples to look on each side of the midline for a peak...this should be related to the distance between the microphones
-                    %for a 12 cm distance it is only linear for about 15
-                    %samples on eithe side of the midline and 17 samples
-                    %pins it at 90 degress.
+%g=gausswin(length(S));
 
 %xplode the array to make this more clear
 s1=S(1,:);
@@ -47,13 +44,21 @@ lag_dif=gcc_inv_shifted-lagVectorPrevious;
 middle=floor(length(lag_dif)/2);
 
 %find the index with the biggest peak
-[peak,tempLag] = max(lag_dif(middle-window/2:middle+window/2)); %only the window  lags are relevant
-lag=tempLag-window/2;
+if(isnan(P.attentionBeamBounds(1))) %no bounds were specified so use the entire window
+    [peak,tempLag] = max(lag_dif(middle-P.ITDWindow/2:middle+P.ITDWindow/2)); %only the window  lags are relevant
+    lag=tempLag-P.ITDWindow/2;
+else
+    [peak,~] = max(lag_dif(middle+P.attentionBeamBounds(1):middle+P.attentionBeamBounds(2)));
+    lag=floor(mean(P.attentionBeamBounds)); %you've already specified an angle to watch for transients
+    display(['peak value within the attention beam was ' num2str(peak)]);
+end
 
 %employ a simple trigger
-if peak>P.peakThreshold  %looking for new objects as negative values because GCC_PHAT works that way
+if peak>P.peakThreshold
     trigger=1;
-    
+    if(~isnan(P.attentionBeamBounds(1)))%report that we know the speaker is in the beam
+        display('I know you are there!');
+    end
 else
     trigger=0;
 end
@@ -61,12 +66,13 @@ end
 %convert the lag in samples to lag in seconds
 angle=ConvertLagToAngle(lag);
 
+
 %send this frame's gcc-phat vector back to be passed along to this function during the next frame
 lagSpace=gcc_inv_shifted;
 
-% %%%%%check your work
-plot(lag_dif(middle-window/2:middle+window/2));
-ylim([-.25 .25]);
+% % %%%%%check your work
+plot(lag_dif(middle-P.ITDWindow/2:middle+P.ITDWindow/2));
+ylim([-.2 .2]);
 drawnow;
 
 return

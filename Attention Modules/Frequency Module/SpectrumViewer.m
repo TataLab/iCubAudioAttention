@@ -40,7 +40,7 @@ while (~doneLooping)  %loop continuously handling audio in a pitchy sort of way
     %a simple trigger
     %check if this frame exceeds amplitude threshold, if it doesn't don't
     %do anything with it
-    exceedsThreshold=0;
+    exceedsThreshold=1;
     if(max(frame(1,:) > P.peakThreshold) || max(frame(2,:))>P.peakThreshold)
         exceedsThreshold=1;  
     end
@@ -50,7 +50,7 @@ while (~doneLooping)  %loop continuously handling audio in a pitchy sort of way
     
         [leftP,rightP,freqs]=ComputePeriodogram(frame,P.sampleRate,nFFT);
         
-        display(['computed ffts in ' num2str(toc(t)) ' seconds']);  
+        %display(['computed ffts in ' num2str(toc(t)) ' seconds']);  
         
         subplot(2,1,1);
         plot(freqs(1:2000),leftP(1:2000)); %only plot frequencies up to some upper bound...this is hardcoded but could be initialized...but it depends on the frame size

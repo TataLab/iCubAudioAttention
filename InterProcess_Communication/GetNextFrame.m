@@ -28,7 +28,15 @@ end
 blah=audioD.Data(1,1).d;  %get the next frame
 frame=double(blah(:,currentFrameIndex:currentFrameIndex+P.frameDuration_samples-1));
 
+%a quick sanity check to make sure you're not reading off the end of the
+%data that's been written
+if(strcmp(frame(1,1:10),zeros(1,10)));
+    display('you are reading zeros in the audio data.  Something might be wrong!');
+end
 
+% plot(frame(1,:));
+% ylim([-2e14 2e14]);
+% drawnow;
 
 %update the frame index for the next frame
 updatedFrameIndex=currentFrameIndex+ P.frameDuration_samples ; %figure out where the next frame will start
