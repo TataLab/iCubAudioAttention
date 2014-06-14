@@ -1,7 +1,7 @@
 function [ H] = MakeBandPassFilter( )
 
 global P;
-nyquist=P.sampleRate/2;
+nyquist=P.kSampleRate/2;
 
 Fp1=P.Fp1_hz/nyquist;
 Fst1=P.Fst1_hz/nyquist;

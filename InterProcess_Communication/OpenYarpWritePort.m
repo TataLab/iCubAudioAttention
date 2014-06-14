@@ -13,8 +13,8 @@ port=Port;
 %first close the port just in case
 port.close;
 
-disp('Going to open port /matlab/write');
-port.open('/matlab/write');
+disp('Going to open port /audioAttention/audioAngle');
+port.open('/audioAttention/audioAngle');
 
 disp('Please connect to a bottle sink (e.g. yarp read)');
 

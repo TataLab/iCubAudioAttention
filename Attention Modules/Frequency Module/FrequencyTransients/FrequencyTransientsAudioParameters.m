@@ -18,7 +18,7 @@ P.sampleRate = 48000;
 P.bitDepth_string = 'int16'; %16-bits = 2 bytes
 P.bitDepth_bytes = 2;
 P.numChannels=2; %stereo
-P.frameDuration_samples = 10240; %@48000 hz stereo 16-bit samples 10240 =  213 ms
+P.frameDuration_samples = 2*10240; %@48000 hz stereo 16-bit samples 10240 =  213 ms
 P.frameDuration_seconds = P.frameDuration_samples/P.sampleRate; 
 P.frameRate = 1/P.frameDuration_seconds; %how often to compute angle in hz
 P.fixedLag_samples = P.frameDuration_samples;  %how much this process should lag the audio write process
@@ -35,12 +35,15 @@ P.mostRecentSampleFilename='/tmp/lastSampleIndex.dat';
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%
 %threshold detection
-P.peakThreshold = 50;  
+%on red iCub: P.peakThreshold = 3e5;  
+%on /atom:
+P.peakThreshold=30;
+
 P.thresholdBounds = [500 1000]; %in hz, range of the periodogram to look for peaks above threshold
 
 %%%%%%%%%%%%%%%%%%
 %handle object integration/substitution
-P.minTimeDelta=1.0; %seconds, how long between transients should we wait before a transient is registered as a new object
+P.minTimeDelta=1; %seconds, how long between transients should we wait before a transient is registered as a new object
 P.minTimeDelta_nanos=P.minTimeDelta*1000000000;
 
 % %%%%%%%%%%%

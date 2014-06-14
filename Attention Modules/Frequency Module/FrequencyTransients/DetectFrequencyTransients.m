@@ -36,15 +36,17 @@ while (~doneLooping)  %loop continuously handling audio in a spatialy sort of wa
  
     t=tic;
     %interpret the threshold detection flag
-    if(exceedsThreshold==1 && ((t-timeOfLastObject)>P.minTimeDelta_nanos))
+    if(exceedsThreshold==1 && ((t-timeOfLastObject)>uint64(P.minTimeDelta_nanos)))
         %display('Exceeded threshold');
         
         new=GetNewEmptyObject;
         new.name='frqObjxx';
         new.onsetAzimuth=NaN;
-        new.timeStamp=t;
+        new.timeStamp=t;  
+        new.isSelected=0;
         timeOfLastObject=new.timeStamp;
         didAddObject=AddNewObject(new);
+      
         %display(didAddObject);
         %add a new object to the stack 
     else
@@ -57,12 +59,12 @@ while (~doneLooping)  %loop continuously handling audio in a spatialy sort of wa
     subplot(2,1,1);
     plot(freqs(1:1000),leftDeltaP(1:1000)); %only plot frequencies up to some upper bound...this is hardcoded but could be initialized...but it depends on the frame size
     %plot(frame(1,:));
-    ylim([-500 500]);
+    ylim([-100 100]);
     subplot(2,1,2);
     plot(freqs(1:1000),rightDeltaP(1:1000));
     %plot(frame(2,:));
-    ylim([-500 500]);
-    
+    ylim([-100 100]);
+%     
     drawnow;
 
     

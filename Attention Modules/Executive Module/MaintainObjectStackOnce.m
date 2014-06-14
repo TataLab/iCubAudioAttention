@@ -6,7 +6,7 @@ function [removedObjects]=MaintainObjectStackOnce(stack,numObjectsMap,n,isBusyMa
 %
 %you can call this from within a loop to periodically prune the stack
 
-objectLifetime = 5.0;  %seconds...how many seconds should an object stay on the stack
+objectLifetime = 4.0;  %seconds...how many seconds should an object stay on the stack
 
 removedObjects=0; %default to zero
 

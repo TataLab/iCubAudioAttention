@@ -25,8 +25,18 @@ if(timingProblem==1)
 end
 
 %grab the audio data
-blah=audioD.Data(1,1).d;  %get the next frame
-frame=double(blah(:,currentFrameIndex:currentFrameIndex+P.frameDuration_samples-1));
+%blah=audioD.Data(1,1).d;  %get the next frame
+frame=double(audioD.Data(1,1).d(:,currentFrameIndex:currentFrameIndex+P.frameDuration_samples-1));
+
+
+    
+%     subplot(2,1,1);
+%     plot(blah(1,:)); 
+%     %ylim([-100 100]);
+%     subplot(2,1,2);
+%     plot(blah(2,:));
+%     %ylim([-100 100]);
+
 
 %a quick sanity check to make sure you're not reading off the end of the
 %data that's been written

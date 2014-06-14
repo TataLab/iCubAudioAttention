@@ -10,7 +10,7 @@ function [didAddObject]=AddNewObject(OStruct)
 
 %substitution is not implemented yet
 
-maxIntegrationTime=0.50; %seconds, upper time bound on whether two objects are coincident enough to be called the same object
+maxIntegrationTime=0.550; %seconds, upper time bound on whether two objects are coincident enough to be called the same object
 integrationTime_nanos=uint64(maxIntegrationTime*1000000000.0);
 
 
@@ -39,7 +39,9 @@ if(objFileMap.Data(1,1).isSelected==0 || OStruct.isSelected==1) %only take actio
     oldName=objFileMap.Data(1,1).name;
     newName=cast(OStruct.name,'uint16'); %a bit more voodoo, object files encode name as an array of uint16 chars  
     
-    if((~strcmp(oldName,newName)) &&  (deltaTime < integrationTime_nanos)) %add by integration
+    if(isequal(oldName,newName)==0 &&  deltaTime < integrationTime_nanos) %add by integration
+        
+        display(['integrating ' oldName ' with ' newName ' but comparing yields ' num2str(strcmp(oldName,newName))]);
         
         %rename this object to indicate it's been merged with the previous top
         %object
