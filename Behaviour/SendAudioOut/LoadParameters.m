@@ -1,13 +1,18 @@
 %set up a global struct of parameters to keep the workspace clean
 global P;
 
-P.kFrameSize_samples=10*1024;
-P.kFixedLag_samples=6*10240; %lots of fixed lag so we know we're not missing data
+P.kFrameSize_samples=110*1024;  %this can be quite long if signal processing requires
+P.kFixedLag_samples=4*10240; %lots of fixed lag so we know we're not missing data
 P.kSampleRate=48000;
 P.kFrameDuration_seconds=P.kFrameSize_samples/P.kSampleRate;
+P.kLagDuration_seconds=P.kFixedLag_samples/P.kSampleRate;
 P.bitDepth_bytes=2;
-P.kGain=15;  %you can add some gain (carefully) here.  Watch for clipping.
+P.kGain=100;  %you can add some gain (carefully) here.  Watch for clipping.
+P.scaleFactor=1/2^15; %16-bit signed ints...except something doesn't work about this
 
+%sometimes you want to save a bunch of audio for later use
+P.kLongBufferSize_seconds=3;
+P.kLongBufferSize_samples = P.kLongBufferSize_seconds * P.kSampleRate;
 P.audioDataDumpFilename='/tmp/AudioDataDump.dat';
 P.mostRecentSampleFilename='/tmp/lastSampleIndex.dat';
 

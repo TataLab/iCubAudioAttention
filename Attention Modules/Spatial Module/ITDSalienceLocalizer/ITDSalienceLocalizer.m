@@ -32,7 +32,7 @@ tempMostRecentSample=sampleD.Data(1,1).f;
 
 %preallocate an array to hold and plot frame data
 visualizeArray=zeros(P.ITDWindow+1,10);
-
+frameNum=1; %initilize counter to capture video frames
 
 
 %initialize a lag space vector
@@ -42,7 +42,8 @@ timeOfLastObject=uint64(0); %keep track of the timestamp of the previous object 
 
 %build a model of the background sound sources
 %[backgroundLag,backgroundLagSD]=BuildBackground(30,currentFrameIndex,currentFrameTime);
-backgroundLag=zeros(1,P.frameDuration_samples);
+backgroundLag=zeros(1,P.frameDuration_samples*2-1);
+backgroundGCC=zeros(1,P.frameDuration_samples*2-1);
 
 %reset the timing
 tempMostRecentSample=sampleD.Data(1,1).f;
@@ -50,14 +51,19 @@ currentFrameIndex = tempMostRecentSample - (P.frameDuration_samples - 1) - P.fix
 currentFrameTime = tic;  %grab the current time
 
 
-
+trigger=0;
 while (~doneLooping)  %loop continuously handling audio in a spatialy sort of way
 
     %update our local copy of the audio data frame and its coordinates
     [frame,currentFrameIndex, currentFrameTime]=GetNextFrame(currentFrameIndex,currentFrameTime);
 
-    [newAngle,backgroundLag,trigger,visFrame]=ComputeAngleUsingITDSalience(frame,backgroundLag);  %compute the angle using a GCC-PHAT approach
-    
+    %[newAngle,backgroundLag,trigger,visFrame]=ComputeAngleUsingITDSalience(frame,backgroundLag);  %compute the angle using a GCC-PHAT approach
+    [newAngle,newLag,backgroundLag,trigger,visFrame]=ComputeAngleUsingITDSalienceXCor(frame,backgroundLag);  %compute the angle using a GCC-PHAT approach
+    %[~,~,backgroundGCC,trigger,~]=ComputeAngleUsingITDSalience(frame,backgroundGCC);
+%     
+%     if(trigger==1)
+%         background=NaN; %if the recent frame exceeds threshold, blank the next one
+%     end
 
     t=tic;
     if((trigger==1) && (t-timeOfLastObject)>P.minTimeDelta_nanos) % update the angle if there's a positive transient (positive could be movement or onset...should do something with offsets eventually...but hmmm, not the same as onsets according to our EEG data)
@@ -65,7 +71,7 @@ while (~doneLooping)  %loop continuously handling audio in a spatialy sort of wa
         timeOfLastObject=t;
         new=GetNewEmptyObject;
         new.onsetAzimuth=newAngle;
-        display(['New object has onset azimuth of ' num2str(newAngle) ' degrees']);
+        display(['New object has a lag of ' num2str(newLag) ' and onset azimuth of ' num2str(newAngle) ' degrees']);
         new.timeStamp=t;
         new.name='ITDObjxx';
         new.isSelected=0;  %setting this to 1 forces this object onto the
@@ -73,13 +79,24 @@ while (~doneLooping)  %loop continuously handling audio in a spatialy sort of wa
         [result]=AddNewObject(new);
         
         
+        
+        
     else
     %nothing
-       
-    %plot
+    
     
     end
     
-   
+% % % %%%%%check your work
+hold off;
+pl=bar(linspace(-22,22,45),visFrame);
+hold on;
+xlim([-22 22]);
+ylim([0 1e8]);
+xlabel('lag');
+ylabel('xcorr');
+drawnow;
+% videoFrames(frameNum)=getframe;
+% frameNum=frameNum+1;
 
 end

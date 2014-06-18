@@ -30,12 +30,21 @@ silence=zeros(2,P.kFrameSize_samples);%send this when we don't want to send audi
 InitializePsychSound(1);%set up audio output
 paoutput = PsychPortAudio('Open', [], 1, 2, 48000, 2,1024);
 
+%make a big buffer to store an entire phrase for later use (or debugging)
+%longBuffer=zeros(2,P.kLongBufferSize_samples);
+
 %get a frame ready
 audiodata=mIn.Data(1,1).d(:,readIndex:readIndex+P.kFrameSize_samples-1); %the first frame is ready
 
 scaleFactor=1/2^15;  %precompute for speed
 audiodata=double(audiodata); %scale the audio from 16bit signed ints to .wav
 audiodata=audiodata.*scaleFactor;
+
+%initialize a vector to hold processed data
+processedAudiodata=zeros(1,length(audiodata));
+
+%initialize a stereo array to hold output audio data
+outputAudiodata=zeros(2,length(audiodata));
 
 %start playback
 PsychPortAudio('FillBuffer', paoutput, pre);
@@ -51,6 +60,7 @@ playbackstart = PsychPortAudio('Start', paoutput, 0,0,1);
 [objFileMap,~,~,isBusyMap]=MapObjectFile;
 
 
+
 %%%%%%%%%%%%
 %loop
 done=0;
@@ -61,38 +71,59 @@ while(~done)
     %if the object is selected
     display(['that frame took ' num2str(toc(frameT)) ' seconds']);
     frameT=tic;
+    while(isBusyMap.Data(1,1).isBusy==1)
+        %the object stack is being written by another process, so block here
+        display('waiting patiently while some else is modifying the object stack');
+    end
+    
     if(objFileMap.Data(1,1).isSelected==1  ) %there is an attended object on the stack
         
         display('sending audio');
-        %%%%%Simple selection of channels
-%         SelectChannels will clean up the signal by ignoring one of the
-%         microphones
-        audiodata=SelectChannels(audiodata,objFileMap.Data(1,1).onsetAzimuth);
+       
+        %%%%%%%%%%%
+        %speech preprocessing section
         %%%%%%%%%
+
+        %initialize
+        processedAudioData=zeros(1,length(audiodata)); 
         
-        %%%%Using ICA
-        %use EEGLab runica() to seperate the sources
+        %channel select
+        processedAudiodata=SelectChannels(audiodata,objFileMap.Data(1,1).onsetAzimuth); %isolate the most relevant mono signal
+        
+        %Use runica() ICA
         %audioData=SeperateSources(audiodata,objFileMap.Data(1,1).onsetAzimuth);
         
-       % audiodata=FilterWithVoicebox(audiodata,P.kSampleRate);
+        %use VoiceBox specsub enhancement
+        processedAudiodata=EnhanceThis(processedAudiodata,P.kSampleRate);
         
-        %in case you need to adjust the gain...something might be flaky
-        %with the 16-bit audio data
-        audiodata=audiodata*P.kGain;
+        %use VoiceBox specsub filtering
+        %processedAudiodata=FilterWithVoicebox(processedAudiodata,P.kSampleRate);
+        
+        %adjust gain
+        processedAudiodata=processedAudiodata*P.kGain;
+        
+        %%%%%%%%%%%
+        %output stage
+        %%%%%%%%%%%%%
+        
+        %expand the mono signal onto both channels
+        outputAudiodata(1,:)=processedAudiodata;
+        outputAudiodata(2,:)=processedAudiodata;
+        
+        plot(processedAudiodata);
+        ylim([-1 1]);
+        drawnow;
+        
+        [underflow,~,~]=PsychPortAudio('FillBuffer', paoutput, outputAudiodata,1);
         
         
-        %         subplot(2,1,1);
-        %         plot(audiodata(1,:));
-        %         ylim([-.1 .1]);
-        %         subplot(2,1,2);
-        %         plot(audiodata(2,:));
-        %         ylim([-.1 .1]);
-        %         drawnow;
-        
-        %send the signal OUT
-        [underflow,~,~]=PsychPortAudio('FillBuffer', paoutput, audiodata,1);
-        
-        
+         %long buffer the data
+%          longBuffer=circshift(longBuffer, [0 -1*P.kFrameSize_samples]); %it's a kind of ring buffer
+%          longBuffer(:,end-P.kFrameSize_samples+1:end)=audiodata;
+%          
+%          plot(longBuffer(1,:));
+%          hold on;
+%          drawnow;
     else
         [underflow,~,~]=PsychPortAudio('FillBuffer', paoutput, silence,1); %else send zeros, how's that for early selection!
         %display('sssshhhhh');

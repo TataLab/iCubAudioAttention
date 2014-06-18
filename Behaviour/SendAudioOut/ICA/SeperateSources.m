@@ -5,8 +5,8 @@ function [outFrame] = SeperateSources( inFrame,angle )
 %[~,~,~,~,~,~,outFrame] = runica(inFrame,'verbose','off');
 
 %using FastICA algorithm from http://research.ics.aalto.fi/ica/fastica/code/dlcode.shtml
-[outFrame]=fastica(inFrame,'verbose','off');
-
+[tempFrame]=fastica(inFrame,'verbose','off');
+outFrame=tempFrame;
 %outFrame=inFrame;
 
 end

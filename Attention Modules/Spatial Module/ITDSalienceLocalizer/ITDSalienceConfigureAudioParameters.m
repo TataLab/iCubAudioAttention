@@ -23,8 +23,10 @@ P.frameDuration_seconds = P.frameDuration_samples/P.sampleRate;
 P.frameRate = 1/P.frameDuration_seconds; %how often to compute angle in hz
 P.fixedLag_samples =P.frameDuration_samples;% P.frameDuration_samples;  %how much this process should lag the audio write process
 P.c=340.29;%define speed of sound in m/s
-P.D=0.16; %define distance between microphones in m
-P.ITDWindow=48;  %should be divisible by 2...this is how many samples to look on each side of the midline for a peak...this should be related to the distance between the microphones
+% P.D=.10;
+% P.ITDWindow=34;
+P.D=0.145; %define distance between microphones in m
+P.ITDWindow=44;  %should be divisible by 2...this is how many samples to look on each side of the midline for a peak...this should be related to the distance between the microphones
                             %for a 12 cm distance it is only linear for about 15
                              %samples on eithe side of the midline and 17 samples
                             %pins it at 90 degress.
@@ -43,7 +45,9 @@ P.mostRecentSampleFilename='/tmp/lastSampleIndex.dat';
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%
 %threshold detection
-P.peakThreshold = .04;  %only adjust angle if signal exceeds this 
+P.GCCPeakThreshold =.04;  %only adjust angle if signal exceeds this %use .04 for icub in room
+P.xcorrPeakThreshold =1e7;  %only adjust angle if signal exceeds this %use .04 for icub in room
+
 
 %handle object integration/substitution
 P.minTimeDelta=2; %seconds, how long between transients should we wait before a transient is registered as a new object
@@ -65,7 +69,7 @@ P.outputBufferSize=P.outputFrameSize*2;
 
 %parameters to control weighting of the lag vector, from inside toward
 %center
-outsideFactor=1.5; %how much to multiply values at eccentric lags(set this to 1 if you don't want any scaling)
+outsideFactor=1; %how much to multiply values at eccentric lags(set this to 1 if you don't want any scaling)
 insideFactor=1; %at the midline
 P.weightsV=linspace(outsideFactor,insideFactor,P.ITDWindow/2); %a linear weighting vector
 

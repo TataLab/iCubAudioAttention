@@ -24,9 +24,7 @@ if (useYARP==1)   %remember to add yarp to the MATLAB java path:  javaaddpath('/
     port=Port;
     
     port.open('/AudioAttention/AudioAngle');
-     
-    waitforbuttonpress;
-    
+         
     pause(3);
 end
 

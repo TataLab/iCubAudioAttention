@@ -10,7 +10,7 @@ function [didAddObject]=AddNewObject(OStruct)
 
 %substitution is not implemented yet
 
-maxIntegrationTime=0.550; %seconds, upper time bound on whether two objects are coincident enough to be called the same object
+maxIntegrationTime=4*0.250; %seconds, upper time bound on whether two objects are coincident enough to be called the same object
 integrationTime_nanos=uint64(maxIntegrationTime*1000000000.0);
 
 
