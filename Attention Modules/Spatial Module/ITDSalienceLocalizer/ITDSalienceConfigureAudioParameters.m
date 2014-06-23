@@ -46,7 +46,7 @@ P.mostRecentSampleFilename='/tmp/lastSampleIndex.dat';
 %%%%%%%%%%%%%%%%%%%%%%%%%%
 %threshold detection
 P.GCCPeakThreshold =.04;  %only adjust angle if signal exceeds this %use .04 for icub in room
-P.xcorrPeakThreshold =1e7;  %only adjust angle if signal exceeds this %use .04 for icub in room
+P.xcorrPeakThreshold =4e7;  %only adjust angle if signal exceeds this %use 4e7 for icub in room
 
 
 %handle object integration/substitution
@@ -69,7 +69,7 @@ P.outputBufferSize=P.outputFrameSize*2;
 
 %parameters to control weighting of the lag vector, from inside toward
 %center
-outsideFactor=1; %how much to multiply values at eccentric lags(set this to 1 if you don't want any scaling)
+outsideFactor=.9; %how much to multiply values at eccentric lags(set this to 1 if you don't want any scaling)
 insideFactor=1; %at the midline
 P.weightsV=linspace(outsideFactor,insideFactor,P.ITDWindow/2); %a linear weighting vector
 

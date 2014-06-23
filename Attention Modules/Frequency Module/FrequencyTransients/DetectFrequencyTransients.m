@@ -18,6 +18,7 @@ leftDeltaP=zeros(nFFT/2+1,1); %hold the difference between spectra across time
 rightDeltaP=zeros(nFFT/2+1,1);
 freqs=zeros(nFFT/2-1+1,1);
 
+frameNum=1; %initilize counter to capture video frames
 
 doneLooping=0;
 exceedsThreshold=0;
@@ -54,20 +55,32 @@ while (~doneLooping)  %loop continuously handling audio in a spatialy sort of wa
    
     end
     
-    
-    
-    subplot(2,1,1);
-    plot(freqs(1:1000),leftDeltaP(1:1000)); %only plot frequencies up to some upper bound...this is hardcoded but could be initialized...but it depends on the frame size
-    %plot(frame(1,:));
-    ylim([-100 100]);
-    subplot(2,1,2);
-    plot(freqs(1:1000),rightDeltaP(1:1000));
-    %plot(frame(2,:));
-    ylim([-100 100]);
 %     
-    drawnow;
+%     figure1=figure(1);
+%     subplot(2,1,1);
+%     plot(freqs(1:1000),leftDeltaP(1:1000)); %only plot frequencies up to some upper bound...this is hardcoded but could be initialized...but it depends on the frame size
+%     ylim([0 300]);
+%     title('Spectral Dynamics');
+% 
+% 	ylabel('power');
+%     subplot(2,1,2);
+%     plot(freqs(1:1000),rightDeltaP(1:1000));
+%     ylim([0 300]);
+%     xlabel('frequency (hz)');
+% 	ylabel('power');
+% 
+% %     annotation(figure1,'rectangle',...
+% %     [0.386904761904762 0.582702702702703 0.0863095238095239 0.132972972972973],...
+% %     'FaceColor','flat');
+% %     annotation(figure1,'rectangle',...
+% %     [0.387666666666668 0.10972972972973 0.0855476190476179 0.132972972972973],...
+% %     'FaceColor','flat');
+% 
+%      drawnow;
 
-    
+%     videoFrames(frameNum)=getframe(figure1);
+%     frameNum=frameNum+1;  
+%     
 
    
 end

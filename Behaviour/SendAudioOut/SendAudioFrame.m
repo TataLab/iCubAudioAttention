@@ -87,7 +87,7 @@ while(~done)
         %processedAudiodata=FilterWithVoicebox(processedAudiodata,P.kSampleRate);
         
         %adjust gain
-        processedAudiodata=processedAudiodata*P.kGain;
+         processedAudiodata=processedAudiodata*P.kGain;
         
         %%%%%%%%%%%
         %output stage

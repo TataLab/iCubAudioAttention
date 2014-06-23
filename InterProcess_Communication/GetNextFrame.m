@@ -1,4 +1,4 @@
-function [frame, updatedFrameIndex,updatedTime] = GetNextFrame( currentFrameIndex,currentTime )
+function [frame, updatedFrameIndex,updatedTime] = GetNextFrame( currentFrameIndex,currentTime)
 %wait until the duration of a frame has elapsed and then read the next
 %unread frame
 %
@@ -11,6 +11,7 @@ function [frame, updatedFrameIndex,updatedTime] = GetNextFrame( currentFrameInde
 %if you need to speed up
 global P;
 global audioD;
+global sampleD;
 
 timingProblem=1;
 
@@ -40,16 +41,12 @@ frame=double(audioD.Data(1,1).d(:,currentFrameIndex:currentFrameIndex+P.frameDur
 
 %a quick sanity check to make sure you're not reading off the end of the
 %data that's been written
-if(strcmp(frame(1,1:10),zeros(1,10)));
-    display('you are reading zeros in the audio data.  Something might be wrong!');
+if(sum(frame(1,:))==0) %theres a problem.  Try to recover.
+    display('You are reading zeros in the audio data.  Maybe the portaudio yarpdev is lagging.  Scanning for most recent sample to resync.');
+    updatedFrameIndex=sampleD.Data(1,1).f+P.frameDuration_samples;
+else
+    % all is well so update the frame index for the next frame using time
+    updatedFrameIndex=currentFrameIndex+ P.frameDuration_samples ; %figure out where the next frame will start
 end
-
-% plot(frame(1,:));
-% ylim([-2e14 2e14]);
-% drawnow;
-
-%update the frame index for the next frame
-updatedFrameIndex=currentFrameIndex+ P.frameDuration_samples ; %figure out where the next frame will start
-
 end
 
