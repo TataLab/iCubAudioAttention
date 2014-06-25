@@ -17,6 +17,8 @@ The plan is to interact as little as possible with Paul's code so I don't break 
 
 #include <deque>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <math.h>
 #include <vector>
 #include <yarp/os/all.h>
