@@ -46,10 +46,10 @@ while(~done)
     
     if(objFileMap.Data(1,1).isSelected==1) %send angles for selected objects or the default object (i.e. send zero to maintain the most recent position)
         azimuth=objFileMap.Data(1,1).onsetAzimuth;
-        hold off;
-        [x,y] = pol2cart(azimuth/360.0*2*pi,1); %convert angle and unit radius to cartesian
-        compass(x,y);
-        drawnow;
+%         hold off;
+%         [x,y] = pol2cart(azimuth/360.0*2*pi,1); %convert angle and unit radius to cartesian
+%         compass(x,y);
+%         drawnow;
         
         if((useYARP==1) && (objFileMap.Data(1,1).timeStamp~=timeOfObjectSentToYARP)) %we didn't already report this one
             display(['sending ' num2str(azimuth) ' to YARP']);
@@ -68,10 +68,10 @@ while(~done)
         
         
         %draw a blank compass plot
-        display('No object is selected');
-        [x,y] = pol2cart(0,0); %convert angle and unit radius to cartesian
-        compass(x,y);
-        drawnow;
+%         display('No object is selected');
+%         [x,y] = pol2cart(0,0); %convert angle and unit radius to cartesian
+%         compass(x,y);
+%         drawnow;
     end
     
     

@@ -94,29 +94,29 @@ while (~doneLooping)  %loop continuously handling audio in a spatialy sort of wa
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%    
 % % % %%%%% PLOT to check your work
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-hold off;
+% hold off;
+% % 
+% % %%%%
+% % % %for a fancy polar plot
+% rangeOfLags=linspace(-22,22,length(visFrame));
+% radiusScale=7e7;
+% angleScale=180;
+% [scaleX,scaleY]=pol2cart(angleScale*pi/180,radiusScale);
+% compass(180,radiusScale,'-w'); %cludge to set the scale
+% hold on;
+% for a=1:length(visFrame)
+%     tempAngleToPlot=ConvertLagToAngle(rangeOfLags(a))*pi/180;
+%     [x,y] = pol2cart(tempAngleToPlot,visFrame(a));
+%     compass(x,y);
+%     hold on;
+%  
+% end
+% %emphasize the peak
 % 
-% %%%%
-% % %for a fancy polar plot
-rangeOfLags=linspace(-22,22,length(visFrame));
-radiusScale=7e7;
-angleScale=180;
-[scaleX,scaleY]=pol2cart(angleScale*pi/180,radiusScale);
-compass(180,radiusScale,'-w'); %cludge to set the scale
-hold on;
-for a=1:length(visFrame)
-    tempAngleToPlot=ConvertLagToAngle(rangeOfLags(a))*pi/180;
-    [x,y] = pol2cart(tempAngleToPlot,visFrame(a));
-    compass(x,y);
-    hold on;
- 
-end
-%emphasize the peak
-
-[xpeak,ypeak]=pol2cart(oldAngle*pi/180,visFrame(newLag));
-compass(xpeak,ypeak,'r');
-
-drawnow;
+% [xpeak,ypeak]=pol2cart(oldAngle*pi/180,visFrame(newLag));
+% compass(xpeak,ypeak,'r');
+% 
+% drawnow;
 % videoFrames(frameNum)=getframe;
 % frameNum=frameNum+1;    
 
