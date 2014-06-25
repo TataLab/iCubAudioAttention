@@ -104,7 +104,7 @@ public:
         }
             
         port.setStrict(true);
-        if (!port.open(p.check("name",Value("/listener")).asString())) {
+        if (!port.open(p.check("name",Value("/AudioAttention/listener")).asString())) {
             printf("Communication problem\n");
             return false;
         }
