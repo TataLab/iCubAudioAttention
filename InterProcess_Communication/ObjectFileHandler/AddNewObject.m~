@@ -39,7 +39,7 @@ if(objFileMap.Data(1,1).isSelected==0 || OStruct.isSelected==1) %only take actio
     oldName=objFileMap.Data(1,1).name;
     newName=cast(OStruct.name,'uint16'); %a bit more voodoo, object files encode name as an array of uint16 chars
     
-    if(objFileMap.Data(1,1).isDefault==0 && isequal(oldName,newName)==0 &&  deltaTime < integrationTime_nanos) %add by integration as long is the top object isn't the default object
+    if(isequal(oldName,newName)==0 &&  deltaTime < integrationTime_nanos) %add by integration
         
         display(['integrating ' oldName ' with ' newName ' but comparing yields ' num2str(strcmp(oldName,newName))]);
         

@@ -46,7 +46,7 @@ P.mostRecentSampleFilename='/tmp/lastSampleIndex.dat';
 %%%%%%%%%%%%%%%%%%%%%%%%%%
 %threshold detection
 P.GCCPeakThreshold =.04;  %only adjust angle if signal exceeds this %use .04 for icub in room
-P.xcorrPeakThreshold =4e7;  %only adjust angle if signal exceeds this %use 4e7 for icub in room
+P.xcorrPeakThreshold =3e7;  %only adjust angle if signal exceeds this %use 4e7 for icub in room
 
 
 %handle object integration/substitution

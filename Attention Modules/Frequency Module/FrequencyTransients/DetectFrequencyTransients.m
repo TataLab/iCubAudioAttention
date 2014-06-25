@@ -56,18 +56,18 @@ while (~doneLooping)  %loop continuously handling audio in a spatialy sort of wa
     end
     
 %     
-%     figure1=figure(1);
-%     subplot(2,1,1);
-%     plot(freqs(1:1000),leftDeltaP(1:1000)); %only plot frequencies up to some upper bound...this is hardcoded but could be initialized...but it depends on the frame size
-%     ylim([0 300]);
-%     title('Spectral Dynamics');
-% 
-% 	ylabel('power');
-%     subplot(2,1,2);
-%     plot(freqs(1:1000),rightDeltaP(1:1000));
-%     ylim([0 300]);
-%     xlabel('frequency (hz)');
-% 	ylabel('power');
+    figure1=figure(1);
+    subplot(2,1,1);
+    bar(freqs(1:1000),leftDeltaP(1:1000)); %only plot frequencies up to some upper bound...this is hardcoded but could be initialized...but it depends on the frame size
+    ylim([0 300]);
+    title('Spectral Dynamics');
+
+	ylabel('power');
+    subplot(2,1,2);
+    bar(freqs(1:1000),rightDeltaP(1:1000));
+    ylim([0 300]);
+    xlabel('frequency (hz)');
+	ylabel('power');
 % 
 % %     annotation(figure1,'rectangle',...
 % %     [0.386904761904762 0.582702702702703 0.0863095238095239 0.132972972972973],...

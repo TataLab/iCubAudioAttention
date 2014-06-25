@@ -39,7 +39,7 @@ P.mostRecentSampleFilename='/tmp/lastSampleIndex.dat';
 %on /atom:
 P.peakThreshold=30;
 
-P.thresholdBounds = [400 600]; %in hz, range of the periodogram to look for peaks above threshold
+P.thresholdBounds = [400 800]; %in hz, range of the periodogram to look for peaks above threshold
 
 %%%%%%%%%%%%%%%%%%
 %handle object integration/substitution
