@@ -1,33 +1,41 @@
 % hold off;
 % function script_stepbystep_modded()
 
-% clear all
-% close all
+clear all
+close all
 
-lowFreq = 200;
-highFreq=5000;
-numChannel=64;
-numCell=1;
-binSize=100;
-maxITD=1000;
-degreePerClass=15;
-score=zeros(16,9);
+useVideo = 0; % set 1 to use webcam
+generateSpikesAudio = 1; % set 1 to generate spikes from filtered audio signal
+useAudioDevice = 0; % set 1 to use audio device (mic)
+                    % will ask for a wav file if set to 0
 
-Fs = 44100;
-nbits = 24;
-acq_ch = 1; % acquisition channel
-secs2record = 0.01;
+lowFreq = 200; % lower frequency bound for filtering of input audio signal
+highFreq=5000; % Upper frequency bound for filtering input audio.
+numChannel=64; % Number of band to divide the above frequency range in.
+numCell=1; % Additional feature: Sets number of neurons that spike for the above frequency bands but for increasing ampltude. Default and recommended for now is 1;
+binSize=100; % Number of TIME bins to divide the input signal
+maxITD=1000; % Additional variable: For use with spike based localizer. Not yet used.
+
+% Parameters for the input audio device
+Fs = 44100; % Frequency of acquisition. Set 44100 for intel/realtek based audio drivers. Set to 48000 for iCub.
+nbits = 16; % Resolution of input samples. Use highest possible by your device to avoid clipping.
+acq_ch = 1; % Number of microphones used. Default 1 for laptop. Set to 2 when using with iCub or stereo recordings.
+secs2record = 0.02; % Length of each frame of audio in seconds.
+
+if(useAudioDevice)
+% If useAudioDevice = 0 then set which device you are using. Will add
+% another number to add portaudio/iCub.
 device = 0; % 0 = default windows driver; 1 = usb mic; 3 = laptop mic
 lineinput = audiorecorder(Fs, nbits, acq_ch, device);
 
 overlapping = 0;
 lastFrame = [];
 isFirst = true;
+end
 
 lastSpikeResponse = zeros(numChannel,1);
 
-useVideo = 1;
-generateSpikesAudio = 1;
+
 
 if (useVideo==1)
 %     global vid;
@@ -38,36 +46,45 @@ if (useVideo==1)
     start(vid);
 end
 
-
-while(1)
+processData = true;
+while(processData)
 % loop = 1:10000
 
-    recordblocking(lineinput, secs2record); % get audio from device
-    
     if (useVideo==1) 
         trigger(vid); 
-    
         IM = (getdata(vid,1,'uint8'));
         IMGray = rgb2gray(IM);
-     
-    
         IM_PREV = IMGray;
-               
         IM_DIFF = abs(double(IMGray) - double(IM_PREV));         
-    end
-    
-    
-    if(isFirst == true)
-        temp = getaudiodata(lineinput);
-        lastFrame = temp;
-        data = lastFrame;
-        isFirst = false;
     else
-        temp = getaudiodata(lineinput);
-        data = [lastFrame(end-round(numel(lastFrame)*overlapping):end); temp(1:round(numel(temp)*(1-overlapping)))];
-        lastFrame = temp;          
+        IM = imread('no_video.jpg');
     end
-       
+    
+    if(useAudioDevice)
+        recordblocking(lineinput, secs2record); % get audio from device
+    
+        if(isFirst == true)
+            temp = getaudiodata(lineinput);
+            lastFrame = temp;
+            data = lastFrame;
+            isFirst = false;
+        else
+            temp = getaudiodata(lineinput);
+            data = [lastFrame(end-round(numel(lastFrame)*overlapping):end); temp(1:round(numel(temp)*(1-overlapping)))];
+            lastFrame = temp;          
+        end
+    else
+        % ask user to specify wav file.
+        [fileName, pathName] = uigetfile('.wav');
+        disp(pathName);
+        if([pathName fileName] == 0)
+            return;
+        end
+        data = wavread([pathName fileName]);
+        data = data(:, 1);
+        processData = false;
+    end
+    
 %     data = (data - mean(data))/max(data);
     [tap, cochwave,fs,cf ] = cochlea_modded(data, Fs, numChannel, lowFreq, highFreq );   
 
@@ -106,7 +123,7 @@ while(1)
         thisSpikeResponse = sum(spikes{1,1},2);
         differenceSpikeResponse = thisSpikeResponse - lastSpikeResponse;
         subplot(2,3,4); 
-        plot( cf,  thisSpikeResponse/secs2record );
+        plot( cf,  thisSpikeResponse);
         axis([cf(end) cf(1) 0 5000]);
         lastSpikeResponse = thisSpikeResponse;
         title('Frequency dependent spike count');
@@ -127,11 +144,11 @@ while(1)
 
     end
         
-    if (useVideo == 1)
+%     if (useVideo == 1)
         subplot(2,3,5);
         imagesc(IM); 
         title('Current Video Frame')
-    end   
+%     end   
 end
 % cleanup(vid);
  onCleanup(@()cleanup(vid));    
