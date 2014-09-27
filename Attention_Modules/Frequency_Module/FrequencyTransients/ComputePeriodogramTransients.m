@@ -1,20 +1,24 @@
-function [ leftP,rightP,leftD,rightD,freqs,thresholdFlag] = ComputePeriodogramTransients( frame,previousL,previousR,sampleRate,nfft )
+function [ leftP,rightP,leftD,rightD,freqs,thresholdFlag] = ComputePeriodogramTransients( frame,previousL,previousR,sampleRate )
 %takes a stereo audio frame and computes the periodogram independently for
 %the two channels
 
 global P;
 
 %compute the periodograms and save the complete spectrum temporarily
-[tempLeftP,freqs]=periodogram(frame(1,:),[],'onesided',nfft,sampleRate);
-[tempRightP]=periodogram(frame(2,:),[],'onesided',nfft,sampleRate);
+[tempLeftP,freqs]=periodogram(frame(1,:),[],[],sampleRate,'one-sided');
+[tempRightP]=periodogram(frame(2,:),[],[],sampleRate,'one-sided');
 
-leftP=tempLeftP;
-rightP=tempRightP;
-leftD=tempLeftP-previousL;
-rightD=tempRightP-previousR;
+leftP=tempLeftP';
+rightP=tempRightP';
+leftD=leftP-previousL;
+rightD=rightP-previousR;
 
-leftD(leftD<0)=0; %only interested in onsets for now
-rightD(rightD<0)=0;
+%you might normalize across the spectrum
+leftD=(leftD-mean(leftD))/std(leftD);
+rightD=(rightD-mean(rightD))/std(rightD);
+
+% leftD(leftD<0)=0; %only interested in onsets for now
+% rightD(rightD<0)=0;
 
 %implement a very simple trigger:  look between 500 and 1000 hz for
 %transients, only look for positive peaks

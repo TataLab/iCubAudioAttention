@@ -14,30 +14,21 @@ global audioD;
 global sampleD;
 
 timingProblem=1;
-
+timeSinceLastFrame=toc(currentTime);
 while(toc(currentTime)<(1/P.frameRate)) %check the time elapsed since the last frame was read
+    %wait until it is time to read the next frame
     timingProblem=0;  %a simple check to make sure you're having to wait for each frame
 end
-%grab when we read the data
-updatedTime=tic;
 
-if(timingProblem==1)
-    display('Timing problem! Your audio may be lagging.')
+if(timingProblem==1) %then we didn't have to wait above
+    display(['Timing problem! Your audio may be lagging by about ' num2str(timeSinceLastFrame-P.frameDuration_seconds) ' seconds']);
+    %try to catch up, this might make a click or pop
+    currentFrameIndex=sampleD.data(1,1).f-P.frameDuration_samples;
 end
 
 %grab the audio data
-%blah=audioD.Data(1,1).d;  %get the next frame
 frame=double(audioD.Data(1,1).d(:,currentFrameIndex:currentFrameIndex+P.frameDuration_samples-1));
-
-
-    
-%     subplot(2,1,1);
-%     plot(blah(1,:)); 
-%     %ylim([-100 100]);
-%     subplot(2,1,2);
-%     plot(blah(2,:));
-%     %ylim([-100 100]);
-
+updatedTime=tic;
 
 %a quick sanity check to make sure you're not reading off the end of the
 %data that's been written
@@ -48,5 +39,9 @@ else
     % all is well so update the frame index for the next frame using time
     updatedFrameIndex=currentFrameIndex+ P.frameDuration_samples ; %figure out where the next frame will start
 end
+
+
+
+
 end
 

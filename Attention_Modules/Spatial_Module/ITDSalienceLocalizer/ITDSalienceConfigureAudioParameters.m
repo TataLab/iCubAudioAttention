@@ -16,7 +16,7 @@ P.sendAngleToYarp = 0;  %set to 1 to send angle over yarp network %remember to a
 
 P.sampleRate = 48000;
 P.bitDepth_string = 'int16'; %16-bits = 2 bytes
-P.bitDepth_bytes = 2;
+P.bitDepth_bytes = 3;
 P.numChannels=2; %stereo
 P.frameDuration_samples = 2*10240; %@48000 hz stereo 16-bit samples 10240 =  213 ms
 P.frameDuration_seconds = P.frameDuration_samples/P.sampleRate; 

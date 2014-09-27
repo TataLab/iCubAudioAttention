@@ -42,7 +42,7 @@ while(~done)
     end
     
     
-   %MaintainObjectStackOnce(objFileMap,numObjMap,nObjectsInStack,isBusyMap);
+   MaintainObjectStackOnce(objFileMap,numObjMap,nObjectsInStack,isBusyMap);
     
 end
 

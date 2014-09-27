@@ -96,8 +96,8 @@ while (~doneLooping)  %loop continuously handling audio in a spatialy sort of wa
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % hold off;
 % % 
-% % %%%%
-% % % %for a fancy polar plot
+% % % %%%%
+% % % % %for a fancy polar plot
 % rangeOfLags=linspace(-22,22,length(visFrame));
 % radiusScale=7e7;
 % angleScale=180;
@@ -115,22 +115,26 @@ while (~doneLooping)  %loop continuously handling audio in a spatialy sort of wa
 % 
 % [xpeak,ypeak]=pol2cart(oldAngle*pi/180,visFrame(newLag));
 % compass(xpeak,ypeak,'r');
-% 
-% drawnow;
+% % 
+%  drawnow;
 % videoFrames(frameNum)=getframe;
 % frameNum=frameNum+1;    
 
 
-%%%for a bar graph:
+% %%for a bar graph:
 % pl=bar(linspace(-22,22,45),visFrame);
 % %set(pl(2),'LineWidth',2);
 % hold on;
 % xlim([-22 22]);
-% ylim([0 1e8]);
+% %ylim([0 1e8]);
 % xlabel('lag');
 % ylabel('xcorr');
 % drawnow;
-% videoFrames(frameNum)=getframe;
-% frameNum=frameNum+1;
+% % videoFrames(frameNum)=getframe;
+% % frameNum=frameNum+1;
+
+
+plot(visFrame);
+drawnow;
 
 end

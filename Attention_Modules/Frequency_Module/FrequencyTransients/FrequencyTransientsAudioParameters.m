@@ -16,12 +16,13 @@ P.sendAngleToYarp = 0;  %set to 1 to send angle over yarp network %remember to a
 
 P.sampleRate = 48000;
 P.bitDepth_string = 'int16'; %16-bits = 2 bytes
-P.bitDepth_bytes = 2;
+P.bitDepth_bytes = 3;
 P.numChannels=2; %stereo
-P.frameDuration_samples = 2*10240; %@48000 hz stereo 16-bit samples 10240 =  213 ms
+P.frameDuration_samples = 10240; %@48000 hz stereo 16-bit samples 10240 =  213 ms
 P.frameDuration_seconds = P.frameDuration_samples/P.sampleRate; 
 P.frameRate = 1/P.frameDuration_seconds; %how often to compute angle in hz
 P.fixedLag_samples = P.frameDuration_samples;  %how much this process should lag the audio write process
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%
 %set up some parameters of the audio data file that is streaming from the
 %iCub.  This is necessary for memory mapping.  It works to map a smaller
@@ -37,9 +38,9 @@ P.mostRecentSampleFilename='/tmp/lastSampleIndex.dat';
 %threshold detection
 %on red iCub: P.peakThreshold = 3e5;  
 %on /atom:
-P.peakThreshold=30;
+P.peakThreshold=10;
 
-P.thresholdBounds = [400 800]; %in hz, range of the periodogram to look for peaks above threshold
+P.thresholdBounds = [500 2000]; %in hz, range of the periodogram to look for peaks above threshold
 
 %%%%%%%%%%%%%%%%%%
 %handle object integration/substitution

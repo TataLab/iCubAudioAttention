@@ -11,14 +11,16 @@ tempMostRecentSample=sampleD.Data(1,1).f;
 currentFrameIndex = tempMostRecentSample - (P.frameDuration_samples - 1) - P.fixedLag_samples;  %set the read index to the first sample in the next frame to be read...here we need to be careful to lag the audio data dump by some small by non-trivial time
 %currentFrameIndex=48000; %use this line to read file "off line" by starting at second second
 
-nFFT=2 ^ nextpow2(P.frameDuration_samples);
-leftP=zeros(nFFT/2+1,1);  %-2 because we won't plot the points corresponding to the DC (first) or the nyquist (last)
-rightP=zeros(nFFT/2+1,1);
-leftDeltaP=zeros(nFFT/2+1,1); %hold the difference between spectra across time
-rightDeltaP=zeros(nFFT/2+1,1);
-freqs=zeros(nFFT/2-1+1,1);
+%call periodogram on dummy data to pre-get nFFT and the frequency vector
+[tempP,freqs]=periodogram(zeros(1,P.frameDuration_samples),[],[],P.sampleRate,'one-sided');  %get the size of the periodogram that will be returned for a frame of this length
+nPeriodogram=length(tempP);
+leftP=zeros(1,nPeriodogram);  %holds the periodograms for each frame
+rightP=zeros(1,nPeriodogram);
+leftDeltaP=zeros(1,nPeriodogram); %hold the difference between periodograms across time
+rightDeltaP=zeros(1,nPeriodogram);
 
-frameNum=1; %initilize counter to capture video frames
+
+%frameNum=1; %initilize counter to capture video frames
 
 doneLooping=0;
 exceedsThreshold=0;
@@ -33,10 +35,13 @@ while (~doneLooping)  %loop continuously handling audio in a spatialy sort of wa
 %     frame_filtered(1,:)=filtfilt(P.H.sosMatrix,P.H.scaleValues,frame(1,:));
 %     frame_filtered(2,:)=filtfilt(P.H.sosMatrix,P.H.scaleValues,frame(2,:));
 
-    [leftP,rightP,leftDeltaP,rightDeltaP,freqs, exceedsThreshold]=ComputePeriodogramTransients(frame,leftP,rightP,P.sampleRate,nFFT);
+    %display(['most recent sample written is: ' num2str(sampleD.data(1,1).f)]);
+
+    [leftP,rightP,leftDeltaP,rightDeltaP,~, exceedsThreshold]=ComputePeriodogramTransients(frame,leftP,rightP,P.sampleRate);
  
     t=tic;
     %interpret the threshold detection flag
+    %exceedsThreshold=0; %in case you want to block object file
     if(exceedsThreshold==1 && ((t-timeOfLastObject)>uint64(P.minTimeDelta_nanos))) %use _nanos on mac os and _micros on linux 
         %display('Exceeded threshold');
         
@@ -44,7 +49,7 @@ while (~doneLooping)  %loop continuously handling audio in a spatialy sort of wa
         new.name='frqObjxx';
         new.onsetAzimuth=NaN;
         new.timeStamp=t;  
-        new.isSelected=0;
+        new.isSelected=1;
         timeOfLastObject=new.timeStamp;
         didAddObject=AddNewObject(new);
       
@@ -55,28 +60,28 @@ while (~doneLooping)  %loop continuously handling audio in a spatialy sort of wa
    
     end
     
-% %     
-%     figure1=figure(1);
-%     subplot(2,1,1);
-%     bar(freqs(1:1000),leftDeltaP(1:1000)); %only plot frequencies up to some upper bound...this is hardcoded but could be initialized...but it depends on the frame size
-%     ylim([0 300]);
-%     title('Spectral Dynamics');
-% 
-% 	ylabel('power');
-%     subplot(2,1,2);
-%     bar(freqs(1:1000),rightDeltaP(1:1000));
-%     ylim([0 300]);
-%     xlabel('frequency (hz)');
-% 	ylabel('power');
-% 
-% %     annotation(figure1,'rectangle',...
-% %     [0.386904761904762 0.582702702702703 0.0863095238095239 0.132972972972973],...
-% %     'FaceColor','flat');
-% %     annotation(figure1,'rectangle',...
-% %     [0.387666666666668 0.10972972972973 0.0855476190476179 0.132972972972973],...
-% %     'FaceColor','flat');
-% 
-%      drawnow;
+    
+    figure1=figure(1);
+    subplot(2,1,1);
+    bar(freqs(1:1000),leftDeltaP(1:1000)); %only plot frequencies up to some upper bound...this is hardcoded but could be initialized...but it depends on the frame size
+    ylim([-80 80]);
+    title('Spectral Dynamics');
+
+	ylabel('power');
+    subplot(2,1,2);
+    bar(freqs(1:1000),rightDeltaP(1:1000));
+    ylim([-80 80]);
+    xlabel('frequency (hz)');
+	ylabel('power');
+
+    annotation(figure1,'rectangle',...
+    [0.386904761904762 0.582702702702703 0.0863095238095239 0.132972972972973],...
+    'FaceColor','flat');
+    annotation(figure1,'rectangle',...
+    [0.387666666666668 0.10972972972973 0.0855476190476179 0.132972972972973],...
+    'FaceColor','flat');
+
+     drawnow;
 
 %     videoFrames(frameNum)=getframe(figure1);
 %     frameNum=frameNum+1;  
