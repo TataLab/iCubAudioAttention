@@ -17,4 +17,5 @@ P.use='ptb';  % 'ptb for PsychToolBox's portaudio interface (very easy)  or 'yar
 P.sessionDuration_seconds = 60*30;  %how long will we run for (to preallocate the audio data memory);
 P.sessionDuration_samples = P.sessionDuration_seconds * P.kSampleRate;
 P.frameRate=P.kSampleRate/P.kNumSamples; %rate at which audio frames should be read
-P.bitDepth_bytes=3;
+P.outputBitDepth_bytes=2;
+P.inputBitDepth_bytes=3; %if you're using an interface that doesn't support 16-bit you'll need to convert

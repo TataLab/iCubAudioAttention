@@ -14,6 +14,32 @@ HandleAudioWithPTBSetParameters;
 %get the audio files ready
 global audioD;
 global sampleD;
+
+%create and initialize the audioDataDump file
+%and the MostRecentSample file
+display('creating empty audioDataDumpFile');
+
+fid=fopen(P.audioDataDumpFilename,'w');
+
+if(P.outputBitDepth_bytes==2)
+    tempZeros=int16(zeros(P.numChannels,P.sessionDuration_samples));
+else
+    display('Sorry we cannot handle output other than 16-bit right now');
+end
+
+fwrite(fid,tempZeros,'int16'); %fill the audioDataDump file with zeros to pre-initialize it
+fclose(fid);
+
+fid=fopen(P.mostRecentSampleFilename,'w');
+tempZero=int32(zeros(1,1));
+fwrite(fid,tempZero,'int32');
+fclose(fid);
+
+clear fid
+clear tempZeros
+clear tempZero
+
+
 [audioD,sampleD]=OpenAudioInputData;  %note that OpenAudioInputData just memmaps some files and returns them by reference, so even though we're doing output, we'll use this for convenience and consistency
 
 initialAudioData = single(zeros(2,P.sessionDuration_samples)); %initialization of the audio file is to fill it with zeros
@@ -49,7 +75,7 @@ while (~done) %loop to get data...note it will overflow the memory mapped file i
     returnedFrameSize=size(audiodata,2); %should be P.kNumSamples, but if not, the chunk should still get put in the right spot
     
     %scale the audio because PTB returns values between +/- 1.0
-    audiodata=audiodata.*2^(P.bitDepth_bytes*8-1); 
+    audiodata=audiodata.*2^(P.outputBitDepth_bytes*8-1); 
     
     audioD.data(1,1).d(:,currentIndex:currentIndex+returnedFrameSize-1) = audiodata; %importantly, also stick it into the memory mapped file
     sampleD.data(1,1).f(1,1)=currentIndex+returnedFrameSize-1; %note which sample was the most recent

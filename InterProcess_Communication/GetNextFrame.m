@@ -21,7 +21,7 @@ while(toc(currentTime)<(1/P.frameRate)) %check the time elapsed since the last f
 end
 
 if(timingProblem==1) %then we didn't have to wait above
-    display(['Timing problem! Your audio may be lagging by about ' num2str(timeSinceLastFrame-P.frameDuration_seconds) ' seconds']);
+    display(['Timing problem! Your audio may be lagging by about ' num2str(timeSinceLastFrame-P.frameDuration_seconds) ' seconds.  Will skip ahead.  This might be clicks or pops.']);
     %try to catch up, this might make a click or pop
     currentFrameIndex=sampleD.data(1,1).f-P.frameDuration_samples;
 end

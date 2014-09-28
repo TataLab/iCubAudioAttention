@@ -28,6 +28,8 @@ exceedsThreshold=0;
 timeOfLastObject=uint64(0); %keep track of the timestamp of the previous object registered.  Compare new objects against this.  Don't register new objects unless they are P.minTimeDelta seconds old.
 currentFrameTime = tic;  %grab the current time
 
+
+
 while (~doneLooping)  %loop continuously handling audio in a spatialy sort of way
     
     %update our local copy of the audio data frame and its coordinates
@@ -60,7 +62,8 @@ while (~doneLooping)  %loop continuously handling audio in a spatialy sort of wa
    
     end
     
-    
+    tempTime=tic;
+    %prepare to draw
     figure1=figure(1);
     subplot(2,1,1);
     bar(freqs(1:1000),leftDeltaP(1:1000)); %only plot frequencies up to some upper bound...this is hardcoded but could be initialized...but it depends on the frame size
@@ -82,6 +85,8 @@ while (~doneLooping)  %loop continuously handling audio in a spatialy sort of wa
     'FaceColor','flat');
 
      drawnow;
+     timeToDraw=toc(tempTime);
+     display(['timeToDraw = ' num2str(timeToDraw)]);
 
 %     videoFrames(frameNum)=getframe(figure1);
 %     frameNum=frameNum+1;  
