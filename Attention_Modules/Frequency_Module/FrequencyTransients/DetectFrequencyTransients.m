@@ -51,7 +51,7 @@ while (~doneLooping)  %loop continuously handling audio in a spatialy sort of wa
         new.name='frqObjxx';
         new.onsetAzimuth=NaN;
         new.timeStamp=t;  
-        new.isSelected=1;
+        new.isSelected=0;
         timeOfLastObject=new.timeStamp;
         didAddObject=AddNewObject(new);
       
@@ -64,29 +64,29 @@ while (~doneLooping)  %loop continuously handling audio in a spatialy sort of wa
     
     tempTime=tic;
     %prepare to draw
-    figure1=figure(1);
-    subplot(2,1,1);
-    bar(freqs(1:1000),leftDeltaP(1:1000)); %only plot frequencies up to some upper bound...this is hardcoded but could be initialized...but it depends on the frame size
-    ylim([-80 80]);
-    title('Spectral Dynamics');
-
-	ylabel('power');
-    subplot(2,1,2);
-    bar(freqs(1:1000),rightDeltaP(1:1000));
-    ylim([-80 80]);
-    xlabel('frequency (hz)');
-	ylabel('power');
-
-    annotation(figure1,'rectangle',...
-    [0.386904761904762 0.582702702702703 0.0863095238095239 0.132972972972973],...
-    'FaceColor','flat');
-    annotation(figure1,'rectangle',...
-    [0.387666666666668 0.10972972972973 0.0855476190476179 0.132972972972973],...
-    'FaceColor','flat');
-
-     drawnow;
-     timeToDraw=toc(tempTime);
-     display(['timeToDraw = ' num2str(timeToDraw)]);
+%     figure1=figure(1);
+%     subplot(2,1,1);
+%     bar(freqs(1:1000),leftDeltaP(1:1000)); %only plot frequencies up to some upper bound...this is hardcoded but could be initialized...but it depends on the frame size
+%     ylim([-80 80]);
+%     title('Spectral Dynamics');
+% 
+% 	ylabel('power');
+%     subplot(2,1,2);
+%     bar(freqs(1:1000),rightDeltaP(1:1000));
+%     ylim([-80 80]);
+%     xlabel('frequency (hz)');
+% 	ylabel('power');
+% 
+%     annotation(figure1,'rectangle',...
+%     [0.386904761904762 0.582702702702703 0.0863095238095239 0.132972972972973],...
+%     'FaceColor','flat');
+%     annotation(figure1,'rectangle',...
+%     [0.387666666666668 0.10972972972973 0.0855476190476179 0.132972972972973],...
+%     'FaceColor','flat');
+% 
+%      drawnow;
+%      timeToDraw=toc(tempTime);
+%      display(['timeToDraw = ' num2str(timeToDraw)]);
 
 %     videoFrames(frameNum)=getframe(figure1);
 %     frameNum=frameNum+1;  
