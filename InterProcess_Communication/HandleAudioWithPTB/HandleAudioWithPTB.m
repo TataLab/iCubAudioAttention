@@ -40,7 +40,7 @@ clear tempZeros
 clear tempZero
 
 
-[audioD,sampleD]=OpenAudioOutputData;  %note that OpenAudioInputData just memmaps some files and returns them by reference, so even though we're doing output, we'll use this for convenience and consistency
+[audioD,sampleD]=OpenAudioOutputData;  %note that OpenAudioInputData just memmaps some files and returns them by reference, We're doing the oppositish thing
 
 initialAudioData = single(zeros(2,P.sessionDuration_samples)); %initialization of the audio file is to fill it with zeros
 initialIndexData=int32(1);  %initialize the sample index at 1

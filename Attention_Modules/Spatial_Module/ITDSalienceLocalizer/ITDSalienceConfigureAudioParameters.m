@@ -25,7 +25,7 @@ P.fixedLag_samples =P.frameDuration_samples;% P.frameDuration_samples;  %how muc
 P.c=340.29;%define speed of sound in m/s
 % P.D=.10;
 % P.ITDWindow=34;
-P.D=0.145; %define distance between microphones in m
+P.D=0.15; %define distance between microphones in m
 P.ITDWindow=44;  %should be divisible by 2...this is how many samples to look on each side of the midline for a peak...this should be related to the distance between the microphones
                             %for a 12 cm distance it is only linear for about 15
                              %samples on eithe side of the midline and 17 samples

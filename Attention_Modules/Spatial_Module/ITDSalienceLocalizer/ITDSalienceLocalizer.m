@@ -134,7 +134,8 @@ while (~doneLooping)  %loop continuously handling audio in a spatialy sort of wa
 % % frameNum=frameNum+1;
 
 
-plot(visFrame);
-drawnow;
+% plot(visFrame);
+% ylim([0 1e9]);
+% drawnow;
 
 end
