@@ -1,4 +1,4 @@
-function [removedObjects]=MaintainObjectStackOnce(stack,numObjectsMap,n,isBusyMap)
+function [removedObjects]=MaintainObjectStackOnce(stack,numObjectsMap,isBusyMap)
 
 %%%%%%%%%%%%%%%%
 %this module scans the object stack once and does "housekeeping".  Mainly it removes
@@ -6,7 +6,12 @@ function [removedObjects]=MaintainObjectStackOnce(stack,numObjectsMap,n,isBusyMa
 %
 %you can call this from within a loop to periodically prune the stack
 
-objectLifetime = 2.0;  %seconds...how many seconds should an object stay on the stack
+
+%display('Performing maintenance on object stack'); 
+
+n=numObjectsMap.Data(1,1).numObjects;
+
+objectLifetime = 3.0;  %seconds...how many seconds should an object stay on the stack
 
 removedObjects=0; %default to zero
 
@@ -21,12 +26,12 @@ if(stack.Data(1,1).isDefault~=1) %if the object at the top of the stack is the d
     
     %scan the objects for old objects, the oldest object should be the
     %second from the bottom, but this makes it explicit
-    
+    display('Found a non-default object');
     for i=1:n-1 % never time out the bottom object because that will be the default object
         if(toc(stack.Data(i,1).timeStamp)>objectLifetime)
             RemoveOldObject(stack,numObjectsMap,i);
             
-            display(['Object ' num2str(i) ' timed out.  Removing it now.']);
+            display(['Object ' num2str(i) ' has been on the stack for ' num2str(toc(stack.Data(i,1).timeStamp)) ' seconds.  Removing it now.']);
         end
     end
 

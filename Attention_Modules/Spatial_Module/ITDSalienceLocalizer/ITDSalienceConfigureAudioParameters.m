@@ -18,7 +18,7 @@ P.sampleRate = 48000;
 P.bitDepth_string = 'int16'; %16-bits = 2 bytes
 P.bitDepth_bytes = 3;
 P.numChannels=2; %stereo
-P.frameDuration_samples = 2*10240; %@48000 hz stereo 16-bit samples 10240 =  213 ms
+P.frameDuration_samples = 1*10240; %@48000 hz stereo 16-bit samples 10240 =  213 ms
 P.frameDuration_seconds = P.frameDuration_samples/P.sampleRate; 
 P.frameRate = 1/P.frameDuration_seconds; %how often to compute angle in hz
 P.fixedLag_samples =P.frameDuration_samples;% P.frameDuration_samples;  %how much this process should lag the audio write process
@@ -46,11 +46,11 @@ P.mostRecentSampleFilename='/tmp/lastSampleIndex.dat';
 %%%%%%%%%%%%%%%%%%%%%%%%%%
 %threshold detection
 P.GCCPeakThreshold =.04;  %only adjust angle if signal exceeds this %use .04 for icub in room
-P.xcorrPeakThreshold =3e7;  %only adjust angle if signal exceeds this %use 4e7 for icub in room
+P.xcorrPeakThreshold =1e9;  %only adjust angle if signal exceeds this %use 4e7 for icub in room
 
 
 %handle object integration/substitution
-P.minTimeDelta=2; %seconds, how long between transients should we wait before a transient is registered as a new object
+P.minTimeDelta=1.0; %seconds, how long between transients should we wait before a transient is registered as a new object
 P.minTimeDelta_nanos=P.minTimeDelta*1000000000; %tic returns nanos on mac os
 P.minTimeDelta_micros=P.minTimeDelta*1000000; %tic returns micros on linux
 %%%%%%%%%%%%%%
@@ -69,7 +69,7 @@ P.outputBufferSize=P.outputFrameSize*2;
 
 %parameters to control weighting of the lag vector, from inside toward
 %center
-outsideFactor=.9; %how much to multiply values at eccentric lags(set this to 1 if you don't want any scaling)
+outsideFactor=1; %how much to multiply values at eccentric lags(set this to 1 if you don't want any scaling)
 insideFactor=1; %at the midline
 P.weightsV=linspace(outsideFactor,insideFactor,P.ITDWindow/2); %a linear weighting vector
 

@@ -85,7 +85,7 @@ while (~doneLooping)  %loop continuously handling audio in a spatialy sort of wa
         display(['New object has a lag of ' num2str(newLag) ' and onset azimuth of ' num2str(newAngle) ' degrees']);
         new.timeStamp=t;
         new.name='ITDObjxx';
-        new.isSelected=0;  %setting this to 1 forces this object onto the
+        new.isSelected=1;  %setting this to 1 forces this object onto the
         %top of the stack
         [result]=AddNewObject(new);
         
@@ -134,7 +134,7 @@ pl=bar(linspace(-22,22,45),visFrame);
 %set(pl(2),'LineWidth',2);
 hold off;
 xlim([-22 22]);
-ylim([0 1e10]);
+ylim([0 30]);
 xlabel('lag');
 ylabel('xcorr');
 drawnow;

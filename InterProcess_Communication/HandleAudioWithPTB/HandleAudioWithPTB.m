@@ -66,16 +66,29 @@ done=0;
 
 display('reading audio data...');
 
+
+
 while (~done) %loop to get data...note it will overflow the memory mapped file if you let it run too long
     
     t=tic;
     [audiodata,currentOffset,overflow,~] = PsychPortAudio('GetAudioData', pahandle,[],[]); %populate the indices, note the types don't match....hmmmmm
     
+    %scale the audio because PTB returns values between +/- 1.0
+    audiodata=audiodata.*2^(P.outputBitDepth_bytes*8-1); 
+    
     currentIndex=currentOffset+1; %it's not very useful in MATLAB if it starts at zero!?
     returnedFrameSize=size(audiodata,2); %should be P.kNumSamples, but if not, the chunk should still get put in the right spot
     
-    %scale the audio because PTB returns values between +/- 1.0
-    audiodata=audiodata.*2^(P.outputBitDepth_bytes*8-1); 
+    %sometimes PortAudio returns a short frame (wtf!?)
+    wtfDiff=P.kNumSamples-returnedFrameSize;
+    if(wtfDiff~=0)
+        display(['You have a problem: the audio data is the wrong size by ' num2str(wtfDiff) ' samples']);
+    end
+    
+%     %set up a variable for simulink to suck up
+%     timeVector=linspace(0,returnedFrameSize/P.kSampleRate,returnedFrameSize);
+%     simLinkData=[timeVector' audiodata']; %package for simulink
+%     sim('SimLink_VisualizingASound');
     
     audioD.data(1,1).d(:,currentIndex:currentIndex+returnedFrameSize-1) = audiodata; %importantly, also stick it into the memory mapped file
     sampleD.data(1,1).f(1,1)=currentIndex+returnedFrameSize-1; %note which sample was the most recent

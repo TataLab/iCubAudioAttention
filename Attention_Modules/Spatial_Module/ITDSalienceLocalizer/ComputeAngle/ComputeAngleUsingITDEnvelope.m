@@ -1,22 +1,24 @@
-function [angle,tempLag,lagSpace,trigger,visFrame] = ComputeAngleUsingITDSalience(S,background)
-% takes S a stereo sound vector (chans x samples) 
-%returns an angle to a peak in GCC_PHAT, the vector of lags, and the
-%difference of lags between current frame and previous frame
+function[angle,tempLag,lagSpace,trigger,visFrame] = ComputeAngleUsingITDEnvelope(S,background)
+%COMPUTEANGLEUSINGITDSALIENCEENVELOPE computes an angle to a source by
+%cross-correlating the envelopes of the channels
 
 
+%import some parameters from the workspace
 global P;
 
+%comput the envelope of the inputs using hilbert transform
+S_env=abs(hilbert(S'))'; %transpose, hilbert works columnwise
+
+% plot(S_env(1,:));
+% drawnow;
+
 %compute cross-correlation
-cross=xcorr(S(1,:),S(2,:));
+cross=xcorr(S_env(1,:),S_env(2,:));
 
 
 
 %this could be made *much faster* by only working on the subregion of the
 %vectors that correspond to useful angles...in the future
-
-if(isnan(background))
-    background=cross; %if we're given NaN then we know the previous frame was triggered.  We want to suppress this one.
-end
 
 %compute the difference between the current lag space and the
 %previous scaled by  an estimate of the power at that lag

@@ -15,6 +15,7 @@ while(~done)
     if(objFileMap.Data(1,1).isSelected==1)
         azimuth=objFileMap.Data(1,1).onsetAzimuth;
         display(['Angle to source: ' num2str(azimuth)]);
+        display(['Name: ' char(objFileMap.Data(1,1).name)]);
         
         %you could plot the azimuth
         
@@ -41,8 +42,7 @@ while(~done)
         display('Problems:  ReportAttendedAngle might be lagging');
     end
     
-    
-   MaintainObjectStackOnce(objFileMap,numObjMap,nObjectsInStack,isBusyMap);
+   MaintainObjectStackOnce(objFileMap,numObjMap,isBusyMap);
     
 end
 
