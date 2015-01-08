@@ -1,0 +1,3 @@
+iSpeak
+speechRecognizer
+lua recognition_main.lua

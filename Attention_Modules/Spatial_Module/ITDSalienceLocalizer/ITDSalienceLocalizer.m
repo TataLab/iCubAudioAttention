@@ -166,6 +166,10 @@ drawnow;
 
 
 % plot(visFrame);
+<<<<<<< HEAD
+=======
+% ylim([0 1e9]);
+>>>>>>> FETCH_HEAD
 % drawnow;
 
 end
