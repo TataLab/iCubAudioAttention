@@ -1,4 +1,4 @@
-function [frame, updatedFrameIndex,updatedTime,thisFrameSampleIndex] = GetNextFrame( currentFrameIndex,currentTime)
+function [frame, updatedFrameIndex,updatedTime] = GetNextFrame( currentFrameIndex,currentTime)
 %wait until the duration of a frame has elapsed and then read the next
 %unread frame
 %
@@ -43,7 +43,7 @@ else
 end
 
 
-thisFrameSampleIndex=sampleD.Data(1,1).f;  %return the value
+
 
 end
 

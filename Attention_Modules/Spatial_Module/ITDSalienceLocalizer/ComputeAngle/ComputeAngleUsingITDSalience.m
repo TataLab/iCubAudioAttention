@@ -11,7 +11,6 @@ global P;
 %define the width of the window over which to inspect lags (we're only
 %interested in lags of a few 10's- the rest would be reverberation
 
-%g=gausswin(length(S));
 
 %xplode the array to make this more clear
 s1=S(1,:);
@@ -21,10 +20,6 @@ f1=fft(s1);
 f2=fft(s2);
 
 
-% f1(140:145)=complex(0,1);
-% f2(140:145)=complex(0,2);
-% f1(end-146:end-141)=complex(0,1);
-% f2(end-146:end-141)=complex(0,2);
 
 %compute the weighted generalized correlation coefficient
 gcc_phat=(f1.*conj(f2))./abs(f1.*conj(f2));
@@ -39,20 +34,17 @@ gcc_inv_real=real(gcc_inv);
 %shift it to zero the 0th lag
 gcc_inv_shifted=fftshift(gcc_inv_real);
 
-%compute the difference between the current lag space and the
-%previous scaled by  an estimate of the power at that lag
 
 %this could be made *much faster* by only working on the subregion of the
 %vectors that correspond to useful angles...in the future
 
-if(isnan(background))
-    background=gcc_inv_shifted; %if we're given NaN then we know the previous frame was triggered.  We want to suppress this one.
-end
+% if(isnan(background))
+%     background=gcc_inv_shifted; %if we're given NaN then we know the previous frame was triggered.  We want to suppress this one.
+% end
 
 %frame's lag space
 lag_dif=(gcc_inv_shifted-background);
 lag_dif(lag_dif<0)=0;  %ignore offsets for now
-tempBlah=lag_dif;
 
 
 %find the 0th lag
@@ -109,7 +101,7 @@ lagSpace=gcc_inv_shifted;
 % drawnow;
 
 %return the data you want to visualize:
-visFrame=tempBlah(middle-P.ITDWindow/2:middle+P.ITDWindow/2);
+visFrame=lag_dif(middle-floor(P.ITDWindow/2):middle+ceil(P.ITDWindow/2));
 
 return
 

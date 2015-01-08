@@ -1,4 +1,7 @@
 function [frame, updatedFrameIndex,updatedTime,thisFrameSampleIndex] = GetNextFrame( currentFrameIndex,currentTime)
+%Jeffress AI:  GetNextFrame
+%display(['Jeffress is getting the next audio frame using: ' mfilename('fullpath')]);
+
 %wait until the duration of a frame has elapsed and then read the next
 %unread frame
 %
@@ -35,7 +38,7 @@ updatedTime=tic;
 %a quick sanity check to make sure you're not reading off the end of the
 %data that's been written
 if(sum(frame(1,:))==0) %theres a problem.  Try to recover.
-    display('You are reading zeros in the audio data.  Maybe the portaudio yarpdev is lagging.  Scanning for most recent sample to resync.');
+    display('You are reading zeros in the audio data.  Maybe the audio device is lagging.  Scanning for most recent sample to resync.');
     updatedFrameIndex=sampleD.Data(1,1).f+P.frameDuration_samples;
 else
     % all is well so update the frame index for the next frame using time

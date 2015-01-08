@@ -33,15 +33,17 @@ currentFrameTime = tic;  %grab the current time
 while (~doneLooping)  %loop continuously handling audio in a spatialy sort of way
     
     %update our local copy of the audio data frame and its coordinates
-    [frame,currentFrameIndex, currentFrameTime]=GetNextFrame(currentFrameIndex,currentFrameTime);
-%     frame_filtered(1,:)=filtfilt(P.H.sosMatrix,P.H.scaleValues,frame(1,:));
+    ftic=tic;
+    [frame,currentFrameIndex, currentFrameTime, thisFrameSampleIndex]=GetNextFrame(currentFrameIndex,currentFrameTime);
+   % display(['time to grab a frame = ' num2str(toc(ftic))]);
+    %     frame_filtered(1,:)=filtfilt(P.H.sosMatrix,P.H.scaleValues,frame(1,:));
 %     frame_filtered(2,:)=filtfilt(P.H.sosMatrix,P.H.scaleValues,frame(2,:));
 
     %display(['most recent sample written is: ' num2str(sampleD.data(1,1).f)]);
-
     [leftP,rightP,leftDeltaP,rightDeltaP,~, exceedsThreshold]=ComputePeriodogramTransients(frame,leftP,rightP,P.sampleRate);
  
-    t=tic;
+    t=currentFrameTime;
+
     %interpret the threshold detection flag
     %exceedsThreshold=0; %in case you want to block object file
     if(exceedsThreshold==1 && ((t-timeOfLastObject)>uint64(P.minTimeDelta_nanos))) %use _nanos on mac os and _micros on linux 
@@ -49,11 +51,13 @@ while (~doneLooping)  %loop continuously handling audio in a spatialy sort of wa
         
         new=GetNewEmptyObject;
         new.name='frqObjxx';
-        new.onsetAzimuth=NaN;
-        new.timeStamp=t;  
+        new.onsetAzimuth=0.0;
+        new.timeStamp=t; 
+        new.timeStampSamples=uint64(thisFrameSampleIndex);
         new.isSelected=0;
+        new.isOriented=0;
         timeOfLastObject=new.timeStamp;
-        didAddObject=AddNewObject(new);
+        didAddObject=AddNewObjectWithCapture(new,1);
       
         %display(didAddObject);
         %add a new object to the stack 
@@ -62,7 +66,6 @@ while (~doneLooping)  %loop continuously handling audio in a spatialy sort of wa
    
     end
     
-    tempTime=tic;
     %prepare to draw
     figure1=figure(1);
     subplot(2,1,1);
@@ -80,9 +83,8 @@ while (~doneLooping)  %loop continuously handling audio in a spatialy sort of wa
 
 
      drawnow;
-%      timeToDraw=toc(tempTime);
-%      display(['timeToDraw = ' num2str(timeToDraw)]);
-
+%      
+%     To capture video of the periodogram:
 %     videoFrames(frameNum)=getframe(figure1);
 %     frameNum=frameNum+1;  
 %     

@@ -17,8 +17,8 @@ rightD=rightP-previousR;
 leftD=(leftD-mean(leftD))/std(leftD);
 rightD=(rightD-mean(rightD))/std(rightD);
 
-% leftD(leftD<0)=0; %only interested in onsets for now
-% rightD(rightD<0)=0;
+leftD(leftD<0)=0; %only interested in onsets for now
+rightD(rightD<0)=0;
 
 %implement a very simple trigger:  look between 500 and 1000 hz for
 %transients, only look for positive peaks

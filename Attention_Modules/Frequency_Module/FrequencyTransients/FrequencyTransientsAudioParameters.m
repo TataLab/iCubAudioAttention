@@ -38,9 +38,9 @@ P.mostRecentSampleFilename='/tmp/lastSampleIndex.dat';
 %threshold detection
 %on red iCub: P.peakThreshold = 3e5;  
 %on /atom:
-P.peakThreshold=10;
+P.peakThreshold=25;
 
-P.thresholdBounds = [500 1000]; %in hz, range of the periodogram to look for peaks above threshold
+P.thresholdBounds = [200 1100]; %in hz, range of the periodogram to look for peaks above threshold
 
 %%%%%%%%%%%%%%%%%%
 %handle object integration/substitution

@@ -16,6 +16,8 @@ newObject.isDefault=double(0);
 newObject.isSelected=double(0);
 newObject.timeStamp=uint64(0);
 newObject.blank=double(0);
+newObject.isOriented=double(0);
+newObject.timeStampSamples=uint64(0);
 
 
 featureStruct=                      {'uint16' [1 8] 'name';
@@ -26,11 +28,13 @@ featureStruct=                      {'uint16' [1 8] 'name';
                                             'double' [1 1] 'isDefault';
                                             'double' [1 1] 'isSelected';
                                             'uint64' [1 1] 'timeStamp';
-                                            'double' [1 1] 'blank'
+                                            'double' [1 1] 'blank';
+                                            'double' [1 1] 'isOriented';
+                                            'uint64' [1 1] 'timeStampSamples'
                                             };
                                         
 %should be (num chars in name *2) + num doubles * 8 
-newObjectSize_bytes=(8*2)+(8*8);
+newObjectSize_bytes=(8*2)+(10*8);
 
 return;
 

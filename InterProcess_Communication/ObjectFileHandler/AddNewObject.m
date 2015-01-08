@@ -1,4 +1,4 @@
-function [didAddObject]=AddNewObject(OStruct)
+function [didAddObject]=AddNewObject(OStruct,verbose)
 %ADDNEWOBJECT
 %takes a new object struct and adds it to the object stack
 %default behaviour should be that new objects get automatically selected
@@ -10,11 +10,19 @@ function [didAddObject]=AddNewObject(OStruct)
 
 %substitution is not implemented yet
 
+if(isempty(verbose))
+    verbose=0;
+end
+
 maxIntegrationTime=4*0.250; %seconds, upper time bound on whether two objects are coincident enough to be called the same object
+
+
 integrationTime_nanos=uint64(maxIntegrationTime*1000000000.0);
 
 
 [objFileMap,numObjectsMap,numObjects,isBusyMap]=MapObjectFile;
+
+display(['there are ' num2str(numObjects) ' objects on the stack']);
 
 while(isBusyMap.Data(1,1).isBusy==1)
     %the object stack is being written by another process, so block here
@@ -35,13 +43,21 @@ if(objFileMap.Data(1,1).isSelected==0 || OStruct.isSelected==1) %only take actio
     oldTime=objFileMap.Data(1,1).timeStamp;
     newTime=OStruct.timeStamp;
     deltaTime=newTime-oldTime;
+    deltaSamples=OStruct.timeStampSamples-objFileMap.Data(1,1).timeStampSamples;
     
+
     oldName=objFileMap.Data(1,1).name;
     newName=cast(OStruct.name,'uint16'); %a bit more voodoo, object files encode name as an array of uint16 chars
     
+    
     if(objFileMap.Data(1,1).isDefault==0 && isequal(oldName,newName)==0 &&  deltaTime < integrationTime_nanos) %add by integration as long is the top object isn't the default object
         
-        display(['integrating ' oldName ' with ' newName ' but comparing yields ' num2str(strcmp(oldName,newName))]);
+        %all is right and good to merge new object with the one on the top
+        %of the stack.  
+        
+        display(['merging at actual deltaTime = ' num2str(deltaTime/1000000000.0) ' seconds ']);
+        display(['merging actual deltaSamples = ' num2str(deltaSamples) ' samples ']);
+        display(' ');
         
         %rename this object to indicate it's been merged with the previous top
         %object
@@ -67,7 +83,9 @@ if(objFileMap.Data(1,1).isSelected==0 || OStruct.isSelected==1) %only take actio
         didAddObject=0; %flag that we integrated an object to the stack
         
     else %add by shifting everything down and adding new object to top of stack
-        display(['Adding new object to top of stack at:  ' num2str(newTime) ' with time delta ' num2str(deltaTime)]);
+        display(['adding at actual deltaTime = ' num2str(deltaTime/1000000000.0) ' seconds ']);
+        display(['adding actual deltaSamples = ' num2str(deltaSamples) ' samples ']);
+        display(' '); 
         
         %shift everything down...this is slow and inefficient
         index=numObjects; %work from the bottom of the stack up
@@ -87,8 +105,14 @@ if(objFileMap.Data(1,1).isSelected==0 || OStruct.isSelected==1) %only take actio
         
         for i=1:length(features) %run through all the feature fields
             if(strcmp(features{i},'name'))
+               if(verbose)
+                    %display(['adding name ' features{i} ' to the object']);
+               end
                 objFileMap.Data(1,1).(features{i})=cast(OStruct.(features{i}),'uint16'); %a hoop I jumped through so that you can assign with object names as strings...thank me later...-matt
             else
+                if(verbose)
+                    %display(['adding feature ' features{i} ' to the object']);
+                end
                 objFileMap.Data(1,1).(features{i})=OStruct.(features{i});
             end
         end

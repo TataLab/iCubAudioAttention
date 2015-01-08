@@ -44,7 +44,7 @@ timeOfLastObject=uint64(0); %keep track of the timestamp of the previous object 
 %build a model of the background sound sources
 %[backgroundLag,backgroundLagSD]=BuildBackground(30,currentFrameIndex,currentFrameTime);
 backgroundLag=zeros(1,P.frameDuration_samples*2-1);
-backgroundGCC=zeros(1,P.frameDuration_samples*2-1);
+backgroundGCC=zeros(1,P.frameDuration_samples);
 
 %reset the timing
 tempMostRecentSample=sampleD.Data(1,1).f;
@@ -56,38 +56,47 @@ trigger=0;
 while (~doneLooping)  %loop continuously handling audio in a spatialy sort of way
 
     %update our local copy of the audio data frame and its coordinates
-    [frame,currentFrameIndex, currentFrameTime]=GetNextFrame(currentFrameIndex,currentFrameTime);
+    [frame,currentFrameIndex, currentFrameTime,thisFrameSampleIndex]=GetNextFrame(currentFrameIndex,currentFrameTime);
 
-    
+    t=currentFrameTime;
     %Choose your favourite method of cross-correlating the channels:
-    
     %for GCC-PHAT
-    %[newAngle,backgroundLag,trigger,visFrame]=ComputeAngleUsingITDSalience(frame,backgroundLag);  %compute the angle using a GCC-PHAT approach
+    [newGCCAngle,newLag,backgroundGCC,GCCTrigger,visGCCFrame]=ComputeAngleUsingITDSalience(frame,backgroundGCC);  %compute the angle using a GCC-PHAT approach
     
     %for straight-ahead xcorr()
-    %[newAngle,newLag,backgroundLag,trigger,visFrame]=ComputeAngleUsingITDSalienceXCor(frame,backgroundLag);  %compute the angle using a xcorr() approach
+    %[newXCorrAngle,newLag,backgroundLag,XCorrTrigger,visXcorrFrame]=ComputeAngleUsingITDSalienceXCor(frame,backgroundLag);  %compute the angle using a xcorr() approach
+
+    %apply some tunable rules about when to register a new object and where
+    %we think it is
+    trigger=0;
+    if( (GCCTrigger==1) )
+        trigger=1;
+        newAngle=newGCCAngle;
+    end
     
     %for cross-correlating the envelopes
-    [newAngle,newLag,backgroundLag,trigger,visFrame]=ComputeAngleUsingITDEnvelope(frame,backgroundLag);  %compute the angle using a xcorr() approach
+    %[newAngle,newLag,backgroundLag,trigger,visFrame]=ComputeAngleUsingITDEnvelope(frame,backgroundLag);  %compute the angle using a xcorr() approach
 
 
     %we need to ignore self movement and other artifacts (are there
     %artifacts?!) of transients.  We could blank the actual lag space, but
     %instead let's just ignore transients for a specified duration
-    t=tic;
+    
     if((trigger==1) && (t-timeOfLastObject)>P.minTimeDelta_nanos) % update the angle if there's a positive transient (positive could be movement or onset...should do something with offsets eventually...but hmmm, not the same as onsets according to our EEG data)
                                                                                                     %use _nanos on mac os and _micros on linux 
         timeOfLastObject=t;
         new=GetNewEmptyObject;
         new.onsetAzimuth=newAngle;
-        oldAngle=newAngle;
-        oldPeak=visFrame(newLag);
-        display(['New object has a lag of ' num2str(newLag) ' and onset azimuth of ' num2str(newAngle) ' degrees']);
+%         oldAngle=newAngle;
+%         oldPeak=visFrame(newLag);
+        display(['New object has onset azimuth of ' num2str(newAngle) ' degrees']);
         new.timeStamp=t;
+        new.timeStampSamples=uint64(thisFrameSampleIndex);
         new.name='ITDObjxx';
-        new.isSelected=0;  %setting this to 1 forces this object onto the
+        new.isSelected=1;  %setting this to 1 forces this object onto the
+        new.isOriented=0;
         %top of the stack
-        [result]=AddNewObject(new);
+        [result]=AddNewObjectWithCapture(new,0);
         
         
         
@@ -130,13 +139,24 @@ while (~doneLooping)  %loop continuously handling audio in a spatialy sort of wa
 
 
 %%for a bar graph:
-pl=bar(linspace(-22,22,45),visFrame);
-%set(pl(2),'LineWidth',2);
+% pl=bar(linspace(-30,30,61),visFrame);
+% set(pl(2),'LineWidth',2);
+subplot(2,1,1);
+plot(linspace(floor(-P.ITDWindow/2),ceil(P.ITDWindow/2),length(visGCCFrame)),visGCCFrame);
 hold off;
-xlim([-22 22]);
-ylim([0 1e10]);
+xlim([-ceil(P.ITDWindow/2) ceil(P.ITDWindow/2)]);
+ylim([0 P.GCCPeakThreshold*5]);
 xlabel('lag');
 ylabel('xcorr');
+
+subplot(2,1,2);
+plot(linspace(floor(-P.ITDWindow/2),ceil(P.ITDWindow/2),length(visXcorrFrame)),visXcorrFrame);
+hold off;
+xlim([-ceil(P.ITDWindow/2) ceil(P.ITDWindow/2)]);
+ylim([0 P.xcorrPeakThreshold*5]);
+xlabel('lag');
+ylabel('xcorr');
+
 drawnow;
 
 
