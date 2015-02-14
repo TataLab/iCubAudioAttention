@@ -1,0 +1,20 @@
+#Grand Unified Script to launch the entire audio attention system
+
+#!/bin/bash
+
+#launch the object handler
+ cd $AUDIOATTENTION_ROOT/Behaviour
+ gnome-terminal -e "matlab -nodesktop -nosplash -r "ReportObjects""
+ 
+#launch the spectral dynamics module
+ cd $AUDIOATTENTION_ROOT/Attention_Modules/Frequency_Module/FrequencyTransients
+ gnome-terminal -e "matlab -nodesktop -nosplash -r "DetectFrequencyTransients""
+   
+#launch the spatial dynamics module
+ cd $AUDIOATTENTION_ROOT/Attention_Modules/Spatial_Module/ITDSalienceLocalizer
+ gnome-terminal -e "matlab -nodesktop -nosplash -r "ITDSalienceLocalizer""
+   
+# launch the send audio out module
+ cd $AUDIOATTENTION_ROOT/Behaviour/SendAudioOut
+ gnome-terminal -e "matlab -nodesktop -nosplash -r "SendAudio""
+   

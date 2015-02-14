@@ -1,0 +1,6 @@
+#!/bin/bash
+ echo "Hello $1"
+ cd $AUDIOATTENTION_ROOT
+ cd Behaviour
+ pwd
+ matlab -nodesktop -nosplash -r ReportObjects

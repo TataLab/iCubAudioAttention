@@ -1,0 +1,5 @@
+#!/bin/bash
+ vi /etc/network/interfaces
+ 
+
+
