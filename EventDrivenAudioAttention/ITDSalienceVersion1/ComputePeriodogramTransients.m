@@ -1,4 +1,4 @@
-function [ tempPGram,freqs,thresholdFlag] = ComputePeriodogramTransients( monoFrame,meanPGram,stdevPGram,sampleRate )
+function [ tempPGram,diffPGram,freqs,thresholdFlag] = ComputePeriodogramTransients( monoFrame,meanPGram,stdevPGram,sampleRate )
 %takes a mono audio frame and computes the periodogram, returns a trigger flag set if it
 %finds a salient peak and also returns this frame's current periodogram to
 %pass to next call to this function (to compute difference over time)
@@ -11,7 +11,8 @@ global P;
 tempPGram=tempPGram(P.frequencyWindow); %restrict the periodogram to the window of interest
 
 tempPGram=tempPGram'; %reorient for sanity
-diffPGram=(tempPGram-meanPGram)./stdevPGram;
+%diffPGram=(tempPGram-meanPGram)./stdevPGram;
+diffPGram=(tempPGram-meanPGram);
 
 
 diffPGram(diffPGram<0)=0; %only interested in onsets for now

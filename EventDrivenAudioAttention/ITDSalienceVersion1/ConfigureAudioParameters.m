@@ -24,7 +24,7 @@ P.sampleRate = 48000;
 P.bitDepth_string = 'int16'; %16-bits = 2 bytes
 P.bitDepth_bytes = 3;
 P.numChannels=2; %stereo
-P.frameDuration_samples = 2^12; %@48000 hz stereo 16-bit samples 10240 =  213 ms
+P.frameDuration_samples = 2^13; %@48000 hz stereo 16-bit samples 10240 =  213 ms
 P.frameDuration_seconds = P.frameDuration_samples/P.sampleRate; 
 P.frameRate = 1/P.frameDuration_seconds; %how often to compute angle in hz
 P.fixedLag_samples =P.frameDuration_samples;% P.frameDuration_samples;  %how much this process should lag the audio write process

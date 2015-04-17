@@ -18,4 +18,4 @@ P.sessionDuration_seconds = 60*30;  %how long will we run for (to preallocate th
 P.sessionDuration_samples = P.sessionDuration_seconds * P.kSampleRate;
 P.frameRate=P.kSampleRate/P.kNumSamples; %rate at which audio frames should be read
 P.outputBitDepth_bytes=2;
-P.inputBitDepth_bytes=3; %if you're using an interface that doesn't support 16-bit you'll need to convert
+P.inputBitDepth_bytes=2; %if you're using an interface that doesn't support 16-bit you'll need to convert

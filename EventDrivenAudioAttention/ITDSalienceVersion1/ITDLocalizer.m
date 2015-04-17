@@ -65,7 +65,7 @@ while (~doneLooping)  %loop continuously handling audio in a spatialy sort of wa
     %by the xcorrelation.
     tempStereo=[frame(1,:);circshift(frame(2,:),[0 newLag])]; %shift the signals so the new object aligns in phase
     mono=mean(tempStereo,1);  %average across the channels
-    [tempPGram,~,frequencyTrigger]=ComputePeriodogramTransients(mono,mean(pGramArray,1),std(pGramArray,0,1),P.sampleRate);
+    [tempPGram,diffPGram,~,frequencyTrigger]=ComputePeriodogramTransients(mono,mean(pGramArray,1),std(pGramArray,0,1),P.sampleRate);
     pGramArray=circshift(pGramArray,[1 0]); %shift oldest to top
     pGramArray(1,:)=tempPGram;
     
@@ -101,8 +101,9 @@ while (~doneLooping)  %loop continuously handling audio in a spatialy sort of wa
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 subplot(2,1,1);
-plot(P.freqs,tempPGram);
-ylim([0 P.peakThreshold*5]);
+plot(P.freqs,diffPGram);
+hold on;
+ylim([0 P.peakThreshold*8]);
 xlabel('frequency');
 ylabel('delta power');
 
@@ -110,7 +111,7 @@ subplot(2,1,2);
 plot(linspace(floor(-P.ITDWindow/2),ceil(P.ITDWindow/2),length(visXcorrFrame)),visXcorrFrame);
 hold off;
 xlim([-ceil(P.ITDWindow/2) ceil(P.ITDWindow/2)]);
-ylim([0 P.xcorrPeakThreshold*5]);
+ylim([0 P.xcorrPeakThreshold*20]);
 xlabel('lag');
 ylabel('delta xcorr');
 

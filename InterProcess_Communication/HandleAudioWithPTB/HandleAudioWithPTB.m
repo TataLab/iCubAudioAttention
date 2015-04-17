@@ -92,7 +92,7 @@ while (~done) %loop to get data...note it will overflow the memory mapped file i
     
     audioD.data(1,1).d(:,currentIndex:currentIndex+returnedFrameSize-1) = audiodata; %importantly, also stick it into the memory mapped file
     sampleD.data(1,1).f(1,1)=currentIndex+returnedFrameSize-1; %note which sample was the most recent
-%     
+    
 %     figure(1);
 %     plot(audiodata(1,:));
 %     drawnow;
