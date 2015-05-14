@@ -5,8 +5,8 @@ function [ outL,outR ] = GetCurrentAudioFrame_builtin( frameDuration, A )
 
 recordblocking(A,frameDuration);
 data=getaudiodata(A);
-outL=data(:,1)';
-outR=data(:,2)';
+outL=data(:,1);
+outR=data(:,2);
 
 
 

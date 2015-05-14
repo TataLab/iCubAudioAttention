@@ -4,9 +4,9 @@ function [frameL,frameR,yy] = GetCurrentAudioFrame_prerecorded(yy,frameSize_samp
 
 
 %for pre-recorded wav file stored on workspace
-frameL=yy(1,1:frameSize_samples);
-frameR=yy(2,1:frameSize_samples);
-yy=circshift(yy,[0 -frameSize_samples]);%shift and wrap the samples for the next frame read
+frameL=yy(1:frameSize_samples,1);
+frameR=yy(1:frameSize_samples,2);
+yy=circshift(yy,[-frameSize_samples 0]);%shift and wrap the samples for the next frame read
 
 
 
