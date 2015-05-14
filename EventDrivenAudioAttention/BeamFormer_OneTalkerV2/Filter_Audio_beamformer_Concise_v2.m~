@@ -1,13 +1,7 @@
 %  [yy,SamplingFre]=readwav('C:\Users\Home\Desktop\audioTest_right_to_left_with_distractor.wav');
 %[yy,SamplingFre]=readwav('./audioTest_right_to_left.wav');
 
-sendAngles=0;  %set to 1 to load yarp and send angles to iCub
 
-if(sendAngles==1)
-    %open a yarp port and read data continuosly
-    LoadYarp;
-    import yarp.Port;
-    import yarp.Bottle;
 
 SamplingFre=48000;
 frameDuration_seconds=0.25;

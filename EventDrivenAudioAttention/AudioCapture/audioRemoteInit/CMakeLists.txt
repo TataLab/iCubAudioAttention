@@ -47,14 +47,14 @@ if(NOT MSVC)
     mark_as_advanced(MEXWHOLEBODYMODEL_ENABLE_RPATH)
 endif(NOT MSVC)
 
-find_package(YCM REQUIRED)
-include(YCMDefaultDirs)
+#find_package(YCM REQUIRED)
+#include(YCMDefaultDirs)
 
-include(AddInstallRPATHSupport)
-add_install_rpath_support(BIN_DIRS ${CMAKE_INSTALL_PREFIX}/bin
-                          LIB_DIRS ${CMAKE_INSTALL_PREFIX}/mex ${CMAKE_INSTALL_PREFIX}/lib
-                          DEPENDS MEXWHOLEBODYMODEL_ENABLE_RPATH
-                          USE_LINK_PATH)
+#include(AddInstallRPATHSupport)
+#add_install_rpath_support(BIN_DIRS ${CMAKE_INSTALL_PREFIX}/bin
+#                          LIB_DIRS ${CMAKE_INSTALL_PREFIX}/mex ${CMAKE_INSTALL_PREFIX}/lib
+#                          DEPENDS MEXWHOLEBODYMODEL_ENABLE_RPATH
+#                          USE_LINK_PATH)
 
 
 #Source and header files
