@@ -1,6 +1,11 @@
 %  [yy,SamplingFre]=readwav('C:\Users\Home\Desktop\audioTest_right_to_left_with_distractor.wav');
 %[yy,SamplingFre]=readwav('./audioTest_right_to_left.wav');
 
+
+%configure things to interact with the iCub if you will controll the robot
+%remember to add the java bindings to your java path something like this:
+% javaaddpath('/Users/Matthew/Documents/Robotics/yarp/bindings/java/');
+
 sendAngles=0;  %set to 1 to load yarp and send angles to iCub
 
 if(sendAngles==1)
@@ -8,6 +13,13 @@ if(sendAngles==1)
     LoadYarp;
     import yarp.Port;
     import yarp.Bottle;
+    port=Port;
+    
+    port.open('/AudioAttention/AudioAngle');
+         
+    pause(3);%give yarp a moment
+end
+
 
 SamplingFre=48000;
 frameDuration_seconds=0.25;
@@ -94,12 +106,15 @@ while(~done)
     amp_frameL=rms(GF_frameL,1);
     deltaAmp_frameL=(amp_frameL-mean(pastAmp,1))./mean(pastAmp,1); %try a scaled delta amplitude
     deltaAmp_frameL(deltaAmp_frameL<0)=0; %only deal with amplitude increments (
-    bar(cfs,deltaAmp_frameL);
-    ylim([0 5]);
-    drawnow;
+    [spectralPeakValues,spectralPeakIndices]=findpeaks(deltaAmp_frameL);
     
-  
+    %handle the not-so-impossible case of zero peaks
+    if(isempty(spectralPeakIndices))
+        [spectralPeakValues,spectralPeakIndices]=max(deltaAmp_frameL); %just use the single biggest peak
+    end
     
+    display(spectralPeakValues);
+   
     
     %%%% Start of beamforming from 10 to 170 degree
     
@@ -270,7 +285,12 @@ while(~done)
     
     %%%THIS IS THAT AWSOME ANGLE. HERE YOU ARE SEND IT TO ROBOT!!
     majority_base_majorityEnergy=MM;
-    display(MM);
+    
+    if(sendAngles)
+            display(['sending ' num2str(majority_base_majorityEnergy) ' to YARP']);
+            SendAngleToYarp(azimuth,port);
+    end
+    
     
     %plot
 %     [xpeak,ypeak]=pol2cart(majority_base_majorityEnergy*pi/180,1);

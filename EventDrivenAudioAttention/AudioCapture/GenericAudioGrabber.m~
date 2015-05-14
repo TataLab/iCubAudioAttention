@@ -5,8 +5,6 @@
 %open a yarp port and read data continuosly
 LoadYarp;
 
-import yarp.Port;
-import yarp.Bottle;
 import yarp.BufferedPortSound;
 import yarp.Sound;
 

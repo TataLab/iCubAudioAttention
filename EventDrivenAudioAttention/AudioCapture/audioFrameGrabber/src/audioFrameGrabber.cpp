@@ -52,7 +52,7 @@ void mexFunction(int nlhs,mxArray *plhs[],int nrhs,const mxArray *prhs[])
   //dimy = (int)dims[0]; dimx = (int)dims[1];
 
   // Initialisation of the component, i.e first call after a 'close all' or matlab start
-  if (nrhs < 1) {
+  /*if (nrhs < 1) {
     mexErrMsgIdAndTxt( "MATLAB:mexatexit:invalidNumInputs","Initialisation has not been performed correctly.");
   }
   
@@ -83,9 +83,15 @@ void mexFunction(int nlhs,mxArray *plhs[],int nrhs,const mxArray *prhs[])
   if (!(mxIsChar(prhs[0]))){
     mexErrMsgIdAndTxt( "MATLAB:mexatexit:inputNotString","Input must be of type string.\n.");
   }
+*/
 
-  BufferedPort<Sound> bufferPort;
-  bufferPort.open("/receiver");
+  //BufferedPort<Sound> bufferPort;
+  //bufferPort.open("/receiver");
+ 
+  //associate pointers
+  a = mxGetPr(prhs[0]);
+  b = mxGetPr(prhs[1]);
+
   mexPrintf("making the connection \n"); 
   Network::connect("/sender", "/receiver");
   //yarp.connect("/sender","/receiver");
@@ -93,7 +99,7 @@ void mexFunction(int nlhs,mxArray *plhs[],int nrhs,const mxArray *prhs[])
   
   Sound* s;
   Bottle* bottReceived;
-  s = bufferPort.read(true);
+  s = a->read(true);
   int nchannels = 2;
   int nsamples  = 48000;
   mexPrintf("received Sound  \n");
@@ -134,8 +140,8 @@ void mexFunction(int nlhs,mxArray *plhs[],int nrhs,const mxArray *prhs[])
   d[2] = 1.0;
   d[3] = 3.0;
 
-  bufferPort.interrupt();
-  bufferPort.close();
+  a->interrupt();
+  a->close();
 
   mexPrintf("end. \n");
 
