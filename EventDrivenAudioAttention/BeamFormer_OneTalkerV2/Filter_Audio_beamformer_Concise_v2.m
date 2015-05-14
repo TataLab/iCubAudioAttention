@@ -1,5 +1,7 @@
 %  [yy,SamplingFre]=readwav('C:\Users\Home\Desktop\audioTest_right_to_left_with_distractor.wav');
-[yy,SamplingFre]=readwav('./audioTest_right_to_left.wav');
+%[yy,SamplingFre]=readwav('./audioTest_right_to_left.wav');
+
+
 Steps=SamplingFre*.25; %steps is duration of frame in samples
 spacing=.14;%space between Mics
 speedSound=340.5;% m/s

@@ -5,9 +5,9 @@
 # the current directory.
 # Replace "yarpy" with whatever your executable should be called.
 
-cmake_minimum_required(VERSION 2.8.7)
+cmake_minimum_required(VERSION 2.8.9)
 
-set(KEYWORD "AudioStreamHandler")
+set(KEYWORD AudioStreamHandler)
 
 # Start a project.
 project(${KEYWORD})
@@ -21,6 +21,15 @@ file(GLOB folder_source *.cpp *.cc *.c)
 file(GLOB folder_header *.h)
 source_group("Source Files" FILES ${folder_source})
 source_group("Header Files" FILES ${folder_header})
+
+# Search for IDL files.
+file(GLOB idl_files *.thrift *.msg *.srv)
+foreach(idl ${idl_files})
+  yarp_idl_to_dir(${idl} ${CMAKE_BINARY_DIR}/idl IDL_SRC IDL_HDR IDL_INCLUDE)
+  set(folder_source ${folder_source} ${IDL_SRC})
+  set(folder_header ${folder_header} ${IDL_HDR})
+  include_directories(${IDL_INCLUDE})
+endforeach()
 
 # Automatically add include directories if needed.
 foreach(header_file ${folder_header})
