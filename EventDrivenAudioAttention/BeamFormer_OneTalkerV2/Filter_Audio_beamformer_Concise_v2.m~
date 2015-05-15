@@ -1,32 +1,36 @@
 %  [yy,SamplingFre]=readwav('C:\Users\Home\Desktop\audioTest_right_to_left_with_distractor.wav');
 %[yy,SamplingFre]=readwav('./audioTest_right_to_left.wav');
+%[yy,SamplingFre]=readwav('./audioTest_right_to_left_noise.wav');
 
 
 %configure things to interact with the iCub if you will controll the robot
 %remember to add the java bindings to your java path something like this:
 % javaaddpath('/Users/Matthew/Documents/Robotics/yarp/bindings/java/');
 
-sendAngles=1;  %set to 1 to load yarp and send angles to iCub
+sendAngles=0;  %set to 1 to load yarp and send angles to iCub
 
 if(sendAngles==1)
     %open a yarp port and read data continuosly
     LoadYarp;
     import yarp.Port;
     import yarp.Bottle;
-    port=Port;
+    portInField=Port;
+    portOutField=Port;
     
-    port.open('/AudioAttention/AudioAngle');
+    portInField.open('/AudioAttention/inFieldAngle');
+    portOutField.open('/AudioAttention/outFieldAngle');
          
     pause(3);%give yarp a moment
 end
 
+captureSalienceThreshold=.5; %threshold that determines whether audio should capture visual to an off-field-of-view location
 
 SamplingFre=48000;
 frameDuration_seconds=0.25;
 frameDuration_samples=SamplingFre*frameDuration_seconds;
 Steps=frameDuration_samples; %steps is duration of frame in samples
 
-spacing=.14;%space between Mics
+spacing=.15;%space between Mics
 speedSound=340.5;% m/s
 numElements=2;%Number of Mics
 nPastFrames=1; %how many frames to go back to compute background means
@@ -57,7 +61,6 @@ LS=length(SteeringAngle); %number of beams
 delay = spacing * (-cos(SteeringAngle)) / speedSound;%to compensate for the delay in the left and right channel
 sample_delay=round(delay*SamplingFre);
 % initializing some vectors to record the results in beam sweeping itiration
-logOutput=zeros(numchans,LS);
 
 %     If there is any prior knowledge about number of talker indicate it here.
 Number_of_possible_talker=1;% 1 or maximum 2 if you are not certain choose 2
@@ -69,8 +72,15 @@ tag_new_angle=0; %should go top
 past_Output_angle=0;
 Energy_threshold=10^-4;
 
+%matrices for holding previous frames of rms amplitudes
+pastAmpL=ones(nPastFrames,numchans).*.0001; %we have to seed this with some arbitrarily small numbers
+pastAmpR=ones(nPastFrames,numchans).*.0001; %we have to seed this with some arbitrarily small numbers
 
-pastAmp=ones(nPastFrames,numchans).*.0001; %we have to seed this with some arbitrarily small numbers
+%we'll need to normalize the saliency values to fit within [0,1] so they
+%play nicely with visual feature maps
+%set some bounds and then clamp the range within
+saliencyMax=100;
+saliencyMin=0;
 
 
 frameNumber=0;
@@ -97,28 +107,54 @@ while(~done)
     
     % get the signal out of filter also its envelope and the delay due to the
     % filter. 'align' basically aligns the delay across the filter bank
-    
-    
-    %
+
     [GF_frameL,~,~] = gammatoneFast(frameL,cfs,SamplingFre,align) ;
     [GF_frameR,~,~] = gammatoneFast(frameR,cfs,SamplingFre,align) ;
     
+    %compute the amplitude of each band
     amp_frameL=rms(GF_frameL,1);
-    deltaAmp_frameL=(amp_frameL-mean(pastAmp,1))./mean(pastAmp,1); %try a scaled delta amplitude
-    deltaAmp_frameL(deltaAmp_frameL<0)=0; %only deal with amplitude increments (
-    [spectralPeakValues,spectralPeakIndices]=findpeaks(deltaAmp_frameL);
+    amp_frameR=rms(GF_frameR,1);
+    
+    %compute the change in amplitude over some time
+    deltaAmp_frameL=(amp_frameL-mean(pastAmpL,1))./mean(pastAmpL,1); %try a scaled delta amplitude
+    deltaAmp_frameR=(amp_frameR-mean(pastAmpR,1))./mean(pastAmpR,1); %try a scaled delta amplitude
+
+    %shift the past values and update the past
+    pastAmpL=circshift(pastAmpL,[1 0]); %push the stack down and wrap
+    pastAmpR=circshift(pastAmpR,[1 0]);
+    pastAmpL(1,:)=amp_frameL; %overwrite the top of the stack
+    pastAmpR(1,:)=amp_frameR;
+    
+    %only deal with amplitude increments 
+    deltaAmp_frameL(deltaAmp_frameL<0)=0; 
+    deltaAmp_frameR(deltaAmp_frameR<0)=0;
+    
+    %find peaks in the spectra from the two channels
+    [spectralPeakValuesL,~]=findpeaks(deltaAmp_frameL);
+    [spectralPeakValuesR,~]=findpeaks(deltaAmp_frameR);
+   
     
     %handle the not-so-impossible case of zero peaks
-    if(isempty(spectralPeakIndices))
-        [spectralPeakValues,spectralPeakIndices]=max(deltaAmp_frameL); %just use the single biggest peak
+    if(isempty(spectralPeakValuesL))
+        [spectralPeakValuesL,~]=max(deltaAmp_frameL); %just use the single biggest peak
+    end
     
-    bar(cfs,deltaAmp_frameL);
-    ylim([0 5]);
-    drawnow;
+    if(isempty(spectralPeakValuesR))
+        [spectralPeakValuesR,~]=max(deltaAmp_frameR); %just use the single biggest peak
+    end
     
-  
+    audioSalienceL=sum(spectralPeakValuesL)*length(spectralPeakValuesL);
+    audioSalienceR=sum(spectralPeakValuesR)*length(spectralPeakValuesR);
+    audioSalience=(audioSalienceL+audioSalienceR)/2;
+    
+    %normalize the audioSalience [0,1]
+    audioSalienceN=(audioSalience-saliencyMin)/(saliencyMax-saliencyMin);
+    audioSalienceN(audioSalienceN<0)=0; %arbitrarily clamp them and manually adjust the range
+    audioSalienceN(audioSalienceN>1)=1;
     
     
+    display(audioSalienceN);
+   
     %%%% Start of beamforming from 10 to 170 degree
     
     %%%Calculating energy of each channel.
@@ -287,143 +323,163 @@ while(~done)
     [MM,~]=mode(currentAngle_temp(1,sortingIndices(:)));
     
     %%%THIS IS THAT AWSOME ANGLE. HERE YOU ARE SEND IT TO ROBOT!!
-    majority_base_majorityEnergy=MM;
+    azimuth=MM;
     
+    %send angles to yarp on appropriate ports
     if(sendAngles)
-            display(['sending ' num2str(majority_base_majorityEnergy) ' to YARP']);
-            SendAngleToYarp(azimuth,port);
+        
+            if((azimuth>25) && (audioSalienceN > audioCaptureThreshold)) %capture attention out of the field
+                display(['sending ' num2str(azimuth) ' to YARP on port /AudioAttention/outFieldAngle']);
+                SendAngleToYarp(azimuth,NaN,portOutField); %salience doesn't matter, just go
+            elseif(azimuth<=25)
+                display(['sending ' num2str(azimuth) ' to YARP on port /AudioAttention/inFieldAngle']);
+                SendAngleToYarp(azimuth,audioSalienceN,portInField);
+            else
+                display('problems');
+            end
+                
     end
     
     
-    %plot
-%     [xpeak,ypeak]=pol2cart(majority_base_majorityEnergy*pi/180,1);
-%     compass(xpeak,ypeak,'r');
-%     
-%     drawnow;
+   %plot
+    [xpeak,ypeak]=pol2cart(-90*pi/180,1);
+    compass(xpeak,ypeak,'w')
+    hold on;
+    [xpeak,ypeak]=pol2cart(azimuth*pi/180,audioSalienceN);
+    compass(xpeak,ypeak,'r');
+    hold off;
+    
+    drawnow;
     %done plotting
     %%%%%%%%
+  
+    
     
 end
 
 
 
-
-
-    %finding two talker
-%     
-%     [A_level,A_idx]=max(merged2_bin_level);
-%     merged2_bin_level_secondTalker=merged2_bin_level;
-%     merged2_bin_level_secondTalker(A_idx)=0;
-%     [A2_level,A2_idx]=max(merged2_bin_level_secondTalker);
-%     angle=merged2_bin_value(A_idx);
-%     
-%     
-%     
-%     
-%     Vector_of_talkers= shiftc(Vector_of_talkers);
-%     Vector_of_talkers_weight= shiftc(Vector_of_talkers_weight);
-%     var_vector= shiftc(var_vector);
-%     
-%     
-%     
-%     %First talker vector
-%     if (A_level/numchans>0.5)&&(Energy>Energy_threshold)
+% 
+% % 
+% % 
+% % %     finding two talker
+% %     
+% %     [A_level,A_idx]=max(merged2_bin_level);
+% %     merged2_bin_level_secondTalker=merged2_bin_level;
+% %     merged2_bin_level_secondTalker(A_idx)=0;
+% %     [A2_level,A2_idx]=max(merged2_bin_level_secondTalker);
+% %     angle=merged2_bin_value(A_idx);
+% %     
+% %     
+% %     
+% %     
+% %     Vector_of_talkers= shiftc(Vector_of_talkers);
+% %     Vector_of_talkers_weight= shiftc(Vector_of_talkers_weight);
+% %     var_vector= shiftc(var_vector);
+% %     
+% %     
+% %     
+% %     %First talker vector
+% %     if (A_level/numchans>0.5)&&(Energy>Energy_threshold)
+% %         
+% %         Vector_of_talkers(1,1)= angle;
+% %         Vector_of_talkers_weight(1,1)=1;
+% %         
+% %         %         display(['First talker with probability of more than 50 percent, P>50% is at ', num2str(angle),' degree'] )
+% %     else
+% %         Vector_of_talkers_weight(1,1)=0;
+% %         %         display(['First talker with probability of more than 50 percent, P<50% is at ', num2str(angle) ,' degree, possibility of ambiguity'])
+% %         
+% %     end
+% %     %     var1=sqrt(var(Vector_of_talkers(1,1:3).*Vector_of_talkers_weight(1,1:3)));
+% %     var1=sqrt(   var(    Vector_of_talkers(1,logical(Vector_of_talkers_weight(1,1:3))) ) )  ;
+% %     
+% %     
+% %     
+% %     var_vector(1,1)=var1;
+% %     
+% %     
+% %     
+% %     %Second talker vector
+% %     if Number_of_possible_talker>1
+% %         
+% %         % check the second talker
+% %         angle2=merged2_bin_value(A2_idx);
+% %         
+% %         if (A2_level/numchans>0.4)&&(Energy>Energy_threshold)
+% %             
+% %             Vector_of_talkers(2,1)= angle2;
+% %             Vector_of_talkers_weight(2,1)=1;
+% %             %             display(['Second talker with probability of more than 40 percent, P>40% is at ', num2str(angle2),' degree'] )
+% %         else
+% %             Vector_of_talkers_weight(2,1)=0;
+% %             %             display(['Second talker with probability of more than 40 percent, P<40% is at ', num2str(angle2) ,' degree, possibility of ambiguity'])
+% %         end
+% %         
+% %         var2=sqrt(var(Vector_of_talkers(2,1:5).*Vector_of_talkers_weight(2,1:5)));
+% %         var_vector(2,1)=var2;
+% %     end  %  check the second talker
+% %     check2=sum(Vector_of_talkers_weight,2);%number of appearance
+% %     
+% %     %Now time to select. criteria:1-new talker appearance(a-high var b- dropping var to zero or bellow a threshold) 2- number of
+% %     %appearance 3- energy
+% %     
+% %     if (Number_of_possible_talker==1)
+% %         if (tag_new_angle==0)% (var1>0)
+% %             if  (var1>0)&&(~isnan(var1))&&(~isempty(var1))%var_vector(1,4)>3
+% %                 tag_new_angle=1;
+% %                 
+% %             end
+% %         end
+% %         if (isnan(var1))
+% %             tag_new_angle=0;
+% %         end
+% %         
+% %         
+% %         [num_of_var_dropping,~] =find(abs(-diff(var_vector(1,1:4)))<1);
+% %         
+% %         if var1<2;%(length(num_of_var_dropping)>2)
+% %             tag_new_angle2=1 ;
+% %         else
+% %             tag_new_angle2=0 ;
+% %         end
+% %         
+% %         if (check2>3)
+% %             tag_new_angle3=1   ;
+% %         else
+% %             tag_new_angle3=0   ;
+% %             
+% %         end
+% %         new_angle_approval=tag_new_angle*tag_new_angle2*tag_new_angle3;
+% %         
+% %         display(Vector_of_talkers);
+% %         
+% %         if new_angle_approval==1
+% %             azimuth=Vector_of_talkers(1,1);%the angle that send to robot
+% %             
+% %         else %rejected? send the preceding angle
+% %             azimuth=past_Output_angle;
+% %         end
+% %         past_Output_angle=azimuth;%update the angle
+% %         
+% %             %%%%%%%
+% %     %plot
+% %      [xpeak,ypeak]=pol2cart(-90*pi/180,1);
+% %     compass(xpeak,ypeak,'w')
+% %     hold on;
+% %     [xpeak,ypeak]=pol2cart(azimuth*pi/180,audioSalienceN);
+% %     compass(xpeak,ypeak,'r');
+% %     hold off;
+% %     
+% %     drawnow;
+%     %%%%%%%%
+% 
 %         
-%         Vector_of_talkers(1,1)= angle;
-%         Vector_of_talkers_weight(1,1)=1;
-%         
-%         %         display(['First talker with probability of more than 50 percent, P>50% is at ', num2str(angle),' degree'] )
-%     else
-%         Vector_of_talkers_weight(1,1)=0;
-%         %         display(['First talker with probability of more than 50 percent, P<50% is at ', num2str(angle) ,' degree, possibility of ambiguity'])
-%         
-%     end
-%     %     var1=sqrt(var(Vector_of_talkers(1,1:3).*Vector_of_talkers_weight(1,1:3)));
-%     var1=sqrt(   var(    Vector_of_talkers(1,logical(Vector_of_talkers_weight(1,1:3))) ) )  ;
-%     
-%     
-%     
-%     var_vector(1,1)=var1;
-%     
-%     
-%     
-%     %Second talker vector
-%     if Number_of_possible_talker>1
-%         
-%         % check the second talker
-%         angle2=merged2_bin_value(A2_idx);
-%         
-%         if (A2_level/numchans>0.4)&&(Energy>Energy_threshold)
-%             
-%             Vector_of_talkers(2,1)= angle2;
-%             Vector_of_talkers_weight(2,1)=1;
-%             %             display(['Second talker with probability of more than 40 percent, P>40% is at ', num2str(angle2),' degree'] )
-%         else
-%             Vector_of_talkers_weight(2,1)=0;
-%             %             display(['Second talker with probability of more than 40 percent, P<40% is at ', num2str(angle2) ,' degree, possibility of ambiguity'])
-%         end
-%         
-%         var2=sqrt(var(Vector_of_talkers(2,1:5).*Vector_of_talkers_weight(2,1:5)));
-%         var_vector(2,1)=var2;
-%     end  %  check the second talker
-%     check2=sum(Vector_of_talkers_weight,2);%number of appearance
-%     
-%     %Now time to select. criteria:1-new talker appearance(a-high var b- dropping var to zero or bellow a threshold) 2- number of
-%     %appearance 3- energy
-%     
-%     if (Number_of_possible_talker==1)
-%         if (tag_new_angle==0)% (var1>0)
-%             if  (var1>0)&&(~isnan(var1))&&(~isempty(var1))%var_vector(1,4)>3
-%                 tag_new_angle=1;
-%                 
-%             end
-%         end
-%         if (isnan(var1))
-%             tag_new_angle=0;
-%         end
-%         
-%         
-%         [num_of_var_dropping,~] =find(abs(-diff(var_vector(1,1:4)))<1);
-%         
-%         if var1<2;%(length(num_of_var_dropping)>2)
-%             tag_new_angle2=1 ;
-%         else
-%             tag_new_angle2=0 ;
-%         end
-%         
-%         if (check2>3)
-%             tag_new_angle3=1   ;
-%         else
-%             tag_new_angle3=0   ;
-%             
-%         end
-%         new_angle_approval=tag_new_angle*tag_new_angle2*tag_new_angle3;
-%         
-%         display(Vector_of_talkers);
-%         
-%         if new_angle_approval==1
-%             Output_angle=Vector_of_talkers(1,1);%the angle that send to robot
-%             
-%         else %rejected? send the preceding angle
-%             Output_angle=past_Output_angle;
-%         end
-%         past_Output_angle=Output_angle;%update the angle
-%         
-%             %%%%%%%
-%     %plot
-%     [xpeak,ypeak]=pol2cart(Output_angle,1);
-%     compass(xpeak,ypeak,'r');
-%     
-%     drawnow;
-    %done plotting
-    %%%%%%%%%
-
-        
 %     end %talker 1
-    
-    
-    
-    %display(['frame duration: ' num2str(Steps/SamplingFre) ' took ' num2str(toc(t))]);
-
-%end %capture loop
-
+%     
+%     
+%     
+%     %display(['frame duration: ' num2str(Steps/SamplingFre) ' took ' num2str(toc(t))]);
+% 
+% end %capture loop
+% 

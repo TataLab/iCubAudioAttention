@@ -1,0 +1,14 @@
+function SendAngleToYarp( angle,salience,port )
+%take an angle, put it in a bottle, send it away
+
+%LoadYarp;
+
+import yarp.Bottle;
+
+angleBottle=Bottle;
+
+angleBottle.addDouble(angle);
+angleBottle.addDouble(salience);
+port.write(angleBottle);
+end
+
