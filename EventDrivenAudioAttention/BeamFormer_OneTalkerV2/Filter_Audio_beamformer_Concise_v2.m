@@ -7,26 +7,35 @@
 %remember to add the java bindings to your java path something like this:
 % javaaddpath('/Users/Matthew/Documents/Robotics/yarp/bindings/java/');
 
-sendAngles=0;  %set to 1 to load yarp and send angles to iCub
+sendAngles=1;  %set to 1 to load yarp and send angles to iCub
 
 if(sendAngles==1)
     %open a yarp port and read data continuosly
     LoadYarp;
     import yarp.Port;
     import yarp.Bottle;
-    portInField=Port;
-    portOutField=Port;
     
-    portInField.open('/AudioAttention/inFieldAngle');
-    portOutField.open('/AudioAttention/outFieldAngle');
+    portI=Port;
+    portI.open('/AudioAttention/inAngle');
+    
+    portO=Port;
+    portO.open('/AudioAttention/outAngle');
          
-    pause(3);%give yarp a moment
+    pause(1);%give yarp a moment
 end
 
-captureSalienceThreshold=.5; %threshold that determines whether audio should capture visual to an off-field-of-view location
+
+
+audioCaptureThreshold=.3; %threshold that determines whether audio should capture visual to an off-field-of-view location
+%we'll need to normalize the saliency values to fit within [0,1] so they
+%play nicely with visual feature maps
+%set some bounds and then clamp the range within
+saliencyMax=50;
+saliencyMin=0;
+
 
 SamplingFre=48000;
-frameDuration_seconds=0.25;
+frameDuration_seconds=0.33;
 frameDuration_samples=SamplingFre*frameDuration_seconds;
 Steps=frameDuration_samples; %steps is duration of frame in samples
 
@@ -76,11 +85,7 @@ Energy_threshold=10^-4;
 pastAmpL=ones(nPastFrames,numchans).*.0001; %we have to seed this with some arbitrarily small numbers
 pastAmpR=ones(nPastFrames,numchans).*.0001; %we have to seed this with some arbitrarily small numbers
 
-%we'll need to normalize the saliency values to fit within [0,1] so they
-%play nicely with visual feature maps
-%set some bounds and then clamp the range within
-saliencyMax=100;
-saliencyMin=0;
+
 
 
 frameNumber=0;
@@ -153,7 +158,7 @@ while(~done)
     audioSalienceN(audioSalienceN>1)=1;
     
     
-    display(audioSalienceN);
+%     display(audioSalienceN);
    
     %%%% Start of beamforming from 10 to 170 degree
     
@@ -165,7 +170,7 @@ while(~done)
     %%% end of composing the signal
     
     %%beamformer; sweeping beams from 10 to 170 degree for each filter channel(numchans times).
-    for jj=1:numchans
+    parfor jj=1:numchans
         
         for j=1:LS %Steer the beam (Ls is the number of beams)
             
@@ -322,20 +327,33 @@ while(~done)
     [sortedX,sortingIndices] = sort(currentAngle_temp(2,:),'descend');
     [MM,~]=mode(currentAngle_temp(1,sortingIndices(:)));
     
+    %clamp the angles
+    if(MM<-60)
+        MM=-60;
+    end
+    if(MM>60)
+        MM=60;
+    end
+    
     %%%THIS IS THAT AWSOME ANGLE. HERE YOU ARE SEND IT TO ROBOT!!
     azimuth=MM;
     
     %send angles to yarp on appropriate ports
     if(sendAngles)
         
-            if((azimuth>25) && (audioSalienceN > audioCaptureThreshold)) %capture attention out of the field
-                display(['sending ' num2str(azimuth) ' to YARP on port /AudioAttention/outFieldAngle']);
-                SendAngleToYarp(azimuth,NaN,portOutField); %salience doesn't matter, just go
-            elseif(azimuth<=25)
-                display(['sending ' num2str(azimuth) ' to YARP on port /AudioAttention/inFieldAngle']);
-                SendAngleToYarp(azimuth,audioSalienceN,portInField);
-            else
-                display('problems');
+            if(((azimuth>25) || (azimuth<-25)) && (audioSalienceN > audioCaptureThreshold)) %capture attention out of the field
+                display(['sending ' num2str(azimuth) ' to YARP on port /AudioAttention/outAngle']);
+                angleBottle=Bottle;
+                angleBottle.addDouble(azimuth);
+                
+                portO.write(angleBottle);
+            elseif ((azimuth>-25) && (azimuth<25))
+                display(['sending ' num2str(azimuth) ' to YARP on port /AudioAttention/inAngle']);
+                angleBottle=Bottle;
+                angleBottle.addDouble(azimuth);
+                angleBottle.addDouble(audioSalienceN); 
+                portI.write(angleBottle);
+
             end
                 
     end
@@ -353,7 +371,8 @@ while(~done)
     %done plotting
     %%%%%%%%
   
-    
+    display(['frame duration: ' num2str(Steps/SamplingFre) ' took ' num2str(toc(t))]);
+
     
 end
 
