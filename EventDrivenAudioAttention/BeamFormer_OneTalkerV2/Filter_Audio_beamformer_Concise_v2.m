@@ -1,13 +1,12 @@
 %  [yy,SamplingFre]=readwav('C:\Users\Home\Desktop\audioTest_right_to_left_with_distractor.wav');
 %[yy,SamplingFre]=readwav('./audioTest_right_to_left.wav');
-%[yy,SamplingFre]=readwav('./audioTest_right_to_left_noise.wav');
-
+%[yy,SamplingFre]=readwav('./audioTest_right_to_left_fan.wav');
 
 %configure things to interact with the iCub if you will controll the robot
 %remember to add the java bindings to your java path something like this:
 % javaaddpath('/Users/Matthew/Documents/Robotics/yarp/bindings/java/');
 
-sendAngles=1;  %set to 1 to load yarp and send angles to iCub
+sendAngles=0;  %set to 1 to load yarp and send angles to iCub
 
 if(sendAngles==1)
     %open a yarp port and read data continuosly
@@ -85,7 +84,9 @@ Energy_threshold=10^-4;
 pastAmpL=ones(nPastFrames,numchans).*.0001; %we have to seed this with some arbitrarily small numbers
 pastAmpR=ones(nPastFrames,numchans).*.0001; %we have to seed this with some arbitrarily small numbers
 
-
+%to record some data
+azimuthVector=[];
+salienceVector=[];
 
 
 frameNumber=0;
@@ -170,7 +171,7 @@ while(~done)
     %%% end of composing the signal
     
     %%beamformer; sweeping beams from 10 to 170 degree for each filter channel(numchans times).
-    parfor jj=1:numchans
+    for jj=1:numchans
         
         for j=1:LS %Steer the beam (Ls is the number of beams)
             
@@ -337,6 +338,13 @@ while(~done)
     
     %%%THIS IS THAT AWSOME ANGLE. HERE YOU ARE SEND IT TO ROBOT!!
     azimuth=MM;
+    
+    %grabbing some data for analysis
+    azimuthVector=[azimuthVector azimuth];
+    salienceVector=[salienceVector audioSalienceN];
+    if(frameNumber==96)
+        done=1;
+    end
     
     %send angles to yarp on appropriate ports
     if(sendAngles)
