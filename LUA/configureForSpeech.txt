@@ -1,4 +1,9 @@
-Mingw32
-SpeechSDK5.1 Microsoft Speech Api
-iCubContrib https://github.com/robotology/icub-contrib-common.git
-Robotology/speech https://github.com/robotology/speech.git
+1.Mingw32
+2.SpeechSDK5.1 Microsoft Speech Api
+3.iCubContrib https://github.com/robotology/icub-contrib-common.git
+4.Robotology/speech https://github.com/robotology/speech.git
+5.Install LUA
+6.download rFSM from GIT !beware: no need to compile! The system finds rFSM.lua file
+7.setEnvironment variables 
+	LUA_CPATH=C:\robot\rFSM\?.lua;C:\robot\yarp\build-x86_64\lib\lua\5.1\?.dll
+	LUA_PATH=C:\robot\rFSM\?.lua
