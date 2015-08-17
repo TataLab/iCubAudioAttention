@@ -1,0 +1,4 @@
+Mingw32
+SpeechSDK5.1 Microsoft Speech Api
+iCubContrib https://github.com/robotology/icub-contrib-common.git
+Robotology/speech https://github.com/robotology/speech.git
