@@ -73,10 +73,6 @@ if (ENABLE_CUDA)
     add_subdirectory(cudaVision)
 endif (ENABLE_CUDA)
 
-add_subdirectory(attentionLib)
-add_subdirectory(app)
 add_subdirectory(src)
 
-icubcontrib_finalize_export(attentionLib) #macro added 13/11/2013
-icubcontrib_finalize_export(attention)
 icubcontrib_add_uninstall_target()        #macro added 13/11/2013
