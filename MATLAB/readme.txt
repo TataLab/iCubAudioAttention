@@ -1,0 +1,2 @@
+
+The MATLAB folder of iCubAudioAttention should be organized into attention versions/projects/systems.  Each project should have all of its own code compartmentalized.  When you make a new system project, make copies of config scripts and functions you want to be encapsulated within your project.

@@ -1,0 +1,82 @@
+function [ P ] = ConfigureParameters( ~ )
+%Set up all (or most) paramters and settings that you'll need for your
+%system here and return everything in a convenient struct
+
+
+display(['Setting up parameters for iCub Audio Attention using: ' mfilename('fullpath')]);
+
+P.sendAngleToYarp = 1;  %set to 1 to send angle over yarp network %remember to add yarp to the MATLAB java path:  javaaddpath('/Applications/yarp/MATLAB Java Classes/jyarp');
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%set up some timing parameters regarding reading audio
+%specify the size of the frame in samples.  note also that the frame size in samples determines the effective "refresh
+%rate" of the localizer because it can't get ahead of the audiocapture
+%thread so it must w
+
+P.c=340.29;%define speed of sound in m/s
+P.D=0.145; %define distance between microphones in m
+P.sampleRate = 48000;
+%P.bitDepth_string = 'int16'; %16-bits = 2 bytes
+P.bitDepth = 24;
+P.numInputChannels=2; %stereo
+P.numOutputChannels=2;
+P.frameDuration_samples = 2^12; %@48000 hz stereo 16-bit samples 10240 =  213 ms
+P.frameDuration_seconds = P.frameDuration_samples/P.sampleRate; 
+P.frameRate = 1/P.frameDuration_seconds; %how often to compute angle in hz
+
+%%%%%%%%%%%%%%%%
+%some parameters for localizing
+%%%%%%%%%%%%%
+P.nBands=5;
+P.nBeamsPerHemifield=floor( (P.D/P.c)*P.sampleRate )-1; %maximum lag in samples x2 (to sweep left and right of midline)
+P.nBeams=2*P.nBeamsPerHemifield+1; %+1 includes the centre beam 
+P.lags=(P.c/P.sampleRate).* (-P.nBeamsPerHemifield:P.nBeamsPerHemifield); %linear spaced distances corresponding to lags in seconds
+P.angles=asin( (1/P.D) .* P.lags ) ; %nonlinear angles (in radians) that correspond to the lags
+P.low_cf=440; % center frequencies based on Erb scale
+P.high_cf=5000;
+P.cfs = MakeErbCFs(P.low_cf,P.high_cf,P.nBands);
+P.align=true; %set this to true to realign time after filtering (Important!)
+P.fOfInterest=1000; %hz
+P.bandOfInterest=find(P.cfs>P.fOfInterest,1,'first');
+
+
+
+
+%%%%%%%%%
+%the most important parameter
+%%%%%%%%%
+
+P.nPastSeconds = .25;  %in seconds; how much time over which to integrate previous events
+P.nPastFrames=floor(P.nPastSeconds/P.frameDuration_seconds);
+
+P.attentionCaptureThreshold=50;
+
+
+%set up output file to hold an angle
+P.angleOutFile='./angle.tmp';
+fid=fopen(P.angleOutFile,'w');
+fwrite(fid,[1.0 1.0],'double');
+fclose(fid);
+P.angleMap=memmapfile(P.angleOutFile,'format',{'double' [1 2] 'angle'},'writable',true);
+clear fid;
+
+%set up output file to hold spectral delta
+P.sOutFile='./deltaS.tmp';
+fid=fopen(P.sOutFile,'w');
+fwrite(fid,zeros(1,P.nBands),'double');
+fclose(fid);
+P.spectralMap=memmapfile(P.sOutFile,'format',{'double' [1 P.nBands] 'spectrum'},'writable',true);
+
+%set up output file to hold spectral delta
+P.beamsOutFile='./beams.tmp';
+fid=fopen(P.beamsOutFile,'w');
+fwrite(fid,zeros(P.nBeams,P.frameDuration_samples-P.nBeams+1),'double');
+fclose(fid);
+P.beamsMap=memmapfile(P.beamsOutFile,'format',{'double' [ P.nBeams P.frameDuration_samples-P.nBeams+1 ] 'beams'},'writable',true);
+
+
+
+
+
+end
+
