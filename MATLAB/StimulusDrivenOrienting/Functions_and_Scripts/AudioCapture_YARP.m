@@ -45,35 +45,29 @@ timeStampVector=zeros(1,frameDuration_samples);
 done=0;
 while(~done) %loop continuously
    
-    t=tic;
-    j=batch('audioCapture');
+
+    [frameL,frameR,stamps]=audioCapture;  %call into YARP through the mex code
     
-    while(toc(t)<frameDuration_seconds);
-    end
+    frameCount=stamps(1); %parse out the frame count and the time stamp
+    timeStamp=stamps(2);
+
     
-    display('job done');
-    %[frameL,frameR,stamps]=audioCapture;  %call into YARP through the mex code
+    %figure out where to write the current frame into the ring buffer
+    memMapWriteIndex=(mod(frameCount,numMemMapFrames)*frameDuration_samples+1); %keep track of which frame you're writting into.  Using modulus to "wrap" 
     
-%     frameCount=stamps(1); %parse out the frame count and the time stamp
-%     timeStamp=stamps(2);
-% 
-%     
-%     %figure out where to write the current frame into the ring buffer
-%     memMapWriteIndex=(mod(frameCount,numMemMapFrames)*frameDuration_samples+1); %keep track of which frame you're writting into.  Using modulus to "wrap" 
-%     
-%     %write the audio data of the current frame
-%     audioOut.Data(1,1).audioD(1,memMapWriteIndex:memMapWriteIndex+frameDuration_samples-1) = frameL;
-%     audioOut.Data(1,1).audioD(2,memMapWriteIndex:memMapWriteIndex+frameDuration_samples-1) = frameR;
-%     
-% %     plot(audioOut.Data(1,1).audioD(1,:));
-% %     ylim([-1.0 1.0]);
-% %     drawnow;
-%     
-%     %compute the sample count stamps and the time stamps
-%     frameCountVector=frameCount:frameCount+frameDuration_samples-1;
-%     timeStampVector=timeStamp:timeStamp+(frameDuration_samples-1)*sampleDuration_seconds;
-% 
-%     audioOut.Data(1,1).audioD(3,memMapWriteIndex:memMapWriteIndex+frameDuration_samples-1)=frameCountVector;
-%     audioOut.Data(1,1).audioD(4,memMapWriteIndex:memMapWriteIndex+frameDuration_samples-1)=timeStampVector;
+    %write the audio data of the current frame
+    audioOut.Data(1,1).audioD(1,memMapWriteIndex:memMapWriteIndex+frameDuration_samples-1) = frameL;
+    audioOut.Data(1,1).audioD(2,memMapWriteIndex:memMapWriteIndex+frameDuration_samples-1) = frameR;
+    
+%     plot(audioOut.Data(1,1).audioD(1,:));
+%     ylim([-1.0 1.0]);
+%     drawnow;
+    
+    %compute the sample count stamps and the time stamps
+    frameCountVector=frameCount:frameCount+frameDuration_samples-1;
+    timeStampVector=timeStamp:timeStamp+(frameDuration_samples-1)*sampleDuration_seconds;
+
+    audioOut.Data(1,1).audioD(3,memMapWriteIndex:memMapWriteIndex+frameDuration_samples-1)=frameCountVector;
+    audioOut.Data(1,1).audioD(4,memMapWriteIndex:memMapWriteIndex+frameDuration_samples-1)=timeStampVector;
 
 end

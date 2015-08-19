@@ -43,6 +43,10 @@ frameCounter=1;
 frameCountVector=ones(1,frameDuration_samples);
 timeStampVector=zeros(1,frameDuration_samples);
 
+%set up the filter
+P_inL=zeros(8,2);
+P_inR=zeros(8,2);
+cfs=MakeErbCFs2(500,5000,15);
 
 while(readIndex + frameDuration_samples < sLength)  %until you reach the end of the file
    
@@ -53,6 +57,17 @@ while(readIndex + frameDuration_samples < sLength)  %until you reach the end of 
     %read audio out of file
     frameL=s(1,sampleIndex); %pull out the left and right channels
     frameR=s(2,sampleIndex);
+    
+    %try filtering
+    [GF_frameL,P_outL,~,~,~]=gammatone_ciM2(frameL,P_inL,sampleRate, cfs);
+    P_inL=P_outL; 
+    [GF_frameR,P_outR,~,~,~]=gammatone_ciM2(frameR,P_inR,sampleRate, cfs);
+    P_inR=P_outR;
+    
+    plot(isnan(GF_frameL));
+    drawnow;
+    
+    
     
     %compute the two vectors of index data: time and sample number
     sampleStampVector=sampleIndex;
