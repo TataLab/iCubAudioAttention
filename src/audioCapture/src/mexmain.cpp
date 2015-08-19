@@ -22,7 +22,9 @@
 // include yarp 
 #include <yarp/os/Network.h>
 #include <yarp/os/BufferedPort.h>
+#include <yarp/os/Stamp.h>
 #include <yarp/sig/Sound.h>
+#include <yarp/os/NetInt16.h>
 
 // Local includes
 //#include <modelcomponent.h>
@@ -35,17 +37,20 @@ using namespace yarp::sig;
 
 //Global variables
 //static ComponentManager *componentManager = NULL;
+const NetInt16 normDivid= 32768;   //normalised signed 16bit int into signed [-1.0,+1.0] 
 
 //=========================================================================================================================
 // Entry point function to library
 void mexFunction(int nlhs,mxArray *plhs[],int nrhs,const mxArray *prhs[])
 {
-  mexPrintf("happily starting the procedure \n");
+  //mexPrintf("happily starting the procedure \n");
 
   // initialization
   yarp::os::Network yarp;
-  const mxArray *a_in_m, *b_in_m, *c_out_m, *d_out_m;
-  double *a, *b, *c, *d;
+  //const mxArray *a_in_m, *b_in_m;
+  const mxArray *c_out_m, *d_out_m, *e_out_m;
+  double *a, *b;
+  double *c, *d, *e;
   const mwSize *dims;
 
   //figure out dimensions
@@ -53,12 +58,13 @@ void mexFunction(int nlhs,mxArray *plhs[],int nrhs,const mxArray *prhs[])
   //numdims = mxGetNumberOfDimensions(prhs[0]);
   //dimy = (int)dims[0]; dimx = (int)dims[1];
 
+  /***** removed section Rea August 14th 2015 **************************
   // Initialisation of the component, i.e first call after a 'close all' or matlab start
   if (nrhs < 1) {
     mexErrMsgIdAndTxt( "MATLAB:mexatexit:invalidNumInputs","Initialisation has not been performed correctly.");
   }
   
-  
+
   // Check to be sure input is of type char 
   if (!(mxIsChar(prhs[0]))) {
     mexErrMsgIdAndTxt( "MATLAB:mexatexit:inputNotString","Initialisation must include component.\n.");
@@ -67,7 +73,7 @@ void mexFunction(int nlhs,mxArray *plhs[],int nrhs,const mxArray *prhs[])
     if (!(mxIsChar(prhs[1]))) {
       mexErrMsgIdAndTxt( "MATLAB:mexatexit:inputNotString","Initialisation must include component and a robot name.\n.");
     }
-      
+    mexPrintf("Correct number of parameters");  
   }
   else {
     mexErrMsgIdAndTxt( "MATLAB:mexatexit:inputNotString","Initialisation must include component and a robot name.\n.");
@@ -83,73 +89,125 @@ void mexFunction(int nlhs,mxArray *plhs[],int nrhs,const mxArray *prhs[])
   if (!(mxIsChar(prhs[0]))){
     mexErrMsgIdAndTxt( "MATLAB:mexatexit:inputNotString","Input must be of type string.\n.");
   }
-
-  mexPrintf("correctly parsed all the inputs \n");
+  ***********************************************************************/
 
   BufferedPort<Sound> bufferPort;
   bufferPort.open("/receiver");
-  mexPrintf("making the connection \n"); 
+  
+  /*
+  if(!Network::exists("/receiver")){
+    mexPrintf("receiver not exists \n");
+    bufferPort.open("/receiver");
+  }
+  else{
+    mexPrintf("receiver exists \n");
+  }
+
+  if(!Network::exists("/receiver")) {
+    mexPrintf("error \n");
+  }
+ 
+  
+
+  if(!Network::isConnected("/sender", "/receiver")) {
+    mexPrintf("no connection \n");
+    Network::connect("/sender", "receiver");
+  }
+  else {
+    mexPrintf("connected alrteady \n");
+  }
+
+  Contact contactPort = Network::queryName("/receiver");  
+  mexPrintf("got into Contact \n");
+
+  
+  if(!contactPort.isValid()){
+    //Port bufferPort;
+    //bufferPort.open("/receiver");
+    mexPrintf("receiver missing. Creating... \n");
+    return;
+  }
+  else {
+    mexPrintf("receiver valid contact \n");
+    p.open(contactPort);
+  }
+
+
+  return;
+  */
+  
   Network::connect("/sender", "/receiver");
   //yarp.connect("/sender","/receiver");
-  mexPrintf("connection success \n");
+  
+ 
   
   Sound* s;
-  Bottle* bottReceived;
-  s = bufferPort.read(true);
-  int nchannels = 2;
-  int nsamples  = 48000;
-  mexPrintf("received Sound  \n");
-
+  int nchannels = 2;           // number of channels
+  int rate = 48000;            // sampling rate
+  int nbytes = 2;              // number of bytes
+  double time = 0.1;                // sec
+  int nsamples = 4096;  // number of samples
+  
   //associate outputs
-  c_out_m = plhs[0] = mxCreateDoubleMatrix(1,48000 * 2,mxREAL);
-  d_out_m = plhs[1] = mxCreateDoubleMatrix(2,2,mxREAL);
+  c_out_m = plhs[0] = mxCreateDoubleMatrix(1,nsamples, mxREAL);
+  d_out_m = plhs[1] = mxCreateDoubleMatrix(1,nsamples, mxREAL);
+  e_out_m = plhs[2] = mxCreateDoubleMatrix(1,2, mxREAL);
+  
+  //c_out_m = plhs[0] = mxCreateNumericMatrix(1,rate * time, mxINT16_CLASS, mxREAL);
+  //d_out_m = mxCreateNumericMatrix(1,rate * time, mxINT16_CLASS, mxREAL);
 
   //associate pointers
   c = mxGetPr(plhs[0]);
   d = mxGetPr(plhs[1]);
+  e = mxGetPr(plhs[2]);
   
-  if(s!=NULL) {
-    unsigned char* soundData = s->getRawData();
-  }
-  else{
-    mexPrintf("Cycle skipped because of the null value of the sound pointer \n");
-  }
+  Stamp ts;	
   
-  unsigned char* dataSound;
-
-  if(s!=NULL) {
-    dataSound = s->getRawData(); 
-  }
-  else {
-    mexPrintf("NULL DATA");
-  }
-
-  for (int i = 0; i < 2; i++) {
-    for (int j = 0; j < 48000; j++) {
-      c[i * 48000 + j] = dataSound[i * 48000 + j];
-    }
-  }
+  	s = bufferPort.read(true);
+  	bufferPort.getEnvelope(ts);
+  	mexPrintf("count:%d time:%f \n", ts.getCount(), ts.getTime());
+  	e[0] = ts.getCount();
+  	e[1] = ts.getTime();
+  	
+  	//int nsamples  = rate * time * nchannels * nbytes;
   
-
-  d[0] = 3.0;
-  d[1] = 4.0;
-  d[2] = 1.0;
-  d[3] = 3.0;
-
-  bufferPort.interrupt();
-  bufferPort.close();
-
-  mexPrintf("end. \n");
-
-  /*while (true) {
-    s = bufferPort.read(true);
-    if (s!=NULL){
-      mexPrintf("received \n");
-      //put->renderSound(*s);
-    }
-    } */
+  	//if(s!=NULL) {
+  	//  unsigned char* soundData = s->getRawData();
+  	//}
+  	//else{
+  	//  mexPrintf("Cycle skipped because of the null value of the sound pointer \n");
+  	//}
   
+  	//unsigned char* dataSound;
 
+  	//if(s!=NULL) {
+  	//  dataSound = s->getRawData(); 
+  	//}
+  	//else {
+  	//  mexPrintf("NULL DATA");
+  	//}
+
+  	for (int j = 0; j < nsamples; j++) {
+    	NetInt16 temp_c = (NetInt16) s->get(j,0);
+    	c[j] = (double) temp_c / normDivid ;
+    	NetInt16 temp_d = (NetInt16) s->get(j,1);
+    	d[j] = (double) temp_d / normDivid;
+  	}
+
+  	//bufferPort.interrupt();
+  	//bufferPort.close();
+
+  	//mexPrintf("end. \n");
+
+  	/*while (true) {
+    		s = bufferPort.read(true);
+    		if (s!=NULL){
+    			mexPrintf("received \n");
+    			//put->renderSound(*s);
+    		}
+    	}
+  	*/
+  
   return;
 }
 
