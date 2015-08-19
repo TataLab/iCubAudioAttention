@@ -7,10 +7,10 @@ cmake_minimum_required(VERSION 2.8)
 SET(PROJECTNAME audioCapture)
 #PROJECT(${PROJECTNAME})  #comment Rea
 
-#set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
 # MATLAB and YARP is searched before adding the different modules because they will be used by all of them
-#find_package(YARP        REQUIRED)  #comment Rea
+find_package(YARP        REQUIRED)  #comment Rea
 find_package(Matlab)
 
 if(MATLAB_FOUND)
@@ -23,7 +23,9 @@ if(MATLAB_FOUND)
 else()
         message("Matlab not found")
 endif()
-#find_package(YCM                   REQUIRED)
+
+
+
 #find_package(ICUB                   REQUIRED)  #comment Rea
 #find_package(Eigen3                 REQUIRED)
 #find_package(TinyXML                REQUIRED)
@@ -53,11 +55,11 @@ endif(NOT MSVC)
 #find_package(YCM REQUIRED)  #comment Rea
 #include(YCMDefaultDirs)  #comment Rea
 
-include(AddInstallRPATHSupport)
-add_install_rpath_support(BIN_DIRS ${CMAKE_INSTALL_PREFIX}/bin
-                          LIB_DIRS ${CMAKE_INSTALL_PREFIX}/mex ${CMAKE_INSTALL_PREFIX}/lib
-                          DEPENDS MEXWHOLEBODYMODEL_ENABLE_RPATH
-                          USE_LINK_PATH)
+#include(AddInstallRPATHSupport)
+#add_install_rpath_support(BIN_DIRS ${CMAKE_INSTALL_PREFIX}/bin
+#                          LIB_DIRS ${CMAKE_INSTALL_PREFIX}/mex ${CMAKE_INSTALL_PREFIX}/lib
+#                          DEPENDS MEXWHOLEBODYMODEL_ENABLE_RPATH
+#                          USE_LINK_PATH)
 
 
 #Source and header files
