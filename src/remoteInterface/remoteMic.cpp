@@ -50,7 +50,7 @@ int main(int argc, char *argv[]) {
         return 1;
     }
     else{
-        printf("correctly opened the interface rate: %d, number of samples: %d, number of channels %d \n",rate, rate*rec_seconds, 2);
+        printf("correctly opened the interface rate: %d, number of samples: %f, number of channels %d \n",rate, rate*rec_seconds, 2);
     }
 
     //Grab and send
