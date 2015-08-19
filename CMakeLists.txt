@@ -64,15 +64,24 @@ SET(ATTENTIONLIB_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/attentionLib/include)
 # default prefix for applications
 set(ICUB_APPLICATIONS_PREFIX "$ENV{ICUB_ROOT}" CACHE PATH "Application path prefix")
 
-### Go through single folder
+### Shall the system look for CUDA 
 option(ENABLE_CUDA  "Do you want to compile with Cuda?" OFF)
-
 if (ENABLE_CUDA)  
     find_package(CUDA QUIET REQUIRED)
     add_definitions (-DWITH_CUDA)
     add_subdirectory(cudaVision)
 endif (ENABLE_CUDA)
 
+### Shall the system look for CUDA 
+option(ENABLE_MATLAB  "Do you want to link against MATLAB?" OFF)
+#if (ENABLE_MATLAB)  
+#    find_package(CUDA QUIET REQUIRED)
+#    add_definitions (-DWITH_CUDA)
+#    add_subdirectory(cudaVision)
+#endif (ENABLE_CUDA)
+
+
+# Go through single folder
 add_subdirectory(src)
 
 icubcontrib_add_uninstall_target()        #macro added 13/11/2013
