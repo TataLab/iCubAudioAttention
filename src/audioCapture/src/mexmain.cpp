@@ -165,7 +165,7 @@ void mexFunction(int nlhs,mxArray *plhs[],int nrhs,const mxArray *prhs[])
   
   	s = bufferPort.read(true);
   	bufferPort.getEnvelope(ts);
-  	mexPrintf("count:%d time:%f \n", ts.getCount(), ts.getTime());
+  	//mexPrintf("count:%d time:%f \n", ts.getCount(), ts.getTime());
   	e[0] = ts.getCount();
   	e[1] = ts.getTime();
   	
