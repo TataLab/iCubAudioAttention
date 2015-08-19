@@ -11,7 +11,17 @@ P=ConfigureParameters;
 done=0;
 while(~done)
     
+    %%%%%%%    Pre-Attentive Stage    **********
     
+    %grab audio
+    
+    %filter
+    
+    %beamformer
+    
+    
+    
+    %%%%%%  Selective Attention Stage *********
     
     
     
