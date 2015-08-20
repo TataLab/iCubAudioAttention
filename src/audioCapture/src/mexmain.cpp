@@ -149,6 +149,7 @@ void mexFunction(int nlhs,mxArray *plhs[],int nrhs,const mxArray *prhs[])
   int nbytes = 2;              // number of bytes
   double time = 0.1;                // sec
   int nsamples = 4096;  // number of samples
+  double sampleDur = 1.0 / rate;
   
   //associate outputs
   c_out_m = plhs[0] = mxCreateDoubleMatrix(4,nsamples, mxREAL);
@@ -163,8 +164,8 @@ void mexFunction(int nlhs,mxArray *plhs[],int nrhs,const mxArray *prhs[])
   s = bufferPort.read(true);
   bufferPort.getEnvelope(ts);
   //mexPrintf("count:%d time:%f \n", ts.getCount(), ts.getTime());
-  e[0] = ts.getCount();
-  e[1] = ts.getTime();
+  int e0 = ts.getCount();
+  double e1 = ts.getTime();
   	  
   ///////In case you want to use a non-blocking read, start here and try to make the following code work
   	//if(s!=NULL) {
@@ -182,14 +183,15 @@ void mexFunction(int nlhs,mxArray *plhs[],int nrhs,const mxArray *prhs[])
   	//}
   //////////
   	
-  	
-  for (int j = 0; j < nsamples; j++) {
-    NetInt16 temp_c = (NetInt16) s->get(j,0);
-    NetInt16 temp_d = (NetInt16) s->get(j,1);
-	c[j]        	= (double) temp_c / normDivid ;
-	c[j + 4096] 	= (double) temp_d / normDivid;
-	c[j + (2*4096)] = (e[0] * 4096) + j;
-    c[j + (3*4096)]	= (e[1] + j * (1/rate));	
+  int row = 0;	
+  for (int col = 0 ; col < nsamples; col+=1) {
+    NetInt16 temp_c = (NetInt16) s->get(col,0);
+    NetInt16 temp_d = (NetInt16) s->get(col,1);
+	c[row]        	= (double) 	temp_c / normDivid ;
+	c[row + 1] 		= (double) 	temp_d / normDivid;
+	c[row + 2] 		= (double) 	(e0 * 4096) + col;
+    c[row + 3]		= (double) 	(e1 + col * sampleDur);
+    row += 4;	
   }
 
   	
