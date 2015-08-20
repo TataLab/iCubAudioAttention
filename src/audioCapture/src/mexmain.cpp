@@ -136,11 +136,13 @@ void mexFunction(int nlhs,mxArray *plhs[],int nrhs,const mxArray *prhs[])
   return;
   */
   
+  
+  //hard coded YARP stuff.  Might need to be changed in the future.  It needs to match the PC104 side.
   Network::connect("/sender", "/receiver");
-  //yarp.connect("/sender","/receiver");
   
  
-  
+  //Here are parameters that are hard coded but shared with other parts of the system.  These must be
+  //tightly coordinated
   Sound* s;
   int nchannels = 2;           // number of channels
   int rate = 48000;            // sampling rate
@@ -149,36 +151,28 @@ void mexFunction(int nlhs,mxArray *plhs[],int nrhs,const mxArray *prhs[])
   int nsamples = 4096;  // number of samples
   
   //associate outputs
-  c_out_m = plhs[0] = mxCreateDoubleMatrix(1,nsamples, mxREAL);
-  d_out_m = plhs[1] = mxCreateDoubleMatrix(1,nsamples, mxREAL);
-  e_out_m = plhs[2] = mxCreateDoubleMatrix(1,2, mxREAL);
-  
-  //c_out_m = plhs[0] = mxCreateNumericMatrix(1,rate * time, mxINT16_CLASS, mxREAL);
-  //d_out_m = mxCreateNumericMatrix(1,rate * time, mxINT16_CLASS, mxREAL);
+  c_out_m = plhs[0] = mxCreateDoubleMatrix(4,nsamples, mxREAL);
+
 
   //associate pointers
   c = mxGetPr(plhs[0]);
-  d = mxGetPr(plhs[1]);
-  e = mxGetPr(plhs[2]);
+  
   
   Stamp ts;	
   
-  	s = bufferPort.read(true);
-  	bufferPort.getEnvelope(ts);
-  	//mexPrintf("count:%d time:%f \n", ts.getCount(), ts.getTime());
-  	e[0] = ts.getCount();
-  	e[1] = ts.getTime();
-  	
-  	//int nsamples  = rate * time * nchannels * nbytes;
-  
+  s = bufferPort.read(true);
+  bufferPort.getEnvelope(ts);
+  //mexPrintf("count:%d time:%f \n", ts.getCount(), ts.getTime());
+  e[0] = ts.getCount();
+  e[1] = ts.getTime();
+  	  
+  ///////In case you want to use a non-blocking read, start here and try to make the following code work
   	//if(s!=NULL) {
   	//  unsigned char* soundData = s->getRawData();
   	//}
   	//else{
   	//  mexPrintf("Cycle skipped because of the null value of the sound pointer \n");
   	//}
-  
-  	//unsigned char* dataSound;
 
   	//if(s!=NULL) {
   	//  dataSound = s->getRawData(); 
@@ -186,27 +180,20 @@ void mexFunction(int nlhs,mxArray *plhs[],int nrhs,const mxArray *prhs[])
   	//else {
   	//  mexPrintf("NULL DATA");
   	//}
+  //////////
+  	
+  	
+  for (int j = 0; j < nsamples; j++) {
+    NetInt16 temp_c = (NetInt16) s->get(j,0);
+    NetInt16 temp_d = (NetInt16) s->get(j,1);
+	c[j]        	= (double) temp_c / normDivid ;
+	c[j + 4096] 	= (double) temp_d / normDivid;
+	c[j + (2*4096)] = (e[0] * 4096) + j;
+    c[j + (3*4096)]	= (e[1] + j * (1/rate));	
+  }
 
-  	for (int j = 0; j < nsamples; j++) {
-    	NetInt16 temp_c = (NetInt16) s->get(j,0);
-    	c[j] = (double) temp_c / normDivid ;
-    	NetInt16 temp_d = (NetInt16) s->get(j,1);
-    	d[j] = (double) temp_d / normDivid;
-  	}
-
-  	//bufferPort.interrupt();
-  	//bufferPort.close();
-
-  	//mexPrintf("end. \n");
-
-  	/*while (true) {
-    		s = bufferPort.read(true);
-    		if (s!=NULL){
-    			mexPrintf("received \n");
-    			//put->renderSound(*s);
-    		}
-    	}
-  	*/
+  	
+  	
   
   return;
 }
