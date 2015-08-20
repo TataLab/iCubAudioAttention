@@ -188,6 +188,7 @@ Windows, Linux
 #include <yarp/dev/PolyDriver.h>
 #include <yarp/dev/GazeControl.h>
 #include <iCub/managerThread.h>
+#include <iCub/azimuthThread.h>
 
 #include <string>
 
@@ -216,13 +217,10 @@ Windows, Linux
 #define COMMAND_VOCAB_FRGB   VOCAB4('f','r','g','b')       // request of fovea blob color (rgb)
 
 
-#define COMMAND_VOCAB_MAXDB  VOCAB3('M','d','b')           // maximum dimension of the blob drawn
-#define COMMAND_VOCAB_MINDB  VOCAB3('m','d','b')           // minimum dimension of the blob drawn
-#define COMMAND_VOCAB_MBA    VOCAB3('m','B','A')           // minimum dimension of the bounding area
-#define COMMAND_VOCAB_SET    VOCAB3('s','e','t')
-#define COMMAND_VOCAB_GET    VOCAB3('g','e','t')
-#define COMMAND_VOCAB_WTD    VOCAB3('w','t','d')
-#define COMMAND_VOCAB_WBU    VOCAB3('w','b','u')
+#define COMMAND_VOCAB_RED    VOCAB3('R','E','D')           // maximum dimension of the blob drawn
+#define COMMAND_VOCAB_BLUE   VOCAB4('B','L','U','E')       // minimum dimension of the blob drawn
+#define COMMAND_VOCAB_GREE   VOCAB4('G','R','E','E')       // minimum dimension of the bounding area
+#define COMMAND_VOCAB_YEL    VOCAB3('Y','E','L')
 
 
 using namespace yarp::dev;
@@ -237,341 +235,53 @@ void moveJoints(IPositionControl *_pos, Vector& _command)
     Time::delay(0.1);
 }
 
-
-
-
-/*
-int main(int argc, char *argv[]) 
-{
-    Network yarp;
-    YARP_REGISTER_DEVICES(icubmod)
-
-    //------------------------------------------------------------------------------------
-    // initializing the iKinCartesian Solver
-    ResourceFinder rf;
-    rf.setDefaultContext("demoGrasp_IIT_ISR");
-    rf.setDefaultConfigFile("config.ini");
-    managerThread* mt = new managerThread("/managerThread",rf);
-    mt->start();
-
-    //-----------------------------------------------------------------------
-
-    //initializing gazecontrollerclient
-    printf("initialising gazeControllerClient \n");
-    Property option;
-    option.put("device","gazecontrollerclient");
-    option.put("remote","/iKinGazeCtrl");
-    std::string localCon("/client/gaze");
-    localCon.append("simpleSaccade");
-    option.put("local",localCon.c_str());
-
-    yarp::dev::PolyDriver* clientGazeCtrl=new PolyDriver();
-    clientGazeCtrl->open(option);
-    yarp::dev::IGazeControl* igaze=NULL;
-
-    int originalContext;
-
-    if (clientGazeCtrl->isValid()) {
-       clientGazeCtrl->view(igaze);
-    }
-    else {
-        return false;
-    }
-    igaze->storeContext(&originalContext);
-    igaze->blockNeckPitch(0);
-    igaze->blockNeckRoll();
-    
-    //------------------------------------------------------------------------
-    
-    BufferedPort<Bottle>* _pInPort  = new BufferedPort<Bottle>;
-    Port* _pOutPort = new Port;
-    //_options.portName+="/command:o";
-    std::string portName="/simpleSaccade/cmd:o";
-    std::string portNameIn = "/simpleSaccade/cmd:i";
-    _pOutPort->open(portName.c_str());
-    _pInPort->open(portNameIn.c_str());
-
-    Property params;
-    params.fromCommand(argc, argv);
-    if(params.check("help"))
-    {
-        fprintf(stderr, "%s --robot robotName --loop numberOfLoop", argv[0]);
-    }
-        
-    //if (!params.check("robot"))
-    //{
-    //    fprintf(stderr, "Please specify the name of the robot\n");
-    //    fprintf(stderr, "--robot name (e.g. icub)\n");
-    //    return -1;
-    //}
-    //if (!params.check("loop"))
-    //{
-    //    fprintf(stderr, "Please specify the number of repetition\n");
-    //    fprintf(stderr, "--loop number\n");
-    //    return -1;
-    //}
-    
-
-    
-    std::string robotName = params.check("robot", 
-                                       Value("icub"), 
-                                       "robotname").asString();
-    std::string remotePorts="/";
-    remotePorts+=robotName;
-    remotePorts+="/head"; //"/right_arm"
-
-    //int nOl=atoi(params.find("loop").asString().c_str());
-    int nOl=params.find("loop").asInt();
-
-    //Network::connect(portName.c_str(), "/aexGrabber");
-
-    std::string localPorts="/test/client";
-
-    Property options;
-    options.put("device", "remote_controlboard");
-    options.put("local", localPorts.c_str());   //local port names
-    options.put("remote", remotePorts.c_str());         //where we connect to
-
-    // create a device
-    PolyDriver robotDevice(options);
-    if (!robotDevice.isValid()) {
-        printf("Device not available.  Here are the known devices:\n");
-        printf("%s", Drivers::factory().toString().c_str());
-        return 0;
-    }
-
-    IPositionControl *pos;
-    IEncoders *encs;
-
-    bool ok;
-    ok = robotDevice.view(pos);
-    ok = ok && robotDevice.view(encs);
-
-    if (!ok) {
-        printf("Problems acquiring interfaces\n");
-        return 0;
-    }
-
-    int nj=0;
-    pos->getAxes(&nj);
-    Vector encoders;
-    Vector command;
-    Vector tmp;
-    encoders.resize(nj);
-    tmp.resize(nj);
-    command.resize(nj);
-    
-    int i;
-    for (i = 0; i < nj; i++) {
-         tmp[i] = 90.0;
-    }
-    pos->setRefAccelerations(tmp.data());
-
-    for (i = 0; i < nj; i++) {
-        tmp[i] = 50.0;
-        pos->setRefSpeed(i, tmp[i]);
-    }
-
-    //pos->setRefSpeeds(tmp.data()))
-    
-    //fisrst zero all joints
-    //
-    for(i=0; i<nj; i++)
-        command[i]=0;
-    //******************************
-    //* SPECIFIC STARTING POSITIONS *
-    //******************************
-    command[0]=0;
-
-    //pos->positionMove(command.data());//(4,deg);
-    double startPos2;
-    double startPos3;
-    double startPos4;
-
-    encs->getEncoder(3, &startPos3);
-    encs->getEncoder(4, &startPos4);
-    printf("start position value of joint 3: %lf\n", startPos3);
-    printf("start position value of joint 4: %lf\n", startPos4);
-    bool first=true;
-    int deltaSacc=2;
-    int times=0;
-    yarp::os::Bottle bot; //= _pOutPort->prepare();
-    bot.clear();
-    bot.addVocab(COMMAND_VOCAB_DUMP);
-    bot.addVocab(COMMAND_VOCAB_ON);
-    Bottle inOn;
-    _pOutPort->write(bot,inOn);
-
-    Time::delay(0.1);
-    
-    fprintf(stderr, "Start saccade(s), number of repetition: %d\n", nOl);
-    /*
-   //wile(times<nOl)
-    //
-    //  times++;
-    //  
-	//
-	//command[4]=-deltaSacc;
-	//moveJoints(pos, command);
-    //pos->positionMove(command.data());
-    //if(first)
-    //{
-    //    double curPos;
-    //    encs->getEncoder(4, &curPos);
-    //	printf("current position value of joint 4: %lf\n", curPos);
-    //    while((curPos>=startPos4-DELTAENC) && (curPos<=startPos4+DELTAENC))
-    //    {
-    //	    printf("current position value of joint 4: %lf\n", curPos);
-    //        encs->getEncoder(4, &curPos);
-     //   }
-    //    bot.clear();
-    //    bot.addVocab(COMMAND_VOCAB_SYNC);
-    //    Bottle inStart;
-    //    _pOutPort->write(bot,inStart);
-   // 	printf("1st synch asked\n");
-    //    first=false;
-    //}
-    //Time::delay(0.1);
-    
-
-    
-	
-	//command[4]=deltaSacc;
-	//moveJoints(pos, command);	
-	//command[4]=0;
-	//moveJoints(pos, command);
-    
-
-	
-	//command[3]=-deltaSacc;
-	//moveJoints(pos, command);
-	//	command[3]=deltaSacc;
-	//moveJoints(pos, command);
-	//command[3]=0;
-	//moveJoints(pos, command);
-    //if(times>=nOl)
-    //{
-    //    double curPos;
-    //    encs->getEncoder(3, &curPos);
-    // 	printf("current position value of joint 3: %lf\n", curPos);
-    //    //while((curPos<startPos3-DELTAENC) || (curPos>startPos3+DELTAENC))
-    //    //{
-	//    //    command[3]=0;
-    // 	//    printf("current position value of joint 3: %lf\n", curPos);
-    //    //    encs->getEncoder(3, &curPos);
-    //    //}
-    //    bot.clear();
-    //    bot.addVocab(COMMAND_VOCAB_SYNC);
-    //    Bottle inEnd;
-    //    _pOutPort->write(bot,inEnd);
-    //	printf("2nd synch asked\n");
-    //}
-    //
-    //
-    //}
-    
-    
-    double value = 0;
-    double endPos2;
-    double r = 0.5;  //meters
-    Vector angles(3);
-    angles(0) =  0.0;
-    angles(1) =  0.0;
-    angles(2) =  0.0;
-    Vector position(3);
-    position(0) = -0.5;
-    position(1) =  0.0;
-    position(2) =  0.4;
-
-    while(true){
-        if (_pInPort->getInputCount()) {
-            Bottle* b = _pInPort->read(true);
-            value = b->get(0).asDouble();
-            printf("got the double %f \n", value);
-            encs->getEncoder(2, &startPos2);
-            //printf("getEncoder3 position %f \n", startPos2);
-            //if ((value+startPos2 < 50) && (value+startPos2 > -50)){
-                endPos2 = startPos2 - value ;
-
-                command[2] = endPos2;
-                //moveJoints(pos, command);
-
-                // iKinGazeCtrl convention: positive angles toward robot right hand side
-                position(0) = -1 * (cos(deg2rad * endPos2) * r);
-                position(1) = -1 * (sin(deg2rad * endPos2) * r);
-                printf("sending vector %s \n", position.toString().c_str());
-                igaze->lookAtFixationPoint(position);
-
-                
-                //angles(0) = value;
-                //printf("sending vector %s \n", angles.toString().c_str());
-                //igaze->lookAtRelAngles(angles);
-                //}
-                //else{
-                //if (value+startPos2 > 50) {
-                //    command[2] = 50;
-                    //moveJoints(pos, command);
-                    
-                //}
-                //else {
-                //    command[2] = -50;
-                    //moveJoints(pos, command);   
-                //}
-                //}
-        }  
-    }
-
-	Time::delay(0.1);
-
-
-    //bot.clear();
-    //bot.addVocab(COMMAND_VOCAB_SYNC);
-    //Bottle inEnd;
-    //_pOutPort->write(bot,inEnd);
-    
-
-    bot.clear();
-    bot.addVocab(COMMAND_VOCAB_DUMP);
-    bot.addVocab(COMMAND_VOCAB_OFF);
-    Bottle inOff;
-    _pOutPort->write(bot,inOff);
-
-    _pOutPort->close();
-    robotDevice.close();
-    //-------------------------------------------
-
-    mt->stop();
-
-    igaze->restoreContext(originalContext);
-    delete igaze;
-    
-    
-    return 0;
-}
-*/
-
-
 class managerModule: public RFModule
 {
 protected:
-    managerThread *thr;    
+    managerThread *thr;
+    azimuthThread *athr;
     Port           rpcPort;
     Semaphore      mutex;
-
+    string robot;
+    bool usePanOnly;
+    
 public:
-    managerModule() { }
+    managerModule() {
+        athr = 0;
+        thr  = 0;
+    }
 
     bool configure(ResourceFinder &rf)
     {
-        Time::turboBoost();            
+        Time::turboBoost();
+        
 
-        thr=new managerThread(getName().c_str(),rf);
-        if (!thr->start())
-        {
-            delete thr;    
-            return false;
+        Bottle &bGeneral=rf.findGroup("general");
+        bGeneral.setMonitor(rf.getMonitor());
+        robot=bGeneral.check("robot",Value("icub"),"Getting robot name").asString().c_str();
+        usePanOnly=bGeneral.check("pan_only",Value("on"),"Getting the pan-head work").asString()=="on"?true:false;
+
+        if(usePanOnly) {
+            yInfo("usePanOnly activate");
+            athr = new azimuthThread(getName().c_str(),rf);
+            if (!athr->start())
+                {
+                    yError("azimuthThread not started");
+                    delete athr;
+                    return false;
+                }
         }
-
+        else {
+            yInfo("wholebody controlled");
+            thr=new managerThread(getName().c_str(),rf);
+            if (!thr->start())
+                {
+                    yError("managerThread not started");
+                    delete thr;    
+                    return false;
+                }
+        }
+            
         rpcPort.open(getName("/rpc"));
         attach(rpcPort);
 
@@ -582,9 +292,17 @@ public:
     {
         rpcPort.interrupt();
         rpcPort.close();
-
-        thr->stop();
-        delete thr;
+        
+        if(athr) {
+            yInfo("stopping the thread");
+            athr->stop();
+            yInfo("deleting the thread");
+            delete athr;
+        }
+        if(thr) {
+            thr->stop();
+            delete thr;
+        }
 
         return true;
     }
@@ -623,71 +341,42 @@ public:
         case COMMAND_VOCAB_LOOK:
             rec = true;
             {
-                printf("*** LOOK command received \n");                
-                thr->setAction("look");
-                /*
-                switch(command.get(1).asVocab()) {
-                case COMMAND_VOCAB_MBA:
+                yInfo("*** LOOK command received");
+                switch (command.get(1).asVocab()) {
+                case COMMAND_VOCAB_RED:
+                    rec = true;
                     {
-                        double w = command.get(2).asDouble();
-                        cout << "set mBA: " << w << endl;
- 
-                        ok=true;
+                        yInfo("      RED OBJECT SEEKING");
                     }
                     break;
-                case COMMAND_VOCAB_MAXDB:
+                case COMMAND_VOCAB_BLUE:
+                    rec = true;
                     {
-                        int w = command.get(2).asInt();
-                        
-                        ok=true;
+                        yInfo("      BLUE OBJECT SEEKING");
                     }
                     break;
-                case COMMAND_VOCAB_MINDB:
+                case COMMAND_VOCAB_GREE:
+                    rec = true;
                     {
-                        int w = command.get(2).asInt();
-     
-                        ok=true;
+                        yInfo("      GREEN OBJECT SEEKING");
                     }
                     break;
-                case COMMAND_VOCAB_WTD:
+                case COMMAND_VOCAB_YEL:
+                    rec = true;
                     {
-                        int w = command.get(2).asDouble();
-    
-                        ok=true;
+                        yInfo("      YELLOW OBJECT SEEKING");
                     }
                     break;
-                case COMMAND_VOCAB_WBU:
-                    {
-                        int w = command.get(2).asDouble();
-                       
-                        ok=true;
-                    }
-                    break;
-                case COMMAND_VOCAB_TRED:
-                    {
-                        int t = command.get(2).asInt();
-                        
-                        ok=true;
-                    }
-                    break;
-                case COMMAND_VOCAB_TGRE:
-                    {
-                        int t = command.get(2).asInt();
-                        
-                        ok=true;
-                    }
-                    break;
-                case COMMAND_VOCAB_TBLU:
-                    {
-                        int t = command.get(2).asInt();
-                        
-                        ok=true;
-                    }
-                    break;
-                default:
-                    cout << "received an unknown request after a SALIENCE_VOCAB_SET" << endl;
-                    break;
-                    }*/
+                default:{}
+                }
+
+                if(usePanOnly) {
+                    
+                }
+                else {
+                    thr->setAction("look");
+                }
+                
 
                  ok = true;
 
@@ -697,45 +386,14 @@ public:
         case COMMAND_VOCAB_POINT:
             rec = true;
             {
-                printf("*** POINT command received \n");
-                thr->setAction("point");
+                if(usePanOnly) {
+                    
+                }
+                else {
+                    thr->setAction("point");
+                }
                 
-                //reply.addVocab(COMMAND_VOCAB_IS);
-                //reply.add(command.get(1));
-                /*switch(command.get(1).asVocab()) {
-                    
-                case COMMAND_VOCAB_MAXDB:
-                    {
-                        
-                        //reply.addInt(nb);
-                        ok = true;
-                    }
-                    break;
-                case COMMAND_VOCAB_MINDB:
-                    {
-                        
-                        //reply.addInt(nb);
-                        ok = true;
-                    }
-                    break;
-                case COMMAND_VOCAB_FRGB:
-                    {
-                        int redValue,greenValue, blueValue;
-                        
-                        reply.addInt(redValue);
-                        reply.addInt(greenValue);
-                        reply.addInt(blueValue);
-                        ok = true;
-                    }
-                    break;
-                    
-            
-                   
-                    
-                default:
-                    cout << "received an unknown request after a SALIENCE_VOCAB_GET" << endl;
-                    break;
-                    }*/
+                
 
                 ok = true;
                 
@@ -758,6 +416,11 @@ public:
         return ok;
     } 	
     
-    double getPeriod()    { return 1.0;  }
-    bool   updateModule() { return true; }
+    double getPeriod()    {
+        return 1.0;
+    }
+
+    bool   updateModule() { 
+        return true;
+    }
 };

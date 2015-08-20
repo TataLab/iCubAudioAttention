@@ -25,8 +25,6 @@ int main(int argc, char *argv[])
     }
 
     YARP_REGISTER_DEVICES(icubmod)
-    
-      //myReport rep;
 
     ResourceFinder rf;
     rf.setVerbose(true);
