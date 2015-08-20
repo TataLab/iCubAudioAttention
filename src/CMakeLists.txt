@@ -5,7 +5,7 @@
 cmake_minimum_required(VERSION 2.6)
 add_subdirectory  ( headingAudio             )
 add_subdirectory  ( remoteInterface          )
-add_subdirectory  ( mosaic                   )
+#add_subdirectory  ( mosaic                   )
 if(ENABLE_MATLAB)
   add_subdirectory  ( audioCapture             )
 endif(ENABLE_MATLAB)
