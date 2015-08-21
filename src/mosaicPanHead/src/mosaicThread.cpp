@@ -489,7 +489,7 @@ bool mosaicThread::setMosaicSize(int width = DEFAULT_WIDTH, int height = DEFAULT
                     count += 12; 
                     char str[80];
                     sprintf(str,"%d",count);
-                    putText(Matrix, "*", cv::Point(c,400), cv::FONT_HERSHEY_SIMPLEX, 0.1, cv::Scalar(255,0,0), 4);
+                    putText(Matrix, str, cv::Point(c,400), cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(255,0,0), 4);
                 }
             }
             else {
