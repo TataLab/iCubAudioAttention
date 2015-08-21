@@ -45,6 +45,7 @@
 
 class mosaicThread : public yarp::os::RateThread {
 private:
+    int decayAngle;                 // decaying factor associated to the angle of interest
     int width_orig, height_orig;    // dimension of the input image (original)
     int width, height;              // dimension of the mosaic image 
     int xcoord, ycoord;             // position of input image's center in mosaic reference frame
@@ -56,6 +57,7 @@ private:
     int countMemory;                // number of saved location
     double shiftx, shifty;          // shift on the mosaic of the leftcamera
     double shiftxRight, shiftyRight;// shift of the mosaic of the rightcamera
+    double angleOfInterest;         // focus of attention location
     float azimuth, elevation;       // parameters necessary to fetch the portion of the mosaic
     yarp::sig::ImageOf<yarp::sig::PixelRgb> *inputImageLeft;        // input image from left camera
     yarp::sig::ImageOf<yarp::sig::PixelRgb> *inputImageRight;       // input image from right camera
@@ -76,6 +78,9 @@ private:
     yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelMono> > imageMonoInRight;       // input port for camera  
     yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelRgb> > imagePortOut;      // output port for overlapped monochromised image
     yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelRgb> > portionPort;       // port used to send the portion of the mosaic requested
+    
+    yarp::os::BufferedPort<yarp::os::Bottle>  anglePort;     // port used to receive angle of interest
+
 
     yarp::dev::PolyDriver *polyTorso, *drvHead;             // polydriver for the control of the torso and head
     iCub::iKin::iCubEye *eyeL;                              // reference to the left eye
@@ -236,6 +241,11 @@ public:
      */    
     void setAttenuation(bool value){attenuation =  value; forgettingFactor = value; };
     
+/**
+ * function that resets the position of the angle of interest and the decayFactor for representation
+ */
+void resetAngleOfInterest(double angle);
+
 };
 
 #endif  //_MOSAIC_THREAD_H_

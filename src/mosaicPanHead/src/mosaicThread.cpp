@@ -179,6 +179,11 @@ bool mosaicThread::threadInit() {
         return false;  // unable to open; let RFModule know so that it won't run
     } 
 
+    if (!anglePort.open(getName("/angle:i").c_str())) {
+        cout << ": unable to open port "  << endl;
+        return false;  // unable to open; let RFModule know so that it won't run
+    } 
+
     printf("\n robotname: %s \n",robot.c_str());
 
     /* 
@@ -470,35 +475,79 @@ bool mosaicThread::setMosaicSize(int width = DEFAULT_WIDTH, int height = DEFAULT
 
     //drawing compass
     unsigned char* pout = outputImageMosaic->getRawImage();
+    unsigned char* tout;
     int padding = outputImageMosaic->getPadding();
-    int rowSize = outputImageMosaic->getRowSize();
+    int rowSize = outputImageMosaic->getRowSize(); 
+    int nChannels = outputImageMosaic->getPixelSize();
     int selectedLine = 400;
+    int lineCounter;
     pout = pout + 400 * rowSize;
     cv::Mat Matrix((IplImage*) outputImageMosaic->getIplImage(), false);
     for(int r = 0; r < 10; ++r) {
-        int count = -108;
-        for(int c = 0 ; c < width ; ++c) { 
-            if(c % 40 == 0) {
-                *pout++ = 255;
-                *pout++ = 0;
-                *pout++ = 0;
+        int count = -90;
+        int initialRight = width>>1;
+        lineCounter = 0;
+        tout = pout + initialRight * nChannels;
+        for(int c = initialRight ; c < width ; ++c) { 
+            if(lineCounter % 50 == 0) {
+                *tout++ = 255;
+                *tout++ = 0;
+                *tout++ = 0;
                 
-                
-                
-                if(r==0) {
-                    count += 12; 
+                /*if(r==0) {
+                    count += 10; 
                     char str[80];
                     sprintf(str,"%d",count);
-                    putText(Matrix, str, cv::Point(c,400), cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(255,0,0), 4);
+                    if(c == 0){
+                        putText(Matrix, str, cv::Point(c-10,400), cv::FONT_HERSHEY_COMPLEX_SMALL, 1, cv::Scalar(255,0,0), 1);
+                    }
+                    else if (c < 0) {
+                        putText(Matrix, str, cv::Point(c-50,400), cv::FONT_HERSHEY_COMPLEX_SMALL, 1, cv::Scalar(255,0,0), 1);
+                    }
+                    else {
+                        putText(Matrix, str, cv::Point(c-20,400), cv::FONT_HERSHEY_COMPLEX_SMALL, 1, cv::Scalar(255,0,0), 1);
+                    }
                 }
+                */
             }
             else {
-                pout += 3;
+                tout += 3;
             }
-
-            
+            lineCounter++;
         }
-        *pout += padding;
+        
+        int initialLeft = width>>1;
+        tout = pout + initialLeft * nChannels;
+        lineCounter = 1;
+        for(int c = initialLeft -1 ; c > 0 ; c--) { 
+            if(lineCounter % 50 == 0) {                
+                *--tout = 0; 
+                *--tout = 0;
+                *--tout = 255;
+                
+                /*if(r==0) {
+                  count += 10; 
+                  char str[80];
+                  sprintf(str,"%d",count);
+                  if(c == 0){
+                  putText(Matrix, str, cv::Point(c-10,400), cv::FONT_HERSHEY_COMPLEX_SMALL, 1, cv::Scalar(255,0,0), 1);
+                  }
+                  else if (c < 0) {
+                  putText(Matrix, str, cv::Point(c-50,400), cv::FONT_HERSHEY_COMPLEX_SMALL, 1, cv::Scalar(255,0,0), 1);
+                  }
+                  else {
+                  putText(Matrix, str, cv::Point(c-20,400), cv::FONT_HERSHEY_COMPLEX_SMALL, 1, cv::Scalar(255,0,0), 1);
+                  }
+                  }
+                    */
+            }
+            else {
+                tout -= 3;
+            } 
+            lineCounter++;
+        }
+        
+        pout += rowSize;
     }
     
     
@@ -506,12 +555,26 @@ bool mosaicThread::setMosaicSize(int width = DEFAULT_WIDTH, int height = DEFAULT
     return true;    
 }
 
+void mosaicThread::resetAngleOfInterest(double angle){
+    angleOfInterest = angle;
+    decayAngle = 255;
+}
+
+
 void mosaicThread::run() {
     //printf("Initialization of the run function %d %d .... \n", width, height);
     count++;
 
+    if(decayAngle > 0) {
+        decayAngle--;
+    }
     
-    //while (isStopping() != true)  {                
+    if(anglePort.getInputCount()) {
+        Bottle* angleBottle = anglePort.read(false);
+        if (angleBottle != NULL) {
+            resetAngleOfInterest(angleBottle->get(0).asDouble());
+        }
+    }                
   
     if(imagePortInLeft.getInputCount()) {    
         inputImageLeft = imagePortInLeft.read(false); // do not wait                          
@@ -551,6 +614,8 @@ void mosaicThread::run() {
         } 
         
         if(imagePortOut.getOutputCount()) {
+
+            
             imagePortOut.prepare() = *outputImageMosaic;
             imagePortOut.write();
         }
@@ -795,6 +860,7 @@ void mosaicThread::makeMosaic(ImageOf<yarp::sig::PixelRgb>* inputImageLeft, Imag
     int i,j;
     
     unsigned char* outTemp = outputImageMosaic->getRawImage();
+    cv::Mat Matrix((IplImage*) outputImageMosaic->getIplImage(), false);
     unsigned char* lineOutTemp;
 
     int iW = inputImageLeft->width();
@@ -1014,6 +1080,8 @@ void mosaicThread::makeMosaic(ImageOf<yarp::sig::PixelRgb>* inputImageLeft, Imag
         }
     }
     */
+
+    cv::rectangle(Matrix, cv::Point(370 - 20,120),cv::Point(370 + 20,360), cv::Scalar(255,0,0), 3, 8, 0);
 
     //deleting previous locations in the image plane
     //representing new locations on the image plane
@@ -1433,8 +1501,9 @@ void mosaicThread::makeMosaic(ImageOf<yarp::sig::PixelMono>* iImageLeft, ImageOf
         inpTemp      += inputPadding;
         outTemp      =  lineOutTemp = lineOutTemp + (rowSize + mPad);
     }
+ 
     
-    
+    /*
     forgettingFactor = true;
     if(forgettingFactor) {
         //extracting temporal decay
@@ -1469,7 +1538,7 @@ void mosaicThread::makeMosaic(ImageOf<yarp::sig::PixelMono>* iImageLeft, ImageOf
         }
         startTimer = Time::now();
     }
-    
+    */
     
     
     /*
@@ -1549,6 +1618,7 @@ void mosaicThread::onStop() {
     imageMonoInRight.interrupt();
     imagePortOut.interrupt();
     portionPort.interrupt();
+    anglePort.interrupt();
         
     imagePortOut.close();
     imagePortInLeft.close();
@@ -1556,5 +1626,6 @@ void mosaicThread::onStop() {
     imageMonoInLeft.close();
     imageMonoInLeft.close();
     portionPort.close();
+    anglePort.close();
 }
 
