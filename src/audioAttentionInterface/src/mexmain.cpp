@@ -47,11 +47,11 @@ void mexFunction(int nlhs,mxArray *plhs[],int nrhs,const mxArray *prhs[])
 
   // initialization
   yarp::os::Network yarp;
-  const mxArray *a_in_m, *b_in_m, *c_out_m;
+  const mxArray *a_in_m, *b_in_m, *c_in_m;
   const mxArray *d_out_m, *e_out_m;
   double *a;
   double *b, *c;
-  double *c, *d, *e;
+  double *d, *e;
   const mwSize *dims;
 
   //figure out dimensions
@@ -87,20 +87,24 @@ void mexFunction(int nlhs,mxArray *plhs[],int nrhs,const mxArray *prhs[])
   c_in_m = prhs[2];
   
   //associate pointers
-  b = mxGetPr(plhs[1]);
-  c = mxGetPr(plhs[2]);
+  b = mxGetPr(prhs[1]);
+  c = mxGetPr(prhs[2]);
 
   //extract string
   int buflen = (mxGetM(prhs[0]) * mxGetN(prhs[0])) + 1;  /* Get the length of the input string. */
-  char* input_buf = mxCalloc(buflen, sizeof(char));      /* Allocate memory for input and output strings. */
+  char* input_buf;
+  mexPrintf("the input string contains %d chars \n", buflen);
+  
+  input_buf = (char*) mxCalloc(buflen, sizeof(char));      /* Allocate memory for input and output strings. */
   /* Copy the string data from prhs[0] into a C string 
    * input_buf. */
-  status = mxGetString(prhs[0], input_buf, buflen);
+  bool status = mxGetString(prhs[0], input_buf, buflen);
   if (status != 0) {
     mexWarnMsgTxt("Not enough space. String is truncated.");
   }
-  mexPrint("Parameters %s %f %f", input_buf, *b, *c);
+  mexPrintf("Parameters %f %f %s \n",*b, *c, input_buf);
 
+  return;
   //******************************************************************************************************************************
 
   BufferedPort<Bottle> bufferPort;
@@ -148,16 +152,16 @@ void mexFunction(int nlhs,mxArray *plhs[],int nrhs,const mxArray *prhs[])
   return;
   */
   
-  if(!Network::connect()) {
-    mexPrintf("Error! Impossible to connect the port to the %s \n", receiverPortName );
+  if(!Network::connect("/audioAttentionInterface/feedback:o", "reader")) {
+    mexPrintf("Error! Impossible to connect the port to the %s \n", input_buf );
     return;
   }
   
-  Bottle* b = bufferPort.prepare();
-  b.clear();
-  b.addDouble(relativeAngle);
-  b.addDouble(associatedSaliency);
-  bufferPort.write();	
+  //Bottle* b = bufferPort.prepare();
+  //b.clear();
+  //b.addDouble(relativeAngle);
+  //b.addDouble(associatedSaliency);
+  //bufferPort.write();	
   	
   return;
 }
