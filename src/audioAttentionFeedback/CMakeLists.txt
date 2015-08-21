@@ -4,7 +4,7 @@
 
 cmake_minimum_required(VERSION 2.8)
 
-SET(PROJECTNAME audioAttentionInterface)
+SET(PROJECTNAME audioAttentionFeedback)
 #PROJECT(${PROJECTNAME})  #comment Rea
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
@@ -25,6 +25,16 @@ else()
 endif()
 
 
+
+#find_package(ICUB                   REQUIRED)  #comment Rea
+#find_package(Eigen3                 REQUIRED)
+#find_package(TinyXML                REQUIRED)
+#find_package(iDynTree               REQUIRED)
+#find_package(paramHelp              REQUIRED)
+#find_package(wholeBodyInterface     REQUIRED)
+#find_package(yarpWholeBodyInterface REQUIRED)
+
+
 #set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${YARP_MODULE_PATH})  #comment Rea
 #set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${ICUB_MODULE_PATH})  #comment Rea
 
@@ -41,6 +51,9 @@ if(NOT MSVC)
     option(MEXWHOLEBODYMODEL_ENABLE_RPATH "Enable RPATH installation" TRUE)
     mark_as_advanced(MEXWHOLEBODYMODEL_ENABLE_RPATH)
 endif(NOT MSVC)
+
+#find_package(YCM REQUIRED)  #comment Rea
+#include(YCMDefaultDirs)  #comment Rea
 
 #include(AddInstallRPATHSupport)
 #add_install_rpath_support(BIN_DIRS ${CMAKE_INSTALL_PREFIX}/bin
@@ -74,6 +87,13 @@ SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${ICUB_LINK_FLAGS}")
 
 #Include directories
 include_directories(${PROJECT_SOURCE_DIR}/include
+                    #${wholeBodyInterface_INCLUDE_DIRS}
+                    #${wholeBodyInterfaceIcub_INCLUDE_DIRS}
+                    #${iDynTree_INCLUDE_DIRS}
+                    #${paramHelp_INCLUDE_DIRS}
+                    #${skinDynLib_INCLUDE_DIRS}
+                    #${ctrlLib_INCLUDE_DIRS}
+                    #${EIGEN3_INCLUDE_DIR}
 		    )
 
 include_directories("${MATLAB_ROOT}/simulink/include")
@@ -128,8 +148,14 @@ elseif(WIN32)
 endif(WIN32)
 
 target_link_libraries(${PROJECTNAME}
-  ${YARP_LIBRARIES}
-  ${MATLAB_LIBRARIES}
+#${wholeBodyInterface_LIBRARIES}
+#${yarpWholeBodyInterface_LIBRARIES}
+#${paramHelp_LIBRARIES}
+#${iDynTree_LIBRARIES}
+${YARP_LIBRARIES}
+${MATLAB_LIBRARIES}
+#${skinDynLib_LIBRARIES}
+#${ctrlLib_LIBRARIES}
 )
 
 #set(simContext wbit)
