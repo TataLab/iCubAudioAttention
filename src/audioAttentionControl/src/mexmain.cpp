@@ -157,10 +157,10 @@ void mexFunction(int nlhs,mxArray *plhs[],int nrhs,const mxArray *prhs[])
     return;
   }
   
-  Bottle* b = bufferPort.prepare();
-  b.clear();
-  b.addDouble(*b);
-  b.addDouble(*c);
+  Bottle bottleSent = bufferPort.prepare();
+  bottleSent.clear();
+  bottleSent.addDouble(*b);
+  bottleSent.addDouble(*c);
   bufferPort.write();	
   	
   return;

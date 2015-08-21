@@ -54,8 +54,8 @@ void mexFunction(int nlhs,mxArray *plhs[],int nrhs,const mxArray *prhs[])
   double *c, *d, *e;
   const mwSize *dims;
 
-  BufferedPort<bottle> headAnglePort;
-  bufferPort.open("/audioAttentionFeedback/headAngle:i");
+  BufferedPort<Bottle> headAnglePort;
+  headAnglePort.open("/audioAttentionFeedback/headAngle:i");
  
   /*
   if(!Network::exists("/receiver")){
@@ -91,8 +91,8 @@ void mexFunction(int nlhs,mxArray *plhs[],int nrhs,const mxArray *prhs[])
   //associate pointers
   c = mxGetPr(plhs[0]);
   
-  Bottle *receivedBottle = bufferPort.read(true);
-  *c = receivedBottle.get(0).asDouble();  	  
+  Bottle *receivedBottle = headAnglePort.read(true);
+  *c = receivedBottle->get(0).asDouble();  	  
  
   return;
 }
