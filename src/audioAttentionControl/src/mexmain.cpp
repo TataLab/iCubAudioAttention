@@ -104,11 +104,9 @@ void mexFunction(int nlhs,mxArray *plhs[],int nrhs,const mxArray *prhs[])
   }
   mexPrintf("Parameters %f %f %s \n",*b, *c, input_buf);
 
-  return;
-  //******************************************************************************************************************************
-
+  
   BufferedPort<Bottle> bufferPort;
-  if(!bufferPort.open("/audioAttentionInterface/feedback:o")) {
+  if(!bufferPort.open("/audioAttentionControl/control:o")) {
     mexPrintf("Error: impossible to open the port.");
     return;
   } 
@@ -152,12 +150,12 @@ void mexFunction(int nlhs,mxArray *plhs[],int nrhs,const mxArray *prhs[])
   return;
   */
   
-  if(!Network::connect("/audioAttentionInterface/feedback:o", "reader")) {
+  if(!Network::connect("/audioAttentionControl/control:o", input_buf)) {
     mexPrintf("Error! Impossible to connect the port to the %s \n", input_buf );
     return;
   }
   
-  Bottle bottleSent = bufferPort.prepare();
+  Bottle& bottleSent = bufferPort.prepare();
   bottleSent.clear();
   bottleSent.addDouble(*b);
   bottleSent.addDouble(*c);

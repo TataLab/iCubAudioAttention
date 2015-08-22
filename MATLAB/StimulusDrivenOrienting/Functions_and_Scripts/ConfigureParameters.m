@@ -61,7 +61,7 @@ P.nPastFrames=floor(P.nPastSeconds/P.frameDuration_seconds);
 %%%%%
 %Stimulus driven attention can capture attention.  Set a threshold
 %%%%%
-P.attentionCaptureThreshold=0.6;
+P.attentionCaptureThreshold=100;
 
 %%%%%%
 %parameters for interacting with memory mapped audio

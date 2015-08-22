@@ -68,15 +68,17 @@ while(~done) %loop continuously
     audioOut.Data(1,1).audioD=newBuffer;
     oldBuffer=newBuffer;
     
-    if(mod(frameCounter,20)==0)
-        display(['Capturing audio from YARP.  Last sample written was ' num2str(frame(3,end))]);
-    end
-    
-    plot(audioOut.Data(1,1).audioD(1,:));
-    ylim([-1.0 1.0]);
-    drawnow;
-    
-    frameCounter=frameCounter+1;
+
+%     
+%     if(mod(frameCounter,20)==0)
+%         display(['Capturing audio from YARP.  Last sample written was ' num2str(frame(3,end))]);
+%     end
+%     
+%     plot(audioOut.Data(1,1).audioD(1,:));
+%     ylim([-1.0 1.0]);
+%     drawnow;
+%     
+%     frameCounter=frameCounter+1;
     
 %     %check
 %     frame=audioOut.Data(1,1).audioD;

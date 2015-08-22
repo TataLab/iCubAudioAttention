@@ -76,9 +76,11 @@ while(~done)
     audioSalienceR=sum(spectralPeakValuesR)*length(spectralPeakValuesR);
     audioSalience=(audioSalienceL+audioSalienceR)/2;
     
-    plot(lastFrameStamp,audioSalience,'o');
-    hold on;
-    drawnow;
+
+    
+%     plot(lastFrameStamp,audioSalience,'o');
+%     hold on;
+%     drawnow;
     
     
     frameL=frameL';
@@ -104,8 +106,11 @@ while(~done)
     if(audioSalience>P.attentionCaptureThreshold)
     selectedBeam=mode(thisFrameMaxima);
     selectedAngle=P.angles(selectedBeam);
+    %send the angle
+    audioAttentionControl('/mosaic/angle:i',selectedAngle*180/pi,1.0);
+    display(['sending ' num2str(selectedAngle*180/pi) ' to YARP']);
     end
-    
+%     
 %     plot(lastFrameStamp,audioSalience,'o');
 %     hold on;
 %     drawnow;
@@ -113,12 +118,14 @@ while(~done)
 %     [x,y] = pol2cart(selectedAngle,1); %convert angle and unit radius to cartesian
 %     compass(x,y);
 %     drawnow;
-%    
+   
+
     
     %grab audio for the next frame
     %don't worry about going too fast because GetNextFrame waits (but do
     %worry about going to slow)
     nextFrameStamp=lastFrameStamp+P.frameDuration_samples; %increment
+
     [frame]=GetNextFrame(P,nextFrameStamp); %blocks until the last sample in the input buffer is greater or equal to the sample you want.  Requires that we handle data here faster than it's written in.
 
     if(~isequal(nextFrameStamp,frame(3,end)))
@@ -126,6 +133,6 @@ while(~done)
     end
     
     lastFrameStamp=nextFrameStamp;
-    display('next frame');
+
     
 end
