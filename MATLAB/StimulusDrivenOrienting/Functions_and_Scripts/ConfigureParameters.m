@@ -25,7 +25,7 @@ P.requiredLag_frames=0; %it might be necessary in some cases to imposes a lag be
 %%%%%%%%%%%%%%%%
 %some parameters for localizing
 %%%%%%%%%%%%%
-P.nBands=15;
+P.nBands=25;
 P.nBeamsPerHemifield=floor( (P.D/P.c)*P.sampleRate )-1; %maximum lag in samples x2 (to sweep left and right of midline)
 P.nBeams=2*P.nBeamsPerHemifield+1; %+1 includes the centre beam 
 P.lags=(P.c/P.sampleRate).* (-P.nBeamsPerHemifield:P.nBeamsPerHemifield); %linear spaced distances corresponding to lags in seconds

@@ -7,7 +7,7 @@
 
 
 audioAttentionRoot='/Users/iCub/Documents/iCubAudioAttention'; %point to the root of the repository
-audioFileName=[audioAttentionRoot '/data/sounds/audioTest_right_to_left.wav'];
+audioFileName=[audioAttentionRoot '/data/sounds/speech_plus_fan_hard.wav'];
 [s,sampleRate]=audioread(audioFileName);
 s=s';  %easier to think in row vectors
 
@@ -61,7 +61,6 @@ while(readIndex + frameDuration_samples < sLength)  %until you reach the end of 
     frame(4,:)=sampleIndex*(1/sampleRate);  %when caputuring real-time audio from a robot you'll use the time stamps provided by the grabber
 
    
-    
     newBuffer=circshift(oldBuffer,[0 -frameDuration_samples]); %shift and wrap
     newBuffer(:,end-frameDuration_samples+1:end)=frame;  %append the most recent frame onto the buffer by overwritting the frame that got wrapped
 
@@ -70,22 +69,15 @@ while(readIndex + frameDuration_samples < sLength)  %until you reach the end of 
     audioOut.Data(1,1).audioD=newBuffer;
     oldBuffer=newBuffer; %store for the next frame
     
-    
-    %write the data into the memory mapped region 
-    memMapWriteIndex=(mod(frameCounter,numMemMapFrames)*frameDuration_samples+1); %keep track of which frame you're writting into.  Using modulus to "wrap" 
-
-    audioOut.Data(1,1).audioD(1,memMapWriteIndex:memMapWriteIndex+frameDuration_samples-1) = frameL;
-    audioOut.Data(1,1).audioD(2,memMapWriteIndex:memMapWriteIndex+frameDuration_samples-1) = frameR;
-    audioOut.Data(1,1).audioD(3,memMapWriteIndex:memMapWriteIndex+frameDuration_samples-1) = sampleStampVector;
-    audioOut.Data(1,1).audioD(4,memMapWriteIndex:memMapWriteIndex+frameDuration_samples-1) = timeStampVector;
 
     %incremement counters
     readIndex=readIndex+frameDuration_samples;
     frameCounter=frameCounter+1;
     
-%     plot(audioOut.Data(1,1).audioD(1,:));
-%     ylim([-1.0 1.0]);
-%     drawnow;
+    plot(oldBuffer(1,:));
+    %plot(audioOut.Data(1,1).audioD(1,:));
+    ylim([-1.0 1.0]);
+    drawnow;
 
     
     while(toc(t)<frameDuration_seconds)

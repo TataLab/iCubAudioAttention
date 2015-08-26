@@ -65,56 +65,56 @@ while(~done)
     end
     
     surf(pastDeltaAmp);
-    zlim([0 100]);
+    zlim([0 10]);
     drawnow;
     
     audioSalience= sum(spectralPeakValues) * length(spectralPeakValues); %this is the magical secret sauce that tells us how likely there is a new "voice-like" object in the scene
     %%%%end spectral salience
     
-    %%%%%Spatial Pre-processing****
-    %twist around to make audio signals into row vectors for beamforming
-    frameL=frameL';
-    frameR=frameR';
-
-    %beamformer
-    for i=1:P.nBands
-        thisBandL=frameL(i,:);
-        thisBandR=frameR(i,:);
-
-        thisFrameImage(i,:,:)=thisBandL(P.lIndex)+thisBandR(P.rIndex); %compute all the beams in one step = MATLAB is fast
-    end
-
-    %localize by find the angle with the most maxima
-    thisFrameRMS=rms(thisFrameImage,3); %find the peaksxbeams matrix of rms values
-    [~,thisFrameMaxima]=max(thisFrameRMS,[],2);
-    
-    
-    
-    %%%%%%  Selective Attention Stage *********
-    %select the modal beam
-    if(audioSalience>P.attentionCaptureThreshold)
-        selectedBeam=mode(thisFrameMaxima);
-        selectedAngle=P.angles(selectedBeam);
-        if (P.sendAngleToYarp==1)
-            %send the angle
-            audioAttentionControl('/mosaic/angle:i',selectedAngle*180/pi,1.0);
-            display(['sending ' num2str(selectedAngle*180/pi) ' to YARP']);
-        end
-    
-    end
-    
-
-    
-    %
-    %     plot(lastFrameStamp,audioSalience,'o');
-    %     hold on;
-    %     drawnow;
-    
-    %     [x,y] = pol2cart(selectedAngle,1); %convert angle and unit radius to cartesian
-    %     compass(x,y);
-    %     drawnow;
-    %
-    
+%     %%%%%Spatial Pre-processing****
+%     %twist around to make audio signals into row vectors for beamforming
+%     frameL=frameL';
+%     frameR=frameR';
+% 
+%     %beamformer
+%     for i=1:P.nBands
+%         thisBandL=frameL(i,:);
+%         thisBandR=frameR(i,:);
+% 
+%         thisFrameImage(i,:,:)=thisBandL(P.lIndex)+thisBandR(P.rIndex); %compute all the beams in one step = MATLAB is fast
+%     end
+% 
+%     %localize by find the angle with the most maxima
+%     thisFrameRMS=rms(thisFrameImage,3); %find the peaksxbeams matrix of rms values
+%     [~,thisFrameMaxima]=max(thisFrameRMS,[],2);
+%     
+%     
+%     
+%     %%%%%%  Selective Attention Stage *********
+%     %select the modal beam
+%     if(audioSalience>P.attentionCaptureThreshold)
+%         selectedBeam=mode(thisFrameMaxima);
+%         selectedAngle=P.angles(selectedBeam);
+%         if (P.sendAngleToYarp==1)
+%             %send the angle
+%             audioAttentionControl('/mosaic/angle:i',selectedAngle*180/pi,1.0);
+%             display(['sending ' num2str(selectedAngle*180/pi) ' to YARP']);
+%         end
+%     
+%     end
+%     
+% 
+%     
+%     %
+%     %     plot(lastFrameStamp,audioSalience,'o');
+%     %     hold on;
+%     %     drawnow;
+%     
+%     %     [x,y] = pol2cart(selectedAngle,1); %convert angle and unit radius to cartesian
+%     %     compass(x,y);
+%     %     drawnow;
+%     %
+%     
     
     %grab audio for the next frame
     %don't worry about going too fast because GetNextFrame waits (but do
