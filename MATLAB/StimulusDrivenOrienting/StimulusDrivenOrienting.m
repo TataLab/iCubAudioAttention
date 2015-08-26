@@ -1,4 +1,4 @@
-
+  
 %perform basic stimulus driven orienting to a salient sound
 
 display(['Running StimulusDrivenOrienting using code at: ' mfilename('fullpath')]);

@@ -6,8 +6,9 @@
 %different
 
 
-audioAttentionRoot='/Users/Matthew/Documents/Robotics/iCubAudioAttention'; %point to the root of the repository
-[s,sampleRate]=readwav([audioAttentionRoot '/data/sounds/audioTest_right_to_left.wav']);
+audioAttentionRoot='/Users/iCub/Documents/iCubAudioAttention'; %point to the root of the repository
+audioFileName=[audioAttentionRoot '/data/sounds/audioTest_right_to_left.wav'];
+[s,sampleRate]=audioread(audioFileName);
 s=s';  %easier to think in row vectors
 
 sLength=length(s);
