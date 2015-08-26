@@ -16,8 +16,9 @@ P_inL=zeros(8,P.nBands);
 P_inR=zeros(8,P.nBands);
 
 %matrices for holding previous frames of rms amplitudes
-pastAmpL=ones(P.nPastFrames,P.nBands).*.0001; %we have to seed this with some arbitrarily small numbers
-pastAmpR=ones(P.nPastFrames,P.nBands).*.0001; %we have to seed this with some arbitrarily small numbers
+
+pastAmp=ones(P.nPastFrames,P.nBands).*.0001; %we have to seed this with some arbitrarily small numbers
+pastDeltaAmp=zeros(P.nPastFrames,P.nBands);
 
 selectedBeam=1;
 selectedAngle=1;
@@ -26,6 +27,7 @@ selectedAngle=1;
 thisFrameImage=zeros(P.nBands,P.nBeams,P.frameDuration_samples); %it's only nBeamsPerHemi *2 long because we loose half the samples off either end (theoretically they're the last samples of the previous frame and the first samples of the frame that hasn't happend yet)
 
 maxBeamsIndices=zeros(P.nBands,1);
+frameCounter=1;
 
 done=0;
 while(~done)
@@ -41,47 +43,39 @@ while(~done)
     [frameR,P_outR,~,~,~]=gammatone_ciM2(frame(2,:),P_inR,P.sampleRate, P.cfs);
     P_inR=P_outR;
     
+    
+    %%%%%%Spectral Pre-processing*****
+    
     %compute the amplitude of each band
     amp_frameL=rms(frameL,1);
     amp_frameR=rms(frameR,1);
     
-    %compute the change in amplitude over some time
-    deltaAmp_frameL=(amp_frameL-mean(pastAmpL(:,1)))./mean(pastAmpL(:,1)); %try a scaled delta amplitude
-    deltaAmp_frameR=(amp_frameR-mean(pastAmpR(:,2)))./mean(pastAmpL(:,2)); %try a scaled delta amplitude
+    amp=(amp_frameL+amp_frameR)./2;  %collapse left and right channels - assume they have (nearly) identical spectra
+    deltaAmp=(amp-mean(pastAmp(:,1)))./mean(pastAmp(:,1));  %subtract the mean of the past spectral amplitude and divide by the mean of the past spectral amplitude
+    pastAmp=circshift(pastAmp,[1 0]); %push the stack down and wrap
+    pastAmp(1,:)=amp;  %overwrite the top of the stack
+    pastDeltaAmp=circshift(pastDeltaAmp,[1 0]);
+    pastDeltaAmp(1,:)=deltaAmp;
     
-    %shift the past values and update the past
-    pastAmpL=circshift(pastAmpL,[1 0]); %push the stack down and wrap
-    pastAmpR=circshift(pastAmpR,[1 0]);
-    pastAmpL(1,:)=amp_frameL; %overwrite the top of the stack
-    pastAmpR(1,:)=amp_frameR;
+    deltaAmp(deltaAmp<0)=0; %only deal with increments
+    [spectralPeakValues,spectralPeakIndices]=findpeaks(deltaAmp); %find the peak values and their indices in the spectrum 
     
-    %only deal with amplitude increments
-    deltaAmp_frameL(deltaAmp_frameL<0)=0;
-    deltaAmp_frameR(deltaAmp_frameR<0)=0;
-    
-    %find peaks in the spectra from the two channels
-    [spectralPeakValuesL,peaksL]=findpeaks(deltaAmp_frameL);
-    [spectralPeakValuesR,peaksR]=findpeaks(deltaAmp_frameR);
-    
- 
-    
-    %handle the not-so-impossible case of zero peaks
-    if(isempty(spectralPeakValuesL))
-        [spectralPeakValuesL,peaksL]=max(deltaAmp_frameL); %just use the single biggest peak
+    if(isempty(spectralPeakValues))
+        [spectralPeakValues,spectralPeakIndices]=max(deltaAmp); %just use the single largest value
     end
     
-    if(isempty(spectralPeakValuesR))
-        [spectralPeakValuesR,peaksR]=max(deltaAmp_frameR); %just use the single biggest peak
-    end
+    surf(pastDeltaAmp);
+    zlim([0 100]);
+    drawnow;
     
-    audioSalienceL=sum(spectralPeakValuesL)*length(spectralPeakValuesL);
-    audioSalienceR=sum(spectralPeakValuesR)*length(spectralPeakValuesR);
-    audioSalience=(audioSalienceL+audioSalienceR)/2;
+    audioSalience= sum(spectralPeakValues) * length(spectralPeakValues); %this is the magical secret sauce that tells us how likely there is a new "voice-like" object in the scene
+    %%%%end spectral salience
     
+    %%%%%Spatial Pre-processing****
+    %twist around to make audio signals into row vectors for beamforming
     frameL=frameL';
     frameR=frameR';
-   
-    
+
     %beamformer
     for i=1:P.nBands
         thisBandL=frameL(i,:);
@@ -90,7 +84,7 @@ while(~done)
         thisFrameImage(i,:,:)=thisBandL(P.lIndex)+thisBandR(P.rIndex); %compute all the beams in one step = MATLAB is fast
     end
 
-    %find the angle with the most maxima
+    %localize by find the angle with the most maxima
     thisFrameRMS=rms(thisFrameImage,3); %find the peaksxbeams matrix of rms values
     [~,thisFrameMaxima]=max(thisFrameRMS,[],2);
     
@@ -109,18 +103,18 @@ while(~done)
     
     end
     
-    toc(t);
-    
-%
-%     plot(lastFrameStamp,audioSalience,'o');
-%     hold on;
-%     drawnow;
-    
-%     [x,y] = pol2cart(selectedAngle,1); %convert angle and unit radius to cartesian
-%     compass(x,y);
-%     drawnow;
-%     
 
+    
+    %
+    %     plot(lastFrameStamp,audioSalience,'o');
+    %     hold on;
+    %     drawnow;
+    
+    %     [x,y] = pol2cart(selectedAngle,1); %convert angle and unit radius to cartesian
+    %     compass(x,y);
+    %     drawnow;
+    %
+    
     
     %grab audio for the next frame
     %don't worry about going too fast because GetNextFrame waits (but do
@@ -134,6 +128,6 @@ while(~done)
     end
     
     lastFrameStamp=nextFrameStamp;
-
+    frameCounter=frameCounter+1;
     
 end

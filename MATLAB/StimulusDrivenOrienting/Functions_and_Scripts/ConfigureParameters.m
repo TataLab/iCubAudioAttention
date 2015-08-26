@@ -55,7 +55,7 @@ P.rIndex(:,P.frameDuration_samples+1:end)=[]; %we can't use the region where it'
 %for computing delta spectrum (i.e. spectrotemporal changes) we need to
 %buffer frames over time.  Set up some parameters to control this
 %%%%%%%%%
-P.nPastSeconds = .5;  %in seconds; how much time over which to integrate previous events
+P.nPastSeconds = 2;  %in seconds; how much time over which to integrate previous events
 P.nPastFrames=floor(P.nPastSeconds/P.frameDuration_seconds);
 
 %%%%%
