@@ -5,7 +5,7 @@ function [ P ] = ConfigureParameters( ~ )
 
 display(['Setting up parameters for iCub Audio Attention using: ' mfilename('fullpath')]);
 
-P.sendAngleToYarp = 1;  %set to 1 to send angle over yarp network %remember to add yarp to the MATLAB java path:  javaaddpath('/Applications/yarp/MATLAB Java Classes/jyarp');
+P.sendAngleToYarp = 0;  %set to 1 to send angle over yarp network %remember to add yarp to the MATLAB java path:  javaaddpath('/Applications/yarp/MATLAB Java Classes/jyarp');
 P.audioAttentionRoot='/Users/iCub/Documents/iCubAudioAttention'; %point to the root of the repository
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -16,7 +16,7 @@ P.audioAttentionRoot='/Users/iCub/Documents/iCubAudioAttention'; %point to the r
 
 P.c=340.29;%define speed of sound in m/s
 P.D=0.145; %define distance between microphones in m
-P.sampleRate = 48000;
+P.sampleRate = 44100;
 
 P.frameDuration_samples = 2^12; %@48000 hz stereo 16-bit samples 10240 =  213 ms
 P.frameDuration_seconds = P.frameDuration_samples/P.sampleRate; 

@@ -32,7 +32,9 @@ while(~done)
     
 
     %%%%%%%    Pre-Attentive Stage    **********
-
+    
+    t=tic;
+    
     %filter into bands
     [frameL,P_outL,~,~,~]=gammatone_ciM2(frame(1,:),P_inL,P.sampleRate, P.cfs);
     P_inL=P_outL; %save last value to initialize next call of the filter
@@ -76,16 +78,9 @@ while(~done)
     audioSalienceR=sum(spectralPeakValuesR)*length(spectralPeakValuesR);
     audioSalience=(audioSalienceL+audioSalienceR)/2;
     
-
-    
-%     plot(lastFrameStamp,audioSalience,'o');
-%     hold on;
-%     drawnow;
-    
-    
     frameL=frameL';
     frameR=frameR';
-    
+   
     
     %beamformer
     for i=1:P.nBands
@@ -104,13 +99,19 @@ while(~done)
     %%%%%%  Selective Attention Stage *********
     %select the modal beam
     if(audioSalience>P.attentionCaptureThreshold)
-    selectedBeam=mode(thisFrameMaxima);
-    selectedAngle=P.angles(selectedBeam);
-    %send the angle
-    audioAttentionControl('/mosaic/angle:i',selectedAngle*180/pi,1.0);
-    display(['sending ' num2str(selectedAngle*180/pi) ' to YARP']);
+        selectedBeam=mode(thisFrameMaxima);
+        selectedAngle=P.angles(selectedBeam);
+        if (P.sendAngleToYarp==1)
+            %send the angle
+            audioAttentionControl('/mosaic/angle:i',selectedAngle*180/pi,1.0);
+            display(['sending ' num2str(selectedAngle*180/pi) ' to YARP']);
+        end
+    
     end
-%     
+    
+    toc(t);
+    
+%
 %     plot(lastFrameStamp,audioSalience,'o');
 %     hold on;
 %     drawnow;
@@ -118,7 +119,7 @@ while(~done)
 %     [x,y] = pol2cart(selectedAngle,1); %convert angle and unit radius to cartesian
 %     compass(x,y);
 %     drawnow;
-   
+%     
 
     
     %grab audio for the next frame

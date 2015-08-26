@@ -36,13 +36,14 @@ end
 
 audioOut  = memmapfile(AudioMemMapFilename, 'Writable', true, 'format',{'double' [4 audioMemMapSize] 'audioD'});
 
+%preallocate some memory
+frame=zeros(4,frameDuration_samples);
+oldBuffer=zeros(4,numMemMapFrames*frameDuration_samples); %to store the old buffer
+newBuffer=oldBuffer;
+
     
 readIndex=1;
 frameCounter=1;
-
-%pre allocate vectors to hold frame count and sample time stamps
-frameCountVector=ones(1,frameDuration_samples);
-timeStampVector=zeros(1,frameDuration_samples);
 
 
 while(readIndex + frameDuration_samples < sLength)  %until you reach the end of the file
@@ -52,13 +53,24 @@ while(readIndex + frameDuration_samples < sLength)  %until you reach the end of 
     sampleIndex=readIndex:readIndex+frameDuration_samples-1; %where to read out of the input file
     
     %read audio out of file
-    frameL=s(1,sampleIndex); %pull out the left and right channels
-    frameR=s(2,sampleIndex);
+    frame(1,:)=s(1,sampleIndex); %pull out the left and right channels
+    frame(2,:)=s(2,sampleIndex);
 
     %compute the two vectors of index data: time and sample number
-    sampleStampVector=sampleIndex;
-    timeStampVector=sampleIndex*(1/sampleRate);  %when caputuring real-time audio from a robot you'll use the time stamps provided by the grabber
+    frame(3,:)=sampleIndex;
+    frame(4,:)=sampleIndex*(1/sampleRate);  %when caputuring real-time audio from a robot you'll use the time stamps provided by the grabber
 
+   
+    
+    newBuffer=circshift(oldBuffer,[0 -frameDuration_samples]); %shift and wrap
+    newBuffer(:,end-frameDuration_samples+1:end)=frame;  %append the most recent frame onto the buffer by overwritting the frame that got wrapped
+
+    
+    %dump the frame into the memmapped region
+    audioOut.Data(1,1).audioD=newBuffer;
+    oldBuffer=newBuffer; %store for the next frame
+    
+    
     %write the data into the memory mapped region 
     memMapWriteIndex=(mod(frameCounter,numMemMapFrames)*frameDuration_samples+1); %keep track of which frame you're writting into.  Using modulus to "wrap" 
 
@@ -70,8 +82,12 @@ while(readIndex + frameDuration_samples < sLength)  %until you reach the end of 
     %incremement counters
     readIndex=readIndex+frameDuration_samples;
     frameCounter=frameCounter+1;
+    
+%     plot(audioOut.Data(1,1).audioD(1,:));
+%     ylim([-1.0 1.0]);
+%     drawnow;
 
-  
+    
     while(toc(t)<frameDuration_seconds)
         %spin
     end
