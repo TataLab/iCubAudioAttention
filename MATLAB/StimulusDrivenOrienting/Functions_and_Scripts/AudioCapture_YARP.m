@@ -4,24 +4,24 @@
 
 
 
-audioAttentionRoot='/Users/Matthew/Documents/Robotics/iCubAudioAttention'; %point to the root of the repository
+pStruct.audioAttentionRoot='/Users/Matthew/Documents/Robotics/iCubAudioAttention'; %point to the root of the repository
 
 %set up some parameters of the audio grabber.  Careful: some of this is
 %hard coded into the mex function.
-sampleRate=48000;
-frameDuration_samples = 4096;  %must match the settings in the mex function. should be integer multiple of the page size to keep memory access fast
+pStruct.sampleRate=48000;
+pStruct.frameDuration_samples = 4096;  %must match the settings in the mex function. should be integer multiple of the page size to keep memory access fast
 
-numMemMapFrames=10;
-audioMemMapSize = numMemMapFrames * frameDuration_samples;  %this is a tricky part of the code.  All other processes that want to memory map this audio will need to know how big it is.  They can get that info using dir().
+pStruct.numMemMapFrames=10;
+pStruct.audioMemMapSize = pStruct.numMemMapFrames * pStruct.frameDuration_samples;  %this is a tricky part of the code.  All other processes that want to memory map this audio will need to know how big it is.  They can get that info using dir().
 
 
 %prepare memory mapping
-AudioMemMapFilename=[audioAttentionRoot '/data/AudioMemMap.tmp'];
-display(['memory mapping file ' AudioMemMapFilename ' for audio data.']);
+pStruct.AudioMemMapFilename=[pStruct.audioAttentionRoot '/data/AudioMemMap.tmp'];
+display(['memory mapping file ' pStruct.AudioMemMapFilename ' for audio data.']);
 
 try
-tempData = zeros(4,audioMemMapSize); %2 audio channels, a counter channel, and a time stamp channel
-fileID=fopen(AudioMemMapFilename,'w');
+tempData = zeros(4,pStruct.audioMemMapSize); %2 audio channels, a counter channel, and a time stamp channel
+fileID=fopen(pStruct.AudioMemMapFilename,'w');
 fwrite(fileID,tempData,'double');
 fclose(fileID);
 ok=1;
@@ -30,10 +30,19 @@ catch % to not catch the error in a fancy way
     ok = 0;
 end
 
-audioOut  = memmapfile(AudioMemMapFilename, 'Writable', true, 'format',{'double' [4 audioMemMapSize] 'audioD'});
 
-oldBuffer=zeros(4,numMemMapFrames*frameDuration_samples); %to store the old buffer
+% %configure for noise nulling
+% pStruct.c=340.29;%define speed of sound in m/s
+% pStruct.D=0.145; %define distance between microphones in m
+% pStruct.nLagsPerHemifield=floor( (pStruct.D/pStruct.c)*pStruct.sampleRate )-1; %maximum lag in samples x2 (to sweep left and right of midline)
+% pStruct.noiseLag=FindNoiseLag(pStruct);
 
+
+
+%get ready to stream audio into the shared memory
+audioOut  = memmapfile(pStruct.AudioMemMapFilename, 'Writable', true, 'format',{'double' [4 pStruct.audioMemMapSize] 'audioD'});
+
+oldBuffer=zeros(4,pStruct.numMemMapFrames*pStruct.frameDuration_samples); %to store the old buffer
 previousLastSample=0;
 previousLastSampleTime=0;
 
@@ -61,8 +70,12 @@ while(~done) %loop continuously
     
     [frame]=audioCapture;  %call into YARP through the mex code
     
+    [Pxx,freqs]=periodogram(frame(1,:),[],linspace(50,10000,100),pStruct.sampleRate,'one-sided');
+    plot(freqs,Pxx);
+    drawnow;
+    
     %do a quick check that we haven't gone off track
-    if(frame(3,end)-previousLastSample~=frameDuration_samples && previousLastSample~=0)
+    if(frame(3,end)-previousLastSample~=pStruct.frameDuration_samples && previousLastSample~=0)
         display('problems....frames might be getting out of sequence');
     end
     
@@ -71,8 +84,8 @@ while(~done) %loop continuously
     previousLastSample=frame(3,end);
 %     previousLastSampleTime=frame(4,end);
     
-    newBuffer=circshift(oldBuffer,[0 -frameDuration_samples]); %shift and wrap
-    newBuffer(:,end-frameDuration_samples+1:end)=frame;  %append the most recent frame onto the buffer by overwritting the frame that got wrapped
+    newBuffer=circshift(oldBuffer,[0 -pStruct.frameDuration_samples]); %shift and wrap
+    newBuffer(:,end-pStruct.frameDuration_samples+1:end)=frame;  %append the most recent frame onto the buffer by overwritting the frame that got wrapped
     
     
     %dump the frame into the memmapped region
