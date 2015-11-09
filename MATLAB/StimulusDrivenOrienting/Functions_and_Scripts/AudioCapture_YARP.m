@@ -34,6 +34,8 @@ audioOut  = memmapfile(AudioMemMapFilename, 'Writable', true, 'format',{'double'
 
 oldBuffer=zeros(4,numMemMapFrames*frameDuration_samples); %to store the old buffer
 
+previousLastSample=0;
+previousLastSampleTime=0;
 
 frameCounter=1;
 done=0;
@@ -59,30 +61,26 @@ while(~done) %loop continuously
     
     [frame]=audioCapture;  %call into YARP through the mex code
     
+    %do a quick check that we haven't gone off track
+    if(frame(3,end)-previousLastSample~=frameDuration_samples && previousLastSample~=0)
+        display('problems....frames might be getting out of sequence');
+    end
+    
+%     display(frame(4,end)-previousLastSampleTime);
+    
+    previousLastSample=frame(3,end);
+    previousLastSampleTime=frame(4,end);
     
     newBuffer=circshift(oldBuffer,[0 -frameDuration_samples]); %shift and wrap
     newBuffer(:,end-frameDuration_samples+1:end)=frame;  %append the most recent frame onto the buffer by overwritting the frame that got wrapped
-
+    
     
     %dump the frame into the memmapped region
     audioOut.Data(1,1).audioD=newBuffer;
     oldBuffer=newBuffer;
-    
-
-%     
-%     if(mod(frameCounter,20)==0)
-%         display(['Capturing audio from YARP.  Last sample written was ' num2str(frame(3,end))]);
-%     end
-%     
+%  
 %     plot(audioOut.Data(1,1).audioD(1,:));
 %     ylim([-1.0 1.0]);
 %     drawnow;
-%     
-%     frameCounter=frameCounter+1;
-    
-%     %check
-%     frame=audioOut.Data(1,1).audioD;
-%     plot(frame(1,:));
-%     drawnow;
-%     
+
 end
