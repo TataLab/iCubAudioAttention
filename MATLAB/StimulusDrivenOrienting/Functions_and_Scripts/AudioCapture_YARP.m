@@ -69,7 +69,7 @@ while(~done) %loop continuously
 %     display(frame(4,end)-previousLastSampleTime);
     
     previousLastSample=frame(3,end);
-    previousLastSampleTime=frame(4,end);
+%     previousLastSampleTime=frame(4,end);
     
     newBuffer=circshift(oldBuffer,[0 -frameDuration_samples]); %shift and wrap
     newBuffer(:,end-frameDuration_samples+1:end)=frame;  %append the most recent frame onto the buffer by overwritting the frame that got wrapped
