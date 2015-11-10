@@ -31,6 +31,12 @@ catch % to not catch the error in a fancy way
 end
 
 
+%configure for noise nulling
+pStruct.c=340.29;%define speed of sound in m/s
+pStruct.D=0.145; %define distance between microphones in m
+pStruct.nLagsPerHemifield=floor( (pStruct.D/pStruct.c)*pStruct.sampleRate )-1; %maximum lag in samples x2 (to sweep left and right of midline)
+pStruct.noiseLag=FindNoiseLag(pStruct);
+
 %get ready to stream audio into the shared memory
 audioOut  = memmapfile(pStruct.AudioMemMapFilename, 'Writable', true, 'format',{'double' [4 pStruct.audioMemMapSize] 'audioD'});
 
@@ -61,7 +67,6 @@ while(~done) %loop continuously
     %fully captured.
     
     [frame]=audioCapture;  %call into YARP through the mex code
-   
     
     %do a quick check that we haven't gone off track
     if(frame(3,end)-previousLastSample~=pStruct.frameDuration_samples && previousLastSample~=0)
@@ -81,8 +86,8 @@ while(~done) %loop continuously
     audioOut.Data(1,1).audioD=newBuffer;
     oldBuffer=newBuffer;
 %  
-%     plot(audioOut.Data(1,1).audioD(1,:));
-%     ylim([-1.0 1.0]);
-%     drawnow;
+    plot(audioOut.Data(1,1).audioD(1,:));
+    ylim([-1.0 1.0]);
+    drawnow;
 
 end

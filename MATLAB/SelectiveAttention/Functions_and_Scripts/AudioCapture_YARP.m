@@ -30,7 +30,6 @@ catch % to not catch the error in a fancy way
     ok = 0;
 end
 
-
 %get ready to stream audio into the shared memory
 audioOut  = memmapfile(pStruct.AudioMemMapFilename, 'Writable', true, 'format',{'double' [4 pStruct.audioMemMapSize] 'audioD'});
 
@@ -61,17 +60,14 @@ while(~done) %loop continuously
     %fully captured.
     
     [frame]=audioCapture;  %call into YARP through the mex code
-   
     
     %do a quick check that we haven't gone off track
     if(frame(3,end)-previousLastSample~=pStruct.frameDuration_samples && previousLastSample~=0)
         display('problems....frames might be getting out of sequence');
     end
     
-%     display(frame(4,end)-previousLastSampleTime);
     
     previousLastSample=frame(3,end);
-%     previousLastSampleTime=frame(4,end);
     
     newBuffer=circshift(oldBuffer,[0 -pStruct.frameDuration_samples]); %shift and wrap
     newBuffer(:,end-pStruct.frameDuration_samples+1:end)=frame;  %append the most recent frame onto the buffer by overwritting the frame that got wrapped
