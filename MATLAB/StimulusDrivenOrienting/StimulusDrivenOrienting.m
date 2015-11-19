@@ -2,6 +2,7 @@
 %perform basic stimulus driven orienting to a salient sound
 
 display(['Running StimulusDrivenOrienting using code at: ' mfilename('fullpath')]);
+addpath('/Users/Matthew/Documents/Robotics/iCubAudioAttention/MATLAB/StimulusDrivenOrienting/Functions_and_Scripts');
 
 %perform initialization and setup;  get back a struct with all the settings
 %we'll need
@@ -24,7 +25,7 @@ selectedBeam=1;
 selectedAngle=1;
 
 %get some variables ready for the output of the beamformer stage
-thisFrameImage=zeros(P.nBands,P.nBeams,P.frameDuration_samples); %it's only nBeamsPerHemi *2 long because we loose half the samples off either end (theoretically they're the last samples of the previous frame and the first samples of the frame that hasn't happend yet)
+thisFrameImage=zeros(P.nBands,P.nBeams,P.frameDuration_samples+2*P.frameOverlap); %it's only nBeamsPerHemi *2 long because we loose half the samples off either end (theoretically they're the last samples of the previous frame and the first samples of the frame that hasn't happend yet)
 
 maxBeamsIndices=zeros(P.nBands,1);
 frameCounter=1;
@@ -32,16 +33,20 @@ frameCounter=1;
 done=0;
 while(~done)
     
-
-    %%%%%%%    Pre-Attentive Stage    **********
-    
     t=tic;
     
-    %filter into bands
-    [frameL,P_outL,~,~,~]=gammatone_ciM2(frame(1,:),P_inL,P.sampleRate, P.cfs);
-    P_inL=P_outL; %save last value to initialize next call of the filter
-    [frameR,P_outR,~,~,~]=gammatone_ciM2(frame(2,:),P_inR,P.sampleRate, P.cfs);
-    P_inR=P_outR;
+    %this reads output of the filterbank streamed by AudioCaptureFilterBank_YARP or
+    %AudioCaptureFilterBank_PreRecorded
+    frameL=P.audioInL.Data(1,1).audioD(1:P.nBands,end-(P.frameDuration_samples+2*P.frameOverlap)+1:end); %note the overlap.  This is so that we can run beamformer and extract exactly frameDuration_samples from each frame by leaving off the tails.  Unnecessary unless you want to concatenate frames for output 
+    frameR=P.audioInR.Data(1,1).audioD(1:P.nBands,end-(P.frameDuration_samples+2*P.frameOverlap)+1:end);
+
+
+    frameL=frameL'; %the transpose of confusion
+    frameR=frameR';
+    
+    %%%%%%%    Pre-Attentive Stage    **********
+    
+  
     
     
     %%%%%%Spectral Pre-processing*****
@@ -64,45 +69,63 @@ while(~done)
         [spectralPeakValues,spectralPeakIndices]=max(deltaAmp); %just use the single largest value
     end
     
-    surf(pastDeltaAmp);
-    zlim([0 10]);
-    drawnow;
+
     
     audioSalience= sum(spectralPeakValues) * length(spectralPeakValues); %this is the magical secret sauce that tells us how likely there is a new "voice-like" object in the scene
+    
+%     plot(frameCounter,audioSalience,'o');
+%     hold on;
+%     drawnow;
+    
+    
     %%%%end spectral salience
     
 %     %%%%%Spatial Pre-processing****
 %     %twist around to make audio signals into row vectors for beamforming
-%     frameL=frameL';
-%     frameR=frameR';
-% 
-%     %beamformer
-%     for i=1:P.nBands
-%         thisBandL=frameL(i,:);
-%         thisBandR=frameR(i,:);
-% 
-%         thisFrameImage(i,:,:)=thisBandL(P.lIndex)+thisBandR(P.rIndex); %compute all the beams in one step = MATLAB is fast
-%     end
-% 
+    frameL=frameL';
+    frameR=frameR';
+
+%   %this is exactly a delay-and-sum beamformer
+    for bandCounter=1:P.nBands
+        
+        thisBandL=frameL(bandCounter,:);
+        thisBandR=frameR(bandCounter,:);
+        
+        beamCounter=1;
+        for b=-P.nBeamsPerHemifield:P.nBeamsPerHemifield
+            tempR=circshift(thisBandR,[0 b]); %shift through each lag
+            thisFrameImage(bandCounter,beamCounter,:)=thisBandL+tempR; %add the shifted right channnel to the unshifted left channel
+            beamCounter=beamCounter+1;
+            
+        end
+    
+    end
+    
 %     %localize by find the angle with the most maxima
-%     thisFrameRMS=rms(thisFrameImage,3); %find the peaksxbeams matrix of rms values
-%     [~,thisFrameMaxima]=max(thisFrameRMS,[],2);
-%     
-%     
-%     
-%     %%%%%%  Selective Attention Stage *********
-%     %select the modal beam
-%     if(audioSalience>P.attentionCaptureThreshold)
-%         selectedBeam=mode(thisFrameMaxima);
-%         selectedAngle=P.angles(selectedBeam);
-%         if (P.sendAngleToYarp==1)
-%             %send the angle
-%             audioAttentionControl('/mosaic/angle:i',selectedAngle*180/pi,1.0);
-%             display(['sending ' num2str(selectedAngle*180/pi) ' to YARP']);
-%         end
-%     
-%     end
-%     
+    thisFrameRMS=rms(thisFrameImage,3); %find the peaksxbeams matrix of rms values
+    [~,thisFrameMaxima]=max(thisFrameRMS,[],2);
+
+    
+   
+    
+    
+%     P.attentionCaptureThreshold=0; %for testing
+    %%%%%%  Selective Attention Stage *********
+    %select the modal beam
+    if(audioSalience>P.attentionCaptureThreshold)
+        selectedBeam=mode(thisFrameMaxima);
+        selectedAngle=P.angles(selectedBeam);
+        if (P.sendAngleToYarp==1)
+            %send the angle
+            audioAttentionControl('/mosaic/angle:i',selectedAngle*180/pi,1.0);
+            display(['sending ' num2str(selectedAngle*180/pi) ' to YARP']);
+        else
+            display(['selected angle: ' num2str(selectedAngle*180/pi)]);
+        end
+        
+    
+    end
+    
 % 
 %     
 %     %
@@ -116,18 +139,16 @@ while(~done)
 %     %
 %     
     
-    %grab audio for the next frame
-    %don't worry about going too fast because GetNextFrame waits (but do
-    %worry about going to slow)
+    %increment for next frame
     nextFrameStamp=lastFrameStamp+P.frameDuration_samples; %increment
-
-    [frame]=GetNextFrame(P,nextFrameStamp); %blocks until the last sample in the input buffer is greater or equal to the sample you want.  Requires that we handle data here faster than it's written in.
-
-    if(~isequal(nextFrameStamp,frame(3,end)))
-        display([' expected frame to end at sample ' num2str(nextFrameStamp) ' but I was ' num2str(frame(3,end) - nextFrameStamp) ' samples behind']);
-    end
-    
     lastFrameStamp=nextFrameStamp;
     frameCounter=frameCounter+1;
+    
+    while(P.audioInL.Data(1,1).audioD(end-1,end)<nextFrameStamp)
+        %spin until the next frame has been written into the buffer
+    end
+    
+    
+
     
 end

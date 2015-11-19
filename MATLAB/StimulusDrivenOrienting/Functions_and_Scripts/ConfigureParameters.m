@@ -6,7 +6,7 @@ function [ P ] = ConfigureParameters( ~ )
 display(['Setting up parameters for iCub Audio Attention using: ' mfilename('fullpath')]);
 
 P.sendAngleToYarp = 0;  %set to 1 to send angle over yarp network %remember to add yarp to the MATLAB java path:  javaaddpath('/Applications/yarp/MATLAB Java Classes/jyarp');
-P.audioAttentionRoot='/Users/iCub/Documents/iCubAudioAttention'; %point to the root of the repository
+P.audioAttentionRoot='~/Documents/Robotics/iCubAudioAttention'; %point to the root of the repository
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %set up some timing parameters regarding reading audio
@@ -16,7 +16,7 @@ P.audioAttentionRoot='/Users/iCub/Documents/iCubAudioAttention'; %point to the r
 
 P.c=340.29;%define speed of sound in m/s
 P.D=0.145; %define distance between microphones in m
-P.sampleRate = 44100;
+P.sampleRate = 48000;
 
 P.frameDuration_samples = 2^12; %@48000 hz stereo 16-bit samples 10240 =  213 ms
 P.frameDuration_seconds = P.frameDuration_samples/P.sampleRate; 
@@ -25,7 +25,7 @@ P.requiredLag_frames=0; %it might be necessary in some cases to imposes a lag be
 %%%%%%%%%%%%%%%%
 %some parameters for localizing
 %%%%%%%%%%%%%
-P.nBands=25;
+P.nBands=50;
 P.nBeamsPerHemifield=floor( (P.D/P.c)*P.sampleRate )-1; %maximum lag in samples x2 (to sweep left and right of midline)
 P.nBeams=2*P.nBeamsPerHemifield+1; %+1 includes the centre beam 
 P.lags=(P.c/P.sampleRate).* (-P.nBeamsPerHemifield:P.nBeamsPerHemifield); %linear spaced distances corresponding to lags in seconds
@@ -35,18 +35,19 @@ P.high_cf=5000;
 P.cfs = MakeErbCFs2(P.low_cf,P.high_cf,P.nBands);
 P.frameOverlap = P.nBeamsPerHemifield;  %this gets a bit confusing: we need to pull enough data so we can run beamformer lags *past* the end of each frame
 P.sizeFramePlusOverlap=P.frameDuration_samples+(P.frameOverlap*2); %this is the total size of the chunk of data we need to pull out of the buffer each time we read it
-%for speed and elegance, prebuild indices
-%the left channel indices
-lIndex=(P.frameOverlap+1):(P.frameOverlap+P.frameDuration_samples);
-P.lIndex=repmat(lIndex,[P.nBeams 1]);
-%now the right channel indices
-rIndex=1:P.frameDuration_samples + (2 * P.frameOverlap); %the extra 2*nBeamsPerHemifield accounts for the overlap between the frames
-P.rIndex=repmat(rIndex,[P.nBeams 1]);
-for i=2:P.nBeams
-    P.rIndex(i,:)=circshift(P.rIndex(i,:),[0 -(i-1)]); %shift each row 1 lag
-end
 
-P.rIndex(:,P.frameDuration_samples+1:end)=[]; %we can't use the region where it's been wrapped
+
+% %for speed and elegance, you could prebuild indices
+% %the left channel indices
+% lIndex=(P.frameOverlap+1):(P.frameOverlap+P.frameDuration_samples);
+% P.lIndex=repmat(lIndex,[P.nBeams 1]);
+% %now the right channel indices
+% rIndex=1:P.frameDuration_samples + (2 * P.frameOverlap); %the extra 2*nBeamsPerHemifield accounts for the overlap between the frames
+% P.rIndex=repmat(rIndex,[P.nBeams 1]);
+% for i=2:P.nBeams
+%     P.rIndex(i,:)=circshift(P.rIndex(i,:),[0 -(i-1)]); %shift each row 1 lag
+% end
+% P.rIndex(:,P.frameDuration_samples+1:end)=[]; %we can't use the region where it's been wrapped
 
 
 
@@ -55,13 +56,13 @@ P.rIndex(:,P.frameDuration_samples+1:end)=[]; %we can't use the region where it'
 %for computing delta spectrum (i.e. spectrotemporal changes) we need to
 %buffer frames over time.  Set up some parameters to control this
 %%%%%%%%%
-P.nPastSeconds = 2;  %in seconds; how much time over which to integrate previous events
+P.nPastSeconds = 1;  %in seconds; how much time over which to integrate previous events
 P.nPastFrames=floor(P.nPastSeconds/P.frameDuration_seconds);
 
 %%%%%
 %Stimulus driven attention can capture attention.  Set a threshold
 %%%%%
-P.attentionCaptureThreshold=100;
+P.attentionCaptureThreshold=2;
 
 %%%%%%
 %parameters for interacting with memory mapped audio
@@ -72,5 +73,18 @@ P.bufferSize_bytes = f.bytes; %the  buffer size is determined by AudioCapture_YA
 P.bufferSize_samples = P.bufferSize_bytes / (8*4); %each sample is a 4 x 64-bit column (two audio data samples, sequence and time)
 
 P.audioIn  = memmapfile(memMapFileName, 'Writable', false, 'format',{'double' [4 P.bufferSize_samples] 'audioD'});
+
+%for reading left and right pre-filtered audio
+memMapFileNameL=[P.audioAttentionRoot '/data/AudioMemMapFilterL.tmp'];
+memMapFileNameR=[P.audioAttentionRoot '/data/AudioMemMapFilterR.tmp'];
+
+f=dir(memMapFileNameL);
+P.bufferSize_bytes = f.bytes; %the  buffer size is determined by AudioCapture_YARP.  Frames on that side are hard coded to be 4096 samples.  There are 4 rows by 4096 doubles x some number of frames in the  buffer.
+P.bufferSize_samples = P.bufferSize_bytes / (8*(P.nBands+2)); %each sample is a P.nbands+2 x 64-bit column (nBands audio data samples, sequence and time)
+
+P.audioInL  = memmapfile(memMapFileNameL, 'Writable', false, 'format',{'double' [P.nBands+2 P.bufferSize_samples] 'audioD'});
+P.audioInR  = memmapfile(memMapFileNameR, 'Writable', false, 'format',{'double' [P.nBands+2 P.bufferSize_samples] 'audioD'});
+
+
 end
 
