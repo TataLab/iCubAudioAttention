@@ -62,4 +62,4 @@ display(['recording that audio took ' num2str(toc(t)) ' seconds.  It should have
 %scale the audio so it runs between -1 and 1
 recordedAudio=recordedAudio./max(max(abs(recordedAudio)));
 
-
+audiowrite('test.wav',recordedAudio',sampleRate);
