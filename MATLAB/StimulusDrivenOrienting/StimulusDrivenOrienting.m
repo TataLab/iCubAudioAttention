@@ -35,10 +35,11 @@ while(~done)
     
     t=tic;
     
+    
     %this reads output of the filterbank streamed by AudioCaptureFilterBank_YARP or
     %AudioCaptureFilterBank_PreRecorded
-    frameL=P.audioInL.Data(1,1).audioD(1:P.nBands,end-(P.frameDuration_samples+2*P.frameOverlap)+1:end); %note the overlap.  This is so that we can run beamformer and extract exactly frameDuration_samples from each frame by leaving off the tails.  Unnecessary unless you want to concatenate frames for output 
-    frameR=P.audioInR.Data(1,1).audioD(1:P.nBands,end-(P.frameDuration_samples+2*P.frameOverlap)+1:end);
+    frameL=P.audioIn.Data(1,1).audioD(4,end-(P.frameDuration_samples+2*P.frameOverlap)+1:end); %note the overlap.  This is so that we can run beamformer and extract exactly frameDuration_samples from each frame by leaving off the tails.  Unnecessary unless you want to concatenate frames for output 
+    frameR=P.audioIn.Data(1,1).audioD(4,end-(P.frameDuration_samples+2*P.frameOverlap)+1:end);
 
 
     frameL=frameL'; %the transpose of confusion
@@ -51,9 +52,20 @@ while(~done)
     
     %%%%%%Spectral Pre-processing*****
     
+
+    
+    
+    %decompose each channle using a gammatone filterbank
+    %and stream out the filtered frames into two seperate files
+    [fFrameL,P_outL,~,~,~]=gammatonePhase(frame(1,:),P_inL,P.sampleRate, P.cfs);
+    P_inL=P_outL; %save last value to initialize next call of the filter
+    [fFrameR,P_outR,~,~,~]=gammatonePhase(frame(2,:),P_inR,P.sampleRate, P.cfs);
+    P_inR=P_outR;
+    
+    
     %compute the amplitude of each band
-    amp_frameL=rms(frameL,1);
-    amp_frameR=rms(frameR,1);
+    amp_frameL=rms(fFrameL,1);
+    amp_frameR=rms(fFrameR,1);
     
     amp=(amp_frameL+amp_frameR)./2;  %collapse left and right channels - assume they have (nearly) identical spectra
     deltaAmp=(amp-mean(pastAmp(:,1)))./mean(pastAmp(:,1));  %subtract the mean of the past spectral amplitude and divide by the mean of the past spectral amplitude
@@ -73,23 +85,23 @@ while(~done)
     
     audioSalience= sum(spectralPeakValues) * length(spectralPeakValues); %this is the magical secret sauce that tells us how likely there is a new "voice-like" object in the scene
     
-%     plot(frameCounter,audioSalience,'o');
-%     hold on;
-%     drawnow;
+    plot(frameCounter,audioSalience,'o');
+    hold on;
+    drawnow;
     
     
     %%%%end spectral salience
     
 %     %%%%%Spatial Pre-processing****
 %     %twist around to make audio signals into row vectors for beamforming
-    frameL=frameL';
-    frameR=frameR';
+    fFrameL=fFrameL';
+    fFrameR=fFrameR';
 
-%   %this is exactly a delay-and-sum beamformer
+%   %this is exactly a bank of delay-and-sum beamformers
     for bandCounter=1:P.nBands
         
-        thisBandL=frameL(bandCounter,:);
-        thisBandR=frameR(bandCounter,:);
+        thisBandL=fFrameL(bandCounter,:);
+        thisBandR=fFrameR(bandCounter,:);
         
         beamCounter=1;
         for b=-P.nBeamsPerHemifield:P.nBeamsPerHemifield
@@ -104,10 +116,7 @@ while(~done)
 %     %localize by find the angle with the most maxima
     thisFrameRMS=rms(thisFrameImage,3); %find the peaksxbeams matrix of rms values
     [~,thisFrameMaxima]=max(thisFrameRMS,[],2);
-
-    
-   
-    
+  
     
 %     P.attentionCaptureThreshold=0; %for testing
     %%%%%%  Selective Attention Stage *********
@@ -144,7 +153,7 @@ while(~done)
     lastFrameStamp=nextFrameStamp;
     frameCounter=frameCounter+1;
     
-    while(P.audioInL.Data(1,1).audioD(end-1,end)<nextFrameStamp)
+    while(P.audioIn.Data(1,1).audioD(end-1,end)<nextFrameStamp)
         %spin until the next frame has been written into the buffer
     end
     

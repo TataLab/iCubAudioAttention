@@ -16,14 +16,14 @@
 
 
 frameSize=4096;  
-sampleRate=48000;
+sampleRate=44100;
 
 %%%%%%
 %parameters for interacting with memory mapped audio
 %%%%%
 memMapFileName='/Users/Matthew/Documents/Robotics/iCubAudioAttention/data/AudioMemMap.tmp';
 f=dir(memMapFileName);
-bufferSize_bytes = f.bytes; %the  buffer size is determined by AudioCapture_YARP.  Frames on that side are hard coded to be 4096 samples.  There are 4 rows by 4096 doubles x some number of frames in the  buffer.
+bufferSize_bytes = f.bytes; %the  buffer size is determined by AudioCapture_YARP or AudioCapture_PreRecorded.  Frames on that side are hard coded to be 4096 samples.  There are 4 rows by 4096 doubles x some number of frames in the  buffer.
 bufferSize_samples = bufferSize_bytes / (8*4); %each sample is a 4 x 64-bit column (two audio data samples, sequence and time)
 audioIn  = memmapfile(memMapFileName, 'Writable', false, 'format',{'double' [4 bufferSize_samples] 'audioD'});
 
