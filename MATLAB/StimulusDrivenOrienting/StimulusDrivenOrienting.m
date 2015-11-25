@@ -21,6 +21,12 @@ P_inR=zeros(8,P.nBands);
 pastAmp=ones(P.nPastFrames,P.nBands).*.0001; %we have to seed this with some arbitrarily small numbers
 pastDeltaAmp=zeros(P.nPastFrames,P.nBands);
 
+%Experimental Object handler
+sObj.angle=0; %angle to sound object in degrees
+sObj.onsetTime=tic; %time stamp when object was registered
+sObj.salience=1; %spectral salience which changes over time
+sObj.selected=0; %flag if selected or not
+
 selectedBeam=1;
 selectedAngle=1;
 
@@ -30,6 +36,7 @@ thisFrameImage=zeros(P.nBands,P.nBeams,P.frameDuration_samples+2*P.frameOverlap)
 maxBeamsIndices=zeros(P.nBands,1);
 frameCounter=1;
 
+
 done=0;
 while(~done)
     
@@ -38,12 +45,11 @@ while(~done)
     
     %this reads output of the filterbank streamed by AudioCaptureFilterBank_YARP or
     %AudioCaptureFilterBank_PreRecorded
-    frameL=P.audioIn.Data(1,1).audioD(4,end-(P.frameDuration_samples+2*P.frameOverlap)+1:end); %note the overlap.  This is so that we can run beamformer and extract exactly frameDuration_samples from each frame by leaving off the tails.  Unnecessary unless you want to concatenate frames for output 
-    frameR=P.audioIn.Data(1,1).audioD(4,end-(P.frameDuration_samples+2*P.frameOverlap)+1:end);
+    frame=P.audioIn.Data(1,1).audioD(:,end-(P.frameDuration_samples+2*P.frameOverlap)+1:end); %note the overlap.  This is so that we can run beamformer and extract exactly frameDuration_samples from each frame by leaving off the tails.  Unnecessary unless you want to concatenate frames for output 
 
 
-    frameL=frameL'; %the transpose of confusion
-    frameR=frameR';
+    frameL=frame(1,:); %the transpose of confusion
+    frameR=frame(2,:);
     
     %%%%%%%    Pre-Attentive Stage    **********
     
@@ -51,15 +57,12 @@ while(~done)
     
     
     %%%%%%Spectral Pre-processing*****
-    
-
-    
-    
+  
     %decompose each channle using a gammatone filterbank
     %and stream out the filtered frames into two seperate files
-    [fFrameL,P_outL,~,~,~]=gammatonePhase(frame(1,:),P_inL,P.sampleRate, P.cfs);
+    [fFrameL,P_outL,~,~,~]=gammatone_ciM2(frame(1,:),P_inL,P.sampleRate, P.cfs);
     P_inL=P_outL; %save last value to initialize next call of the filter
-    [fFrameR,P_outR,~,~,~]=gammatonePhase(frame(2,:),P_inR,P.sampleRate, P.cfs);
+    [fFrameR,P_outR,~,~,~]=gammatone_ciM2(frame(2,:),P_inR,P.sampleRate, P.cfs);
     P_inR=P_outR;
     
     
@@ -85,10 +88,12 @@ while(~done)
     
     audioSalience= sum(spectralPeakValues) * length(spectralPeakValues); %this is the magical secret sauce that tells us how likely there is a new "voice-like" object in the scene
     
-    plot(frameCounter,audioSalience,'o');
-    hold on;
-    drawnow;
-    
+% 
+%     
+%     plot(frameCounter,audioSalience,'o');
+%     hold on;
+%     drawnow;
+%     
     
     %%%%end spectral salience
     
@@ -113,40 +118,48 @@ while(~done)
     
     end
     
-%     %localize by find the angle with the most maxima
+     %localize by find the angle with the most maxima
     thisFrameRMS=rms(thisFrameImage,3); %find the peaksxbeams matrix of rms values
     [~,thisFrameMaxima]=max(thisFrameRMS,[],2);
   
     
 %     P.attentionCaptureThreshold=0; %for testing
     %%%%%%  Selective Attention Stage *********
-    %select the modal beam
-    if(audioSalience>P.attentionCaptureThreshold)
-        selectedBeam=mode(thisFrameMaxima);
-        selectedAngle=P.angles(selectedBeam);
+    
+    %compare the salience of the current frame to the 
+    %time-decaying salience of the previously selected object
+    
+    tdSalience =  1./(1+exp(toc(sObj.onsetTime))) * sObj.salience ;
+    
+    plot(frameCounter,tdSalience,'o');
+    drawnow;
+    hold on;
+   
+    if(audioSalience>tdSalience)
+        %a new object captured attention so update all the object features
+        sObj.salience=audioSalience;  %the current objects salience
+        sObj.onsetTime=tic;
+        
+        %select the modal beam
+        selectedBeam=mode(thisFrameMaxima(spectralPeakIndices));
+        sObj.angle=P.angles(selectedBeam);
         if (P.sendAngleToYarp==1)
             %send the angle
-            audioAttentionControl('/mosaic/angle:i',selectedAngle*180/pi,1.0);
-            display(['sending ' num2str(selectedAngle*180/pi) ' to YARP']);
+            audioAttentionControl('/mosaic/angle:i',sObj.angle*180/pi,1.0);
+            display(['sending ' num2str(sObj.angle*180/pi) ' to YARP']);
+            display(spectralPeakIndices);
         else
-            display(['selected angle: ' num2str(selectedAngle*180/pi)]);
+            display(['selected angle: ' num2str(sObj.angle*180/pi)]);
         end
         
     
     end
+
+    %     [x,y] = pol2cart(selectedAngle,1); %convert angle and unit radius to cartesian
+    %     compass(x,y);
+    %     drawnow;
+    %
     
-% 
-%     
-%     %
-%     %     plot(lastFrameStamp,audioSalience,'o');
-%     %     hold on;
-%     %     drawnow;
-%     
-%     %     [x,y] = pol2cart(selectedAngle,1); %convert angle and unit radius to cartesian
-%     %     compass(x,y);
-%     %     drawnow;
-%     %
-%     
     
     %increment for next frame
     nextFrameStamp=lastFrameStamp+P.frameDuration_samples; %increment

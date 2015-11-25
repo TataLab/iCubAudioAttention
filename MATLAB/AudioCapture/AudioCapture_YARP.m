@@ -46,7 +46,7 @@
 
 
 %build a data structure of parameters to keep things organized
-pStruct.streamAudioOutput = 1; %flag to toggle on streaming
+pStruct.streamAudioOutput = 0; %flag to toggle on streaming
 pStruct.writeToMemMap = 1;  %flag to toggle on writing stereo signal to local shared memory (use this to expose the signal to other MATLAB instances)
 
 %set up some parameters of the audio grabber.  Careful: some of this is

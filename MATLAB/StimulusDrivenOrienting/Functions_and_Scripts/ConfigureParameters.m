@@ -5,7 +5,7 @@ function [ P ] = ConfigureParameters( ~ )
 
 display(['Setting up parameters for iCub Audio Attention using: ' mfilename('fullpath')]);
 
-P.sendAngleToYarp = 0;  %set to 1 to send angle over yarp network %remember to add yarp to the MATLAB java path:  javaaddpath('/Applications/yarp/MATLAB Java Classes/jyarp');
+P.sendAngleToYarp = 1;  %set to 1 to send angle over yarp network %remember to add yarp to the MATLAB java path:  javaaddpath('/Applications/yarp/MATLAB Java Classes/jyarp');
 P.audioAttentionRoot='~/Documents/Robotics/iCubAudioAttention'; %point to the root of the repository
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -16,9 +16,9 @@ P.audioAttentionRoot='~/Documents/Robotics/iCubAudioAttention'; %point to the ro
 
 P.c=340.29;%define speed of sound in m/s
 P.D=0.145; %define distance between microphones in m
-P.sampleRate = 44100;
+P.sampleRate = 48000;
 
-P.frameDuration_samples = 2^12; %@48000 hz stereo 16-bit samples 10240 =  213 ms
+P.frameDuration_samples = 2^14; %@48000 hz stereo 16-bit samples 10240 =  213 ms
 P.frameDuration_seconds = P.frameDuration_samples/P.sampleRate; 
 P.requiredLag_frames=0; %it might be necessary in some cases to imposes a lag behind real-time
 
@@ -53,7 +53,7 @@ P.sizeFramePlusOverlap=P.frameDuration_samples+(P.frameOverlap*2); %this is the 
 %some parameters for the filterbank
 P.nBands=20;
 P.low_cf=50; % center frequencies based on Erb scale
-P.high_cf=10000;
+P.high_cf=5000;
 P.cfs = MakeErbCFs2(P.low_cf,P.high_cf,P.nBands);
 
 
@@ -62,13 +62,13 @@ P.cfs = MakeErbCFs2(P.low_cf,P.high_cf,P.nBands);
 %for computing delta spectrum (i.e. spectrotemporal changes) we need to
 %buffer frames over time.  Set up some parameters to control this
 %%%%%%%%%
-P.nPastSeconds = .25;  %in seconds; how much time over which to integrate previous events
+P.nPastSeconds = 1;  %in seconds; how much time over which to integrate previous events
 P.nPastFrames=floor(P.nPastSeconds/P.frameDuration_seconds);
 
 %%%%%
 %Stimulus driven attention can capture attention.  Set a threshold
 %%%%%
-P.attentionCaptureThreshold=2;
+P.attentionCaptureThreshold=5;
 
 %%%%%%
 %parameters for interacting with memory mapped audio
