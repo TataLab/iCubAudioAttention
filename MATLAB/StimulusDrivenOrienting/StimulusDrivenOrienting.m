@@ -21,11 +21,7 @@ P_inR=zeros(8,P.nBands);
 pastAmp=ones(P.nPastFrames,P.nBands).*.0001; %we have to seed this with some arbitrarily small numbers
 pastDeltaAmp=zeros(P.nPastFrames,P.nBands);
 
-%Experimental Object handler
-sObj.angle=0; %angle to sound object in degrees
-sObj.onsetTime=tic; %time stamp when object was registered
-sObj.salience=1; %spectral salience which changes over time
-sObj.selected=0; %flag if selected or not
+
 
 selectedBeam=1;
 selectedAngle=1;
