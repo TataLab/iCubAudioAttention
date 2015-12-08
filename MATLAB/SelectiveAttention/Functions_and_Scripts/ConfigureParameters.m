@@ -76,5 +76,17 @@ P.bufferSize_samples = P.bufferSize_bytes / (8*4); %each sample is a 4 x 64-bit 
 
 P.audioIn  = memmapfile(memMapFileName, 'Writable', false, 'format',{'double' [4 P.bufferSize_samples] 'audioD'});
 
+
+%%%%%%%
+%Parameters for memory mapping the object file
+%%%%%
+objectFileName=[P.audioAttentionRoot '/data/objectFile.tmp'];
+P.objFileMap  = memmapfile(objectFileName,'writable',true, 'format', {     'uint64' [1 1] 'onsetTime'; 
+                                                                           'double' [1 1] 'angle'; 
+                                                                           'double' [1 1] 'salience'; 
+                                                                           'double' [1 1] 'selected'; 
+                                                                           'double' [1 P.nBeams] 'bayesBeams'});
+
+
 end
 

@@ -22,7 +22,6 @@ pastAmp=ones(P.nPastFrames,P.nBands).*.0001; %we have to seed this with some arb
 pastDeltaAmp=zeros(P.nPastFrames,P.nBands);
 
 
-
 selectedBeam=1;
 selectedAngle=1;
 
@@ -80,7 +79,6 @@ while(~done)
         [spectralPeakValues,spectralPeakIndices]=max(deltaAmp); %just use the single largest value
     end
     
-
     
     audioSalience= sum(spectralPeakValues) * length(spectralPeakValues); %this is the magical secret sauce that tells us how likely there is a new "voice-like" object in the scene
     
@@ -125,30 +123,24 @@ while(~done)
     %compare the salience of the current frame to the 
     %time-decaying salience of the previously selected object
     
-    tdSalience =  1./(1+exp(toc(sObj.onsetTime))) * sObj.salience ;
+    tdSalience =  1./(1+exp(toc(P.objFileMap.Data.onsetTime))) * P.objFileMap.Data.salience ;
     
-    plot(frameCounter,tdSalience,'o');
-    drawnow;
-    hold on;
-   
+%     plot(frameCounter,tdSalience,'o');
+%     drawnow;
+%     hold on;
+%    
     if(audioSalience>tdSalience)
         %a new object captured attention so update all the object features
-        sObj.salience=audioSalience;  %the current objects salience
-        sObj.onsetTime=tic;
+        P.objFileMap.Data.salience=audioSalience;  %the current objects salience
+        P.objFileMap.Data.onsetTime=tic;%take the last time stamp of the frame to be the onset time ... note that's arbitrarily inaccurate to within frameDuration
         
         %select the modal beam
         selectedBeam=mode(thisFrameMaxima(spectralPeakIndices));
-        sObj.angle=P.angles(selectedBeam);
-        if (P.sendAngleToYarp==1)
-            %send the angle
-            audioAttentionControl('/mosaic/angle:i',sObj.angle*180/pi,1.0);
-            display(['sending ' num2str(sObj.angle*180/pi) ' to YARP']);
-            display(spectralPeakIndices);
-        else
-            display(['selected angle: ' num2str(sObj.angle*180/pi)]);
-        end
+        P.objFileMap.Data.angle=P.angles(selectedBeam);
         
-    
+        display(['frame number ' num2str(frameCounter) ' had ' num2str(length(spectralPeakValues)) ' spectral peaks']);
+        plot(P.cfs,deltaAmp);
+        drawnow;
     end
 
     %     [x,y] = pol2cart(selectedAngle,1); %convert angle and unit radius to cartesian

@@ -33,13 +33,14 @@ while(~done)
     
     
 
-
-    
+    plot(frameCounter,P.objFileMap.Data.salience,'o');
+    drawnow;
+    hold on;    
     
     frameCounter=frameCounter+1;
     while(P.audioIn.Data(1,1).audioD(end-1,end) < nextFrameStamp)
         %spin
-        %if you don't have to spin here, then the code below is running too
+        %if you don't have to spin here, then the code above is running too
         %slowly
     end
 end
