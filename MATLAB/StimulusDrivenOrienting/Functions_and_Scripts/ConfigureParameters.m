@@ -5,7 +5,7 @@ function [ P ] = ConfigureParameters( ~ )
 
 display(['Setting up parameters for iCub Audio Attention using: ' mfilename('fullpath')]);
 
-P.sendAngleToYarp = 1;  %set to 1 to send angle over yarp network %remember to add yarp to the MATLAB java path:  javaaddpath('/Applications/yarp/MATLAB Java Classes/jyarp');
+P.sendAngleToYarp = 0;  %set to 1 to send angle over yarp network %remember to add yarp to the MATLAB java path:  javaaddpath('/Applications/yarp/MATLAB Java Classes/jyarp');
 P.audioAttentionRoot='~/Documents/Robotics/iCubAudioAttention'; %point to the root of the repository
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -14,8 +14,8 @@ P.audioAttentionRoot='~/Documents/Robotics/iCubAudioAttention'; %point to the ro
 %rate" of the localizer because it can't get ahead of the audiocapture
 %thread so it must wait
 
-P.c=340.29;%define speed of sound in m/s
-P.D=0.145; %define distance between microphones in m
+P.c=336.0;%define speed of sound in m/s
+P.D=0.15; %define distance between microphones in m
 P.sampleRate = 48000;
 
 P.frameDuration_samples = 2^14; %@48000 hz stereo 16-bit samples 10240 =  213 ms
@@ -25,13 +25,13 @@ P.requiredLag_frames=0; %it might be necessary in some cases to imposes a lag be
 %%%%%%%%%%%%%%%%
 %some parameters for localizing
 %%%%%%%%%%%%%
-P.nBands=100;
+P.nBands=64;
 P.nBeamsPerHemifield=floor( (P.D/P.c)*P.sampleRate )-1; %maximum lag in samples x2 (to sweep left and right of midline)
 P.nBeams=2*P.nBeamsPerHemifield+1; %+1 includes the centre beam 
 P.lags=(P.c/P.sampleRate).* (-P.nBeamsPerHemifield:P.nBeamsPerHemifield); %linear spaced distances corresponding to lags in seconds
 P.angles=asin( (1/P.D) .* P.lags ) ; %nonlinear angles (in radians) that correspond to the lags
 P.low_cf=50; % center frequencies based on Erb scale
-P.high_cf=2000;
+P.high_cf=10000;
 P.cfs = MakeErbCFs2(P.low_cf,P.high_cf,P.nBands);
 P.frameOverlap = P.nBeamsPerHemifield;  %this gets a bit confusing: we need to pull enough data so we can run beamformer lags *past* the end of each frame
 P.sizeFramePlusOverlap=P.frameDuration_samples+(P.frameOverlap*2); %this is the total size of the chunk of data we need to pull out of the buffer each time we read it
@@ -56,13 +56,13 @@ P.sizeFramePlusOverlap=P.frameDuration_samples+(P.frameOverlap*2); %this is the 
 %for computing delta spectrum (i.e. spectrotemporal changes) we need to
 %buffer frames over time.  Set up some parameters to control this
 %%%%%%%%%
-P.nPastSeconds = 1;  %in seconds; how much time over which to integrate previous events
+P.nPastSeconds = .5;  %in seconds; how much time over which to integrate previous events
 P.nPastFrames=floor(P.nPastSeconds/P.frameDuration_seconds);
 
 %%%%%
 %Stimulus driven attention can capture attention.  Set a threshold
 %%%%%
-P.attentionCaptureThreshold=5;
+P.attentionCaptureThreshold=100;
 
 %%%%%%
 %parameters for interacting with memory mapped audio
@@ -78,35 +78,35 @@ P.audioIn  = memmapfile(memMapFileName, 'Writable', false, 'format',{'double' [4
 %For interacting with a memory mapped object file
 %%%%%%%%
 %convert the object into a vector of doubles
-
-%initialize the features in the object
-obj.onsetTime=tic;
-obj.angle=0.0;
-obj.salience=0.0;
-obj.selected=0;
-obj.bayesBeams=zeros(1,P.nBeams);
-
-fields=fieldnames(obj);
-data=[];
-
-%a bit of hoop jumping to make sure we get the correct number of bytes in
-%the memory mapped region
-for i=1:length(fields) %for every feature in the object
-    temp=getfield(obj,fields{i});%#ok %pull out the feature from the structure  
-    data=[data temp];%#ok %cat it into one long row vector
-end
-
-display('creating new auditory object file.');
-objectFileName=[P.audioAttentionRoot '/data/objectFile.tmp'];
-fileID=fopen(objectFileName ,'w');
-fwrite(fileID,data,'double');
-fclose(fileID);
-P.objFileMap  = memmapfile(objectFileName,'writable',true, 'format', {     'uint64' [1 1] 'onsetTime'; 
-                                                                                    'double' [1 1] 'angle'; 
-                                                                                    'double' [1 1] 'salience'; 
-                                                                                    'double' [1 1] 'selected'; 
-                                                                                    'double' [1 P.nBeams] 'bayesBeams'});
-
+% 
+% %initialize the features in the object
+% obj.onsetTime=tic;
+% obj.angle=0.0;
+% obj.salience=0.0;
+% obj.selected=0;
+% obj.bayesBeams=zeros(1,P.nBeams);
+% 
+% fields=fieldnames(obj);
+% data=[];
+% 
+% %a bit of hoop jumping to make sure we get the correct number of bytes in
+% %the memory mapped region
+% for i=1:length(fields) %for every feature in the object
+%     temp=getfield(obj,fields{i});%#ok %pull out the feature from the structure  
+%     data=[data temp];%#ok %cat it into one long row vector
+% end
+% 
+% display('creating new auditory object file.');
+% objectFileName=[P.audioAttentionRoot '/data/objectFile.tmp'];
+% fileID=fopen(objectFileName ,'w');
+% % fwrite(fileID,data,'double');
+% % fclose(fileID);
+% % P.objFileMap  = memmapfile(objectFileName,'writable',true, 'format', {     'uint64' [1 1] 'onsetTime'; 
+% %                                                                                     'double' [1 1] 'angle'; 
+%                                                                                     'double' [1 1] 'salience'; 
+%                                                                                     'double' [1 1] 'selected'; 
+%                                                                                     'double' [1 P.nBeams] 'bayesBeams'});
+% 
 
 end
 

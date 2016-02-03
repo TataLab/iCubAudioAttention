@@ -1,8 +1,8 @@
-  
-%perform basic stimulus driven orienting to a salient sound
+    
+%learn a target talker and pre-select frequency bands
 
-display(['Running StimulusDrivenOrienting using code at: ' mfilename('fullpath')]);
-addpath('/Users/Matthew/Documents/Robotics/iCubAudioAttention/MATLAB/StimulusDrivenOrienting/Functions_and_Scripts');
+display(['Running SelectiveAttentionTunedBeamformer using code at: ' mfilename('fullpath')]);
+addpath('/Users/Matthew/Documents/Robotics/iCubAudioAttention/MATLAB/SelectiveAttention/Functions_and_Scripts');
 
 %perform initialization and setup;  get back a struct with all the settings
 %we'll need
@@ -33,7 +33,15 @@ O.onsetTime=tic;
 O.angle=0.0;
 O.salience=0.0;
 
+%tune the filterbank by listening to a target talker
+%[fWeights]=TuneFilterBank(P);
 
+%for testing
+% fWeightsL=ones(4096,64);
+% fWeightsR=ones(4096,64);
+
+%for testing
+load('mattWeights.mat');
 
 done=0;
 while(~done)
@@ -64,18 +72,42 @@ while(~done)
     P_inR=P_outR;
     
     
+    %apply learned weights to the filterbank to select the target talker in
+    %a top-down sense
+    fFrameL=fFrameL.*squeeze(fWeights(1,:,:));
+    fFrameR=fFrameR.*squeeze(fWeights(2,:,:));
+    
+    
     %compute the amplitude of each band
     amp_frameL=rms(fFrameL,1);
     amp_frameR=rms(fFrameR,1);
     
     amp=(amp_frameL+amp_frameR)./2;  %collapse left and right channels - assume they have (nearly) identical spectra
-    deltaAmp=(amp-mean(pastAmp(:,1)))./mean(pastAmp(:,1));  %subtract the mean of the past spectral amplitude and divide by the mean of the past spectral amplitude
+    
+
+    deltaAmp=(amp-mean(pastAmp,1))./mean(pastAmp,1);  %subtract the mean of the past spectral amplitude and divide by the mean of the past spectral amplitude
+    
     pastAmp=circshift(pastAmp,[1 0]); %push the stack down and wrap
     pastAmp(1,:)=amp;  %overwrite the top of the stack
-    pastDeltaAmp=circshift(pastDeltaAmp,[1 0]);
-    pastDeltaAmp(1,:)=deltaAmp;
+
+    %look at onsets and offsets independently
+    deltaAmpOnsets=deltaAmp;
+    deltaAmpOffsets=deltaAmp;
     
-    deltaAmp(deltaAmp<0)=0; %only deal with increments
+    deltaAmpOnsets(deltaAmpOnsets<0)=0; %only deal with increments
+    deltaAmpOffsets(deltaAmpOffsets>0)=0;
+    deltaAmpOffsets=deltaAmpOffsets.*-1; %make offsets positive
+    
+   
+%     subplot(2,1,1);
+%     plot(P.cfs,deltaAmpOnsets);
+%     ylim([0 1]);
+%     subplot(2,1,2);
+%     plot(P.cfs,deltaAmpOffsets);
+%     ylim([0 1]);
+%     drawnow;
+    
+    
     [spectralPeakValues,spectralPeakIndices]=findpeaks(deltaAmp); %find the peak values and their indices in the spectrum 
     
     if(isempty(spectralPeakValues))
@@ -85,14 +117,10 @@ while(~done)
     
     audioSalience= sum(spectralPeakValues) * length(spectralPeakValues); %this is the magical secret sauce that tells us how likely there is a new "voice-like" object in the scene
     
+       
+   
 
-    
-%     plot(frameCounter,audioSalience,'o');
-%     hold on;
-%     drawnow;
-    
-    
-    %%%%end spectral salience
+    %%%end spectral salience
     
 %     %%%%%Spatial Pre-processing****
 %     %twist around to make audio signals into row vectors for beamforming
@@ -102,7 +130,6 @@ while(~done)
     
     %get some variables ready for the output of the beamformer stage
     thisFrameImage=zeros(P.nBands,P.nBeams,P.frameDuration_samples+2*P.frameOverlap); %it's only nBeamsPerHemi *2 long because we loose half the samples off either end (theoretically they're the last samples of the previous frame and the first samples of the frame that hasn't happend yet)
-
 
     
 %   %this is exactly a bank of delay-and-sum beamformers
@@ -121,31 +148,46 @@ while(~done)
     
     end
     
-     %localize by find the angle with the most maxima
+     %localize by find the beam with the most energy 
+     %note that the filterbank weights multiply through this computation
+     
     thisFrameRMS=rms(thisFrameImage,3); %find the peaksxbeams matrix of rms values
-    [~,thisFrameMaxima]=max(thisFrameRMS,[],2);
+    weightedRMS=sum(thisFrameRMS,1);
+    [~,maxBeam]=max(weightedRMS,[],2);
+    
+%     bar(P.angles,weightedRMS);
+%     drawnow;
+    
     
 %     imagesc(thisFrameRMS);
 %     drawnow
     
 %     P.attentionCaptureThreshold=0; %for testing
     %%%%%%  Selective Attention Stage *********
+   
+%     
     
-    %compare the salience of the current frame to the 
-    %time-decaying salience of the previously selected object
-    tdSalience =  1./(1+exp(0.20*toc(O.onsetTime))) * O.salience ;
-    
+    %compute the time-decaying salience
+    %tdSalience =  P.salienceGain * 1./(1+exp(0.20*toc(O.onsetTime))) * O.salience ;
+    tdSalience = 2 * toc(O.onsetTime) * exp(-toc(O.onsetTime) * 0.8) + exp(-toc(O.onsetTime) * 0.8) * O.salience;
+    %     
     plot(frameCounter,tdSalience,'o');
     drawnow;
     hold on;
-   
-    if(audioSalience>tdSalience && audioSalience > 15)
+
+
+
+    %apply object logic to select objects
+    %if the salience of the current frame exceeds the time-decaying
+    %salience of the selected object, then capture attention to the new
+    %object
+    if(audioSalience>tdSalience && audioSalience > P.attentionCaptureThreshold)
         %a new object captured attention so update all the object features
         O.salience=audioSalience;  %the current objects salience
         O.onsetTime=tic;%take the last time stamp of the frame to be the onset time ... note that's arbitrarily inaccurate to within frameDuration
         
-        %select the modal beam
-        selectedBeam=mode(thisFrameMaxima(spectralPeakIndices));
+        %select the max beam
+        selectedBeam=maxBeam;
         O.angle=P.angles(selectedBeam);
         
         if(P.sendAngleToYarp==1)
@@ -153,15 +195,20 @@ while(~done)
         end
         
         display(['found salient talker at ' num2str(O.angle*180/pi) ' degrees']);
-%         display(['frame number ' num2str(frameCounter) ' had ' num2str(length(spectralPeakValues)) ' spectral peaks']);
-%         plot(P.cfs,deltaAmp);
-%         drawnow;
+
     end
+    
+    
+    
+    
+    
+    
+    
 
 %         [x,y] = pol2cart(O.angle,1); %convert angle and unit radius to cartesian
 %         compass(x,y);
 %         drawnow;
-%     
+    
     
 %     display(O.angle * 180 / pi);
 

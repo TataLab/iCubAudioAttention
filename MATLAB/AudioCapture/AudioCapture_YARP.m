@@ -2,7 +2,7 @@
 % Copyright (C) 2015 Matthew Tata
 % email: matthew.tata@uleth.ca
 %
-% Permission is granted to copy, distribute, and/or modify this program
+% Permi ssion is granted to copy, distribute, and/or modify this program
 % under the terms of the GNU General Public License, version 2 or any
 % later version published by the Free Software Foundation.
 %
@@ -129,9 +129,13 @@ while(~done) %loop continuously
     end
     
 %     %if you want to visualize the audio (this may slow too much)
-%     plot(audioOut.Data(1,1).audioD(1,:));
-%     ylim([-1.0 1.0]);
-%     drawnow;
+    subplot(2,1,1);
+    plot(audioOut.Data(1,1).audioD(1,:));
+    ylim([-1.0 1.0]);
+    subplot(2,1,2);
+    plot(audioOut.Data(1,1).audioD(2,:));
+    ylim([-1.0 1.0]);
+    drawnow;
 
 %check the timing
 frameCounter=frameCounter+1;
