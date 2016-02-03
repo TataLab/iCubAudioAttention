@@ -138,9 +138,9 @@ while(~done)
         selectedBeam=mode(thisFrameMaxima(spectralPeakIndices));
         P.objFileMap.Data.angle=P.angles(selectedBeam);
         
-        display(['frame number ' num2str(frameCounter) ' had ' num2str(length(spectralPeakValues)) ' spectral peaks']);
-        plot(P.cfs,deltaAmp);
-        drawnow;
+%         display(['frame number ' num2str(frameCounter) ' had ' num2str(length(spectralPeakValues)) ' spectral peaks']);
+%         plot(P.cfs,deltaAmp);
+%         drawnow;
     end
 
     %     [x,y] = pol2cart(selectedAngle,1); %convert angle and unit radius to cartesian

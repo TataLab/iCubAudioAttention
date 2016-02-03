@@ -16,7 +16,7 @@ P.audioAttentionRoot='~/Documents/Robotics/iCubAudioAttention'; %point to the ro
 
 P.c=340.29;%define speed of sound in m/s
 P.D=0.145; %define distance between microphones in m
-P.sampleRate = 48000;
+P.sampleRate = 44100;
 
 P.frameDuration_samples = 2^14; %@48000 hz stereo 16-bit samples 10240 =  213 ms
 P.frameDuration_seconds = P.frameDuration_samples/P.sampleRate; 
