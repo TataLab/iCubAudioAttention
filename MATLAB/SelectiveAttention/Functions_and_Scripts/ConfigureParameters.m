@@ -14,9 +14,10 @@ P.audioAttentionRoot='/Users/Matthew/Documents/Robotics/iCubAudioAttention'; %po
 %rate" of the localizer because it can't get ahead of the audiocapture
 %thread so it must wait
 
-P.c=340.29;%define speed of sound in m/s
-P.D=0.145; %define distance between microphones in m
-P.sampleRate = 44100;
+P.c=336;%define speed of sound in m/s (to be very accurate, adjust for elevation (lethbridge is at ~950m)
+P.D=0.15; %define distance between microphones in m
+P.sampleRate = 48000;
+display(['please note sampling rate is set to ' num2str(P.sampleRate) ' (iCub streams audio at 48K)']);
 
 P.frameDuration_samples = 2^12; %@48000 hz stereo 16-bit samples 10240 =  213 ms
 P.frameDuration_seconds = P.frameDuration_samples/P.sampleRate; 
@@ -26,13 +27,13 @@ P.numFramesInBuffer=20;  %how big of an echoic memory should we have
 %%%%%%%%%%%%%%%%
 %some parameters for localizing
 %%%%%%%%%%%%%
-P.nBands=20;  %if you're stream pre-filtered audio from AudioCaptureFilterBank_YARP then the number of bands needs to match!
+P.nBands=64;  %if you're stream pre-filtered audio from AudioCaptureFilterBank_YARP then the number of bands needs to match!
 P.nBeamsPerHemifield=floor( (P.D/P.c)*P.sampleRate )-1; %maximum lag in samples x2 (to sweep left and right of midline)
 P.nBeams=2*P.nBeamsPerHemifield+1; %+1 includes the centre beam 
 P.lags=(P.c/P.sampleRate).* (-P.nBeamsPerHemifield:P.nBeamsPerHemifield); %linear spaced distances corresponding to lags in seconds
 P.angles=asin( (1/P.D) .* P.lags ) ; %nonlinear angles (in radians) that correspond to the lags
 P.low_cf=50; % center frequencies based on Erb scale
-P.high_cf=10000;
+P.high_cf=2000;
 P.cfs = MakeErbCFs2(P.low_cf,P.high_cf,P.nBands);
 P.frameOverlap = 0;  %this gets a bit confusing: we need to pull enough data so we can run beamformer lags *past* the end of each frame
 P.sizeFramePlusOverlap=P.frameDuration_samples+(P.frameOverlap*2); %this is the total size of the chunk of data we need to pull out of the buffer each time we read it
@@ -56,14 +57,14 @@ P.rIndex(:,P.frameDuration_samples+1:end)=[]; %we can't use the region where it'
 %for computing delta spectrum (i.e. spectrotemporal changes) we need to
 %buffer frames over time.  Set up some parameters to control this
 %%%%%%%%%
-P.nPastSeconds = 1;  %in seconds; how much time over which to integrate previous events
+P.nPastSeconds = .5;  %in seconds; how much time over which to integrate previous events
 P.nPastFrames=floor(P.nPastSeconds/P.frameDuration_seconds);
 
 %%%%%
 %Stimulus driven attention can capture attention.  Set a threshold
 %%%%%
-P.attentionCaptureThreshold=100;
-
+P.attentionCaptureThreshold=100;  % a minimum salience that must be exceeded for attention to be captured...this is environment sensitive and must be tuned
+%P.salienceGain = 2; %"stickiness of attention": use this to prevent a second frame from capturing attention from the previous frame
 %%%%%%
 %parameters for interacting with memory mapped audio
 %%%%%
@@ -76,16 +77,13 @@ P.bufferSize_samples = P.bufferSize_bytes / (8*4); %each sample is a 4 x 64-bit 
 
 P.audioIn  = memmapfile(memMapFileName, 'Writable', false, 'format',{'double' [4 P.bufferSize_samples] 'audioD'});
 
-
-%%%%%%%
-%Parameters for memory mapping the object file
 %%%%%
-objectFileName=[P.audioAttentionRoot '/data/objectFile.tmp'];
-P.objFileMap  = memmapfile(objectFileName,'writable',true, 'format', {     'uint64' [1 1] 'onsetTime'; 
-                                                                           'double' [1 1] 'angle'; 
-                                                                           'double' [1 1] 'salience'; 
-                                                                           'double' [1 1] 'selected'; 
-                                                                           'double' [1 P.nBeams] 'bayesBeams'});
+%Parameters for tuning the filterbank using PCA and envelope binding
+%%%%%
+
+P.tuningDuration_seconds=5; %aproximately how long to record pre-calibration in seconds
+P.tuningDuration_frames =floor(P.tuningDuration_seconds/P.frameDuration_seconds); %exactly how many frames is this
+P.varExplainedCriteria=75;  %percent of variance required to be explained by PCA and cross-spectrum envelope binding
 
 
 end

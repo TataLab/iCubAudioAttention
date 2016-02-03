@@ -16,7 +16,7 @@
 
 
 frameSize=4096;  
-sampleRate=44100;
+sampleRate=48000;
 
 %%%%%%
 %parameters for interacting with memory mapped audio
@@ -50,9 +50,9 @@ for i=1:howLong_frames
     
     %wait until AudioCapture_YARP writes new data into the shared memory
     while(audioIn.Data(1,1).audioD(3,end)<thisFrameStamp+frameSize)
-        %spin
-        %display('waiting for the next frame');
-    end
+%         %spin
+%         display('waiting for the next frame');
+     end
 
  
     %display(['that frame took ' num2str(toc(measuredFrameTime)) ' seconds.  It should have taken ' num2str(frameSize/sampleRate) ' seconds.']);
@@ -62,4 +62,5 @@ display(['recording that audio took ' num2str(toc(t)) ' seconds.  It should have
 %scale the audio so it runs between -1 and 1
 recordedAudio=recordedAudio./max(max(abs(recordedAudio)));
 
-audiowrite('test.wav',recordedAudio',sampleRate);
+audiowrite('/Users/Matthew/Documents/Robotics/iCubAudioAttention/data/trainingdata/Noice.wav',recordedAudio',sampleRate);
+sound (recordedAudio(1,:),sampleRate);
