@@ -65,8 +65,12 @@ for bandCounter=1:P.nBands
     
 end
 
-%return
-noiseFloor=thisFrameImage;
+%upsample and interpolate the measured noise floor to match the resolution of the space angles 
+thisFrameImage=thisFrameImage'; %interp will want it to be anglesxbands
+thisFrameImage=interp1(P.angles,thisFrameImage,-pi/2:P.radialResolution_radians:pi/2); %interpolate the smaller number of beams onto the (probably) larger number of angles in real space.  Divide by two because we're still only working with the front half.
+thisFrameImage=thisFrameImage'; %flip it back to bandsxangles
+reflectedFrameImage=fliplr(thisFrameImage);
+noiseFloor=[thisFrameImage reflectedFrameImage(:,2:end-1)];
 
 display('done');
 

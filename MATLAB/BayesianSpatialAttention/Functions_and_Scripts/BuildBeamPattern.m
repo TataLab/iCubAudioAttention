@@ -9,7 +9,7 @@ display('Building synthetic beam pattern');
 
 %for accumulating the rms amplitude at each frequency x arrival angle x
 %steering angle
-outputBeamPattern=zeros(P.nBands,P.nBeams, P.nBeams);
+outputBeamPattern=zeros(P.nBands,P.numSpaceAngles, P.numSpaceAngles);
 
 
 %for each frequency band
@@ -23,14 +23,14 @@ for bandIndex=1:P.nBands
     
     
     %for each arrival angle in radians
-    for arrivalAngleIndex=1:P.nBeams
+    for arrivalAngleIndex=1:P.numSpaceAngles
         
         
         %for each steering angle B
-        for steeringAngleIndex=1:P.nBeams
+        for steeringAngleIndex=1:P.numSpaceAngles
             
-            arrivalAngle_radians=P.angles(arrivalAngleIndex); %look up the angle of this beam
-            steeringAngle_radians=P.angles(steeringAngleIndex); %look up the steering angle of this beam
+            arrivalAngle_radians=P.spaceAngles(arrivalAngleIndex); %look up the angle of this beam
+            steeringAngle_radians=P.spaceAngles(steeringAngleIndex); %look up the steering angle of this beam
             
             %for accumulating the summed signals from each sensor
             realSum=0;
@@ -60,7 +60,7 @@ for bandIndex=1:P.nBands
         thisBeamPattern=20 * log10(thisBeamPattern);
         
         %pin the maximimum nulling at -50 dB so it doesn't go to -infinity
-        thisBeamPattern(thisBeamPattern<-50)=-50;
+        thisBeamPattern(thisBeamPattern<-100)=-50;
         
         %shift it up so every value is positive
         thisBeamPattern=thisBeamPattern+abs(min(thisBeamPattern));
@@ -75,6 +75,7 @@ for bandIndex=1:P.nBands
         
     end
     
+
     
 end
 

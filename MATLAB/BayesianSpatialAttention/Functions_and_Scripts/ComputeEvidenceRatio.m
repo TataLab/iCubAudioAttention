@@ -8,13 +8,13 @@ function [ evidenceRatios ] = ComputeEvidenceRatio( P )
 
 display('pre-computing evidence ratios');
 
-evidenceRatios=zeros(P.nBands,P.nBeams,P.nBeams);
+evidenceRatios=zeros(P.nBands,P.numSpaceAngles,P.numSpaceAngles);
 
 %for each frequency band
 for bandIndex=1:P.nBands
     
     %for each steering angle B
-    for steeringAngleIndex=1:P.nBeams
+    for steeringAngleIndex=1:P.numSpaceAngles
         
         B=P.noiseFloor(bandIndex,steeringAngleIndex); %pull out the P(B) due to background noise at this steering angle
         

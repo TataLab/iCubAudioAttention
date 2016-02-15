@@ -36,7 +36,7 @@ frameCounter=1;
 O.onsetTime=tic;
 O.angle=0.0;
 O.salience=0.0;
-O.radialPriors=zeros(1,P.numSpaceAngles); 
+O.radialPriors=zeros(P.nBands,P.numSpaceAngles); 
 
 %tune the filterbank by listening to a target talker
 %[fWeights]=TuneFilterBank(P);
@@ -46,7 +46,11 @@ O.radialPriors=zeros(1,P.numSpaceAngles);
 % fWeightsR=ones(4096,64);
 
 %for testing
-load('mattWeights.mat');
+%load('mattWeights.mat');
+
+%to not use top-down attention use uniform weights
+fWeights=ones(P.nMics,P.frameDuration_samples,P.nBands);
+
 
 done=0;
 while(~done)
@@ -176,29 +180,19 @@ while(~done)
      %localize by find the beam with the most energy 
      %note that the filterbank weights multiply through this computation
      
-    thisFrameRMS=rms(thisFrameImage,3); %find the peaksxbeams matrix of rms values
+    thisFrameRMS=rms(thisFrameImage,3); %find the bandsxbeams matrix of rms values
+    
+    %this computes a first-guess angle to steer towards
     weightedRMS=sum(thisFrameRMS,1);
     [maxRMS,maxBeam]=max(weightedRMS,[],2);
     
    
-    
-%     imagesc(thisFrameRMS);
-%     drawnow
-    
-%     P.attentionCaptureThreshold=0; %for testing
     %%%%%%  Selective Attention Stage *********
    
-%     
     
     %compute the time-decaying salience
     %tdSalience =  P.salienceGain * 1./(1+exp(0.20*toc(O.onsetTime))) * O.salience ;
     tdSalience = 2 * toc(O.onsetTime) * exp(-toc(O.onsetTime) * 0.8) + exp(-toc(O.onsetTime) * 0.8) * O.salience;
-%     %     
-%     plot(frameCounter,tdSalience,'o');
-%     drawnow;
-%     hold on;
-
-
 
     %apply object logic to select objects
     %if the salience of the current frame exceeds the time-decaying
@@ -211,20 +205,20 @@ while(~done)
         
         %to initialize the prior probabilities of each angle in the object's
         %probabalistic map, we need to normalize the initial beams
-
-        
         %initialize the map of prior probabilities for this object
         
-        %first build a vector of normalized probabilities using the
-        %RMS of each beam
-        normWeightedRMS=weightedRMS./sum(weightedRMS);
-        reflectedRMS=fliplr(normWeightedRMS);
-        surroundRMS=[normWeightedRMS reflectedRMS(2:end-1)];
-    
-        O.radialPriors(1,:)=interp1(P.micAngles,surroundRMS,P.spaceAngles); %the beam distribution isn't linearly arranged around the circle and doesn't sample the space with the same resolution as the angles that point into external space.  Interpolate.
+        %first build a matrix of normalized probabilities
+        %but we  want a bandsxbeams matrix of priors to initialize Bayes
+        normBy=sum(thisFrameRMS,2);
+        normBy=repmat(normBy,[1 P.nBeams]); %we're going to normize within bands so we need 64 row vectors
+        initialPriors=thisFrameRMS./normBy;
+        reflectedPriors=fliplr(initialPriors);
+        surroundPriors=[initialPriors reflectedPriors(:,2:end-1)];
+        surroundPriors=surroundPriors'; %interp1 wants the priors for each frequency band along collumns
+        interpolatedSurroundPriors=interp1(P.micAngles,surroundPriors,P.spaceAngles); %the beam distribution isn't linearly arranged around the circle and doesn't sample the space with the same resolution as the angles that point into external space.  Interpolate.
+        O.radialPriors=interpolatedSurroundPriors'; %transpose back because we want frequency bands along columns and angles along rows
         
-%         bar(P.spaceAngles,O.radialPriors);
-%         drawnow;
+
         
         %select the max beam
         selectedBeam=maxBeam;
@@ -236,41 +230,45 @@ while(~done)
             audioAttentionControl('/mosaic/angle:i',O.angle * 180/pi,tdSalience);
         end
         
-        display(['found salient talker at ' num2str(O.angle*180/pi) ' degrees']);
+        display(['found salient talker at beam ' num2str(selectedBeam) ' angle ' num2str(O.angle*180/pi) ' degrees']);
 
-    elseif (onsetAudioSalience < P.attentionCaptureThreshold)    
+    else  %update the existing object    
         
         %pass the object with its vector of priors in external space and the current angle
+        %updatePriors will rotate the priors to align with mic space and use these to update the priors using Bayes and return
+        %the object with updated priors (i.e. posteriors which can be used
+        %as priors in the subsequent iteration)
+ 
+        O.radialPriors=UpdatePriors(O,maxBeam,currentMicAngle,P);
+      
         
-        %update priors will rotate the priors to align with mic space and
-        %read out the priors that correspond to the beams
-        %then it will use these to update the priors using Bayes and return
-        %the object with updated priors
         
+        %
+        % %visualize the posteriors
+%         posteriors=sum(O.radialPriors,1); %we have to collapse the priors into a single vector to visualize
+%         [plotRadialX,plotRadialY]=pol2cart(P.spaceAngles,posteriors);
+%         compass(plotRadialX,plotRadialY);
+%         drawnow;
+        %
+        %
         
-        UpdatePriors(O,maxBeam,currentMicAngle,P);
-        
-
+%         [a,i]=max(posteriors);
+%         display(['best guess angle is at ' num2str(180/pi*a(1))]);
        
         
         
         
     end
     
-    
-    
-    
-    
-    
-    
 
-%         [x,y] = pol2cart(O.angle,1); %convert angle and unit radius to cartesian
-%         compass(x,y);
-%         drawnow;
-    
-    
-%     display(O.angle * 180 / pi);
+    c=cumprod(O.radialPriors);
+    c=c(end,1:180)./sum(c(end,1:180));
+    %visualize the object
+    plot(linspace(-90,90,180),c);
+    ylim([0 1]);
+    drawnow;
 
+    
     %increment for next frame
     nextFrameStamp=lastFrameStamp+P.frameDuration_samples; %increment
     lastFrameStamp=nextFrameStamp;

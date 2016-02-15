@@ -16,7 +16,7 @@ P.audioAttentionRoot='/Users/Matthew/Documents/Robotics/iCubAudioAttention'; %po
 
 P.c=336;%define speed of sound in m/s (to be very accurate, adjust for elevation (lethbridge is at ~950m)
 P.D=0.145; %define distance between microphones in m
-P.sampleRate = 48000;
+P.sampleRate = 44100;
 P.nMics=2;
 display(['please note sampling rate is set to ' num2str(P.sampleRate) ' (iCub streams audio at 48K)']);
 
@@ -36,7 +36,7 @@ P.angles=real(asin( (1/P.D) .* P.lags )) ; %nonlinear angles (in radians) that c
 P.low_cf=50; % center frequencies based on Erb scale
 P.high_cf=10000;
 P.cfs = MakeErbCFs2(P.low_cf,P.high_cf,P.nBands);
-P.frameOverlap = P.nBeamsPerHemifield;  %this gets a bit confusing: we need to pull enough data so we can run beamformer lags *past* the end of each frame
+P.frameOverlap = 0;  %this gets a bit confusing: we need to pull enough data so we can run beamformer lags *past* the end of each frame
 P.sizeFramePlusOverlap=P.frameDuration_samples+(P.frameOverlap*2); %this is the total size of the chunk of data we need to pull out of the buffer each time we read it
 P.frameIndices=P.frameOverlap+1:(P.frameOverlap+1) + P.frameDuration_samples - 1; %the indices of the "core" frame inside the grabbed audio data
 
@@ -81,14 +81,31 @@ P.varExplainedCriteria=75;  %percent of variance required to be explained by PCA
 %microphone array.  
 %%%%
 P.radialResolution_degrees=1; %degrees per possible head direction
-radialResolution_radians=pi/180 * P.radialResolution_degrees;
-P.spaceAngles=-pi/2:radialResolution_radians:3*pi/2-radialResolution_radians; %the angles that point to external space
+P.radialResolution_radians=pi/180 * P.radialResolution_degrees;
+P.spaceAngles=-pi/2:P.radialResolution_radians:3*pi/2-P.radialResolution_radians; %the angles that point to external space
 P.numSpaceAngles=length(P.spaceAngles);
 P.micAngles=[P.angles pi+P.angles(2:end-1)]; %all the possible microphone coordinate angles, all the way around
 
-P.beamPattern=BuildBeamPattern(P); %compute all the sensitivities of the different steering angles for different arrival angles
-P.noiseFloor=BuildNoiseFloor(P,'/Users/Matthew/Documents/Robotics/iCubAudioAttention/data/sounds/20-Fan-10sec.wav'); %use pre-recorded noise to get an estimate of the false alarm probability
+if(isempty(dir('./Functions_and_Scripts/beamPattern.mat'))) %if we don't have a saved beam pattern then we have to build it
+    beamPattern=BuildBeamPattern(P); %compute all the sensitivities of the different steering angles for different arrival angles
+    save('./Functions_and_Scripts/beamPattern.mat','beamPattern'); %save it for next time
+    P.beamPattern=beamPattern;
+else
+    load('./Functions_and_Scripts/beamPattern.mat');
+    P.beamPattern=beamPattern;
+end
+
+if(isempty(dir('./Functions_and_Scripts/noiseFloor.mat'))) %if we don't have a saved beam pattern then we have to build it
+    noiseFloor=BuildNoiseFloor(P,'/Users/Matthew/Documents/Robotics/iCubAudioAttention/data/sounds/20-Fan-1sec_44100hz.wav'); %use pre-recorded noise to get an estimate of the false alarm probability
+    save('./Functions_and_Scripts/noiseFloor.mat','noiseFloor'); %save it for next time
+    P.noiseFloor=noiseFloor;
+else
+    load('./Functions_and_Scripts/noiseFloor.mat');
+    P.noiseFloor=noiseFloor;
+end
+
 P.evidenceRatios=ComputeEvidenceRatio(P); %precompute the ratio of P(B|A) to P(B)
+
 
 end
 
