@@ -20,7 +20,7 @@ for bandIndex=1:P.nBands
         
         %for each true arrival angle
         thisArrivalAngleVector=P.beamPattern(bandIndex,:,steeringAngleIndex);
-        thisEvidenceRatioVector=(thisArrivalAngleVector+B)./B;  %compute all the ratios at once
+        thisEvidenceRatioVector=(thisArrivalAngleVector)./B;  %compute all the ratios at once
         evidenceRatios(bandIndex,:,steeringAngleIndex)=thisEvidenceRatioVector; %stash the ratio into the return matrix
            
     end

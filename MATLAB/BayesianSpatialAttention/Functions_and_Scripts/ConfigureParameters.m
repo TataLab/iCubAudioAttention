@@ -16,11 +16,11 @@ P.audioAttentionRoot='/Users/Matthew/Documents/Robotics/iCubAudioAttention'; %po
 
 P.c=336;%define speed of sound in m/s (to be very accurate, adjust for elevation (lethbridge is at ~950m)
 P.D=0.145; %define distance between microphones in m
-P.sampleRate = 44100;
+P.sampleRate = 48000;
 P.nMics=2;
 display(['please note sampling rate is set to ' num2str(P.sampleRate) ' (iCub streams audio at 48K)']);
 
-P.frameDuration_samples = 2^12; %@48000 hz stereo 16-bit samples 10240 =  213 ms
+P.frameDuration_samples = 2^13; %divide by sample rate to get frame duration
 P.frameDuration_seconds = P.frameDuration_samples/P.sampleRate; 
 P.requiredLag_frames=0; %it might be necessary in some cases to imposes a lag behind real-time
 P.numFramesInBuffer=20;  %how big of an echoic memory should we have
@@ -95,12 +95,12 @@ else
     P.beamPattern=beamPattern;
 end
 
-if(isempty(dir('./Functions_and_Scripts/noiseFloor.mat'))) %if we don't have a saved beam pattern then we have to build it
-    noiseFloor=BuildNoiseFloor(P,'/Users/Matthew/Documents/Robotics/iCubAudioAttention/data/sounds/20-Fan-1sec_44100hz.wav'); %use pre-recorded noise to get an estimate of the false alarm probability
-    save('./Functions_and_Scripts/noiseFloor.mat','noiseFloor'); %save it for next time
+if(isempty(dir('./Functions_and_Scripts/UofL_iCubNoiseFloor.mat'))) %if we don't have a saved beam pattern then we have to build it
+    noiseFloor=BuildNoiseFloor(P,'/Users/Matthew/Documents/Robotics/iCubAudioAttention/data/sounds/UofL_iCubNoiseFloor.wav'); %use pre-recorded noise to get an estimate of the false alarm probability
+    save('./Functions_and_Scripts/UofL_iCubNoiseFloor.mat','noiseFloor'); %save it for next time
     P.noiseFloor=noiseFloor;
 else
-    load('./Functions_and_Scripts/noiseFloor.mat');
+    load('./Functions_and_Scripts/UofL_iCubNoiseFloor.mat');
     P.noiseFloor=noiseFloor;
 end
 

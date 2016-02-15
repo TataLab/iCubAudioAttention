@@ -117,7 +117,7 @@ while(~done)
     
     [onsetSpectralPeakValues,onsetSpectralPeakIndices]=findpeaks(deltaAmpOnsets); %find the peak values and their indices in the spectrum 
     [offsetSpectralPeakValues,offsetSpectralPeakIndices]=findpeaks(deltaAmpOffsets); %find the peak values and their indices in the spectrum 
-
+    [frameSpectralPeakValues,frameSpectralPeakIndices]=findpeaks(amp); %find the absolute raw "peakiness" of the current frame
     
    %deal with the not-so-unlikely case of a single peak by just using the
    %height of the peak
@@ -127,10 +127,14 @@ while(~done)
     if(isempty(offsetSpectralPeakValues))
         [offsetSpectralPeakValues,offsetSpectralPeakIndices]=max(deltaAmpOffsets); %just use the single largest value
     end
+    if(isempty(frameSpectralPeakValues))
+        [frameSpectralPeakValues,frameSpectralPeakIndices]=max(amp); %just use the single largest value
+    end
     
     onsetAudioSalience= sum(onsetSpectralPeakValues) * length(onsetSpectralPeakValues); %this is the magical secret sauce that tells us how likely there is a new "voice-like" object in the scene
     offsetAudioSalience= sum(offsetSpectralPeakValues) / length(offsetSpectralPeakValues); %this is the magical secret sauce that tells us how likely there is a new "voice-like" object in the scene
 
+    frameSalience=sum(frameSpectralPeakValues) * length(frameSpectralPeakValues);
     %inspection
 %     
 %     subplot(2,1,1);
@@ -194,10 +198,15 @@ while(~done)
     %tdSalience =  P.salienceGain * 1./(1+exp(0.20*toc(O.onsetTime))) * O.salience ;
     tdSalience = 2 * toc(O.onsetTime) * exp(-toc(O.onsetTime) * 0.8) + exp(-toc(O.onsetTime) * 0.8) * O.salience;
 
+%     plot(frameCounter,frameSalience,'o');
+%     drawnow;
+%     hold on;
+    
     %apply object logic to select objects
     %if the salience of the current frame exceeds the time-decaying
     %salience of the selected object, then capture attention to the new
     %object
+    
     if(onsetAudioSalience>tdSalience && onsetAudioSalience > P.attentionCaptureThreshold)
         %a new object captured attention so update all the object features
         O.salience=onsetAudioSalience;  %the current objects salience
@@ -232,7 +241,7 @@ while(~done)
         
         display(['found salient talker at beam ' num2str(selectedBeam) ' angle ' num2str(O.angle*180/pi) ' degrees']);
 
-    else  %update the existing object    
+    elseif(frameSalience>0.04)  %update the existing object    
         
         %pass the object with its vector of priors in external space and the current angle
         %updatePriors will rotate the priors to align with mic space and use these to update the priors using Bayes and return
@@ -241,6 +250,8 @@ while(~done)
  
         O.radialPriors=UpdatePriors(O,maxBeam,currentMicAngle,P);
       
+%         surf(O.radialPriors(:,1:180));
+%         drawnow;
         
         
         %
@@ -260,14 +271,17 @@ while(~done)
         
     end
     
+% 
+%     c=cumprod(O.radialPriors);
+%     c=c(end,1:180)./sum(c(end,1:180));
+%     %visualize the object
+%     plot(linspace(-90,90,180),c);
+%      ylim([0 1]);
+%     drawnow;
 
-    c=cumprod(O.radialPriors);
-    c=c(end,1:180)./sum(c(end,1:180));
-    %visualize the object
-    plot(linspace(-90,90,180),c);
-    ylim([0 1]);
+
+    imagesc(O.radialPriors(1:180));
     drawnow;
-
     
     %increment for next frame
     nextFrameStamp=lastFrameStamp+P.frameDuration_samples; %increment

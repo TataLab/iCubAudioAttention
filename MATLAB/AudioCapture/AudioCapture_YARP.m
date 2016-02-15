@@ -49,6 +49,7 @@
 pStruct.streamAudioOutput = 0; %flag to toggle on streaming
 pStruct.writeToMemMap = 1;  %flag to toggle on writing stereo signal to local shared memory (use this to expose the signal to other MATLAB instances)
 
+totalTime=tic;
 %set up some parameters of the audio grabber.  Careful: some of this is
 %hard coded into the mex function.
 pStruct.sampleRate=48000;
@@ -111,6 +112,7 @@ while(~done) %loop continuously
     
     
     [frame]=audioCapture; %grab audio from YARP.  This is a blocking read.  It waits until the buffer fills.  It doesn't play nicely with streaming refills of the PsychPortAudio buffer, so if you're monitoring the audio out then you'll always be a frame behind and possibly dropping samples  
+    
     %now you have audio data
     %do something with it
     
@@ -128,17 +130,19 @@ while(~done) %loop continuously
         oldBuffer=newBuffer;   
     end
     
-%     %if you want to visualize the audio (this may slow too much)
-    subplot(2,1,1);
-    plot(audioOut.Data(1,1).audioD(1,:));
-    ylim([-1.0 1.0]);
-    subplot(2,1,2);
-    plot(audioOut.Data(1,1).audioD(2,:));
-    ylim([-1.0 1.0]);
-    drawnow;
+% %     %if you want to visualize the audio (this may slow too much)
+%     subplot(2,1,1);
+%     plot(audioOut.Data(1,1).audioD(1,:));
+%     ylim([-0.15 0.15]);
+%     subplot(2,1,2);
+%     plot(audioOut.Data(1,1).audioD(2,:));
+%     ylim([-0.05 0.05]);
+%     drawnow;
 
 %check the timing
 frameCounter=frameCounter+1;
+display(frameCounter);
+toc(totalTime);
 elapsed=toc(t);
 if(elapsed>pStruct.frameDuration_seconds)
     display(['frame number ' num2str(frameCounter) ' ran slow by ' num2str(elapsed - pStruct.frameDuration_seconds) ' seconds.  Samples may have been dropped.']);
