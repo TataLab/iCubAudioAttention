@@ -12,12 +12,30 @@ function [ posteriors ] = UpdatePriors( O, evidenceBeam, currentMicHeading_degre
 
 %start by circshifting the vector of priors so that we can look up a prior
 %in mic array coordinates
-currentMicHeading_index=ceil(currentMicHeading_degrees);  %this is a cludge, it hardcodes a requirement that the resolution of radialPriors be 1 degree
-micPriors=circshift(O.radialPriors,[0 -currentMicHeading_index]); %think about the sign of the head very very carefully
+currentMicHeading_index=find(currentMicHeading_degrees>=P.spaceAngles,1,'first'); %find the index in space angles that corresponds to the mic heading
+%evidence beam is in mic beams with P.nBeams resolution; we want it to be
+%in space with P.numSpaceAngles resolution
 
+[~,evidenceBeamAngle]=find(P.spaceAngles>=P.angles(evidenceBeam),1,'first'); %find the index of the angle in the high-resolution radial space that corresponds to the evidence beam
+
+
+
+micPriors=circshift(O.radialPriors,[0 -currentMicHeading_index]); %think about the sign of the head very very carefully
+%display(['current evidence beam is ' num2str(evidenceBeam)]);
+
+%expand the priors to span all frequencies
+micPriors=repmat(micPriors,[P.nBands 1]);
 
 %now we can use Bayes to update these priors
-posteriors=micPriors.*squeeze(P.evidenceRatios(:,:,evidenceBeam));
+posteriors=micPriors.*squeeze(P.evidenceRatios(:,:,evidenceBeamAngle));
+
+
+%collapse across the bands to arrive at a single best-guess of the new
+%probabilities
+posteriors=sum(posteriors,1);
+
+%normalize posteriors so they add to 1
+posteriors=posteriors./sum(posteriors);
 
 %now rotate them back into real-world space
 posteriors=circshift(posteriors,[0 currentMicHeading_index]); %mind the sign, be sure you're rotating the right direction!

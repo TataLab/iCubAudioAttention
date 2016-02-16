@@ -36,7 +36,7 @@ frameCounter=1;
 O.onsetTime=tic;
 O.angle=0.0;
 O.salience=0.0;
-O.radialPriors=zeros(P.nBands,P.numSpaceAngles); 
+O.radialPriors=zeros(1,P.numSpaceAngles); 
 
 %tune the filterbank by listening to a target talker
 %[fWeights]=TuneFilterBank(P);
@@ -215,31 +215,26 @@ while(~done)
         %to initialize the prior probabilities of each angle in the object's
         %probabalistic map, we need to normalize the initial beams
         %initialize the map of prior probabilities for this object
-        
-        %first build a matrix of normalized probabilities
-        %but we  want a bandsxbeams matrix of priors to initialize Bayes
-        normBy=sum(thisFrameRMS,2);
-        normBy=repmat(normBy,[1 P.nBeams]); %we're going to normize within bands so we need 64 row vectors
-        initialPriors=thisFrameRMS./normBy;
+   
+
+%%this will use a single vector of priors for every frequency.  If we
+%%arrive at that vector by pooling across frequencies, then this makes
+%%sense
+        normBy=sum(weightedRMS);
+        initialPriors=weightedRMS./normBy;
         reflectedPriors=fliplr(initialPriors);
         surroundPriors=[initialPriors reflectedPriors(:,2:end-1)];
-        surroundPriors=surroundPriors'; %interp1 wants the priors for each frequency band along collumns
-        interpolatedSurroundPriors=interp1(P.micAngles,surroundPriors,P.spaceAngles); %the beam distribution isn't linearly arranged around the circle and doesn't sample the space with the same resolution as the angles that point into external space.  Interpolate.
-        O.radialPriors=interpolatedSurroundPriors'; %transpose back because we want frequency bands along columns and angles along rows
-        
-
-        
-        %select the max beam
-        selectedBeam=maxBeam;
-        O.angle=P.angles(selectedBeam);
-        
-        
+        interpolatedSurroundPriors=interp1(P.micAngles,surroundPriors,P.spaceAngles,'spline'); %the beam distribution isn't linearly arranged around the circle and doesn't sample the space with the same resolution as the angles that point into external space.  Interpolate.
+        O.radialPriors=interpolatedSurroundPriors; %transpose back because we want frequency bands along columns and angles along rows
+   
         
         if(P.sendAngleToYarp==1)
             audioAttentionControl('/mosaic/angle:i',O.angle * 180/pi,tdSalience);
         end
         
-        display(['found salient talker at beam ' num2str(selectedBeam) ' angle ' num2str(O.angle*180/pi) ' degrees']);
+        [~,initialBeam]=max(O.radialPriors(1:180));
+        initialAngle=P.spaceAngles(initialBeam);
+        display(['found salient talker at beam ' num2str(initialBeam) ' angle ' num2str(O.angle*180/pi) ' degrees']);
 
     elseif(frameSalience>0.04)  %update the existing object    
         
@@ -250,38 +245,20 @@ while(~done)
  
         O.radialPriors=UpdatePriors(O,maxBeam,currentMicAngle,P);
       
-%         surf(O.radialPriors(:,1:180));
-%         drawnow;
-        
-        
-        %
-        % %visualize the posteriors
-%         posteriors=sum(O.radialPriors,1); %we have to collapse the priors into a single vector to visualize
-%         [plotRadialX,plotRadialY]=pol2cart(P.spaceAngles,posteriors);
-%         compass(plotRadialX,plotRadialY);
-%         drawnow;
-        %
-        %
-        
-%         [a,i]=max(posteriors);
-%         display(['best guess angle is at ' num2str(180/pi*a(1))]);
-       
-        
-        
+        bar(O.radialPriors);
+        drawnow;
+
         
     end
     
-% 
-%     c=cumprod(O.radialPriors);
-%     c=c(end,1:180)./sum(c(end,1:180));
-%     %visualize the object
-%     plot(linspace(-90,90,180),c);
-%      ylim([0 1]);
-%     drawnow;
 
-
-    imagesc(O.radialPriors(1:180));
-    drawnow;
+    %decide where we think the current object is
+    [~,selectedBeam]=max(O.radialPriors(1:180));  
+    O.angle=P.spaceAngles(selectedBeam);
+    display(['Current object is probably at ' num2str(O.angle*180/pi) ' degrees']);
+    
+    
+    
     
     %increment for next frame
     nextFrameStamp=lastFrameStamp+P.frameDuration_samples; %increment

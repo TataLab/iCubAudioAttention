@@ -16,7 +16,7 @@ P.audioAttentionRoot='/Users/Matthew/Documents/Robotics/iCubAudioAttention'; %po
 
 P.c=336;%define speed of sound in m/s (to be very accurate, adjust for elevation (lethbridge is at ~950m)
 P.D=0.145; %define distance between microphones in m
-P.sampleRate = 48000;
+P.sampleRate = 44100;
 P.nMics=2;
 display(['please note sampling rate is set to ' num2str(P.sampleRate) ' (iCub streams audio at 48K)']);
 
@@ -103,6 +103,8 @@ else
     load('./Functions_and_Scripts/UofL_iCubNoiseFloor.mat');
     P.noiseFloor=noiseFloor;
 end
+
+
 
 P.evidenceRatios=ComputeEvidenceRatio(P); %precompute the ratio of P(B|A) to P(B)
 
