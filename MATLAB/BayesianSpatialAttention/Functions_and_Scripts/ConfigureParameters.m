@@ -20,7 +20,7 @@ P.sampleRate = 44100;
 P.nMics=2;
 display(['please note sampling rate is set to ' num2str(P.sampleRate) ' (iCub streams audio at 48K)']);
 
-P.frameDuration_samples = 2^13; %divide by sample rate to get frame duration
+P.frameDuration_samples = 2^11; %divide by sample rate to get frame duration
 P.frameDuration_seconds = P.frameDuration_samples/P.sampleRate; 
 P.requiredLag_frames=0; %it might be necessary in some cases to imposes a lag behind real-time
 P.numFramesInBuffer=20;  %how big of an echoic memory should we have
@@ -82,10 +82,11 @@ P.varExplainedCriteria=75;  %percent of variance required to be explained by PCA
 %%%%
 P.radialResolution_degrees=1; %degrees per possible head direction
 P.radialResolution_radians=pi/180 * P.radialResolution_degrees;
-P.spaceAngles=-pi/2:P.radialResolution_radians:3*pi/2-P.radialResolution_radians; %the angles that point to external space
-P.numSpaceAngles=length(P.spaceAngles);
+P.numSpaceAngles=360/P.radialResolution_degrees;
+P.spaceAngles=linspace(-pi,pi-P.radialResolution_radians,P.numSpaceAngles); %the angles that point to external space; midline is the middle of the vector
 P.micAngles=[P.angles pi+P.angles(2:end-1)]; %all the possible microphone coordinate angles, all the way around
-
+P.micAngles=circshift(P.micAngles,[0 P.nBeamsPerHemifield]); %rotate the microphone angles so that midline is in the middle
+P.micAngles=unwrap(P.micAngles)-2*pi; %we don't want the ugly discontinuity.  Better to run smoothly from -pi:pi
 if(isempty(dir('./Functions_and_Scripts/beamPattern.mat'))) %if we don't have a saved beam pattern then we have to build it
     beamPattern=BuildBeamPattern(P); %compute all the sensitivities of the different steering angles for different arrival angles
     save('./Functions_and_Scripts/beamPattern.mat','beamPattern'); %save it for next time
@@ -95,14 +96,20 @@ else
     P.beamPattern=beamPattern;
 end
 
-if(isempty(dir('./Functions_and_Scripts/UofL_iCubNoiseFloor.mat'))) %if we don't have a saved beam pattern then we have to build it
-    noiseFloor=BuildNoiseFloor(P,'/Users/Matthew/Documents/Robotics/iCubAudioAttention/data/sounds/UofL_iCubNoiseFloor.wav'); %use pre-recorded noise to get an estimate of the false alarm probability
-    save('./Functions_and_Scripts/UofL_iCubNoiseFloor.mat','noiseFloor'); %save it for next time
-    P.noiseFloor=noiseFloor;
+P.useNoiseFloor=0;
+if P.useNoiseFloor==1 %should we take the time to build and use a model of the background noise?
+    if(isempty(dir('./Functions_and_Scripts/UofL_iCubNoiseFloor.mat'))) %if we don't have a saved beam pattern then we have to build it
+        noiseFloor=BuildNoiseFloor(P,'/Users/Matthew/Documents/Robotics/iCubAudioAttention/data/sounds/UofL_iCubNoiseFloor.wav'); %use pre-recorded noise to get an estimate of the false alarm probability
+        save('./Functions_and_Scripts/UofL_iCubNoiseFloor.mat','noiseFloor'); %save it for next time
+    else
+        load('./Functions_and_Scripts/UofL_iCubNoiseFloor.mat');
+        P.noiseFloor=noiseFloor;
+    end
 else
-    load('./Functions_and_Scripts/UofL_iCubNoiseFloor.mat');
-    P.noiseFloor=noiseFloor;
+    noiseFloor=ones(P.nBands,P.numSpaceAngles); %if not, just divide through by ones
 end
+
+P.noiseFloor=noiseFloor;
 
 
 

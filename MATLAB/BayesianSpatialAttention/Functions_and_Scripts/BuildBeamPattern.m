@@ -22,11 +22,11 @@ for bandIndex=1:P.nBands
     thisBeamPattern=zeros(1,P.nBeams);
     
     
-    %for each arrival angle in radians
+    %for each true arrival angle A in radians
     for arrivalAngleIndex=1:P.numSpaceAngles
         
-        
-        %for each steering angle B
+        %we need the probability that each steering angle B will be the
+        %evidence angle
         for steeringAngleIndex=1:P.numSpaceAngles
             
             arrivalAngle_radians=P.spaceAngles(arrivalAngleIndex); %look up the angle of this beam
@@ -52,6 +52,9 @@ for bandIndex=1:P.nBands
             
             %compute something like RMS for each signal
             thisBeamPattern(steeringAngleIndex) = sqrt(realSum^2 + imaginarySum^2)/P.nMics;
+            
+            
+            
             
         end
         

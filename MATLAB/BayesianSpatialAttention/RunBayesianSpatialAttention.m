@@ -11,7 +11,7 @@ addpath('./Functions_and_Scripts');
 %we'll need
 P=ConfigureParameters;
 
-currentMicAngle=0.0;  %the current heading of the robot
+currentMicHeading_degrees=0.0;  %the current heading of the robot
 
 frame=P.audioIn.Data(1,1).audioD(:,end-P.sizeFramePlusOverlap+1:end); %initialize the first frame 
 lastFrameStamp = frame(3,end);%ask what is the stamp of the most recent sample written (it's in the last column in the buffer)
@@ -196,18 +196,25 @@ while(~done)
     
     %compute the time-decaying salience
     %tdSalience =  P.salienceGain * 1./(1+exp(0.20*toc(O.onsetTime))) * O.salience ;
-    tdSalience = 2 * toc(O.onsetTime) * exp(-toc(O.onsetTime) * 0.8) + exp(-toc(O.onsetTime) * 0.8) * O.salience;
-
-%     plot(frameCounter,frameSalience,'o');
+    O.tdSalience = 2 * toc(O.onsetTime) * exp(-toc(O.onsetTime) * 10.8) + exp(-toc(O.onsetTime) * 0.2) * O.salience;
+    
+%     plot(frameCounter,O.tdSalience,'o');
 %     drawnow;
 %     hold on;
     
+    
+
+    %we have to know where we're pointing: circshift the vector of priors so that we can look up a prior
+    %in mic array coordinates
+    currentMicHeading_index=find(currentMicHeading_degrees>=P.spaceAngles,1,'first'); %find the index in space angles that corresponds to the mic heading
+
+
     %apply object logic to select objects
     %if the salience of the current frame exceeds the time-decaying
     %salience of the selected object, then capture attention to the new
     %object
     
-    if(onsetAudioSalience>tdSalience && onsetAudioSalience > P.attentionCaptureThreshold)
+    if(onsetAudioSalience>O.tdSalience && onsetAudioSalience > P.attentionCaptureThreshold)
         %a new object captured attention so update all the object features
         O.salience=onsetAudioSalience;  %the current objects salience
         O.onsetTime=tic;%take the last time stamp of the frame to be the onset time ... note that's arbitrarily inaccurate to within frameDuration
@@ -217,16 +224,15 @@ while(~done)
         %initialize the map of prior probabilities for this object
    
 
-%%this will use a single vector of priors for every frequency.  If we
-%%arrive at that vector by pooling across frequencies, then this makes
-%%sense
-        normBy=sum(weightedRMS);
-        initialPriors=weightedRMS./normBy;
+        %%this will use a single vector of priors for every frequency.  If we
+        %%arrive at that vector by pooling across frequencies, then this makes
+        %%sense
+        initialPriors=weightedRMS;
         reflectedPriors=fliplr(initialPriors);
-        surroundPriors=[initialPriors reflectedPriors(:,2:end-1)];
+        surroundPriors=[initialPriors reflectedPriors(:,2:end-1)]; %reflect the front onto the back (because we've got only two mics in the array
+        surroundPriors=circshift(surroundPriors,[0 P.nBeamsPerHemifield]); %we need this lined up with P.micAngles which has -180 as its first element
         interpolatedSurroundPriors=interp1(P.micAngles,surroundPriors,P.spaceAngles,'spline'); %the beam distribution isn't linearly arranged around the circle and doesn't sample the space with the same resolution as the angles that point into external space.  Interpolate.
-        O.radialPriors=interpolatedSurroundPriors; %transpose back because we want frequency bands along columns and angles along rows
-   
+        O.radialPriors=circshift(interpolatedSurroundPriors,[0 -currentMicHeading_index]); %circshift it into real-world space so the mic angle is decoupled from the world around it
         
         if(P.sendAngleToYarp==1)
             audioAttentionControl('/mosaic/angle:i',O.angle * 180/pi,tdSalience);
@@ -236,27 +242,26 @@ while(~done)
         initialAngle=P.spaceAngles(initialBeam);
         display(['found salient talker at beam ' num2str(initialBeam) ' angle ' num2str(O.angle*180/pi) ' degrees']);
 
-    elseif(frameSalience>0.04)  %update the existing object    
+    else  %update the existing object    
         
         %pass the object with its vector of priors in external space and the current angle
         %updatePriors will rotate the priors to align with mic space and use these to update the priors using Bayes and return
         %the object with updated priors (i.e. posteriors which can be used
         %as priors in the subsequent iteration)
  
-        O.radialPriors=UpdatePriors(O,maxBeam,currentMicAngle,P);
-      
-        bar(O.radialPriors);
-        drawnow;
-
-        
+        O.radialPriors=UpdatePriors(O,maxBeam,currentMicHeading_index,P);
+       
     end
     
 
     %decide where we think the current object is
-    [~,selectedBeam]=max(O.radialPriors(1:180));  
-    O.angle=P.spaceAngles(selectedBeam);
+    [~,selectedBeam]=max(O.radialPriors(90:270));  
+    O.angle=P.spaceAngles(selectedBeam+90);
     display(['Current object is probably at ' num2str(O.angle*180/pi) ' degrees']);
-    
+    bar(O.radialPriors(90:270)*O.tdSalience);
+    ylim([0 400]);
+    drawnow;
+
     
     
     

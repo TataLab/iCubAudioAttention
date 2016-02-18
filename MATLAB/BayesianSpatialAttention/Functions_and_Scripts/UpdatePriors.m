@@ -1,4 +1,4 @@
-function [ posteriors ] = UpdatePriors( O, evidenceBeam, currentMicHeading_degrees, P )
+function [ posteriors ] = UpdatePriors( O, evidenceBeam, currentMicHeading_index, P )
 %pass the object with its vector of priors in external space and the
 %current angle we think the sound is comming from, the heading of the robot and the parameters of the array
 
@@ -10,9 +10,7 @@ function [ posteriors ] = UpdatePriors( O, evidenceBeam, currentMicHeading_degre
 
 %P(A|B)=P(A)*P(B|A)/P(B)
 
-%start by circshifting the vector of priors so that we can look up a prior
-%in mic array coordinates
-currentMicHeading_index=find(currentMicHeading_degrees>=P.spaceAngles,1,'first'); %find the index in space angles that corresponds to the mic heading
+
 %evidence beam is in mic beams with P.nBeams resolution; we want it to be
 %in space with P.numSpaceAngles resolution
 
