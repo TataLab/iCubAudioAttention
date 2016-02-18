@@ -62,5 +62,5 @@ display(['recording that audio took ' num2str(toc(t)) ' seconds.  It should have
 %scale the audio so it runs between -1 and 1
 recordedAudio=recordedAudio./max(max(abs(recordedAudio)));
 
-audiowrite('/Users/Matthew/Documents/Robotics/iCubAudioAttention/data/trainingdata/Noice.wav',recordedAudio',sampleRate);
+audiowrite('/Users/Matthew/Documents/Robotics/iCubAudioAttention/data/trainingdata/test.wav',recordedAudio',sampleRate);
 sound (recordedAudio(1,:),sampleRate);
