@@ -11,7 +11,6 @@ display('estimating background noise beam pattern');
 
 frame=frame'; %transpose of confusion to get audio running in row vectors as god intended
 
-frame(2,:)=circshift(frame(2,:),[0 10]);
 
 %throw an error if the samplerate of the noise file doesn't match the
 %expected sample rate
@@ -65,12 +64,25 @@ for bandCounter=1:P.nBands
     
 end
 
+%we can flatten it here
+%collapse down columns to arrive at a single vector of probabilities
+
+
+
+
+
+noiseFloor=squeeze(noiseFloor(end,:)); %we only want the final cumulative product
+
+reflectedNoiseFloor=fliplr(noiseFloor);
+noiseFloor=[noiseFloor reflectedNoiseFloor(2:end-1)];
+noiseFloor=circshift(noiseFloor,[0 P.nBeamsPerHemifield]); %align the the noisefloor with the P.micAngles (we're still in microphone space)
+
 %upsample and interpolate the measured noise floor to match the resolution of the space angles 
-thisFrameImage=thisFrameImage'; %interp will want it to be anglesxbands
-thisFrameImage=interp1(P.angles,thisFrameImage,-pi/2:P.radialResolution_radians:pi/2); %interpolate the smaller number of beams onto the (probably) larger number of angles in real space.  Divide by two because we're still only working with the front half.
-thisFrameImage=thisFrameImage'; %flip it back to bandsxangles
-reflectedFrameImage=fliplr(thisFrameImage);
-noiseFloor=[thisFrameImage reflectedFrameImage(:,2:end-1)];
+noiseFloor=interp1(P.micAngles,noiseFloor,P.spaceAngles,'spline'); %interpolate the smaller number of beams onto the (probably) larger number of angles in real space.  Divide by two because we're still only working with the front half.
+
+%let's normalize noiseFloor so the numbers don't vanish
+noiseFloor=noiseFloor./sum(noiseFloor);
+
 
 display('done');
 

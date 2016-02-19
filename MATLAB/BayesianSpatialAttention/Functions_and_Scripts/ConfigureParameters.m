@@ -20,7 +20,7 @@ P.sampleRate = 44100;
 P.nMics=2;
 display(['please note sampling rate is set to ' num2str(P.sampleRate) ' (iCub streams audio at 48K)']);
 
-P.frameDuration_samples = 2^11; %divide by sample rate to get frame duration
+P.frameDuration_samples = 2^13; %divide by sample rate to get frame duration
 P.frameDuration_seconds = P.frameDuration_samples/P.sampleRate; 
 P.requiredLag_frames=0; %it might be necessary in some cases to imposes a lag behind real-time
 P.numFramesInBuffer=20;  %how big of an echoic memory should we have
@@ -28,13 +28,13 @@ P.numFramesInBuffer=20;  %how big of an echoic memory should we have
 %%%%%%%%%%%%%%%%
 %some parameters for localizing
 %%%%%%%%%%%%%
-P.nBands=64;  %if you're stream pre-filtered audio from AudioCaptureFilterBank_YARP then the number of bands needs to match!
+P.nBands=16;  %if you're stream pre-filtered audio from AudioCaptureFilterBank_YARP then the number of bands needs to match!
 P.nBeamsPerHemifield=ceil( (P.D/P.c)*P.sampleRate ); %maximum lag in samples x2 (to sweep left and right of midline)
 P.nBeams=2*P.nBeamsPerHemifield+1; %+1 includes the centre beam 
 P.lags=(P.c/P.sampleRate).* (-P.nBeamsPerHemifield:P.nBeamsPerHemifield); %linear spaced distances corresponding to lags in seconds
 P.angles=real(asin( (1/P.D) .* P.lags )) ; %nonlinear angles (in radians) that correspond to the lags
 P.low_cf=50; % center frequencies based on Erb scale
-P.high_cf=10000;
+P.high_cf=5000;
 P.cfs = MakeErbCFs2(P.low_cf,P.high_cf,P.nBands);
 P.frameOverlap = 0;  %this gets a bit confusing: we need to pull enough data so we can run beamformer lags *past* the end of each frame
 P.sizeFramePlusOverlap=P.frameDuration_samples+(P.frameOverlap*2); %this is the total size of the chunk of data we need to pull out of the buffer each time we read it
@@ -97,16 +97,17 @@ else
 end
 
 P.useNoiseFloor=0;
+noiseFloorFileName='/Users/Matthew/Documents/Robotics/iCubAudioAttention/data/sounds/PinkNoise_2sec_0lag_44100hz.wav';
 if P.useNoiseFloor==1 %should we take the time to build and use a model of the background noise?
-    if(isempty(dir('./Functions_and_Scripts/UofL_iCubNoiseFloor.mat'))) %if we don't have a saved beam pattern then we have to build it
-        noiseFloor=BuildNoiseFloor(P,'/Users/Matthew/Documents/Robotics/iCubAudioAttention/data/sounds/UofL_iCubNoiseFloor.wav'); %use pre-recorded noise to get an estimate of the false alarm probability
-        save('./Functions_and_Scripts/UofL_iCubNoiseFloor.mat','noiseFloor'); %save it for next time
+    if(isempty(dir('./Functions_and_Scripts/PinkNoise_1sec_0lag_weak.mat'))) %if we don't have a saved beam pattern then we have to build it
+        noiseFloor=BuildNoiseFloor(P,noiseFloorFileName); %use pre-recorded noise to get an estimate of the false alarm probability
+        save('./Functions_and_Scripts/PinkNoise_2sec_0lag_44100hz.mat','noiseFloor'); %save it for next time
     else
-        load('./Functions_and_Scripts/UofL_iCubNoiseFloor.mat');
+        load('./Functions_and_Scripts/PinkNoise_2sec_0lag_44100hz.mat');
         P.noiseFloor=noiseFloor;
     end
 else
-    noiseFloor=ones(P.nBands,P.numSpaceAngles); %if not, just divide through by ones
+    noiseFloor=ones(1,P.numSpaceAngles); %if not, just divide through by ones
 end
 
 P.noiseFloor=noiseFloor;

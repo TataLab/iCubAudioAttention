@@ -8,25 +8,21 @@ function [ evidenceRatios ] = ComputeEvidenceRatio( P )
 
 display('pre-computing evidence ratios');
 
-evidenceRatios=zeros(P.nBands,P.numSpaceAngles,P.numSpaceAngles);
+evidenceRatios=zeros(P.numSpaceAngles,P.numSpaceAngles);
 
-%for each frequency band
-for bandIndex=1:P.nBands
-    
+
     %for each steering angle B
     for steeringAngleIndex=1:P.numSpaceAngles
         
-        B=P.noiseFloor(bandIndex,steeringAngleIndex); %pull out the P(B) due to background noise at this steering angle
+        
         
         %for each true arrival angle
-        thisArrivalAngleVector=P.beamPattern(bandIndex,:,steeringAngleIndex);
-        thisEvidenceRatioVector=(thisArrivalAngleVector)./B;  %compute all the ratios at once
-        evidenceRatios(bandIndex,:,steeringAngleIndex)=thisEvidenceRatioVector; %stash the ratio into the return matrix
-           
+        thisArrivalAngleVector=squeeze(P.beamPattern(:,steeringAngleIndex));
+        thisEvidenceRatioVector=(thisArrivalAngleVector')./P.noiseFloor;  %compute all the ratios at once
+        thisEvidenceRatioVector=thisEvidenceRatioVector./sum(thisEvidenceRatioVector);
+        evidenceRatios(:,steeringAngleIndex)=thisEvidenceRatioVector; %stash the ratio into the return matrix
+        
     end
-end
-
-
 
 
 

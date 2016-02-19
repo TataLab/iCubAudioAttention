@@ -36,7 +36,7 @@ frameCounter=1;
 O.onsetTime=tic;
 O.angle=0.0;
 O.salience=0.0;
-O.radialPriors=zeros(1,P.numSpaceAngles); 
+O.radialPriors=ones(1,P.numSpaceAngles); 
 
 %tune the filterbank by listening to a target talker
 %[fWeights]=TuneFilterBank(P);
@@ -47,11 +47,12 @@ O.radialPriors=zeros(1,P.numSpaceAngles);
 
 %for testing
 %load('mattWeights.mat');
+numFramesToAcquire=100;
+acquireProbData=zeros(numFramesToAcquire,P.numSpaceAngles);
+
 
 %to not use top-down attention use uniform weights
 fWeights=ones(P.nMics,P.frameDuration_samples,P.nBands);
-
-
 done=0;
 while(~done)
     
@@ -135,18 +136,18 @@ while(~done)
     offsetAudioSalience= sum(offsetSpectralPeakValues) / length(offsetSpectralPeakValues); %this is the magical secret sauce that tells us how likely there is a new "voice-like" object in the scene
 
     frameSalience=sum(frameSpectralPeakValues) * length(frameSpectralPeakValues);
-    %inspection
-%     
+    %%inspection
+    
 %     subplot(2,1,1);
 %     plot(frameCounter,onsetAudioSalience,'ro');
 %     hold on;
 % 
 %     subplot(2,1,2);
-%     plot(frameCounter,offsetAudioSalience,'go');
+%     plot(frameCounter,frameSalience,'go');
 %     hold on;
 % 
 %     drawnow;
-%     
+    
 
 %     scatter(onsetAudioSalience,offsetAudioSalience,'o');
 %     drawnow;
@@ -196,7 +197,7 @@ while(~done)
     
     %compute the time-decaying salience
     %tdSalience =  P.salienceGain * 1./(1+exp(0.20*toc(O.onsetTime))) * O.salience ;
-    O.tdSalience = 2 * toc(O.onsetTime) * exp(-toc(O.onsetTime) * 10.8) + exp(-toc(O.onsetTime) * 0.2) * O.salience;
+    O.tdSalience = (2 * toc(O.onsetTime) * exp(-toc(O.onsetTime) * 1.8) + exp(-toc(O.onsetTime) * 0.8)) * O.salience;
     
 %     plot(frameCounter,O.tdSalience,'o');
 %     drawnow;
@@ -214,7 +215,7 @@ while(~done)
     %salience of the selected object, then capture attention to the new
     %object
     
-    if(onsetAudioSalience>O.tdSalience && onsetAudioSalience > P.attentionCaptureThreshold)
+    if(onsetAudioSalience>O.tdSalience)% && onsetAudioSalience > P.attentionCaptureThreshold)
         %a new object captured attention so update all the object features
         O.salience=onsetAudioSalience;  %the current objects salience
         O.onsetTime=tic;%take the last time stamp of the frame to be the onset time ... note that's arbitrarily inaccurate to within frameDuration
@@ -242,7 +243,7 @@ while(~done)
         initialAngle=P.spaceAngles(initialBeam);
         display(['found salient talker at beam ' num2str(initialBeam) ' angle ' num2str(O.angle*180/pi) ' degrees']);
 
-    else  %update the existing object    
+    elseif (frameSalience>0.125); %update the existing object    
         
         %pass the object with its vector of priors in external space and the current angle
         %updatePriors will rotate the priors to align with mic space and use these to update the priors using Bayes and return
@@ -253,17 +254,23 @@ while(~done)
        
     end
     
-
+    O.radialPriors=O.radialPriors./sum(O.radialPriors);
+    
     %decide where we think the current object is
     [~,selectedBeam]=max(O.radialPriors(90:270));  
     O.angle=P.spaceAngles(selectedBeam+90);
     display(['Current object is probably at ' num2str(O.angle*180/pi) ' degrees']);
-    bar(O.radialPriors(90:270)*O.tdSalience);
-    ylim([0 400]);
+    bar(O.radialPriors);
+    ylim([0 1]);
     drawnow;
 
-    
-    
+    %for data acquisition in an experiment
+    %acquire data showing the time progression of O.radialPriors
+    if(frameCounter<=numFramesToAcquire)
+        acquireProbData(frameCounter,:)=O.radialPriors;
+    else
+        display('done acquiring data');
+    end
     
     %increment for next frame
     nextFrameStamp=lastFrameStamp+P.frameDuration_samples; %increment

@@ -7,7 +7,7 @@
 audioAttentionRoot='/Users/Matthew/Documents/Robotics/iCubAudioAttention'; %point to the root of the repository
 %audioFileName=[audioAttentionRoot '/MATLAB/AudioCapture/audioTest_right_to_left.wav'];
 %audioFileName=[audioAttentionRoot '/data/sounds/audioTest_right_to_left.wav'];
-audioFileName=[audioAttentionRoot '/data/sounds/TwoTalkerConversation_10samplesLandR.wav'];
+audioFileName=[audioAttentionRoot '/data/sounds/TwoTalkerConversation_10samplesLandR_plusNoise.wav'];
 
 
 disp(audioFileName);

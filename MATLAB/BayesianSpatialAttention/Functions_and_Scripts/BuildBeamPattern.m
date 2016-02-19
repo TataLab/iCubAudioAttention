@@ -9,12 +9,13 @@ display('Building synthetic beam pattern');
 
 %for accumulating the rms amplitude at each frequency x arrival angle x
 %steering angle
-outputBeamPattern=zeros(P.nBands,P.numSpaceAngles, P.numSpaceAngles);
+rawBeamPattern=zeros(P.nBands,P.numSpaceAngles, P.numSpaceAngles);
 
 
 %for each frequency band
 for bandIndex=1:P.nBands
     
+    display(['Computing beam pattern for band ' num2str(bandIndex) ' of ' num2str(P.nBands)]);
     frequencyBand=P.cfs(bandIndex); %look up the center frequency of this band
     
     
@@ -69,18 +70,48 @@ for bandIndex=1:P.nBands
         thisBeamPattern=thisBeamPattern+abs(min(thisBeamPattern));
         
         
-        %normalize the beam pattern so that it can work like a probability
-        thisBeamPattern=thisBeamPattern./sum(thisBeamPattern); %elements sum to 1.0
+        %normalize the beam pattern so that it can work like a
+        %probability...no wait, normalize across this dimension later
+        %thisBeamPattern=thisBeamPattern./sum(thisBeamPattern); %elements sum to 1.0
         
+
         %accumulate this beamPattern into the matrix of output beam patterns
-        outputBeamPattern(bandIndex,arrivalAngleIndex,:)=thisBeamPattern;
+        rawBeamPattern(bandIndex,arrivalAngleIndex,:)=thisBeamPattern;
         
         
     end
     
+   
+end
+
+
+%this is a bit weird.  We need to normalize each product as we go through
+%the stack of frequency bands.  Otherwise we end up with fleetingly small
+%numbers
+outputBeamPattern=ones(P.numSpaceAngles,P.numSpaceAngles);
+
+for i=1:P.nBands
+   
+    outputBeamPattern=outputBeamPattern .* squeeze(rawBeamPattern(i,:,:));
+    outputBeamPattern=outputBeamPattern./sum(sum(outputBeamPattern));
 
     
 end
+
+%now normalize across the B dimension because for any true arrival angle
+%there will always be a selected peak that is the evidence angle, so the
+%probabilities sum to 1.  Notice that for any given evidence angle, the
+%"sensitivity" or probability that a true arrival angle yields that
+%evidence doesn't sum to one across arrival angles.
+
+for i=1:P.numSpaceAngles
+   
+    outputBeamPattern(i,:)=outputBeamPattern(i,:)./sum(outputBeamPattern(i,:));
+    
+end
+
+
+
 
 display('done');
 end

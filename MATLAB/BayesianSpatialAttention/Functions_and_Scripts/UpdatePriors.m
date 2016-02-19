@@ -21,16 +21,10 @@ function [ posteriors ] = UpdatePriors( O, evidenceBeam, currentMicHeading_index
 micPriors=circshift(O.radialPriors,[0 -currentMicHeading_index]); %think about the sign of the head very very carefully
 %display(['current evidence beam is ' num2str(evidenceBeam)]);
 
-%expand the priors to span all frequencies
-micPriors=repmat(micPriors,[P.nBands 1]);
 
 %now we can use Bayes to update these priors
-posteriors=micPriors.*squeeze(P.evidenceRatios(:,:,evidenceBeamAngle));
-
-
-%collapse across the bands to arrive at a single best-guess of the new
-%probabilities
-posteriors=sum(posteriors,1);
+ratios=squeeze(P.evidenceRatios(:,evidenceBeamAngle));
+posteriors=micPriors.*ratios'; %traspose
 
 %normalize posteriors so they add to 1
 posteriors=posteriors./sum(posteriors);
