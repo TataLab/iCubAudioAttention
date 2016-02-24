@@ -16,7 +16,7 @@ P.audioAttentionRoot='/Users/Matthew/Documents/Robotics/iCubAudioAttention'; %po
 
 P.c=336;%define speed of sound in m/s (to be very accurate, adjust for elevation (lethbridge is at ~950m)
 P.D=0.145; %define distance between microphones in m
-P.sampleRate = 44100;
+P.sampleRate = 48000;
 P.nMics=2;
 display(['please note sampling rate is set to ' num2str(P.sampleRate) ' (iCub streams audio at 48K)']);
 
@@ -28,7 +28,7 @@ P.numFramesInBuffer=20;  %how big of an echoic memory should we have
 %%%%%%%%%%%%%%%%
 %some parameters for localizing
 %%%%%%%%%%%%%
-P.nBands=16;  %if you're stream pre-filtered audio from AudioCaptureFilterBank_YARP then the number of bands needs to match!
+P.nBands=64;  %if you're stream pre-filtered audio from AudioCaptureFilterBank_YARP then the number of bands needs to match!
 P.nBeamsPerHemifield=ceil( (P.D/P.c)*P.sampleRate ); %maximum lag in samples x2 (to sweep left and right of midline)
 P.nBeams=2*P.nBeamsPerHemifield+1; %+1 includes the centre beam 
 P.lags=(P.c/P.sampleRate).* (-P.nBeamsPerHemifield:P.nBeamsPerHemifield); %linear spaced distances corresponding to lags in seconds
@@ -40,7 +40,6 @@ P.frameOverlap = 0;  %this gets a bit confusing: we need to pull enough data so 
 P.sizeFramePlusOverlap=P.frameDuration_samples+(P.frameOverlap*2); %this is the total size of the chunk of data we need to pull out of the buffer each time we read it
 P.frameIndices=P.frameOverlap+1:(P.frameOverlap+1) + P.frameDuration_samples - 1; %the indices of the "core" frame inside the grabbed audio data
 
-
 %%%%%%%%%
 %for computing delta spectrum (i.e. spectrotemporal changes) we need to
 %buffer frames over time.  Set up some parameters to control this
@@ -51,14 +50,14 @@ P.nPastFrames=floor(P.nPastSeconds/P.frameDuration_seconds);
 %%%%%
 %Stimulus driven attention can capture attention.  Set a threshold
 %%%%%
-P.attentionCaptureThreshold=100;  % a minimum salience that must be exceeded for attention to be captured...this is environment sensitive and must be tuned
+P.attentionCaptureThreshold=300;  % a minimum salience that must be exceeded for attention to be captured...this is environment sensitive and must be tuned
 %P.salienceGain = 2; %"stickiness of attention": use this to prevent a second frame from capturing attention from the previous frame
 %%%%%%
 %parameters for interacting with memory mapped audio
 %%%%%
 
 %for reading unfiltered memmapped audio
-memMapFileName=[P.audioAttentionRoot '/data/AudioMemMap.tmp'];
+memMapFileName='/tmp/AudioMemMap.tmp';
 f=dir(memMapFileName);
 P.bufferSize_bytes = f.bytes; %the  buffer size is determined by AudioCapture_YARP.  Frames on that side are hard coded to be 4096 samples.  There are 4 rows by 4096 doubles x some number of frames in the  buffer.
 P.bufferSize_samples = P.bufferSize_bytes / (8*4); %each sample is a 4 x 64-bit column (two audio data samples, sequence and time)
@@ -88,12 +87,17 @@ P.micAngles=[P.angles pi+P.angles(2:end-1)]; %all the possible microphone coordi
 P.micAngles=circshift(P.micAngles,[0 P.nBeamsPerHemifield]); %rotate the microphone angles so that midline is in the middle
 P.micAngles=unwrap(P.micAngles)-2*pi; %we don't want the ugly discontinuity.  Better to run smoothly from -pi:pi
 if(isempty(dir('./Functions_and_Scripts/beamPattern.mat'))) %if we don't have a saved beam pattern then we have to build it
-    beamPattern=BuildBeamPattern(P); %compute all the sensitivities of the different steering angles for different arrival angles
+    [beamPattern,beamMatrix]=BuildBeamPattern(P); %compute all the sensitivities of the different steering angles for different arrival angles
     save('./Functions_and_Scripts/beamPattern.mat','beamPattern'); %save it for next time
+    save('./Functions_and_Scripts/beamMatrix.mat','beamMatrix'); %save it for next time
     P.beamPattern=beamPattern;
+    P.beamMatrix=beamMatrix;
 else
     load('./Functions_and_Scripts/beamPattern.mat');
+    load('./Functions_and_Scripts/beamMatrix.mat');
+
     P.beamPattern=beamPattern;
+    P.beamMatrix=beamMatrix;
 end
 
 P.useNoiseFloor=0;
@@ -116,6 +120,12 @@ P.noiseFloor=noiseFloor;
 
 P.evidenceRatios=ComputeEvidenceRatio(P); %precompute the ratio of P(B|A) to P(B)
 
-
+%setup for controlling a desktop motor with arduino
+P.useDesktopRobot = 1;
+if(P.useDesktopRobot)
+    display('Setting up motor AdaFruit motor controller on Arduino'); 
+    addpath('/Users/Matthew/Documents/Robotics/DesktopRobot/StepperController');
+    P.motorControl=ConfigureArduino;
+end
 end
 

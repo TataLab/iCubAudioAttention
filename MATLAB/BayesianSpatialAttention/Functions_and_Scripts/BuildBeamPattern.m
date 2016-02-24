@@ -1,4 +1,4 @@
-function [ outputBeamPattern ] = BuildBeamPattern( P )
+function [ outputBeamPattern , rawBeamPattern ] = BuildBeamPattern( P )
 %take struct of parameters and compute the sensitivity of a steared beam to
 %off-beam arrival angles
 
@@ -63,8 +63,8 @@ for bandIndex=1:P.nBands
         %express into decibels so it's a sensitivity
         thisBeamPattern=20 * log10(thisBeamPattern);
         
-        %pin the maximimum nulling at -50 dB so it doesn't go to -infinity
-        thisBeamPattern(thisBeamPattern<-100)=-50;
+        %pin the maximimum nulling at -100 dB so it doesn't go to -infinity
+        thisBeamPattern(thisBeamPattern<-100)=-100;
         
         %shift it up so every value is positive
         thisBeamPattern=thisBeamPattern+abs(min(thisBeamPattern));

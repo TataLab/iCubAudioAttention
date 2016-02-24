@@ -18,7 +18,7 @@ function [ posteriors ] = UpdatePriors( O, evidenceBeam, currentMicHeading_index
 
 
 
-micPriors=circshift(O.radialPriors,[0 -currentMicHeading_index]); %think about the sign of the head very very carefully
+micPriors=circshift(O.radialPriors,[0,-currentMicHeading_index]); %think about the sign of the head very very carefully
 %display(['current evidence beam is ' num2str(evidenceBeam)]);
 
 
@@ -30,7 +30,7 @@ posteriors=micPriors.*ratios'; %traspose
 posteriors=posteriors./sum(posteriors);
 
 %now rotate them back into real-world space
-posteriors=circshift(posteriors,[0 currentMicHeading_index]); %mind the sign, be sure you're rotating the right direction!
+posteriors=circshift(posteriors,[0,currentMicHeading_index]); %mind the sign, be sure you're rotating the right direction!
 
 
 

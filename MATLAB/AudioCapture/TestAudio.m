@@ -15,13 +15,14 @@
 % shared memory
 
 
-frameSize=4096;  
+frameSize=512;  
 sampleRate=48000;
 
 %%%%%%
 %parameters for interacting with memory mapped audio
 %%%%%
-memMapFileName='/Users/Matthew/Documents/Robotics/iCubAudioAttention/data/AudioMemMap.tmp';
+%memMapFileName='/Users/Matthew/Documents/Robotics/iCubAudioAttention/data/AudioMemMap.tmp';
+memMapFileName='/tmp/AudioMemMap.tmp';
 f=dir(memMapFileName);
 bufferSize_bytes = f.bytes; %the  buffer size is determined by AudioCapture_YARP or AudioCapture_PreRecorded.  Frames on that side are hard coded to be 4096 samples.  There are 4 rows by 4096 doubles x some number of frames in the  buffer.
 bufferSize_samples = bufferSize_bytes / (8*4); %each sample is a 4 x 64-bit column (two audio data samples, sequence and time)
@@ -52,9 +53,10 @@ for i=1:howLong_frames
     while(audioIn.Data(1,1).audioD(3,end)<thisFrameStamp+frameSize)
 %         %spin
 %         display('waiting for the next frame');
-     end
+    end
 
- 
+    plot(frame(1,:));
+    drawnow;
     %display(['that frame took ' num2str(toc(measuredFrameTime)) ' seconds.  It should have taken ' num2str(frameSize/sampleRate) ' seconds.']);
 end
 display(['recording that audio took ' num2str(toc(t)) ' seconds.  It should have taken ' num2str(howLong_samples/sampleRate) ' seconds.']);
@@ -62,5 +64,5 @@ display(['recording that audio took ' num2str(toc(t)) ' seconds.  It should have
 %scale the audio so it runs between -1 and 1
 recordedAudio=recordedAudio./max(max(abs(recordedAudio)));
 
-audiowrite('/Users/Matthew/Documents/Robotics/iCubAudioAttention/data/trainingdata/test.wav',recordedAudio',sampleRate);
+audiowrite('./test.wav',recordedAudio',sampleRate);
 sound (recordedAudio(1,:),sampleRate);
