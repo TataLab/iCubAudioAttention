@@ -23,7 +23,7 @@ numMemMapFrames=200;
 audioMemMapSize = numMemMapFrames * frameDuration_samples;  %this is a tricky part of the code.  All other processes that want to memory map this audio will need to know how big it is.  They can get that info using dir().
 
 %prepare memory mapping
-AudioMemMapFilename=[audioAttentionRoot '/data/AudioMemMap.tmp'];
+AudioMemMapFilename=['/tmp/AudioMemMap.tmp'];
 display(['memory mapping file ' AudioMemMapFilename ' for audio data.']);
 
 try

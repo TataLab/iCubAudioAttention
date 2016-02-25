@@ -75,7 +75,7 @@ if(pStruct.writeToMemMap) %set up to use memory mapping to expose the audio to o
     pStruct.numMemMapFrames=10; %think of this as echoic memory:  a raw audio data buffer
     pStruct.audioMemMapSize = pStruct.numMemMapFrames * pStruct.frameDuration_samples;  %this is a tricky part of the code.  All other processes that want to memory map this audio will need to know how big it is.  They can get that info using dir().
     %prepare memory mapping
-    pStruct.AudioMemMapFilename=[pStruct.audioAttentionRoot '/data/AudioMemMap.tmp'];
+    pStruct.AudioMemMapFilename=['/tmp/AudioMemMap.tmp'];
     display(['memory mapping file ' pStruct.AudioMemMapFilename ' for audio data.']);    
     try
         tempData = zeros(4,pStruct.audioMemMapSize); %2 audio channels, a counter channel, and a time stamp channel

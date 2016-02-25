@@ -5,7 +5,7 @@ function [ P ] = ConfigureParameters( ~ )
 
 display(['Setting up parameters for iCub Audio Attention using: ' mfilename('fullpath')]);
 
-P.sendAngleToYarp = 0;  %set to 1 to send angle over yarp network %remember to add yarp to the MATLAB java path:  javaaddpath('/Applications/yarp/MATLAB Java Classes/jyarp');
+P.sendAngleToYarp = 1;  %set to 1 to send angle over yarp network %remember to add yarp to the MATLAB java path:  javaaddpath('/Applications/yarp/MATLAB Java Classes/jyarp');
 P.audioAttentionRoot='/Users/Matthew/Documents/Robotics/iCubAudioAttention'; %point to the root of the repository
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -20,7 +20,7 @@ P.sampleRate = 48000;
 P.nMics=2;
 display(['please note sampling rate is set to ' num2str(P.sampleRate) ' (iCub streams audio at 48K)']);
 
-P.frameDuration_samples = 2^13; %divide by sample rate to get frame duration
+P.frameDuration_samples = 2^14; %divide by sample rate to get frame duration
 P.frameDuration_seconds = P.frameDuration_samples/P.sampleRate; 
 P.requiredLag_frames=0; %it might be necessary in some cases to imposes a lag behind real-time
 P.numFramesInBuffer=20;  %how big of an echoic memory should we have
@@ -116,12 +116,12 @@ end
 
 P.noiseFloor=noiseFloor;
 
-
+P.learnRate=10.0;
 
 P.evidenceRatios=ComputeEvidenceRatio(P); %precompute the ratio of P(B|A) to P(B)
 
 %setup for controlling a desktop motor with arduino
-P.useDesktopRobot = 1;
+P.useDesktopRobot = 0;
 if(P.useDesktopRobot)
     display('Setting up motor AdaFruit motor controller on Arduino'); 
     addpath('/Users/Matthew/Documents/Robotics/DesktopRobot/StepperController');

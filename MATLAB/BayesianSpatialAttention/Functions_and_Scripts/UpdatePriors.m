@@ -1,4 +1,4 @@
-function [ posteriors ] = UpdatePriors( O, evidenceBeam, currentMicHeading_index, P )
+function [ posteriors_micAligned,posteriors_spaceAligned ] = UpdatePriors( O, evidenceBeam, currentMicHeading_index, P , frameSalience)
 %pass the object with its vector of priors in external space and the
 %current angle we think the sound is comming from, the heading of the robot and the parameters of the array
 
@@ -14,23 +14,27 @@ function [ posteriors ] = UpdatePriors( O, evidenceBeam, currentMicHeading_index
 %evidence beam is in mic beams with P.nBeams resolution; we want it to be
 %in space with P.numSpaceAngles resolution
 
-[~,evidenceBeamAngle]=find(P.spaceAngles>=P.angles(evidenceBeam),1,'first'); %find the index of the angle in the high-resolution radial space that corresponds to the evidence beam
-
-
-
-micPriors=circshift(O.radialPriors,[0,-currentMicHeading_index]); %think about the sign of the head very very carefully
-%display(['current evidence beam is ' num2str(evidenceBeam)]);
+%find the index of the angle in the high-resolution radial space that corresponds to the evidence beam
+tempDif=P.spaceAngles-P.angles(evidenceBeam);
+[~,evidenceBeamAngleIndex]=min(abs(tempDif));
 
 
 %now we can use Bayes to update these priors
-ratios=squeeze(P.evidenceRatios(:,evidenceBeamAngle));
-posteriors=micPriors.*ratios'; %traspose
+PBgivenA=squeeze(P.evidenceRatios(:,evidenceBeamAngleIndex));
+
+% plot(ratios);
+% drawnow;
+
+tempPosteriors=O.radialPriors_micAligned.*PBgivenA'; %traspose
+
 
 %normalize posteriors so they add to 1
-posteriors=posteriors./sum(posteriors);
+tempPosteriors=tempPosteriors./sum(tempPosteriors);
+
+posteriors_micAligned=O.radialPriors_micAligned +  P.learnRate * (tempPosteriors * frameSalience);
 
 %now rotate them back into real-world space
-posteriors=circshift(posteriors,[0,currentMicHeading_index]); %mind the sign, be sure you're rotating the right direction!
+posteriors_spaceAligned=circshift(posteriors_micAligned,[0,currentMicHeading_index]); %mind the sign, be sure you're rotating the right direction!
 
 
 
