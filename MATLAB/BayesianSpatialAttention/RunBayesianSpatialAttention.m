@@ -50,8 +50,10 @@ O.fWeights=ones(P.nBands,P.frameDuration_samples); %note that this is bandsxsamp
 
 %for testing
 %load('mattWeights.mat');
-numFramesToAcquire=100;
-acquireProbData=zeros(numFramesToAcquire,P.numSpaceAngles);
+numFramesToAcquire=40;
+acquireProbData_micAligned=zeros(numFramesToAcquire,P.numSpaceAngles);
+acquireProbData_spaecAligned=zeros(numFramesToAcquire,P.numSpaceAngles);
+
 
 
 
@@ -174,12 +176,12 @@ while(~done)
     
     %compute the time-decaying salience
     %tdSalience =  P.salienceGain * 1./(1+exp(0.20*toc(O.onsetTime))) * O.salience ;
-    O.tdSalience = (2 * toc(O.onsetTime) * exp(-toc(O.onsetTime) * 1.8) + exp(-toc(O.onsetTime) * 0.8)) * O.salience;
+    O.tdSalience = (2 * toc(O.onsetTime) * exp(-toc(O.onsetTime) * 0.8) + exp(-toc(O.onsetTime) * 0.8)) * O.salience;
     %
-    %     plot(frameCounter,O.tdSalience,'o');
-    %     hold on;
-    %     drawnow;
-    %
+%         plot(frameCounter,O.tdSalience,'o');
+%         hold on;
+%         drawnow;
+%     
     
     %we have to know where we're pointing: circshift the vector of priors so that we can look up a prior
     %in mic array coordinates
@@ -257,7 +259,8 @@ while(~done)
         normInterpolatedSurroundPriors=interpolatedSurroundPriors./sum(interpolatedSurroundPriors);
         
         %map priors and align
-        O.radialPriors_micAligned=interpolatedSurroundPriors;
+        O.radialPriors_micAligned=O.radialPriors_micAligned+interpolatedSurroundPriors;
+        O.radialPriors_micAligned=O.radialPriors_micAligned./sum(O.radialPriors_micAligned);
         O.radialPriors_spaceAligned=circshift(O.radialPriors_micAligned,[0 -currentMicHeading_index]); %circshift it into real-world space so the mic angle is decoupled from the world around it
         
         
@@ -265,14 +268,18 @@ while(~done)
         if(P.sendAngleToYarp==1)
             
             audioAttentionControl('/mosaic/angle:i',O.angle_micAligned*180/pi,1);
+  
+            %%here we need to get the angle of the microphones relative to
+            %%the space around the robot.  On red iCub we need to replace
+            %%this with some code that actually reads the head angle
             currentMicHeading_degrees=currentMicHeading_degrees+O.angle_micAligned*180/pi;
             
             %jump some hoops to make sure we know where the head is
             %pointing
-            if(currentMicHeading_degrees<-50.0) 
-                currentMicHeading_degrees=-50.0;
-            elseif(currentMicHeading_degrees>50.0)
-                currentMicHeading_degrees=50.0;
+            if(currentMicHeading_degrees<-40.0) 
+                currentMicHeading_degrees=-40.0;
+            elseif(currentMicHeading_degrees>40.0)
+                currentMicHeading_degrees=40.0;
             end
                 
             
@@ -326,14 +333,14 @@ while(~done)
         %as priors in the subsequent iteration)
         [O.radialPriors_micAligned,O.radialPriors_spaceAligned]=UpdatePriors(O,maxBeam,currentMicHeading_index,P,frameSalience);
 %         
-%         %update our guess about where the object is
+        %update our guess about where the object is
 %         [~,priorPeaks]=findpeaks(O.radialPriors_micAligned,'sortstr','descend');
 %         priorPeaks=priorPeaks(1:2); %take the two biggest peaks
 %         peaksOffMidline=priorPeaks-180;
 %         [~,peakIndex]=min(abs(peaksOffMidline)); %pick the peak closest to the centre
 %         
 %         
-%         O.angle_micAligned=P.spaceAngles(peakIndex);
+        O.angle_micAligned=P.spaceAngles(peakIndex);
 %         
         %display(['space heading: ' num2str(O.angle_spaceAligned*180/pi) ' mic heading: ' num2str(O.angle_micAligned*180/pi)]);
         %display(O.angle_micAligned*180/pi);
@@ -347,25 +354,38 @@ while(~done)
         %         drawnow;
         
 %         
-%         if(P.sendAngleToYarp==1)
-%             
-%             audioAttentionControl('/mosaic/angle:i',O.angle_micAligned*180/pi,1);
-%             currentMicHeading_degrees=currentMicHeading_degrees+O.angle_micAligned*180/pi;
-%             %jump some hoops to make sure we know where the head is
-%             %pointing
-%             if(currentMicHeading_degrees<-40.0)
-%                 currentMicHeading_degrees=-40.0;
-%             elseif(currentMicHeading_degrees>40.0)
-%                 currentMicHeading_degrees=40.0;
-%             end
-%         end
-%         
+        if(P.sendAngleToYarp==1)
+            
+            %here we send a vector of 360 degrees to
+            audioAttentionControl('/mosaic/salienceImage:i',O.radialPriors_spaceAligned*180/pi,1);
+            
+            
+            %%here we need to get the angle of the microphones relative to
+            %%the space around the robot.  On red iCub we need to replace
+            %%this with some code that actually reads the head angle
+            currentMicHeading_degrees=currentMicHeading_degrees+O.angle_micAligned*180/pi;
+            %jump some hoops to make sure we know where the head is
+            %pointing
+           
+            if(currentMicHeading_degrees<-40.0)
+                currentMicHeading_degrees=-40.0;
+            elseif(currentMicHeading_degrees>40.0)
+                currentMicHeading_degrees=40.0;
+            end
+        end
+        
         
     end
     
     
-    plot(P.spaceAngles(180-50:180+50),O.radialPriors_micAligned(180-50:180+50));
-    drawnow;
+    
+  [priorsX,priorsY]=pol2cart(P.spaceAngles,O.radialPriors_micAligned);
+  compass(priorsX,priorsY);
+  drawnow;
+    
+    
+%     plot(P.spaceAngles(180-50:180+50),O.radialPriors_micAligned(180-50:180+50));
+%     drawnow;
     
     if(P.useDesktopRobot==1)
         P.motorControl=TurnDegrees(P.motorControl,O.angle_mic);
@@ -379,19 +399,17 @@ while(~done)
     %     ylim([0 100]);
     %     drawnow;
     
+   
     
-    
-    %imagesc(squeeze(P.beamMatrix(:,O.selectedBeam,:)));
-    %zlim([0.0 0.05]);
-    %drawnow;
-    
-    %     %for data acquisition in an experiment
-    %     %acquire data showing the time progression of O.radialPriors
-    %     if(frameCounter<=numFramesToAcquire)
-    %         acquireProbData(frameCounter,:)=O.radialPriors;
-    %     else
-    %         display('done acquiring data');
-    %     end
+        %for data acquisition in an experiment
+        %acquire data showing the time progression of O.radialPriors
+        if(frameCounter<=numFramesToAcquire)
+            acquireProbData_micAligned(frameCounter,:)=O.radialPriors_micAligned;
+            acquireProbData_spaceAligned(frameCounter,:)=O.radialPriors_spaceAligned;
+
+        else
+            display('done acquiring data');
+        end
     
     %increment for next frame
     nextFrameStamp=lastFrameStamp+P.frameDuration_samples; %increment

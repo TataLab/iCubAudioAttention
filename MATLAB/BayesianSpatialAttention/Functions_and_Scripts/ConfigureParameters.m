@@ -116,7 +116,7 @@ end
 
 P.noiseFloor=noiseFloor;
 
-P.learnRate=10.0;
+P.learnRate=0.05;
 
 P.evidenceRatios=ComputeEvidenceRatio(P); %precompute the ratio of P(B|A) to P(B)
 

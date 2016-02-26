@@ -33,6 +33,9 @@ tempPosteriors=tempPosteriors./sum(tempPosteriors);
 
 posteriors_micAligned=O.radialPriors_micAligned +  P.learnRate * (tempPosteriors * frameSalience);
 
+%normalize again the saliences
+posteriors_micAligned=posteriors_micAligned./sum(posteriors_micAligned);
+
 %now rotate them back into real-world space
 posteriors_spaceAligned=circshift(posteriors_micAligned,[0,currentMicHeading_index]); %mind the sign, be sure you're rotating the right direction!
 
