@@ -12,6 +12,7 @@ addpath('./Functions_and_Scripts');
 P=ConfigureParameters;
 
 currentMicHeading_degrees=0.0;  %the current heading of the robot
+currentMicHeading_radians=0.0;
 
 frame=P.audioIn.Data(1,1).audioD(:,end-P.sizeFramePlusOverlap+1:end); %initialize the first frame
 lastFrameStamp = frame(3,end);%ask what is the stamp of the most recent sample written (it's in the last column in the buffer)
@@ -34,10 +35,14 @@ frameCounter=1;
 
 %set up an auditory object to keep track of sound sources
 O.onsetTime=tic;
-O.angle=0.0;
+O.angle_micAligned=0.0;
+O.angle_spaceAligned=0.0;
+O.angle_spaceAligned_index=1;
 O.salience=0.0;
-O.radialPriors_spaceAligned=ones(1,P.numSpaceAngles);
-O.radialPriors_micAligned=ones(1,P.numSpaceAngles);
+O.radialPriors_initial_spaceAligned=ones(1,P.numSpaceAngles);
+O.radialPriors_initial_micAligned=ones(1,P.numSpaceAngles);
+O.radialPriors_updated_spaceAligned=ones(1,P.numSpaceAngles);
+O.radialPriors_updated_micAligned=ones(1,P.numSpaceAngles);
 %to not use top-down attention use uniform weights
 O.fWeights=ones(P.nBands,P.frameDuration_samples); %note that this is bandsxsamples.  to apply these weights in the spectral stage we'll need samples by bands because of the filterbank output
 
@@ -50,9 +55,9 @@ O.fWeights=ones(P.nBands,P.frameDuration_samples); %note that this is bandsxsamp
 
 %for testing
 %load('mattWeights.mat');
-numFramesToAcquire=40;
+numFramesToAcquire=200;
 acquireProbData_micAligned=zeros(numFramesToAcquire,P.numSpaceAngles);
-acquireProbData_spaecAligned=zeros(numFramesToAcquire,P.numSpaceAngles);
+acquireProbData_spaceAligned=zeros(numFramesToAcquire,P.numSpaceAngles);
 
 
 
@@ -110,23 +115,6 @@ while(~done)
     deltaAmpOffsets(deltaAmpOffsets<0)=0;
     
     
-    
-    %     %inspection
-    %     subplot(2,1,1);
-    %     bar(P.cfs,deltaAmpOnsets);
-    %     ylim([-10 10]);
-    %
-    %     subplot(2,1,2);
-    %     bar(P.cfs,deltaAmpOffsets);
-    %     ylim([-10 10]);
-    %
-    %     drawnow;
-    %
-    
-    %     bar(deltaAmpOffsets);
-    %     ylim([-1 .5]);
-    %     drawnow;
-    
     [onsetSpectralPeakValues,onsetSpectralPeakIndices]=findpeaks(deltaAmpOnsets); %find the peak values and their indices in the spectrum
     [offsetSpectralPeakValues,offsetSpectralPeakIndices]=findpeaks(deltaAmpOffsets); %find the peak values and their indices in the spectrum
     [frameSpectralPeakValues,frameSpectralPeakIndices]=findpeaks(amp); %find the absolute raw "peakiness" of the current frame
@@ -149,21 +137,6 @@ while(~done)
     frameSalience=sum(frameSpectralPeakValues) * length(frameSpectralPeakValues);
     %%inspection
     
-    %     subplot(2,1,1);
-    %       plot(frameCounter,onsetAudioSalience,'ro');
-    %        hold on;
-    %
-    %     subplot(2,1,2);
-    %     plot(frameCounter,frameSalience,'go');
-    %     hold on;
-    %
-    %        drawnow;
-    
-    
-    %     scatter(onsetAudioSalience,offsetAudioSalience,'o');
-    %     drawnow;
-    %     hold on;
-    %
     
     %%%end spectral salience
     
@@ -175,36 +148,23 @@ while(~done)
     
     
     %compute the time-decaying salience
-    %tdSalience =  P.salienceGain * 1./(1+exp(0.20*toc(O.onsetTime))) * O.salience ;
     O.tdSalience = (2 * toc(O.onsetTime) * exp(-toc(O.onsetTime) * 0.8) + exp(-toc(O.onsetTime) * 0.8)) * O.salience;
-    %
-        plot(frameCounter,O.tdSalience,'o');
-        hold on;
-        drawnow;
-%     
-    
-    %we have to know where we're pointing: circshift the vector of priors so that we can look up a prior
-    %in mic array coordinates
-    %    if(P.useDesktopRobot==1)
-    %         currentMicHeading_degrees=P.motorControl.currentHeading;  %ask for the current heading from the motor controller
-    %    else
-    %        currentMicHeading_degrees=0;
-    %    end
-    
-    
+ 
     %compute the difference between space and mic angles in units of indices
     %into the lookup vectors
     currentMicHeading_index=floor(currentMicHeading_degrees/P.radialResolution_degrees);  %we need to convert heading in degrees into the index of that in the vector of angles.the midline is a zero
     %display(currentMicHeading_index);
-    
+
     %check if a new object appeared
     if(onsetAudioSalience>O.tdSalience && onsetAudioSalience > P.attentionCaptureThreshold)
         %a new object captured attention so update all the object features
         O.salience=onsetAudioSalience;  %the current objects salience
         O.onsetTime=tic;%take the last time stamp of the frame to be the onset time ... note that's arbitrarily inaccurate to within frameDuration
         
-        %set new filterbank weights
+        %set new filterbank weights, or set ones to not use spectral
+        %attention
         O.fWeights=repmat(deltaAmpOnsets',[1 P.frameDuration_samples]);
+        %O.fWeights=ones(P.nBands,P.frameDuration_samples);
         
         %get some variables ready for the output of the beamformer stage
         thisFrameImage=zeros(P.nBands,P.nBeams,P.frameDuration_samples+2*P.frameOverlap); %it's only nBeamsPerHemi *2 long because we loose half the samples off either end (theoretically they're the last samples of the previous frame and the first samples of the frame that hasn't happend yet)
@@ -238,6 +198,7 @@ while(~done)
         O.angle_micAligned=P.angles(maxBeam);
         %display(O.angle_micAligned*180/pi);
         
+        O.angle_spaceAligned=O.angle_micAligned-currentMicHeading_radians;
         
         %to initialize the prior probabilities of each angle in the object's
         %probabalistic map, we need to normalize the initial beams
@@ -259,16 +220,21 @@ while(~done)
         normInterpolatedSurroundPriors=interpolatedSurroundPriors./sum(interpolatedSurroundPriors);
         
         %map priors and align
-        O.radialPriors_micAligned=O.radialPriors_micAligned+interpolatedSurroundPriors;
-        O.radialPriors_micAligned=O.radialPriors_micAligned./sum(O.radialPriors_micAligned);
-        O.radialPriors_spaceAligned=circshift(O.radialPriors_micAligned,[0 -currentMicHeading_index]); %circshift it into real-world space so the mic angle is decoupled from the world around it
+        O.radialPriors_initial_micAligned=interpolatedSurroundPriors;  %reset or add old priors .... depends on what you want .. have to think about this
+        O.radialPriors_initial_micAligned=O.radialPriors_initial_micAligned./sum(O.radialPriors_initial_micAligned);
+        O.radialPriors_initial_spaceAligned=circshift(O.radialPriors_initial_micAligned,[0 currentMicHeading_index]); %circshift it into real-world space so the mic angle is decoupled from the world around it
         
+        %initialize the updated priors
+        O.radialPriors_updated_micAligned=O.radialPriors_initial_micAligned;
+        O.radialPriors_updated_spaceAligned=O.radialPriors_initial_spaceAligned;
         
         
         if(P.sendAngleToYarp==1)
             
+            %send a single angle to ballistically move the head to a
+            %capturing sound
             audioAttentionControl('/mosaic/angle:i',O.angle_micAligned*180/pi,1);
-  
+            
             %%here we need to get the angle of the microphones relative to
             %%the space around the robot.  On red iCub we need to replace
             %%this with some code that actually reads the head angle
@@ -276,21 +242,22 @@ while(~done)
             
             %jump some hoops to make sure we know where the head is
             %pointing
-            if(currentMicHeading_degrees<-40.0) 
+            if(currentMicHeading_degrees<-40.0)
                 currentMicHeading_degrees=-40.0;
             elseif(currentMicHeading_degrees>40.0)
                 currentMicHeading_degrees=40.0;
             end
-                
+            
+            currentMicHeading_radians=currentMicHeading_degrees*pi/180;
             
         end
         
-        display(['New object at ' num2str(O.angle_micAligned*180/pi)]);
-        display(currentMicHeading_degrees);
+        display(['New object at ' num2str(O.angle_spaceAligned*180/pi)]);
+        %display(currentMicHeading_degrees);
         
-        
+      
+        %%%else update!%%%%%
     else
-        
         
         %previous filterbank weights for the selected talker to the beamforming
         %stage, use the weights stored in the object
@@ -331,86 +298,23 @@ while(~done)
         %updatePriors will rotate the priors to align with mic space and use these to update the priors using Bayes and return
         %the object with updated priors (i.e. posteriors which can be used
         %as priors in the subsequent iteration)
-        [O.radialPriors_micAligned,O.radialPriors_spaceAligned]=UpdatePriors(O,maxBeam,currentMicHeading_index,P,frameSalience);
-%         
-        %update our guess about where the object is
-%         [~,priorPeaks]=findpeaks(O.radialPriors_micAligned,'sortstr','descend');
-%         priorPeaks=priorPeaks(1:2); %take the two biggest peaks
-%         peaksOffMidline=priorPeaks-180;
-%         [~,peakIndex]=min(abs(peaksOffMidline)); %pick the peak closest to the centre
-%         
-%         
-%        O.angle_micAligned=P.spaceAngles(peakIndex);
-%         
-        %display(['space heading: ' num2str(O.angle_spaceAligned*180/pi) ' mic heading: ' num2str(O.angle_micAligned*180/pi)]);
-        %display(O.angle_micAligned*180/pi);
-        %         [OmicX,OmicY]=pol2cart(O.angle_micAligned,1);
-        %         [OspaceX,OspaceY]=pol2cart(O.angle_spaceAligned,1);
-        %
-        %         hold off;
-        %         compass(OmicX,OmicY,'r');
-        %         hold on;
-        %         compass(OspaceX,OspaceY,'g');
-        %         drawnow;
-        
-%         
-        if(P.sendAngleToYarp==1)
-            
-            %here we send a vector of 360 degrees to
-            %audioAttentionControl('/mosaic/salienceImage:i',O.radialPriors_spaceAligned*180/pi,1);
-            
-            
-            %%here we need to get the angle of the microphones relative to
-            %%the space around the robot.  On red iCub we need to replace
-            %%this with some code that actually reads the head angle
-            %currentMicHeading_degrees=currentMicHeading_degrees+O.angle_micAligned*180/pi;
-            %jump some hoops to make sure we know where the head is
-            %pointing
-           
-            if(currentMicHeading_degrees<-40.0)
-                currentMicHeading_degrees=-40.0;
-            elseif(currentMicHeading_degrees>40.0)
-                currentMicHeading_degrees=40.0;
-            end
-        end
-        
-        
-    end
-    
-    
-    
-%   [priorsX,priorsY]=pol2cart(P.spaceAngles,O.radialPriors_micAligned);
-%   compass(priorsX,priorsY);
-%   drawnow;
-    
-    
-%     plot(P.spaceAngles(180-50:180+50),O.radialPriors_micAligned(180-50:180+50));
-%     drawnow;
-    
-    if(P.useDesktopRobot==1)
-        P.motorControl=TurnDegrees(P.motorControl,O.angle_mic);
-        display(['current heading is at ' num2str(currentMicHeading_degrees)]);
-        display(['turning robot ' num2str(O.angle_mic) ' degrees']);
-        %pause(.5);
-    end
-    
-    
-    %     bar(O.radialPriors.*O.salience);
-    %     ylim([0 100]);
-    %     drawnow;
-    
-   
-    
-        %for data acquisition in an experiment
-        %acquire data showing the time progression of O.radialPriors
-        if(frameCounter<=numFramesToAcquire)
-            acquireProbData_micAligned(frameCounter,:)=O.radialPriors_micAligned;
-            acquireProbData_spaceAligned(frameCounter,:)=O.radialPriors_spaceAligned;
+        [O.radialPriors_updated_micAligned,O.radialPriors_updated_spaceAligned]=UpdatePriors(O,maxBeam,currentMicHeading_index,P,O.tdSalience);
+ 
+        %send a vector of probabilities to YARP
+        audioAttentionControl('/mosaic/bayesianMap:i',O.radialPriors_updated_micAligned*180/pi,1);
 
-        else
-            display('done acquiring data');
-        end
+    end
     
+    
+    
+    if(frameCounter<=numFramesToAcquire)
+        display('acquiring a frame');
+        acquireProbData_spaceAligned(frameCounter,:)=O.radialPriors_updated_spaceAligned;
+        acquireProbData_micAligned(frameCounter,:)=O.radialPriors_updated_micAligned;
+    else
+        display('not acquiring a frame');
+    end
+   
     %increment for next frame
     nextFrameStamp=lastFrameStamp+P.frameDuration_samples; %increment
     lastFrameStamp=nextFrameStamp;

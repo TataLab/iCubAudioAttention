@@ -22,22 +22,28 @@ tempDif=P.spaceAngles-P.angles(evidenceBeam);
 %now we can use Bayes to update these priors
 PBgivenA=squeeze(P.evidenceRatios(:,evidenceBeamAngleIndex));
 
-% plot(ratios);
-% drawnow;
 
-tempPosteriors=O.radialPriors_micAligned.*PBgivenA'; %traspose
+PBgivenA=PBgivenA';
+
+PBgivenA_spaceAligned=circshift(PBgivenA,[0 currentMicHeading_index]);
+
+%use the initial priors on each update to ignore subsequent updates
+%(possibly helpful if the head doesn't turn much).  Or use the most recent
+%priors to keep bootstrapping
+tempPosteriors_spaceAligned=O.radialPriors_initial_spaceAligned.*PBgivenA_spaceAligned; %traspose
+%tempPosteriors_spaceAligned=O.radialPriors_updated_spaceAligned.*PBgivenA_spaceAligned; %traspose
 
 
 %normalize posteriors so they add to 1
-tempPosteriors=tempPosteriors./sum(tempPosteriors);
+tempPosteriors_spaceAligned=tempPosteriors_spaceAligned./sum(tempPosteriors_spaceAligned);
 
-posteriors_micAligned=O.radialPriors_micAligned +  P.learnRate * (tempPosteriors * frameSalience);
+posteriors_spaceAligned=O.radialPriors_updated_spaceAligned +  P.learnRate * (tempPosteriors_spaceAligned);
 
 %normalize again the saliences
-posteriors_micAligned=posteriors_micAligned./sum(posteriors_micAligned);
+posteriors_spaceAligned=posteriors_spaceAligned./sum(posteriors_spaceAligned);
 
-%now rotate them back into real-world space
-posteriors_spaceAligned=circshift(posteriors_micAligned,[0,currentMicHeading_index]); %mind the sign, be sure you're rotating the right direction!
+%now rotate them back into mic-world 
+posteriors_micAligned=circshift(posteriors_spaceAligned,[0,-currentMicHeading_index]); %mind the sign, be sure you're rotating the right direction!
 
 
 
