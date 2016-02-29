@@ -5,7 +5,7 @@ function [ P ] = ConfigureParameters( ~ )
 
 display(['Setting up parameters for iCub Audio Attention using: ' mfilename('fullpath')]);
 
-P.sendAngleToYarp = 1;  %set to 1 to send angle over yarp network %remember to add yarp to the MATLAB java path:  javaaddpath('/Applications/yarp/MATLAB Java Classes/jyarp');
+P.sendAngleToYarp = 0;  %set to 1 to send angle over yarp network %remember to add yarp to the MATLAB java path:  javaaddpath('/Applications/yarp/MATLAB Java Classes/jyarp');
 P.audioAttentionRoot='/Users/Matthew/Documents/Robotics/iCubAudioAttention'; %point to the root of the repository
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
