@@ -1,9 +1,9 @@
 // -*- mode:C++; tab-width:4; c-basic-offset:4; indent-tabs-mode:nil -*-
 
 /*
-  * Copyright (C)2013  Department of Robotics Brain and Cognitive Sciences - Istituto Italiano di Tecnologia
+  * Copyright (C)2016  Department of Robotics Brain and Cognitive Sciences - Istituto Italiano di Tecnologia
   * Author:Francesco Rea
-  * email: francesco.reak@iit.it
+  * email: francesco.rea@iit.it
   * Permission is granted to copy, distribute, and/or modify this program
   * under the terms of the GNU General Public License, version 2 or any
   * later version published by the Free Software Foundation.
@@ -18,15 +18,14 @@
 */
 
 /**
- * @file tutorialModule.cpp
- * @brief Implementation of the tutorialModule (see header file).
+ * @file gazeInterfaceModule.cpp
+ * @brief Implementation of the gazeInterfaceModule (see header file).
  */
 
-#include "iCub/tutorialModule.h"
+#include "iCub/gazeInterfaceModule.h"
 
 using namespace yarp::os;
 using namespace yarp::sig;
-using namespace attention::dictionary;
 using namespace std;
 
 /* 
@@ -36,12 +35,12 @@ using namespace std;
  *  equivalent of the "open" method.
  */
 
-bool tutorialModule::configure(yarp::os::ResourceFinder &rf) {
+bool gazeInterfaceModule::configure(yarp::os::ResourceFinder &rf) {
     /* Process all parameters from both command-line and .ini file */
 
     /* get the module name which will form the stem of all module port names */
     moduleName            = rf.check("name", 
-                           Value("/tutorial"), 
+                           Value("/gazeInterface"), 
                            "module name (string)").asString();
     /*
     * before continuing, set the module name before getting any other parameters, 
@@ -88,7 +87,7 @@ bool tutorialModule::configure(yarp::os::ResourceFinder &rf) {
 
 
     /* create the thread and pass pointers to the module parameters */
-    rThread = new tutorialRatethread(robotName, configFile);
+    rThread = new gazeInterfaceRatethread(robotName, configFile);
     rThread->setName(getName().c_str());
     //rThread->setInputPortName(inputPortName.c_str());
     
@@ -99,12 +98,12 @@ bool tutorialModule::configure(yarp::os::ResourceFinder &rf) {
                         // so that it will then run the module
 }
 
-bool tutorialModule::interruptModule() {
+bool gazeInterfaceModule::interruptModule() {
     handlerPort.interrupt();
     return true;
 }
 
-bool tutorialModule::close() {
+bool gazeInterfaceModule::close() {
     handlerPort.close();
     /* stop the thread */
     yDebug("stopping the thread \n");
@@ -112,8 +111,10 @@ bool tutorialModule::close() {
     return true;
 }
 
-bool tutorialModule::respond(const Bottle& command, Bottle& reply) 
-{
+bool gazeInterfaceModule::respond(const Bottle& command, Bottle& reply) 
+{   
+    bool ok = false;
+    bool rec = false; // is the command recognized?
     string helpMessage =  string(getName().c_str()) + 
                 " commands are: \n" +  
                 "help \n" +
@@ -128,17 +129,104 @@ bool tutorialModule::respond(const Bottle& command, Bottle& reply)
         cout << helpMessage;
         reply.addString("ok");
     }
+    mutex.wait();
+    switch (command.get(0).asVocab()) {
+    case COMMAND_VOCAB_HELP:
+        rec = true;
+        {
+            reply.addVocab(Vocab::encode("many"));
+            reply.addString("help");
+
+            //reply.addString();
+            reply.addString("set fn \t: general set command ");
+            reply.addString("get fn \t: general get command ");
+            //reply.addString();
+
+            
+            //reply.addString();
+            reply.addString("seek red \t : looking for a red color object");
+            reply.addString("seek rgb \t : looking for a general color object");
+            reply.addString("sus  \t : suspending");
+            reply.addString("res  \t : resuming");
+            //reply.addString();
+
+
+            ok = true;
+        }
+        break;
+    case COMMAND_VOCAB_SUSPEND:
+        rec = true;
+        {
+            //prioritiser->suspend();
+            ok = true;
+        }
+        break;
+    case COMMAND_VOCAB_STOP:
+        rec = true;
+        {
+            //prioritiser->suspend();
+            //prioritiser->resume();
+            ok = true;
+        }
+        break;
+    case COMMAND_VOCAB_RESUME:
+    rec = true;
+        {
+            //prioritiser->resume();
+            ok = true;
+        }
+        break;
+    case COMMAND_VOCAB_SEEK:
+        rec = true;
+        {
+            //prioritiser->suspend();
+            //prioritiser->seek(command);
+            //prioritiser->resume();
+            ok = true;
+        }
+        break;
+    case COMMAND_VOCAB_FIX:
+        rec = true;
+        {
+            switch (command.get(1).asVocab()) {
+            case COMMAND_VOCAB_CENT:
+                {
+                    printf("Fixating in Center \n");
+                    //prioritiser->fixCenter(1000);
+                }
+                break;
+            }
+            ok = true;
+        }
+        break;
+    default: {
+                
+    }
+        break;    
+    }
+    mutex.post();
+
+    if (!rec)
+        ok = RFModule::respond(command,reply);
+    
+    if (!ok) {
+        reply.clear();
+        reply.addVocab(COMMAND_VOCAB_FAILED);
+    }
+    else
+        reply.addVocab(COMMAND_VOCAB_OK);
+    
     
     return true;
 }
 
 /* Called periodically every getPeriod() seconds */
-bool tutorialModule::updateModule()
+bool gazeInterfaceModule::updateModule()
 {
     return true;
 }
 
-double tutorialModule::getPeriod()
+double gazeInterfaceModule::getPeriod()
 {
     /* module periodicity (seconds), called implicitly by myModule */
     return 1;

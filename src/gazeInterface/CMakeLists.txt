@@ -30,8 +30,7 @@ IF (folder_source)
     )
 
     TARGET_LINK_LIBRARIES(${KEYWORD}        
-      iKin
-      icubmod 
+      iKin 
       ${YARP_LIBRARIES}
    )	
 
