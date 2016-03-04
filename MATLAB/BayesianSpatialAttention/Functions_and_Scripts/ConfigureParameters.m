@@ -34,7 +34,7 @@ P.nBeams=2*P.nBeamsPerHemifield+1; %+1 includes the centre beam
 P.lags=(P.c/P.sampleRate).* (-P.nBeamsPerHemifield:P.nBeamsPerHemifield); %linear spaced distances corresponding to lags in seconds
 P.angles=real(asin( (1/P.D) .* P.lags )) ; %nonlinear angles (in radians) that correspond to the lags
 P.low_cf=100; % center frequencies based on Erb scale
-P.high_cf=3000;
+P.high_cf=5000;
 P.cfs = MakeErbCFs2(P.low_cf,P.high_cf,P.nBands);
 P.frameOverlap = 0;  %this gets a bit confusing: we need to pull enough data so we can run beamformer lags *past* the end of each frame
 P.sizeFramePlusOverlap=P.frameDuration_samples+(P.frameOverlap*2); %this is the total size of the chunk of data we need to pull out of the buffer each time we read it
@@ -127,9 +127,13 @@ if(P.useDesktopRobot)
     addpath('/Users/Matthew/Documents/Robotics/DesktopRobot/StepperController');
     P.motorControl=ConfigureArduino;
 end
+P.fov=45; %degrees
+P.fov_pixels=320; 
 
-P.fov_indices=181-25:181+25;
+P.fov_indices=floor(181-P.fov/2):ceil(181+P.fov/2);  %find the "middle" in micAligned space
 P.fov_angles=P.spaceAngles(P.fov_indices);
+P.fov_xIndices=linspace(P.fov_indices(1), P.fov_indices(end),P.fov_pixels);
+P.fov_cameraResolutionY=240; %x and y dimensions in pixels
 
 end
 
