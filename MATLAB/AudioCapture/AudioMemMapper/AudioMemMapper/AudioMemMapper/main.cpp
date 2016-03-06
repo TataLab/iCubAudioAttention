@@ -145,7 +145,7 @@ int main(void)
      
         if (data.bufferIsFull==1) {
             
-            printf("I worked!");
+            //printf("I worked!");
             //reset the buffer flag
             data.bufferIsFull=0;
             
