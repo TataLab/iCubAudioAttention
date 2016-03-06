@@ -28,13 +28,13 @@ P.numFramesInBuffer=20;  %how big of an echoic memory should we have
 %%%%%%%%%%%%%%%%
 %some parameters for localizing
 %%%%%%%%%%%%%
-P.nBands=32;  %if you're stream pre-filtered audio from AudioCaptureFilterBank_YARP then the number of bands needs to match!
+P.nBands=128;  %if you're stream pre-filtered audio from AudioCaptureFilterBank_YARP then the number of bands needs to match!
 P.nBeamsPerHemifield=ceil( (P.D/P.c)*P.sampleRate ); %maximum lag in samples x2 (to sweep left and right of midline)
 P.nBeams=2*P.nBeamsPerHemifield+1; %+1 includes the centre beam 
 P.lags=(P.c/P.sampleRate).* (-P.nBeamsPerHemifield:P.nBeamsPerHemifield); %linear spaced distances corresponding to lags in seconds
 P.angles=real(asin( (1/P.D) .* P.lags )) ; %nonlinear angles (in radians) that correspond to the lags
 P.low_cf=100; % center frequencies based on Erb scale
-P.high_cf=3000;
+P.high_cf=10000;
 P.cfs = MakeErbCFs2(P.low_cf,P.high_cf,P.nBands);
 P.frameOverlap = 0;  %this gets a bit confusing: we need to pull enough data so we can run beamformer lags *past* the end of each frame
 P.sizeFramePlusOverlap=P.frameDuration_samples+(P.frameOverlap*2); %this is the total size of the chunk of data we need to pull out of the buffer each time we read it
