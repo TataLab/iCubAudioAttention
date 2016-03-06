@@ -20,7 +20,7 @@ P.sampleRate = 48000;
 P.nMics=2;
 display(['please note sampling rate is set to ' num2str(P.sampleRate) ' (iCub streams audio at 48K)']);
 
-P.frameDuration_samples = 2^14; %divide by sample rate to get frame duration
+P.frameDuration_samples = 2^13; %divide by sample rate to get frame duration
 P.frameDuration_seconds = P.frameDuration_samples/P.sampleRate; 
 P.requiredLag_frames=0; %it might be necessary in some cases to imposes a lag behind real-time
 P.numFramesInBuffer=20;  %how big of an echoic memory should we have
@@ -33,8 +33,8 @@ P.nBeamsPerHemifield=ceil( (P.D/P.c)*P.sampleRate ); %maximum lag in samples x2 
 P.nBeams=2*P.nBeamsPerHemifield+1; %+1 includes the centre beam 
 P.lags=(P.c/P.sampleRate).* (-P.nBeamsPerHemifield:P.nBeamsPerHemifield); %linear spaced distances corresponding to lags in seconds
 P.angles=real(asin( (1/P.D) .* P.lags )) ; %nonlinear angles (in radians) that correspond to the lags
-P.low_cf=100; % center frequencies based on Erb scale
-P.high_cf=5000;
+P.low_cf=300; % center frequencies based on Erb scale
+P.high_cf=3000;
 P.cfs = MakeErbCFs2(P.low_cf,P.high_cf,P.nBands);
 P.frameOverlap = 0;  %this gets a bit confusing: we need to pull enough data so we can run beamformer lags *past* the end of each frame
 P.sizeFramePlusOverlap=P.frameDuration_samples+(P.frameOverlap*2); %this is the total size of the chunk of data we need to pull out of the buffer each time we read it
@@ -44,13 +44,14 @@ P.frameIndices=P.frameOverlap+1:(P.frameOverlap+1) + P.frameDuration_samples - 1
 %for computing delta spectrum (i.e. spectrotemporal changes) we need to
 %buffer frames over time.  Set up some parameters to control this
 %%%%%%%%%
-P.nPastSeconds = 0.5;  %in seconds; how much time over which to integrate previous events
+P.nPastSeconds = 1.5;  %in seconds; how much time over which to integrate previous events
 P.nPastFrames=floor(P.nPastSeconds/P.frameDuration_seconds);
 
 %%%%%
 %Stimulus driven attention can capture attention.  Set a threshold
 %%%%%
-P.attentionCaptureThreshold=10;  % a minimum salience that must be exceeded for attention to be captured...this is environment sensitive and must be tuned
+P.attentionCaptureThreshold=100;  % a minimum salience that must be exceeded for attention to be captured...this is environment sensitive and must be tuned
+P.inhibitionOfCapture=2.0; %in seconds, min amount of time between successive captures
 %P.salienceGain = 2; %"stickiness of attention": use this to prevent a second frame from capturing attention from the previous frame
 %%%%%%
 %parameters for interacting with memory mapped audio

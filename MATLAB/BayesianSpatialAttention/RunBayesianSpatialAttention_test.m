@@ -58,7 +58,7 @@ O.fWeights=ones(P.nBands,P.frameDuration_samples); %note that this is bandsxsamp
 
 %for testing
 %load('mattWeights.mat');
-numFramesToAcquire=100;
+numFramesToAcquire=0;
 acquireProbData_micAligned=zeros(numFramesToAcquire,P.numSpaceAngles);
 acquireProbData_spaceAligned=zeros(numFramesToAcquire,P.numSpaceAngles);
 acquireSalienceData_micAligned=zeros(numFramesToAcquire,P.numSpaceAngles);
@@ -141,6 +141,9 @@ while(~done)
     frameSalience=sum(frameSpectralPeakValues) * length(frameSpectralPeakValues);
     %%inspection
     
+%     plot(frameCounter,onsetAudioSalience,'ro');
+%     hold on;
+%     drawnow;
     
     %%%end spectral salience
     
@@ -152,7 +155,8 @@ while(~done)
     
     
     %compute the time-decaying salience
-    O.tdSalience = (2 * toc(O.onsetTime) * exp(-toc(O.onsetTime) * 0.8) + exp(-toc(O.onsetTime) * 0.8)) * O.salience;
+    O.tdSalience = (20 * toc(O.onsetTime) * exp(-toc(O.onsetTime) * 1.0) + exp(-toc(O.onsetTime) * 1.0)) * O.salience;
+%     figure(1);
 %     plot(frameCounter,O.tdSalience,'ro');
 %     drawnow;
 %     hold on;
@@ -163,7 +167,7 @@ while(~done)
     %display(currentMicHeading_index);
 
     %check if a new object appeared
-    if(onsetAudioSalience>O.tdSalience && onsetAudioSalience > P.attentionCaptureThreshold)
+    if(onsetAudioSalience>O.tdSalience && toc(O.onsetTime)>P.inhibitionOfCapture)
         %a new object captured attention so update all the object features
         O.salience=onsetAudioSalience;  %the current objects salience
         O.onsetTime=tic;%take the last time stamp of the frame to be the onset time ... note that's arbitrarily inaccurate to within frameDuration
@@ -251,8 +255,12 @@ while(~done)
         
         if(P.sendAngleToYarp==1)
             
+            display('*******');
+            display('       ');
+            display(['New object at ' num2str(O.angle_spaceAligned*180/pi) ' at frame ' num2str(frameCounter) ' with salience ' num2str(onsetAudioSalience)]);
             audioAttentionControl('/mosaic/angle:i',O.angle_micAligned*180/pi,1);
-            
+            display('       ');
+
             %%here we need to get the angle of the microphones relative to
             %%the space around the robot.  On red iCub we need to replace
             %%this with some code that actually reads the head angle
@@ -270,12 +278,11 @@ while(~done)
             
         end
         
-        display(['New object at ' num2str(O.angle_spaceAligned*180/pi)]);
         %display(currentMicHeading_degrees);
         
         
         %send a full screen to the vision module
-        audioAttentionControl('/mosaic/salienceImage:i',length(thisImage_camera),255*ones(1,length(thisImage_camera)));
+        %audioAttentionControl('/mosaic/salienceImage:i',length(thisImage_camera),255*ones(1,length(thisImage_camera)));
 
         
       
@@ -326,14 +333,41 @@ while(~done)
         O.radialSalience_updated_micAligned=O.radialPriors_updated_micAligned.*frameSalience;
         O.radialSalience_updated_spaceAligned=O.radialPriors_updated_spaceAligned.*frameSalience;
         
+        %you can try to keep updating the current angle, but it jumps
+        %around a lot!  Better to use vision
+        %find max angle within field of view
+        
+%         [~,headingErrorIndex]=max(O.radialSalience_updated_micAligned(P.fov_indices));
+%         headingErrorAngle_degrees=P.fov_angles(headingErrorIndex)*180/pi;
+%         if(P.sendAngleToYarp==1)
+%             audioAttentionControl('/mosaic/angle:i',headingErrorAngle_degrees,1);
+%         
+%             %%here we need to get the angle of the microphones relative to
+%             %%the space around the robot.  On red iCub we need to replace
+%             %%this with some code that actually reads the head angle
+%             currentMicHeading_degrees=currentMicHeading_degrees+headingErrorAngle_degrees;
+%             
+%             %jump some hoops to make sure we know where the head is
+%             %pointing
+%             if(currentMicHeading_degrees<-40.0)
+%                 currentMicHeading_degrees=-40.0;
+%             elseif(currentMicHeading_degrees>40.0)
+%                 currentMicHeading_degrees=40.0;
+%             end
+%             
+%             currentMicHeading_radians=currentMicHeading_degrees*pi/180;
+%             
+%         
+%         end
+        
         %build a frame image
         imageMax=255;
         imageMin=1;
-        scaleMax=20;
+        scaleMax=.00500;
         scaleMin=0;
         
         %which image to send
-        imageData=O.radialPriors_updated_micAligned(P.fov_indices).*O.tdSalience;
+        imageData=O.radialPriors_updated_micAligned(P.fov_indices).*frameSalience;
         
         %interpolate over all the x pixels in the camera image
         thisImage_camera=interp1(P.fov_indices,imageData,P.fov_xIndices,'spline');
@@ -344,11 +378,15 @@ while(~done)
         thisImage_camera(thisImage_camera>255)=255;
         
         %send the image to the vision module
-        audioAttentionControl('/mosaic/salienceImage:i',length(thisImage_camera),thisImage_camera);
+       % audioAttentionControl('/mosaic/salienceImage:i',length(thisImage_camera),thisImage_camera);
 
-        plot(thisImage_camera)
-        ylim([0 255]);
-        drawnow;
+       figure(2);
+       image(thisImage_camera);
+       drawnow;
+       
+%         plot(thisImage_camera)
+%         ylim([0 255]);
+%         drawnow;
     end
     
     
@@ -360,7 +398,7 @@ while(~done)
         acquireSalienceData_micAligned(frameCounter,:)=O.radialSalience_updated_micAligned;
         acquireSalienceData_spaceAligned(frameCounter,:)=O.radialSalience_updated_spaceAligned;
     else
-        display('not acquiring a frame');
+        %display('not acquiring a frame');
     end
     
 %     plot(P.spaceAngles*180/pi,O.radialPriors_initial_spaceAligned*180/pi,'ro');

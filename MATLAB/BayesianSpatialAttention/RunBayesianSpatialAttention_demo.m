@@ -301,7 +301,7 @@ while(~done)
         [O.radialPriors_updated_micAligned,O.radialPriors_updated_spaceAligned]=UpdatePriors(O,maxBeam,currentMicHeading_index,P,O.tdSalience);
  
         %send a vector of probabilities to YARP
-        audioAttentionControl('/mosaic/bayesianMap:i',O.radialPriors_updated_micAligned*180/pi,1);
+        audioAttentionSendMap('/mosaic/bayesianMap:i',O.radialPriors_updated_micAligned*180/pi,1);
 
     end
     
