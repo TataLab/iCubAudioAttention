@@ -5,7 +5,7 @@ function [ P ] = ConfigureParameters( ~ )
 
 display(['Setting up parameters for iCub Audio Attention using: ' mfilename('fullpath')]);
 
-P.sendAngleToYarp = 0;  %set to 1 to send angle over yarp network %remember to add yarp to the MATLAB java path:  javaaddpath('/Applications/yarp/MATLAB Java Classes/jyarp');
+P.sendAngleToYarp = 1;  %set to 1 to send angle over yarp network %remember to add yarp to the MATLAB java path:  javaaddpath('/Applications/yarp/MATLAB Java Classes/jyarp');
 P.audioAttentionRoot='/Users/Matthew/Documents/Robotics/iCubAudioAttention'; %point to the root of the repository
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -20,7 +20,7 @@ P.sampleRate = 48000;
 P.nMics=2;
 display(['please note sampling rate is set to ' num2str(P.sampleRate) ' (iCub streams audio at 48K)']);
 
-P.frameDuration_samples = 2^14; %divide by sample rate to get frame duration
+P.frameDuration_samples = 2^13; %divide by sample rate to get frame duration
 P.frameDuration_seconds = P.frameDuration_samples/P.sampleRate; 
 P.requiredLag_frames=0; %it might be necessary in some cases to imposes a lag behind real-time
 P.numFramesInBuffer=20;  %how big of an echoic memory should we have
@@ -28,12 +28,13 @@ P.numFramesInBuffer=20;  %how big of an echoic memory should we have
 %%%%%%%%%%%%%%%%
 %some parameters for localizing
 %%%%%%%%%%%%%
-P.nBands=32;  %if you're stream pre-filtered audio from AudioCaptureFilterBank_YARP then the number of bands needs to match!
+P.nBands=128;  %if you're stream pre-filtered audio from AudioCaptureFilterBank_YARP then the number of bands needs to match!
 P.nBeamsPerHemifield=ceil( (P.D/P.c)*P.sampleRate ); %maximum lag in samples x2 (to sweep left and right of midline)
 P.nBeams=2*P.nBeamsPerHemifield+1; %+1 includes the centre beam 
 P.lags=(P.c/P.sampleRate).* (-P.nBeamsPerHemifield:P.nBeamsPerHemifield); %linear spaced distances corresponding to lags in seconds
 P.angles=real(asin( (1/P.D) .* P.lags )) ; %nonlinear angles (in radians) that correspond to the lags
-P.low_cf=100; % center frequencies based on Erb scale
+
+P.low_cf=300; % center frequencies based on Erb scale
 P.high_cf=3000;
 P.cfs = MakeErbCFs2(P.low_cf,P.high_cf,P.nBands);
 P.frameOverlap = 0;  %this gets a bit confusing: we need to pull enough data so we can run beamformer lags *past* the end of each frame
@@ -44,13 +45,14 @@ P.frameIndices=P.frameOverlap+1:(P.frameOverlap+1) + P.frameDuration_samples - 1
 %for computing delta spectrum (i.e. spectrotemporal changes) we need to
 %buffer frames over time.  Set up some parameters to control this
 %%%%%%%%%
-P.nPastSeconds = 0.5;  %in seconds; how much time over which to integrate previous events
+P.nPastSeconds = 1.5;  %in seconds; how much time over which to integrate previous events
 P.nPastFrames=floor(P.nPastSeconds/P.frameDuration_seconds);
 
 %%%%%
 %Stimulus driven attention can capture attention.  Set a threshold
 %%%%%
-P.attentionCaptureThreshold=10;  % a minimum salience that must be exceeded for attention to be captured...this is environment sensitive and must be tuned
+P.attentionCaptureThreshold=100;  % a minimum salience that must be exceeded for attention to be captured...this is environment sensitive and must be tuned
+P.inhibitionOfCapture=2.0; %in seconds, min amount of time between successive captures
 %P.salienceGain = 2; %"stickiness of attention": use this to prevent a second frame from capturing attention from the previous frame
 %%%%%%
 %parameters for interacting with memory mapped audio
@@ -127,9 +129,13 @@ if(P.useDesktopRobot)
     addpath('/Users/Matthew/Documents/Robotics/DesktopRobot/StepperController');
     P.motorControl=ConfigureArduino;
 end
+P.fov=45; %degrees
+P.fov_pixels=320; 
 
-P.fov_indices=181-25:181+25;
+P.fov_indices=floor(181-P.fov/2):ceil(181+P.fov/2);  %find the "middle" in micAligned space
 P.fov_angles=P.spaceAngles(P.fov_indices);
+P.fov_xIndices=linspace(P.fov_indices(1), P.fov_indices(end),P.fov_pixels);
+P.fov_cameraResolutionY=240; %x and y dimensions in pixels
 
 end
 

@@ -60,8 +60,7 @@ source_group("Source Files" FILES ${folder_source})
 source_group("Header Files" FILES ${folder_header})
 
 #Some additional options
-include(iCubHelpers)
-include(iCubOptions)
+
 
 # Check if externl torque control is to be used
 if (ICUBWBI_USE_EXTERNAL_TORQUE_CONTROL)

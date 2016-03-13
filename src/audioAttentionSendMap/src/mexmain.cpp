@@ -90,6 +90,8 @@ void mexFunction(int nlhs,mxArray *plhs[],int nrhs,const mxArray *prhs[])
   b = mxGetPr(prhs[1]);
   c = mxGetPr(prhs[2]);
 
+  
+    
   //extract string
   int buflen = (mxGetM(prhs[0]) * mxGetN(prhs[0])) + 1;  /* Get the length of the input string. */
   char* input_buf;
@@ -106,7 +108,7 @@ void mexFunction(int nlhs,mxArray *plhs[],int nrhs,const mxArray *prhs[])
 
   
   BufferedPort<Bottle> bufferPort;
-  if(!bufferPort.open("/audioAttentionControl/control:o")) {
+  if(!bufferPort.open("/mosaic/salienceImage:o")) {
     mexPrintf("Error: impossible to open the port.");
     return;
   } 
@@ -149,16 +151,16 @@ void mexFunction(int nlhs,mxArray *plhs[],int nrhs,const mxArray *prhs[])
   }
   return;
   */
-  
-  if(!Network::connect("/audioAttentionControl/control:o", input_buf)) {
-    mexPrintf("Error! Impossible to connect the port to the %s \n", input_buf );
-    return;
-  }
-  
+    if(!Network::connect("/mosaic/salienceImage:o", input_buf)) {
+        mexPrintf("Error! Impossible to connect the port to the %s \n", input_buf );
+        return;
+    }
+    
   Bottle& bottleSent = bufferPort.prepare();
   bottleSent.clear();
-  bottleSent.addDouble(*b);
-  bottleSent.addDouble(*c);
+  for(int i=0;i < static_cast<int>(*b);i++){
+  	bottleSent.addDouble(c[i]);
+   }
   bufferPort.write();	
   	
   return;
