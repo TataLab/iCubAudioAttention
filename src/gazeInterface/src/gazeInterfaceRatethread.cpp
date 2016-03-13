@@ -79,17 +79,23 @@ void gazeInterfaceRatethread::run() {
     //code here .....
     if (inputPort.getInputCount()) {
         inputReading = inputPort.read(true);   //blocking reading for synchr with the input
-        result = processing();
-    }
+        yInfo("reading from SIM: %s", inputReading->toString().c_str());
+        if (outputPort.getOutputCount()) {
 
-    if (outputPort.getOutputCount()) {
-        Bottle& outputCommand = outputPort.prepare();
-        outputCommand.clear();
-        // changing the pointer of the prepared area for the outputPort.write()
-        outputCommand.addInt(10);
-        outputPort.write();
-    }
+            result = processing();
 
+            Bottle& outputCommand = outputPort.prepare();
+            outputCommand.clear();
+            // changing the pointer of the prepared area for the outputPort.write()
+            double roll  = inputReading->get(0).asDouble();
+            double pitch = inputReading->get(1).asDouble();
+            double yaw   = inputReading->get(2).asDouble();           
+            outputCommand.addDouble(roll);
+            outputCommand.addDouble(pitch);
+            outputCommand.addDouble(yaw);
+            outputPort.write();
+        }
+    }
 }
 
 bool gazeInterfaceRatethread::processing(){
