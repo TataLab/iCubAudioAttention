@@ -56,12 +56,12 @@ int main(int argc, char *argv[]) {
 		return -1;
 	}
 
-	double empty[memoryMapSize_samples *4] = {0}; //plus 2 for time and sample stamps
+	double empty[4096 *4] = {0}; //plus 2 for time and sample stamps
 
 	//setup for memory mapping
 	FILE *fid;
 	fid = fopen("/tmp/AudioMemMap.tmp", "w");
-	fwrite(empty, sizeof(double), memoryMapSize_samples *4, fid); //plus 2 for time and sample stamps
+	fwrite(empty, sizeof(double), 4096 *4, fid); //plus 2 for time and sample stamps
 	fclose(fid);
 	int mappedFileID;
 	mappedFileID = open("/tmp/AudioMemMap.tmp", O_RDWR);
@@ -83,7 +83,7 @@ int main(int argc, char *argv[]) {
 		int e0 = ts.getCount();
 		double e1 = ts.getTime();
 		int row = 0;
-		for (int col = 0 ; col < memoryMapSize_samples; col++) {
+		for (int col = 0 ; col < 4096; col++) {
 			NetInt16 temp_c = (NetInt16) s->get(col, 0);
 			NetInt16 temp_d = (NetInt16) s->get(col, 1);
 			mappedAudioData[row]        	= (double) 	temp_c / normDivid ;
