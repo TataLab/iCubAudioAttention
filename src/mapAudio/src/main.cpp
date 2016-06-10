@@ -69,7 +69,7 @@ int main(int argc, char *argv[]) {
 	mappedAudioData = (double *)mmap(0, memoryMapSize_bytes, PROT_WRITE, MAP_SHARED , mappedFileID, 0);
 	printf("Here\n");
 
-
+	  double sampleDur = 1.0 / 48000;
 
 	//Sound stuff
 	Sound* s;
@@ -80,14 +80,18 @@ int main(int argc, char *argv[]) {
 		bufferPort.getEnvelope(ts);
 		printf("count:%d time:%f \n", ts.getCount(), ts.getTime());
 
-
+		int e0 = ts.getCount();
+		double e1 = ts.getTime();
 		int row = 0;
 		for (int col = 0 ; col < memoryMapSize_samples; col++) {
 			NetInt16 temp_c = (NetInt16) s->get(col, 0);
 			NetInt16 temp_d = (NetInt16) s->get(col, 1);
 			mappedAudioData[row]        	= (double) 	temp_c / normDivid ;
 			mappedAudioData[row + 1] 		= (double) 	temp_d / normDivid;
-			row += 2;
+			mappedAudioData[row + 2] 		= (double) 	(e0 * 4096) + col;
+			mappedAudioData[row + 3]		= (double) 	(e1 + col * sampleDur);
+			row += 4;
+
 		}
 	}
 	return 0;
