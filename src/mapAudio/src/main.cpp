@@ -56,18 +56,18 @@ int main(int argc, char *argv[]) {
 		return -1;
 	}
 
-	double empty[memoryMapSize_samples * (numChannels + 2)] = {0}; //plus 2 for time and sample stamps
+	double empty[memoryMapSize_samples *4] = {0}; //plus 2 for time and sample stamps
 
 	//setup for memory mapping
 	FILE *fid;
 	fid = fopen("/tmp/AudioMemMap.tmp", "w");
-	fwrite(empty, sizeof(double), memoryMapSize_samples * (numChannels + 2), fid); //plus 2 for time and sample stamps
+	fwrite(empty, sizeof(double), memoryMapSize_samples *4, fid); //plus 2 for time and sample stamps
 	fclose(fid);
 	int mappedFileID;
 	mappedFileID = open("/tmp/AudioMemMap.tmp", O_RDWR);
 	double *mappedAudioData;
 	mappedAudioData = (double *)mmap(0, memoryMapSize_bytes, PROT_WRITE, MAP_SHARED , mappedFileID, 0);
-	printf("Here\n");
+	//printf("Here\n");
 
 	  double sampleDur = 1.0 / 48000;
 
@@ -75,7 +75,7 @@ int main(int argc, char *argv[]) {
 	Sound* s;
 	Stamp ts;
 	while (true) {
-		printf("here\n");
+		//printf("here\n");
 		s = bufferPort.read(true);
 		bufferPort.getEnvelope(ts);
 		printf("count:%d time:%f \n", ts.getCount(), ts.getTime());
