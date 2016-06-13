@@ -155,7 +155,7 @@ while(~done)
     
     
     %compute the time-decaying salience
-    O.tdSalience = (20 * toc(O.onsetTime) * exp(-toc(O.onsetTime) * 1.0) + exp(-toc(O.onsetTime) * 1.0)) * O.salience;
+    O.tdSalience = (20 * toc(O.onsetTime) * exp(-toc(O.onsetTime) * 1.0) + exp(-toc(O.onsetTime) * 0.8)) * O.salience;
 %     figure(1);
 %     plot(frameCounter,O.tdSalience,'ro');
 %     drawnow;
@@ -179,6 +179,10 @@ while(~done)
         
         %get some variables ready for the output of the beamformer stage
         thisFrameImage=zeros(P.nBands,P.nBeams,P.frameDuration_samples+2*P.frameOverlap); %it's only nBeamsPerHemi *2 long because we loose half the samples off either end (theoretically they're the last samples of the previous frame and the first samples of the frame that hasn't happend yet)
+        
+        %apply weights
+        fFrameL=O.fWeights.*fFrameL;
+        fFrameR=O.fWeights.*fFrameR;
         
         %sweep a beam to find a first guess at this new object's location
         %   %this is exactly a bank of delay-and-sum beamformers
@@ -252,14 +256,15 @@ while(~done)
         O.radialSalience_updated_micAligned=O.radialPriors_initial_micAligned.*O.tdSalience;
         O.radialSalience_updated_spaceAligned=O.radialPriors_initial_spaceAligned.*O.tdSalience;
 
-        
+        display('*******');
+        display('       ');
+        display(['New object at ' num2str(O.angle_spaceAligned*180/pi) ' at frame ' num2str(frameCounter) ' with salience ' num2str(onsetAudioSalience)]);
+        display('       ');
+
         if(P.sendAngleToYarp==1)
             
-            display('*******');
-            display('       ');
-            display(['New object at ' num2str(O.angle_spaceAligned*180/pi) ' at frame ' num2str(frameCounter) ' with salience ' num2str(onsetAudioSalience)]);
+            
             audioAttentionControl('/mosaic/angle:i',O.angle_micAligned*180/pi,1);
-            display('       ');
 
             %%here we need to get the angle of the microphones relative to
             %%the space around the robot.  On red iCub we need to replace
@@ -380,9 +385,9 @@ while(~done)
         %send the image to the vision module
        % audioAttentionControl('/mosaic/salienceImage:i',length(thisImage_camera),thisImage_camera);
 
-       figure(2);
-       image(thisImage_camera);
-       drawnow;
+        
+        image(thisImage_camera);
+        drawnow;
        
 %         plot(thisImage_camera)
 %         ylim([0 255]);

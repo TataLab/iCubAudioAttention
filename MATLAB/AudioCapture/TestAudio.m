@@ -15,7 +15,7 @@
 % shared memory
 
 
-frameSize=512;  
+frameSize=4096;  
 sampleRate=48000;
 
 %%%%%%
@@ -49,12 +49,21 @@ for i=1:howLong_frames
     recordedAudio(:,writeIndex:writeIndex+frameSize-1)=frame(1:2,:);
     writeIndex=writeIndex+frameSize;
     
+    wellSpun=0;
     %wait until AudioCapture_YARP writes new data into the shared memory
     while(audioIn.Data(1,1).audioD(3,end)<thisFrameStamp+frameSize)
 %         %spin
 %         display('waiting for the next frame');
+          wellSpun=1;
     end
 
+    
+    if(~wellSpun)
+        display('timing problems, you may have dropped audio data');
+    end
+    
+    
+    
     plot(frame(1,:));
     drawnow;
     %display(['that frame took ' num2str(toc(measuredFrameTime)) ' seconds.  It should have taken ' num2str(frameSize/sampleRate) ' seconds.']);

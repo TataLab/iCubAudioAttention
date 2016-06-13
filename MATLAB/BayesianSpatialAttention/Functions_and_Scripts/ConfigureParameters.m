@@ -28,13 +28,13 @@ P.numFramesInBuffer=20;  %how big of an echoic memory should we have
 %%%%%%%%%%%%%%%%
 %some parameters for localizing
 %%%%%%%%%%%%%
-P.nBands=128;  %if you're stream pre-filtered audio from AudioCaptureFilterBank_YARP then the number of bands needs to match!
+P.nBands=40;  %if you're stream pre-filtered audio from AudioCaptureFilterBank_YARP then the number of bands needs to match!
 P.nBeamsPerHemifield=ceil( (P.D/P.c)*P.sampleRate ); %maximum lag in samples x2 (to sweep left and right of midline)
 P.nBeams=2*P.nBeamsPerHemifield+1; %+1 includes the centre beam 
 P.lags=(P.c/P.sampleRate).* (-P.nBeamsPerHemifield:P.nBeamsPerHemifield); %linear spaced distances corresponding to lags in seconds
 P.angles=real(asin( (1/P.D) .* P.lags )) ; %nonlinear angles (in radians) that correspond to the lags
 
-P.low_cf=300; % center frequencies based on Erb scale
+P.low_cf=100; % center frequencies based on Erb scale
 P.high_cf=3000;
 P.cfs = MakeErbCFs2(P.low_cf,P.high_cf,P.nBands);
 P.frameOverlap = 0;  %this gets a bit confusing: we need to pull enough data so we can run beamformer lags *past* the end of each frame
@@ -45,14 +45,14 @@ P.frameIndices=P.frameOverlap+1:(P.frameOverlap+1) + P.frameDuration_samples - 1
 %for computing delta spectrum (i.e. spectrotemporal changes) we need to
 %buffer frames over time.  Set up some parameters to control this
 %%%%%%%%%
-P.nPastSeconds = 1.5;  %in seconds; how much time over which to integrate previous events
+P.nPastSeconds = P.frameDuration_seconds*3;  %in seconds; how much time over which to integrate previous events
 P.nPastFrames=floor(P.nPastSeconds/P.frameDuration_seconds);
 
 %%%%%
 %Stimulus driven attention can capture attention.  Set a threshold
 %%%%%
 P.attentionCaptureThreshold=100;  % a minimum salience that must be exceeded for attention to be captured...this is environment sensitive and must be tuned
-P.inhibitionOfCapture=2.0; %in seconds, min amount of time between successive captures
+P.inhibitionOfCapture=1.5; %in seconds, min amount of time between successive captures
 %P.salienceGain = 2; %"stickiness of attention": use this to prevent a second frame from capturing attention from the previous frame
 %%%%%%
 %parameters for interacting with memory mapped audio
