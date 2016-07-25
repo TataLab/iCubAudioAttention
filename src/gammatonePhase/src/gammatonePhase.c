@@ -1,65 +1,3 @@
-/*
- *=========================================================================
- * An efficient C implementation of the 4th order gammatone filter
- *-------------------------------------------------------------------------
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- *-------------------------------------------------------------------------
-%
-%  [bm, env, instp, instf] = gammatone_c(x, fs, cf, hrect) 
-%
-%  x     - input signal
-%  fs    - sampling frequency (Hz)
-%  cf    - centre frequency of the filter (Hz)
-%  hrect - half-wave rectifying if hrect = 1 (default 0)
-%
-%  bm    - basilar membrane displacement
-%  env   - instantaneous envelope
-%  instp - instantaneous phase (unwrapped radian)
-%  instf - instantaneous frequency (Hz)
-%
-%
-%  The gammatone filter is commonly used in models of the auditory system.
-%  The algorithm is based on Martin Cooke's Ph.D work (Cooke, 1993) using 
-%  the base-band impulse invariant transformation. This implementation is 
-%  highly efficient in that a mathematical rearrangement is used to 
-%  significantly reduce the cost of computing complex exponentials. For 
-%  more detail on this implementation see
-%  http://www.dcs.shef.ac.uk/~ning/resources/gammatone/
-%
-%  Once compiled in Matlab this C function can be used as a standard 
-%  Matlab function:
-%  >> mex gammatone_c.c
-%  >> bm = gammatone_c(x, 16000, 200);
-%
-%  Ning Ma, University of Sheffield
-%  n.ma@dcs.shef.ac.uk, 09 Mar 2006
-% 
- * CHANGES:
- * 2012-05-30 Ning Ma <n.ma@dcs.shef.ac.uk>
- *   Fixed a typo in the implementation (a5). The typo does not make a lot
- *   of difference to the response. Thanks to Vijay Parsa for reporting
- *   the problem.
- *
- * 2010-02-01 Ning Ma <n.ma@dcs.shef.ac.uk>
- *   Clip very small filter coefficients to zero in order to prevent
- *   gradual underflow. Arithmetic operations may become very slow with
- *   subnormal numbers (those smaller than the minimum positive normal
- *   value, 2.225e-308 in double precision). This could happen if the 
- *   input signal cotains many zeros (e.g. impulse responses). Thanks to
- *   John Culling for reporting the problem.
- *=========================================================================
- */
 
 #include <stdlib.h>
 #include <math.h>
@@ -255,20 +193,6 @@ void mexFunction(int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[])
              xx=x[t];   
             }   
 			
-/*
-
-x = [x zeros(1,intshift)];
-kT=(0:length(x)-1)/fs;
-
-q=exp(1i.*(-wcf.*kT)).*x; % shift down to d.c.
-p=filter([1 0],[1 -4*a 6*a^2 -4*a^3 a^4],q); % filter: part 1
-u=filter([1 4*a 4*a^2 0],[1 0],p); % filter: part 2
-bm=gain*real(exp(1i*wcf*(kT(intshift+1:end)+phasealign)).*u(intshift+1:end)); % shift up in frequency
-env = gain*abs(u(intshift+1:end));
-instf=real(cf+[diff(unwrap(angle(u(intshift+1:end)))) 0]./tpt);
-*/
-
-
 			/* Filter part 1 & shift down to d.c. */
 			p0r = qcos*xx + a1*p1r + a2*p2r + a3*p3r + a4*p4r;
 			p0i = qsin*xx + a1*p1i + a2*p2i + a3*p3i + a4*p4i;
@@ -287,14 +211,7 @@ instf=real(cf+[diff(unwrap(angle(u(intshift+1:end)))) 0]./tpt);
 			p4r = p3r; p3r = p2r; p2r = p1r; p1r = p0r;
 			p4i = p3i; p3i = p2i; p2i = p1i; p1i = p0i;
 
-			/*==========================================
-			 * Basilar membrane response
-			 * 1/ shift up in frequency first: (u0r+i*u0i) * exp(i*tpt*cf*t) = (u0r+i*u0i) * (qcos + i*(-qsin))
-			 * 2/ take the real part only: bm = real(exp(j*wcf*kT).*u) * gain;
-			 bm = real(exp(j*wcf*kT+j*wcf*phasealign).*u) * gain; =(u0r+i*u0i) * (qcos + i*(-qsin))*(cos(phasealign)+i*sin(phasealign))
-			 =(u0r+i*u0i) *(qcos*C+qsin*S +i(qcos*S-qsin*C))-->Real()=u0r * (qcos * C + qsin* S)+ u0i*(qsin*C-qcos*S)
-			 *==========================================
-			 */ 
+
 			 
 			if (t>(intshift-1))
 			{
