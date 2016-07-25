@@ -47,7 +47,7 @@ int main()
 
     FILE *fid;
 
-    fid=fopen("/tmp/AudioMemMap.tmp","w");
+    fid=fopen("/tmp/headAngleMemMap.tmp","w");
     fwrite(pies, sizeof(double), sizeof(pies), fid);
     fclose(fid);
     int mappedFileID;
@@ -71,7 +71,7 @@ int main()
 
 
   while (1){
-
+    usleep(40000);
     enc->getEncoders (checkpoints.data());
     *mappedAudioData = (double) checkpoints[0];
     printf ( "%f \n", *mappedAudioData);
