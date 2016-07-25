@@ -9,6 +9,8 @@ function [ P ] = ConfigureParameters( ~ )
 %rate" of the localizer because it can't get ahead of the audiocapture
 %thread so it must wait
 
+P.useYARP=0;
+
 P.c=336.628;%define speed of sound in m/s (to be very accurate, adjust for elevation (lethbridge is at ~950m)
 P.D=0.14; %define distance between microphones in m
 P.sampleRate = 48000;
@@ -63,6 +65,12 @@ P.bufferSize_bytes = inputDir.bytes; %the  buffer size is determined by your aud
 P.bufferSize_samples = P.bufferSize_bytes / (8*4); %each sample is a 4 x 64-bit column (two audio data samples, sequence and time)
 
 P.rawAudio  = memmapfile(memMapFileName_input, 'Writable', false, 'format',{'double' [4 P.bufferSize_samples] 'audioD'});
+
+%set up a shared memory location to pull in the current angle of the head
+%(provided by a YARP module)
+memMapFileName_headAngle='/tmp/headAngleMemMap.tmp';
+P.headAngle=memmapfile(memMapFileName_headAngle, 'Writable', false, 'format',{'double' [1] 'headAngle'});
+
 
 %%%%%
 %Parameters for building a probabalistic map of space

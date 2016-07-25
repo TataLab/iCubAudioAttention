@@ -19,16 +19,13 @@ O.salience=0.0;
 O.probMap_allo=ones(P.nBands,P.numSpaceAngles); %probabalistic map of where this object is in allocentric space
 O.specSignature=ones(P.nBands,P.numSpaceAngles);  %the weights of each band toward the beamformer
 
-
-
 %setup for controlling the iCub
-P.useiCub = 0;
 rotateIndex=161:-10:81;
 numRotations=length(rotateIndex)+1;
 
 %initialize the head position "sensor" (it's not really a sensor but it
 %will be eventually!?)
-heading_allo=0;
+heading_allo=P.headAngle.Data(1,1).headAngle;
 
 %initialize the probability map
 probMap_allo=ones(P.nBands,P.numSpaceAngles);
@@ -42,6 +39,10 @@ done=0;
 while(~done)
     
     %run looop control
+    %we'll always grab the newest frame, but we will necessarily drop
+    %frames while the head is rotating...that's not a bad thing...just be
+    %aware of it
+    
     currentFrameSequenceStamp=P.auditorySpace.Data(1,1).timeStamp(1,1);
     nextFrameSequenceStamp=currentFrameSequenceStamp+1;
     %display(currentFrameSequenceStamp);
@@ -67,29 +68,15 @@ while(~done)
     
     %multiply the prior with the new evidence to compute a posterior
     %probability
-   probMap_allo = probMap_allo .* currentImage_allo;
+    probMap_allo = probMap_allo .* currentImage_allo;
     
-%     %or weighted linear combination of the prior and the evidence
-%      priorWeight=1000.0;
-%      evidenceWeight=0.001;
-%      probMap_allo = (priorWeight.*probMap_allo.*currentImage_allo) + (evidenceWeight.*currentImage_allo);
-%      
-%     
-    
-    
-    
-    %look for changes in the scene
-    %difMap=currentImage_allo-O.probMap_allo;
-    %bandCollapsedDifMap=sum(difMap,1);
+   
     
     % renormalize the posterior probability
     probMap_allo = probMap_allo ./ repmat(sum(probMap_allo,2),[1 P.numSpaceAngles]);
     
     
     %O.probMap_allo=probMap_allo;  %to do object oriented stuff eventually
-
-    %weight bands and collapse the probabalistic scene
-    %bandCollapsedImage_allo=sum(O.specSignature .* O.probMap_allo,1);
     
     %just compute the image collapsed across frequency bands
     bandCollapsedImage_allo=sum(probMap_allo,1);
@@ -97,24 +84,9 @@ while(~done)
     deltaImage=currentBandCollapsedImage_allo-bandCollapsedImage_allo;
     
     
-    %     plot(P.spaceAngles*180/pi,deltaImage);
-    
-    
-    %     plot(P.spaceAngles*180/pi,bandCollapsedImage_allo);
-    %     ylim([0 .2]);
-    %     drawnow;
-    
-    %plotting out some stuff
-    %
-    %     subplot(2,1,1);
-    %     surf(P.spaceAngles*180/pi,P.cfs,currentImage_egoNorm);
-    %     view([-10,50]);
-    %     subplot(2,1,2);
-    
-    
-        surf(P.spaceAngles*180/pi,P.cfs,probMap_allo);
-        view([-10,50]);
-        drawnow;
+    surf(P.spaceAngles*180/pi,P.cfs,probMap_allo);
+    view([-10,50]);
+    drawnow;
     
     
     
@@ -130,19 +102,20 @@ while(~done)
         
         nextHeadingIndex=rotateIndex(rotationNumber);
         rotationNumber=rotationNumber+1;
-        if (P.useDesktopRobot == 1)
+        if (P.useYARP == 1)
             
-            nextHeading_allo=round(P.spaceAngles(nextHeadingIndex)*180/pi);
+            nextHeading_allo=round(P.spaceAngles(nextHeadingIndex)*180/pi);     %figure out which allocentric angle we should look at 
+            
+            nextHeading_ego=nextHeading_allo-heading_allo; %what is that allocentric angle in egocentric coordinates
+            
+            %tell iCub to turn...
             
             
-            nextHeading_ego=nextHeading_allo-heading_allo;
-            %display(['next heading will be ', num2str(nextHeading_allo)]);
-            heading_allo=nextHeading_allo;
+            pause(1); %give it a moment
             
+            heading_allo=P.headAngle.Data(1,1).headAngle; %read the new head angle
+        
             
-            %t=tic;
-            TurnDegrees(P.motorControl,nextHeading_ego );
-            pause(.25);
             
         end
         
