@@ -11,7 +11,7 @@ function [ P ] = ConfigureParameters( ~ )
 
 P.c=336.628;%define speed of sound in m/s (to be very accurate, adjust for elevation (lethbridge is at ~950m)
 P.D=0.14; %define distance between microphones in m
-P.sampleRate = 44100;
+P.sampleRate = 48000;
 P.nMics=2;
 display(['please note sampling rate is set to ' num2str(P.sampleRate) ' check your settings to be sure']);
 
