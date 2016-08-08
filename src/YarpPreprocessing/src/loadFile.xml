@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<AudioConfig>
+	<name>default</name>
+	<!--Define speed of sound in m/s (to be very accurate, adjust for elevation (lethbridge is at ~950m)-->
+	<C>336</C>
+	<!--define distance between microphones in m-->
+	<micDistance> 0.145 </MicDistance>
+	<samplingRate> 48000 </samplingRate>
+	<!--Number of Microphones that are in used-->
+	<nMics>2</nMics>
+	<frameSamples>4096</frameSamples>
+
+	<!--Please note that the number of bands need to be a power of 2 -->
+	<nBands>256</nBands>
+	<lowCf>100</lowCf>
+	<highCf>5000</highCf>
+
+	<!--PLEASE ADD THIS IT WILL BE A STRING WITH YES or NO (use tolower to make it caps independent)-->
+	<phaseAlign>yes</phaseAlign>
+	<requiredLagFrames>2</requiredLagFrames>
+	<numFramesInBuffer>2</numFramesInBuffer>
+	<frameOverlap>2</frameOverlap>
+	<attentionCaptureThreshold>2</attentionCaptureThreshold>
+	<radialResolutionDegrees>2</radialResolutionDegrees>
+
+
+	<!--ADD VAR THAT WILL CONTROL HOW MANY ELEMENTS WILL BE IN THE INTEREP INTO-->
+	<interpellateNSamples>180</interpellateNSamples>
+
+
+
+
+
+</AudioConfig>
