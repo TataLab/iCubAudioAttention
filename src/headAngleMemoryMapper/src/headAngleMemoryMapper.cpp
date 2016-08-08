@@ -77,8 +77,9 @@ int main()
     if (oldLocation != (double) checkpoints[0]) {
       *mappedAudioData = (double) checkpoints[0];
       oldLocation = (double) checkpoints[0];
+       printf ( "%f \n", *mappedAudioData);
     }
-    printf ( "%f \n", *mappedAudioData);
+   
   }
 
 
