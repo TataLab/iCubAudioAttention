@@ -9,7 +9,7 @@ int myMod(int a, int b) {
 }
 BeamFormer::BeamFormer()
 {
-	fileName = "../src/YarpPreprocessing/src/loadFile.xml";
+	fileName = "../../src/YarpPreprocessing/src/loadFile.xml";
 	loadFile();
 
 	for (int i = 0; i < (getNBeamsPerHemifield * 2) + 1; i++)

@@ -8,7 +8,7 @@
 
 GammatonFilter::GammatonFilter()
 {
-	fileName = "../src/YarpPreprocessing/src/loadFile.xml";
+	fileName = "../../src/YarpPreprocessing/src/loadFile.xml";
 	loadFile();
 
 	//TODO Give the user the option to select the type of spacing he would like

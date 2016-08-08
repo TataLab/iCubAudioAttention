@@ -11,7 +11,7 @@ AudioPreprocesserModule::AudioPreprocesserModule()
 	beamForm = new BeamFormer();
 
 	//TODO how should this path be better protected
-	fileName = "../src/YarpPreprocessing/src/loadFile.xml";
+	fileName = "../../src/YarpPreprocessing/src/loadFile.xml";
 	loadFile();
 
 	rawAudio = new float[(frameSamples * nMics)];
