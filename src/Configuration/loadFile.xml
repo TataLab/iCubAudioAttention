@@ -11,8 +11,8 @@
 	<frameSamples>4096</frameSamples>
 
 	<!--Please note that the number of bands need to be a power of 2 -->
-	<nBands>256</nBands>
-	<lowCf>100</lowCf>
+	<nBands>128</nBands>
+	<lowCf>1000</lowCf>
 	<highCf>5000</highCf>
 
 	<!--PLEASE ADD THIS IT WILL BE A STRING WITH YES or NO (use tolower to make it caps independent)-->

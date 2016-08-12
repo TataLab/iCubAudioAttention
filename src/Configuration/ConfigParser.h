@@ -6,9 +6,10 @@
 #ifndef __CONFIGPARSER_H
 #define __CONFIGPARSER_H
 
+#include "Config.h"
+
 #include <string>
 #include <vector>
-#include "Config.h"
 #include <iostream>
 #include <fstream>
 

@@ -1,14 +1,11 @@
 // -*- mode:C++; tab-width:4; c-basic-offset:4; indent-tabs-mode:nil -*-
 #include "gammatonFilter.h"
-#include <iostream>
-#include <fstream>
-
 
 #define erb(x)         ( 24.7 * ( 4.37e-3 * ( x ) + 1.0 ) )
 
-GammatonFilter::GammatonFilter()
+GammatonFilter::GammatonFilter(std::string file)
 {
-	fileName = "../../src/YarpPreprocessing/src/loadFile.xml";
+	fileName = file;
 	loadFile();
 
 	//TODO Give the user the option to select the type of spacing he would like
@@ -22,28 +19,18 @@ GammatonFilter::GammatonFilter()
 
 	P = new float [8 * nBands];
 
-
 }
 
 GammatonFilter::~GammatonFilter()
 {
-	clearVectors();
-	myfile.close();
+
 }
 
 void GammatonFilter::inputAudio(float* inAudio)
 {
-	clearVectors();
 	inputSignal = inAudio;
 	generatFilter(0);
 	generatFilter(1);
-}
-
-void GammatonFilter::clearVectors()
-{
-
-	//TODO Make this clear things
-
 }
 
 void GammatonFilter::generatFilter(int MicNumber)
@@ -59,12 +46,10 @@ void GammatonFilter::generatFilter(int MicNumber)
 
 		oldphase = 0.0;
 
-p0r = 0, p1r = 0, p2r = 0, p3r = 0, p4r = 0, p0i = 0, p1i = 0, p2i = 0, p3i = 0, p4i = 0;
+		p0r = 0, p1r = 0, p2r = 0, p3r = 0, p4r = 0, p0i = 0, p1i = 0, p2i = 0, p3i = 0, p4i = 0;
 
 		double tptbw = tpt * erb(cfs[ch]) * BW_CORRECTION;
 		double a = exp(-tptbw);
-
-
 		double gain = (tptbw * tptbw * tptbw * tptbw) / 3;
 
 		double a1 = 4.0 * a;
@@ -73,15 +58,14 @@ p0r = 0, p1r = 0, p2r = 0, p3r = 0, p4r = 0, p0i = 0, p1i = 0, p2i = 0, p3i = 0,
 		double a4 = -a * a * a * a;
 		double a5 = a * a;
 
-
 		double coscf = cos(tpt * cfs[ch]);
 		double sincf = sin(tpt * cfs[ch]);
 		double qcos = 1;
 		double qsin = 0;
 
-		for (int t = 0; t < (frameSamples*nMics); t++)
+		for (int t = 0; t < (frameSamples * nMics); t++)
 		{
-			if(t%2 != MicNumber)
+			if (t % 2 != MicNumber)
 				continue;
 			float xx = inputSignal[t];
 
@@ -100,38 +84,38 @@ p0r = 0, p1r = 0, p2r = 0, p3r = 0, p4r = 0, p0i = 0, p1i = 0, p2i = 0, p3i = 0,
 			p4i = p3i; p3i = p2i; p2i = p1i; p1i = p0i;
 
 
-			filteredAudio[ch+(MicNumber*nBands)][t/2] = (u0r * qcos + u0i * qsin) * gain;
-			if (hrect && filteredAudio[ch+(MicNumber*nBands)][t/2] < 0) {
-				filteredAudio[ch+(MicNumber*nBands)][t/2] = 0; 
+			filteredAudio[ch + (MicNumber * nBands)][t / 2] = (u0r * qcos + u0i * qsin) * gain;
+			if (hrect && filteredAudio[ch + (MicNumber * nBands)][t / 2] < 0) {
+				filteredAudio[ch + (MicNumber * nBands)][t / 2] = 0;
 			}
 
 			qcos = coscf * (oldcs = qcos) + sincf * qsin;
 			qsin = coscf * qsin - sincf * oldcs;
-
-
 		}
-
 	}
-
-
 }
 
 void GammatonFilter::loadFile()
 {
-	ConfigParser *confPars;
-	//std::cout << fileName << std::endl;
-	confPars = ConfigParser::getInstance(fileName);
-	Config pars = (confPars->getConfig("default"));
 
-	samplingRate = pars.getSamplingRate();
-	lowerCF = pars.getLowCf();
-	higherCF = pars.getHighCf();
-	nBands = pars.getNBands();
-	frameSamples = pars.getFrameSamples();
-	nMics = pars.getNMics();
-	//TODO fix this
-	align = false;
-	hrect = false;
+	ConfigParser *confPars;
+	try {
+		confPars = ConfigParser::getInstance(fileName);
+		Config pars = (confPars->getConfig("default"));
+
+		samplingRate = pars.getSamplingRate();
+		lowerCF = pars.getLowCf();
+		higherCF = pars.getHighCf();
+		nBands = pars.getNBands();
+		frameSamples = pars.getFrameSamples();
+		nMics = pars.getNMics();
+		//TODO fix this
+		align = false;
+		hrect = false;
+	}
+	catch (int a) {
+
+	}
 
 
 }
@@ -169,7 +153,5 @@ double GammatonFilter::ErbRateToHz(int Erb)
 
 std::vector< float* > GammatonFilter::getFilteredAudio()
 {
-
 	return filteredAudio;
-
 }

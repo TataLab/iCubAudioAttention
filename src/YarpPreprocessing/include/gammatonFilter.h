@@ -15,8 +15,7 @@
 
 
 
-#include "ConfigParser.h"
-#include "Config.h"
+#include "../../Configuration/ConfigParser.h"
 
 #include <vector>
 #include <string>
@@ -35,7 +34,7 @@ public:
 	*	Calls makeErbCFs()
 	*	Pre Allocates the data structures that will hold the inputAudio as well as the filteredAudio
 	*/
-	GammatonFilter();
+	GammatonFilter(std::string file);
 	/**
 	*	 Default De-constructor
 	*/
@@ -43,26 +42,21 @@ public:
 
 	/**
 	*	inputAudio
-	*	Calls clearVectors()
 	*	Sets the audio file that is passed into this file as the audio to be filtered
 	*	TODO make an Error check function that will check if the input audio is valid
 	*	Calls generatFilter()
+	*	@param  inAudio An array which contains audio data. The left channel are all the even indexs and right channels are all the odd indexs.
 	*/
 	void inputAudio(float *inAudio);
 	/**
 	*	getFilteredAudio
-	*	A getter that will return a vector containing the filtered audio
+	*	Return a vector containing the filtered audio
 	*	(first half of the vector is left channels the second half of the vector is the right channel)
-	*	TODO check if generateFilter() was called or if the vector that has been populated
+	*	@return      The a vector of arrays which
 	*/
 	std::vector< float* > getFilteredAudio();
 
 private:
-	/**
-	*	 Clears the contains of every vectors however it keeps the size consistent.
-	*/
-	void clearVectors();
-
 	/**
 	*	 Generates the gammaton filter
 	*/

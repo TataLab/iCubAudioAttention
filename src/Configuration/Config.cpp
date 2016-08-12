@@ -135,19 +135,17 @@ bool Config::getPhaseAlign()
 	return phaseAlign;
 }
 
-
 void Config::setPhaseAlign(std::string pa)
 {
-	for(int i=0; i < pa.length(); i++)
+	for (int i = 0; i < pa.length(); i++)
 	{
 		pa[i] = std::toupper(pa[i]);
 
 	}
-	if(pa == "TRUE" || pa == "YES") phaseAlign = true;
+	if (pa == "TRUE" || pa == "YES") phaseAlign = true;
 	else phaseAlign = false;
 
 }
-
 
 void Config::setName(std::string n)
 {
@@ -176,8 +174,7 @@ void Config::setNBands(int nb)
 }
 void Config::setNBeamsPerHemifield()
 {
-	//TODO CHANGE THIS
-	nBeamsPerHemifield = 19;
+	nBeamsPerHemifield = (int)((micDistance / C) * samplingRate) - 1;
 }
 
 void Config::setFrameDurationSamples(int fds)
@@ -189,7 +186,7 @@ void Config::setFrameDurationSamples(int fds)
 
 void Config::setFrameDurationSeconds()
 {
-	frameDurationSamples = frameDurationSamples/samplingRate;
+	frameDurationSamples = frameDurationSamples / samplingRate;
 }
 
 void Config::setRequiredLagFrames(int rlf)
@@ -215,12 +212,9 @@ void Config::setLags()
 
 void Config::setAngles()
 {
-	//TODO seriously need to learn this $h1t sooner than later..
 	//real(asin( (1/P.D) .* P.lags )) ; %nonlinear angles (in radians) that correspond to the lags
 	//angles = asin(1/micDistance)
-
 }
-
 
 void Config::setLowCf(int lcf)
 {
@@ -239,14 +233,12 @@ void Config::setFrameOverlap(int fo)
 
 void Config::setframePlusOverlap()
 {
-	framePlusOverlap = frameDurationSamples + (frameOverlap*2);
+	framePlusOverlap = frameDurationSamples + (frameOverlap * 2);
 }
 
 void Config::setFrameIndicies()
 {
-	//TODO Learn math.. HAHA but seriously this : doesnt make sense
 	// /P.frameIndices=P.frameOverlap+1:(P.frameOverlap+1) + P.frameDuration_samples - 1; %the indices of the "core" frame inside the grabbed audio data
-
 }
 
 void Config::setNPastSeconds(int nps)
@@ -256,7 +248,7 @@ void Config::setNPastSeconds(int nps)
 
 void Config::setNPastFrames()
 {
-	nPastFrames = floor(nPastSeconds/frameDurationSeconds);
+	nPastFrames = floor(nPastSeconds / frameDurationSeconds);
 }
 
 void Config::setAttentionCaptureThreshold(int act)
@@ -274,14 +266,13 @@ void Config::setRadialResolutionDegrees(double rd)
 }
 void Config::setRadialResolutionRadians()
 {
-	radialResolutionRadians = 	3.14159265358979323846/180*radialResolutionDegrees;
+	radialResolutionRadians = 	3.14159265358979323846 / 180 * radialResolutionDegrees;
 }
 
 void Config::setNumSpaceAngles()
 {
-	numSpaceAngles = 360/radialResolutionDegrees;
+	numSpaceAngles = 360 / radialResolutionDegrees;
 }
-
 
 void Config::setFrameSamples(int fs)
 {

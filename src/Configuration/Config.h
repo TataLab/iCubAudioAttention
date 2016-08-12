@@ -16,15 +16,15 @@ class Config
 public:
 
 	/**
-   Default Constructor
+	Default Constructor
 
-   @return a blank Config object which is ready to take values.
- */
+	@return a blank Config object which is ready to take values.
+	*/
 	Config();
 
 	/**
 	 Default Destructor
- */
+	*/
 	~Config();
 
 	/*

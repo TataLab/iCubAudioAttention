@@ -4,18 +4,17 @@
 #define _BEAM_FORMER_H_
 
 #include "gammatonFilter.h"
+#include "../../Configuration/ConfigParser.h"
+
 #include <string>
 #include <iostream>
 #include <fstream>
 #include <vector>
 #include <thread>
 
-#include "ConfigParser.h"
-#include "Config.h"
-
-class BeamFormer{
+class BeamFormer {
 public:
-	BeamFormer();
+	BeamFormer(std::string file);
 	~BeamFormer();
 
 	void inputAudio(std::vector< float* > inAudio);
@@ -25,15 +24,14 @@ public:
 	std::vector<std::vector<double> > getReducedBeamAudio();
 private:
 
-/**
-*	loadFile
-*	Accesses the loadFile.xml that is found in the root directory of this
-*	module and load all required parameters for the beam former.
-*/
+	/**
+	*	loadFile
+	*	Accesses the loadFile.xml that is found in the root directory of this
+	*	module and load all required parameters for the beam former.
+	*/
 	void loadFile();
-	void clearVectors();
-	void multiThreader(int i);
-
+	void reducedAudioMultiThreadingLoop(int i);
+	void audioMultiThreadingLoop(int i);
 
 	std::vector< float* > inputSignal;
 
@@ -46,6 +44,7 @@ private:
 
 	std::string fileName;
 	int getNBeamsPerHemifield;
+	int totalBeams;
 
 	std::ofstream myfile;
 };

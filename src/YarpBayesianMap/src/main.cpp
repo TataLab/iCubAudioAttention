@@ -1,17 +1,18 @@
-#include "AudioPreprocesserModule.h"
-
 #include <yarp/os/all.h>
 #include <yarp/dev/all.h>
 #include <iostream>
+#include "BayesianModule.h"
+
+using namespace yarp::os;
+using namespace yarp::dev;
 
 
 int main(int argc, char * argv[])
 {
     /* initialize yarp network */
-    yarp::os::Network yarp;
+    Network yarp;
 
-
-    yarp::os::ResourceFinder rf;
+    ResourceFinder rf;
     rf.configure(argc, argv);
     rf.setVerbose(true);
     std::cout << "[INFO] Configuring and starting module. \n";
@@ -22,6 +23,6 @@ int main(int argc, char * argv[])
         return -1;
     }
 
-    AudioPreprocesserModule module;
+    BayesianModule module;
     return module.runModule(rf);
 }
