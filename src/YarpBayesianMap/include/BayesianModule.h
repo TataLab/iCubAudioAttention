@@ -49,7 +49,7 @@ private:
 
 
     yarp::os::BufferedPort<yarp::sig::Matrix> *inPort;
-    yarp::os::BufferedPort<yarp::sig::Matrix> *outPort;
+    yarp::os::Port *outPort;
 
     std::vector <std::vector <double>> probabilityMap;
     std::vector <std::vector <double>> currentAudioMap;

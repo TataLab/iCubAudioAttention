@@ -77,7 +77,7 @@ bool BayesianModule::configure(yarp::os::ResourceFinder &rf)
     inPort = new yarp::os::BufferedPort<yarp::sig::Matrix>();
     inPort->open("/iCubAudioAttention/BayesianMap:i");
 
-    outPort = new yarp::os::BufferedPort<yarp::sig::Matrix>();
+    outPort = new yarp::os::Port();
     outPort->open("/iCubAudioAttention/BayesianMap:o");
 
     if (yarp::os::Network::exists("/iCubAudioAttention/BayesianMap:i"))
@@ -107,7 +107,8 @@ bool BayesianModule::updateModule()
 
     setAcousticMap();
     memoryMapper();
-
+    outPort->setEnvelope(ts);
+    outPort->write(*outputMatrix);
 
     gettimeofday(&en, NULL);
     seconds  = en.tv_sec  - st.tv_sec;
