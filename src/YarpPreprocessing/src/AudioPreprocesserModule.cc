@@ -1,4 +1,30 @@
+// -*- mode:C++; tab-width:4; c-basic-offset:4; indent-tabs-mode:nil -*-
+
+/*
+  * Copyright (C)2016  Department of Robotics Brain and Cognitive Sciences - Istituto Italiano di Tecnologia
+  * Author:Francesco Rea
+  * email: francesco.rea@iit.it
+  * Permission is granted to copy, distribute, and/or modify this program
+  * under the terms of the GNU General Public License, version 2 or any
+  * later version published by the Free Software Foundation.
+  *
+  * A copy of the license can be found at
+  * http://www.robotcub.org/icub/license/gpl.txt
+  *
+  * This program is distributed in the hope that it will be useful, but
+  * WITHOUT ANY WARRANTY; without even the implied warranty of
+  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+  * Public License for more details
+*/
+
+/**
+ * @file AudioPreprocesserModule.cpp
+ * @brief Implementation of the processing module 
+ */
+
 #include "AudioPreprocesserModule.h"
+
+using namespace yarp::os;
 
 AudioPreprocesserModule::AudioPreprocesserModule()
 {
@@ -42,27 +68,52 @@ AudioPreprocesserModule::~AudioPreprocesserModule()
 
 bool AudioPreprocesserModule::configure(yarp::os::ResourceFinder &rf)
 {
-	inPort = new yarp::os::BufferedPort<yarp::sig::Sound>();
-	inPort->open("/iCubAudioAttention/Preprocesser:i");
-
-	outPort = new yarp::os::Port();
-	outPort->open("/iCubAudioAttention/Preprocesser:o");
-	//TODO this show not be done here
-
-	if (yarp::os::Network::exists("/iCubAudioAttention/Preprocesser:i"))
+  /* Process all parameters from both command-line and .ini file */
+  
+  /* get the module name which will form the stem of all module port names */
+  moduleName            = rf.check("name", 
+				   Value("/AudioPreprocessor"), 
+				   "module name (string)").asString();
+  /*
+   * before continuing, set the module name before getting any other parameters, 
+   * specifically the port names which are dependent on the module name
+   */
+  setName(moduleName.c_str());
+  
+  /*
+   * get the robot name which will form the stem of the robot ports names
+   * and append the specific part and device required
+   */
+  robotName             = rf.check("robot", 
+				   Value("icub"), 
+				   "Robot name (string)").asString();
+  robotPortName         = "/" + robotName + "/head";
+  
+  inputPortName           = rf.check("inputPortName",
+				     Value(":i"),
+				     "Input port name (string)").asString();
+  inPort = new yarp::os::BufferedPort<yarp::sig::Sound>();
+  inPort->open("/iCubAudioAttention/Preprocesser:i");
+  
+  outPort = new yarp::os::Port();
+  outPort->open("/iCubAudioAttention/Preprocesser:o");
+  //TODO this show not be done here
+  
+  if (yarp::os::Network::exists("/iCubAudioAttention/Preprocesser:i"))
+    {
+      if (yarp::os::Network::connect("/sender", "/iCubAudioAttention/Preprocesser:i") == false)
 	{
-		if (yarp::os::Network::connect("/sender", "/iCubAudioAttention/Preprocesser:i") == false)
-		{
-			std::cout << myerror << "[ERROR]" << myreset << " Could not make connection to /sender. Exiting.\n";
-			return false;
-		}
+	  std::cout << myerror << "[ERROR]" << myreset << " Could not make connection to /sender. Exiting.\n";
+	  yError("Could not make connection to /sender. Exiting");
+	  return false;
 	}
-	else
-	{
-		return false;
-	}
-
-	return true;
+    }
+  else
+    {
+      return false;
+    }
+  
+  return true;
 }
 
 double AudioPreprocesserModule::getPeriod()
