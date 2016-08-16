@@ -27,7 +27,7 @@
 #ifndef _AUDIO_PREPROCESSER_MODULE_H_
 #define _AUDIO_PREPROCESSER_MODULE_H_
 
-
+#include "AudioPreprocesserRatethread.h"
 #include "gammatonFilter.h"
 #include "beamFormer.h"
 
@@ -54,7 +54,10 @@ class AudioPreprocesserModule: public yarp::os::RFModule
   std::string moduleName;                  // name of the module 
   std::string robotPortName;               // name of robot port
   std::string inputPortName;               // name of the input port for events
-  std::string robotName;                   // name of the robot 
+  std::string robotName;                   // name of the robot
+  std::string configFile;                  // name of the configFile that the resource Finder will seek
+  AudioPreprocesserRatethread* apr;         // ratethread handling the processing in the module
+  
  public:
 	/**
 	* default constructor

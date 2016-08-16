@@ -112,6 +112,24 @@ bool AudioPreprocesserModule::configure(yarp::os::ResourceFinder &rf)
     {
       return false;
     }
+
+  if (rf.check("config")) {
+        configFile=rf.findFile(rf.find("config").asString().c_str());
+        if (configFile=="") {
+            return false;
+        }
+    }
+    else {
+        configFile.clear();
+    }
+  
+  /* create the thread and pass pointers to the module parameters */
+  apr = new AudioPreprocesserRatethread(robotName, configFile);
+  apr->setName(getName().c_str());
+  //rThread->setInputPortName(inputPortName.c_str());
+  
+  /* now start the thread to do the work */
+  //apr->start(); // this calls threadInit() and it if returns true, it then calls run()
   
   return true;
 }
