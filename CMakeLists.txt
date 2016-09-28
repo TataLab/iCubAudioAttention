@@ -94,5 +94,6 @@ option(ENABLE_MATLAB  "Do you want to link against MATLAB?" OFF)
 
 # Go through single folder
 add_subdirectory(src)
+add_subdirectory(app)
 
 icubcontrib_add_uninstall_target()        #macro added 13/11/2013
