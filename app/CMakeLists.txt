@@ -18,13 +18,7 @@
 # default prefix for applications
 #SET(ICUB_APPLICATIONS_PREFIX "$ENV{ICUB_ROOT}"  CACHE PATH "Application path prefix")
 #add_subdirectory ( audiovisualAttention )				
-add_subdirectory ( biologicalProcessing )
-add_subdirectory ( logpolarAttention    )
-add_subdirectory ( handProfiler         )
-add_subdirectory ( zdfApplication       )
-#add_subdirectory(protoObjectVisualAttention)
-#add_subdirectory(dumpApplication)
-
+add_subdirectory ( bayesianMapApp )
 
 ## make all applications show up as single target
 #icub_app_all()

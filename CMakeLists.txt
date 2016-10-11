@@ -8,7 +8,7 @@ if(COMMAND cmake_policy)
     cmake_policy(SET CMP0003 NEW)
 endif(COMMAND cmake_policy)
 
-project (attention)
+project (audioAttention)
 
 # Check for the minimal set of packages required for the global project.
 # If we include them here, sub-projects can be configured a bit faster.
@@ -75,7 +75,7 @@ SET(ATTENTIONLIB_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/attentionLib/include)
 set(ICUB_APPLICATIONS_PREFIX "$ENV{ICUB_ROOT}" CACHE PATH "Application path prefix")
 
 ### Shall the system look for CUDA 
-option(ENABLE_CUDA  "Do you want to compile with Cuda?" OFF)
+option(ENABLE_COMPILEONPC104  "Are you compiling on PC104?" OFF)
 if (ENABLE_CUDA)  
     find_package(CUDA QUIET REQUIRED)
     add_definitions (-DWITH_CUDA)

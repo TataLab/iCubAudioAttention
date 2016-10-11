@@ -1,6 +1,6 @@
 <application>
 
-  <name>handProfile application</name>
+  <name>bayesianMap for Audio</name>
 
   <dependencies>
       <port>/iCubGui/objects</port>

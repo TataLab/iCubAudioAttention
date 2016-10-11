@@ -1,8 +1,8 @@
-# Copyright: (C) 2014 RobotCub Consortium
-# Authors: Alessia Vignolo, Francesco Rea
+# Copyright: (C) 2016 Rbcs
+# Authors:  Francesco Rea
 # CopyPolicy: Released under the terms of the GNU GPL v2.0.
 
-set(appname handProfiler)
+set(appname bayesianMapApp)
 #icub_app(${appname})
 
 file(GLOB conf ${CMAKE_CURRENT_SOURCE_DIR}/conf/*.ini ${CMAKE_CURRENT_SOURCE_DIR}/conf/*.xml)
