@@ -51,7 +51,7 @@ private:
     yarp::sig::ImageOf<yarp::sig::PixelRgb>* inputImage;                            // input image from the inputPort
     yarp::sig::ImageOf<yarp::sig::PixelRgb>* outputImage;                           // output image
 
-    yarp::os::BufferedPort<yarp::os::Bottle>    inputPort;      // receives a bottle from the bayesianMap module
+    yarp::os::BufferedPort<yarp::sig::Matrix>    inputPort;      // receives a bottle from the bayesianMap module
     yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelRgb> > outputPort;     // output port to plot event
     std::string name;                                                                // rootname of all the ports opened by this thread
     
@@ -104,6 +104,12 @@ public:
     * function that sets the inputPort name
     */
     void setInputPortName(std::string inpPrtName);
+
+     /**
+     * method for the processing in the ratethread
+     * @param mat matrix to be processed in the method
+     **/
+    bool processing(yarp::sig::Matrix *mat);
 
     /**
      * method for the processing in the ratethread

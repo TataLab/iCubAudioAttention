@@ -80,15 +80,20 @@ void freqVisualisationRatethread::setInputPortName(string InpPort) {
 void freqVisualisationRatethread::run() {    
     //code here .....
     if (inputPort.getInputCount()) {
-        Bottle* b = inputPort.read(false);   //blocking reading for synchr with the input
-        if (b!=NULL) {
-            result = processing(b);
+        Matrix* mat = inputPort.read(false);   //blocking reading for synchr with the input
+        if (mat!=NULL) {
+            yDebug("matrix is not null");
+            if (outputPort.getOutputCount()) {
+                yDebug("preparing the image %d %d",mat->cols(),mat->rows() );
+                outputImage = &outputPort.prepare();
+                outputImage->resize(mat->cols(),mat->rows());
+                result = processing(mat);
+            }
         }
     }
 
     if (outputPort.getOutputCount()) {
-        *outputImage = outputPort.prepare();
-        outputImage->resize(imageOutWidth, imageOutHeight);
+        yDebug("writing the output image out");
         // changing the pointer of the prepared area for the outputPort.write()
         //outputPort.prepare() = *inputImage;
 
@@ -97,10 +102,36 @@ void freqVisualisationRatethread::run() {
 
 }
 
+bool freqVisualisationRatethread::processing(Matrix* mat){
+    // here goes the processing...
+    int nRows = mat->rows();
+    int nCols = mat->cols();
+    yDebug("Matrix rows %d cols %d ", nRows, nCols );
+    imageOutWidth  = mat->cols();
+    imageOutHeight = mat->rows();
+    unsigned char* pImage = outputImage->getRawImage();
+    yDebug("image width %d, height %d", outputImage->width(), outputImage->height());
+    double* pMat = mat->data();
+    int padding = outputImage->getPadding();
+    for (int r = 0; r < nRows; r++) {
+        for (int c = 0; c < nCols; c++) {
+            *pImage = 0;
+            pImage += 3;
+            pMat++;
+        }
+        pImage += padding;
+    }
+    return true;
+}
+
 bool freqVisualisationRatethread::processing(Bottle* b){
     // here goes the processing...
     yDebug("length %d ", b->size());
-    
+    int intA = b->get(0).asInt();
+    int intB = b->get(1).asInt();
+    Bottle* subBottle = b->get(2).asList();
+    yDebug("a %d b %d", intA, intB);
+    yDebug("bottle length %d: %s", 10, subBottle->toString().c_str());
     return true;
 }
 
