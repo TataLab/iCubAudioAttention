@@ -32,9 +32,10 @@ public:
 	*	Default constructor
 	*	Calls loadFile()
 	*	Calls makeErbCFs()
-	*	Pre Allocates the data structures that will hold the inputAudio as well as the filteredAudio
+	*	Pre-allocates the data structures that will hold the inputAudio as well as the filteredAudio
 	*/
 	GammatonFilter(std::string file);
+	
 	/**
 	*	 Default De-constructor
 	*/
@@ -45,9 +46,10 @@ public:
 	*	Sets the audio file that is passed into this file as the audio to be filtered
 	*	TODO make an Error check function that will check if the input audio is valid
 	*	Calls generatFilter()
-	*	@param  inAudio An array which contains audio data. The left channel are all the even indexs and right channels are all the odd indexs.
+	*	@param  inAudio An array which contains audio data. The left channel are all the even index's and right channels are all the odd indexs.
 	*/
 	void inputAudio(float *inAudio);
+	
 	/**
 	*	getFilteredAudio
 	*	Return a vector containing the filtered audio
@@ -58,78 +60,69 @@ public:
 
 private:
 	/**
-	*	 Generates the gammaton filter
+	*	 Generates the gammaton filter.
+	*	@param MicNumber which mic is being used to generate the current filter.
 	*/
 	void generatFilter(int MicNumber);
 
 	/**
-	*
+	*	makeErbCFs
+	*	Fills the vector called cfs using the ERB spaced centered frequencies.
 	*/
 	void makeErbCFs();
 
 	/**
-	*
+	*	makeLinerCFs
+	*	Fills the vector called cfs using the Liner spaced centered frequencies.
 	*/
 	void makeLinerCFs();
 	/**
 	*	loadFile
-	*	Accesses the loadFile.xml that is found in the root directory of this
-	*	module and load all required parameters for the gammatone filter bank.
+	*	Accesses the loadFile.xml that is found in the Configuration directory
+	*	load all required parameters for the gammatone filter bank.
 	*/
 	void loadFile();
 
 	/**
-	*
-	*/
-	double HzToErbRate(int Hz);
-
-	/**
-	*
+	*	HzToErbRate
+	*	Takes a Hz input and translate it into ERB
+	*	@param Hz 
+	*	@return Erb
 	*/
 	double HzToErbRate(double Hz);
 
 	/**
-	*
+	*	ErbRateToHz
+	*	Takes a Erb input and translate it into Hz
+	*	@param Erb
+	*	@return Hz 
 	*/
-	double ErbRateToHz(int Hz);
-
-	/**
-	*
-	*/
-	double ErbRateToHz(double Hz);
+	double ErbRateToHz(double Erb);
 
 
 
 
 	int nBands;
-	//filtered audio
-	std::vector< float* > filteredAudio;
+	std::vector< float* > filteredAudio;						//filtered audio 
 
-	//input audio
-	const float *inputSignal;
+	const float *inputSignal;									//input audio
 
-	//Sampling frequency is calculated in Hz
-	int samplingRate;
-	int centerFrequency;
+	int samplingRate;											//Sampling frequency is calculated in Hz
 
-	//Peramiters to calculate the center freqeuncies that the gammaton filter bank will use
-	std::vector<double> cfs;
-	int lowerCF;
-	int higherCF;
+	std::vector<double> cfs;									//Perimeters to calculate the center frequencies that the gammaton filter bank will use
+	int lowerCF;												//Lowest center frequency to use in the gammaton filter
+	int higherCF;												//Highest center frequency to use in the gammaton filter
 
+	std::string fileName;										//Path and name of the file containing all defeat perimeters
+
+	int frameSamples;											//The number of samples per audio frame
+	bool align;													//If 
+	int nMics;													//The number of microphones used
+	
+	bool hrect;
+	double p0r, p1r, p2r, p3r, p4r, p0i, p1i, p2i, p3i, p4i;
 	float *P;
 
-	//Name of the file containing all defealt peramiters
-	std::string fileName;
-
-	int frameSamples;
-	bool align;
-
-	int nMics;
-	bool hrect;
-	std::ofstream myfile;
-
-	double p0r, p1r, p2r, p3r, p4r, p0i, p1i, p2i, p3i, p4i;
 };
 
 #endif

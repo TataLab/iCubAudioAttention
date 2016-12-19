@@ -8,7 +8,6 @@ GammatonFilter::GammatonFilter(std::string file)
 	fileName = file;
 	loadFile();
 
-	//TODO Give the user the option to select the type of spacing he would like
 	makeErbCFs();
 
 	for (int i = 0; i < nBands * nMics; i++)
@@ -109,7 +108,6 @@ void GammatonFilter::loadFile()
 		nBands = pars.getNBands();
 		frameSamples = pars.getFrameSamples();
 		nMics = pars.getNMics();
-		//TODO fix this
 		align = false;
 		hrect = false;
 	}
@@ -134,19 +132,9 @@ void GammatonFilter::makeErbCFs()
 
 double GammatonFilter::HzToErbRate(double Hz)
 {
-	//TODO: log 10 might be a little bit slow thus we should do something else
-	return (21.4 * log10(0.00437 * Hz + 1));
-}
-double GammatonFilter::HzToErbRate(int Hz)
-{
-	//TODO: log 10 might be a little bit slow thus we should do something else
 	return (21.4 * log10(0.00437 * Hz + 1));
 }
 double GammatonFilter::ErbRateToHz(double Erb)
-{
-	return (pow(10, Erb / 21.4) - 1) / 0.00437;
-}
-double GammatonFilter::ErbRateToHz(int Erb)
 {
 	return (pow(10, Erb / 21.4) - 1) / 0.00437;
 }

@@ -130,11 +130,7 @@ void BeamFormer::loadFile()
 	}
 	catch (int a) {
 
-		//TODO try diffrent paths to the file (Dont know if this is the best way to do this)
+		
 	}
-
-
-
-
 
 }

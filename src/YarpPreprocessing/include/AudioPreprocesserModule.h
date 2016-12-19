@@ -88,6 +88,8 @@ private:
 	void createMemoryMappedFile();
 	void memoryMapper();
 	void sendAudioMap();
+	void sendGammatonFilteredAudio();
+	void sendBeamFormedAudio();
 	double interpl(int x, int x1, int x2, double y1, double y2);
 
 	/**
@@ -108,14 +110,22 @@ private:
 	//Variables need to time the update module
 	struct timeval st, en;
 	long mtime, seconds, useconds;
+	double oldtime;
+	int lastframe;
 
-	//Incoming Audio Data from the iCub and remoteInterface
-	yarp::os::BufferedPort<yarp::sig::Sound> *inPort;
-	yarp::os::Port *outPort;
-	yarp::sig::Sound* s;
-	yarp::os::Stamp ts;
-	float *rawAudio;
-	yarp::sig::Matrix* outAudioMap;
+	//Yarp Ports
+	yarp::os::BufferedPort<yarp::sig::Sound> *inPort;						//Incoming Audio Data from the iCub and remoteInterface
+	yarp::os::Port *audioMapPort;											//Outgoing port audio map after full preprocessing
+	yarp::os::Port *gammatonFilteredAudioPort;								//Outgoing port 
+	yarp::os::Port *beamFormedAudioPort;									//Outgoing port
+
+	yarp::sig::Sound* s;													//Yarp Sound that stores the incoming sound from inPort
+	yarp::os::Stamp ts;														//Contains the time stamps for the perticulare frame of sound
+	float *rawAudio;														//Contains 
+
+	yarp::sig::Matrix* outAudioMap;											//Yarp Matrix used to store preprocessed audio
+	yarp::sig::Matrix* outGammatonFilteredAudio;							//Yarp Matrix used to store audio after its been gammaton filtered
+	yarp::sig::Matrix* outBeamFormedAudio;									//Yarp Matrix used to store the beam formed audio
 
 	std::string fileName;
 	int frameSamples;
@@ -126,15 +136,9 @@ private:
 	GammatonFilter *gammatonAudioFilter;
 	BeamFormer *beamForm;
 
-
-	double oldtime;
-	int lastframe;
 	std::vector < std::vector < float* > > beamFormedAudioVector;
 	std::vector < std::vector < double > > reducedBeamFormedAudioVector;
 
-
-
-	
 	FILE *fid;
 	int mappedFileID;
 	double *mappedAudioData;

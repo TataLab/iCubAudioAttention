@@ -88,6 +88,7 @@ bool BayesianModule::configure(yarp::os::ResourceFinder &rf)
             return false;
         }
     }
+    
     return true;
 }
 

@@ -40,8 +40,6 @@ AudioPreprocesserModule::AudioPreprocesserModule()
 
 	gammatonAudioFilter = new GammatonFilter(fileName);
 	beamForm = new BeamFormer(fileName);
-
-
 	rawAudio = new float[(frameSamples * nMics)];
 	oldtime = 0;
 
@@ -95,8 +93,8 @@ bool AudioPreprocesserModule::configure(yarp::os::ResourceFinder &rf)
   inPort = new yarp::os::BufferedPort<yarp::sig::Sound>();
   inPort->open("/iCubAudioAttention/Preprocesser:i");
   
-  outPort = new yarp::os::Port();
-  outPort->open("/iCubAudioAttention/Preprocesser:o");
+  audioMapPort = new yarp::os::Port();
+  audioMapPort->open("/iCubAudioAttention/Preprocesser:o");
   //TODO this show not be done here
   
   if (yarp::os::Network::exists("/iCubAudioAttention/Preprocesser:i"))
@@ -160,17 +158,26 @@ bool AudioPreprocesserModule::updateModule()
 	}
 
 	gammatonAudioFilter->inputAudio(rawAudio);
+	 if (gammatonFilteredAudioPort.getOutputCount()) {
+		sendAudioMap();
+		gammatonFilteredAudioPort->setEnvelope(ts);
+		gammatonFilteredAudioPort->write(*outAudioMap);
+    }
 	beamForm->inputAudio(gammatonAudioFilter->getFilteredAudio());
 	reducedBeamFormedAudioVector = beamForm->getReducedBeamAudio();
-
+	if (beamFormedAudioPort.getOutputCount()) {
+		sendAudioMap();
+		beamFormedAudioPort->setEnvelope(ts);
+		beamFormedAudioPort->write(*outAudioMap);
+    }
 	spineInterp();
-
 	memoryMapper();
-	sendAudioMap();
-	outPort->setEnvelope(ts);
-	outPort->write(*outAudioMap);
+	if (audioMapPort.getOutputCount()) {
+		sendAudioMap();
+		audioMapPort->setEnvelope(ts);
+		audioMapPort->write(*outAudioMap);
+    }
 
-	//TODO Change timing to use Yarp timing
 	//Timing how long the module took
 	lastframe = ts.getCount();
 	gettimeofday(&en, NULL);
@@ -252,7 +259,30 @@ void AudioPreprocesserModule::sendAudioMap()
 		}
 		outAudioMap->setRow(i, tempV);
 	}
-
+}
+void AudioPreprocesserModule::sendGammatonFilteredAudio()
+{
+	for (int i = 0; i < nBands; i++)
+	{
+		yarp::sig::Vector tempV(interpellateNSamples * 2);
+		for (int j = 0; j < interpellateNSamples * 2; j++)
+		{
+			tempV[j] = highResolutionAudioMap[j][i];
+		}
+		outAudioMap->setRow(i, tempV);
+	}
+}
+void AudioPreprocesserModule::sendGammatonFilteredAudio()
+{
+	for (int i = 0; i < nBands; i++)
+	{
+		yarp::sig::Vector tempV(interpellateNSamples * 2);
+		for (int j = 0; j < interpellateNSamples * 2; j++)
+		{
+			tempV[j] = highResolutionAudioMap[j][i];
+		}
+		outAudioMap->setRow(i, tempV);
+	}
 }
 
 void AudioPreprocesserModule::spineInterp()

@@ -14,13 +14,41 @@
 
 class BeamFormer {
 public:
+	/**
+	*	Default constructor
+	*	Calls loadFile()
+	*	Calls makeErbCFs()
+	*	Pre-allocates the data structures that will hold the inputAudio as well as the filteredAudio
+	*	@param file A string that contains the filename location of the initialization file
+	*/
 	BeamFormer(std::string file);
+
+	/**
+	*	 Default De-constructor
+	*/
 	~BeamFormer();
 
+	/**
+	*	inputAudio
+	*	Sets the audio file that is passed into this file as the audio to be filtered
+	*	TODO make an Error check function that will check if the input audio is valid
+	*	Calls generatFilter()
+	*	@param  inAudio An array which contains audio data. The left channel are all the even indexs and right channels are all the odd indexs.
+	*/
 	void inputAudio(std::vector< float* > inAudio);
 
-	//TODO Should theis be static arraies since we know the size probably
+	/**
+	*	 getBeamAudio
+	*	 Function that will run multithread function that will calculate the Beam formed Audio from information that is stored in inputSignal.
+	*	 @return Beam fromed data that is stored in vector of size(totalBeams) containing a vector of size(number of Bands) that contains a array of float with a size(samples in frame).
+	*/
 	std::vector<std::vector<float*> > getBeamAudio();
+	/**
+	*	 getBeamAudio
+	*	 Function that will run multithread function that will calculate the Beam formed Audio from information that is stored in inputSignal.
+	*	 This Function then compresses the data in the time frame by running RMS(root mean square).
+	*	 @return Compressed beam formed data that is stored in vector of size(totalBeams) containing a vector of size(number of Bands) that contains the average power in each frame.
+	*/
 	std::vector<std::vector<double> > getReducedBeamAudio();
 private:
 
@@ -30,23 +58,25 @@ private:
 	*	module and load all required parameters for the beam former.
 	*/
 	void loadFile();
+
+
 	void reducedAudioMultiThreadingLoop(int i);
 	void audioMultiThreadingLoop(int i);
 
-	std::vector< float* > inputSignal;
 
-	std::vector < std::vector < float* > > beamFormedAudioVector;
-	std::vector < std::vector < double > > reducedBeamFormedAudioVector;
-	float ** beamFormedAudio;
-	int nMics;
-	int frameSamples;
-	int nBands;
+	std::vector< float* > inputSignal;										//The input audio signal
+	std::vector < std::vector < float* > > beamFormedAudioVector;			//The uncompressed beamformed data if getBeamAudio() was called
+	std::vector < std::vector < double > > reducedBeamFormedAudioVector;	//The compressed beamformed data if getReducedBeamAudio() was called
+	
+	int nMics;																//Number of Microphones that is used
+	int frameSamples;														//The number of samples in each frame of audio data
+	int nBands;																//The maximum number of bands for the given spacing of the mics
 
-	std::string fileName;
-	int getNBeamsPerHemifield;
-	int totalBeams;
+	std::string fileName;													//The path and file name of the .xml configuration file
+	int getNBeamsPerHemifield;												//The maximum number of bands in each hemifield
+	int totalBeams;															//Total number of beams that is used
 
-	std::ofstream myfile;
 };
 
 #endif
+
