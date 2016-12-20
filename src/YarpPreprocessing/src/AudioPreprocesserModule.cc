@@ -158,25 +158,27 @@ bool AudioPreprocesserModule::updateModule()
 	}
 
 	gammatonAudioFilter->inputAudio(rawAudio);
-	 if (gammatonFilteredAudioPort.getOutputCount()) {
+	 if (gammatonFilteredAudioPort->getOutputCount()) {
 		sendAudioMap();
 		gammatonFilteredAudioPort->setEnvelope(ts);
 		gammatonFilteredAudioPort->write(*outAudioMap);
     }
 	beamForm->inputAudio(gammatonAudioFilter->getFilteredAudio());
 	reducedBeamFormedAudioVector = beamForm->getReducedBeamAudio();
-	if (beamFormedAudioPort.getOutputCount()) {
+	if (beamFormedAudioPort->getOutputCount()) {
 		sendAudioMap();
 		beamFormedAudioPort->setEnvelope(ts);
 		beamFormedAudioPort->write(*outAudioMap);
     }
 	spineInterp();
-	memoryMapper();
-	if (audioMapPort.getOutputCount()) {
+	if (audioMapPort->getOutputCount()) {
 		sendAudioMap();
 		audioMapPort->setEnvelope(ts);
 		audioMapPort->write(*outAudioMap);
     }
+
+    //Please uncomment the line below if you would you would like to memory map the audio Map
+    //memoryMapper();
 
 	//Timing how long the module took
 	lastframe = ts.getCount();
@@ -272,7 +274,7 @@ void AudioPreprocesserModule::sendGammatonFilteredAudio()
 		outAudioMap->setRow(i, tempV);
 	}
 }
-void AudioPreprocesserModule::sendGammatonFilteredAudio()
+void AudioPreprocesserModule::sendBeamFormedAudio()
 {
 	for (int i = 0; i < nBands; i++)
 	{

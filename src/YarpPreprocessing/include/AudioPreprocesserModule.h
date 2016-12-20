@@ -84,18 +84,55 @@ private:
 	std::string mywarn;
 	std::string myreset;
 
+	/**
+	*	loadFile
+	*	Accesses the loadFile.xml that is found in the root directory of this
+	*	module and load all required parameters for the beam former.
+	*/
 	void loadFile();
+
+	/**
+	*	createMemoryMappedFile
+	*	Creates, and allocates all the data required for the memory mapping.
+	*/
 	void createMemoryMappedFile();
+
+	/**
+	*	memoryMapper
+	*	Taking the Audio data 
+	*/
 	void memoryMapper();
+
+	/**
+	*	sendAudioMap
+	*	Function used to send audio map after its been though the gammaton, beamforming, and reduction steps.
+	*	The audio map is stored in outAudioMap and sent though port audioMapPort.
+	*/
 	void sendAudioMap();
+
+	/**
+	*	sendGammatonFilteredAudio
+	*	Function used to send audio after its pass though the gammaton filter. 
+	*	The audio is held in outGammatonFilteredAudio matrix and is sent though port gammatonFilteredAudioPort.
+	*/
 	void sendGammatonFilteredAudio();
+
+	/**
+	* 	sendBeamFormedAudio
+	*	Function used to send beam formed audio that is held in outBeamFormedAudio though port beamFormedAudioPort.
+	*/
 	void sendBeamFormedAudio();
+
+	/**
+	* 	interpl
+	*	Helper function used by spineInterp to do liner interpolation between points (x1,y1) and (x2,y2).
+	*/
 	double interpl(int x, int x1, int x2, double y1, double y2);
 
 	/**
-	* SpineInterp()
-	*
-	*	Taking the Audio data that is found in reducedBeamFormedAudioVector. Creates an interpolation of the data corresponding to the interpellateNSamples that was specified in the xml.
+	* 	SpineInterp
+	*	Taking the Audio data that is found in reducedBeamFormedAudioVector. 
+	*	Creates an interpolation of the data corresponding to the interpellateNSamples that was specified in the xml.
 	*	The data of this function will be saved in highResolutionAudioMap.
 	*/
 	void spineInterp();
