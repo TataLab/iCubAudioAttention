@@ -1,9 +1,9 @@
 // -*- mode:C++; tab-width:4; c-basic-offset:4; indent-tabs-mode:nil -*-
 
 /*
-  * Copyright (C)2016  Department of Robotics Brain and Cognitive Sciences - Istituto Italiano di Tecnologia
-  * Author:Francesco Rea
-  * email: francesco.rea@iit.it
+  * Copyright (C)2017  Department of Neuroscience - University of Lethbridge
+  * Author:Matt Tata, Marko Ilievski
+  * email: m.ilievski@uleth.ca, matthew.tata@uleth.ca, francesco.rea@iit.it
   * Permission is granted to copy, distribute, and/or modify this program
   * under the terms of the GNU General Public License, version 2 or any
   * later version published by the Free Software Foundation.
@@ -16,7 +16,6 @@
   * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
   * Public License for more details
 */
-
 /**
  * @file AudioPreprocesserModule.cpp
  * @brief Implementation of the processing module 
@@ -34,12 +33,15 @@ AudioPreprocesserModule::AudioPreprocesserModule()
 	mywarn = "\033[0;33m";
 	myreset = "\033[0m";
 
-	//TODO how should this path be better protected
+	//Set the file which the module uses to grab the config information
 	fileName = "../../src/Configuration/loadFile.xml";
+	//calls the parser and the config file to configure the needed variables in this class
 	loadFile();
 
+	//
 	gammatonAudioFilter = new GammatonFilter(fileName);
 	beamForm = new BeamFormer(fileName);
+
 	rawAudio = new float[(frameSamples * nMics)];
 	oldtime = 0;
 
@@ -66,35 +68,12 @@ AudioPreprocesserModule::~AudioPreprocesserModule()
 
 bool AudioPreprocesserModule::configure(yarp::os::ResourceFinder &rf)
 {
-  /* Process all parameters from both command-line and .ini file */
   
-  /* get the module name which will form the stem of all module port names */
-  moduleName            = rf.check("name", 
-				   Value("/AudioPreprocessor"), 
-				   "module name (string)").asString();
-  /*
-   * before continuing, set the module name before getting any other parameters, 
-   * specifically the port names which are dependent on the module name
-   */
-  setName(moduleName.c_str());
-  
-  /*
-   * get the robot name which will form the stem of the robot ports names
-   * and append the specific part and device required
-   */
-  robotName             = rf.check("robot", 
-				   Value("icub"), 
-				   "Robot name (string)").asString();
-  robotPortName         = "/" + robotName + "/head";
-  
-  inputPortName           = rf.check("inputPortName",
-				     Value(":i"),
-				     "Input port name (string)").asString();
   inPort = new yarp::os::BufferedPort<yarp::sig::Sound>();
   inPort->open("/iCubAudioAttention/Preprocesser:i");
   
-  audioMapPort = new yarp::os::Port();
-  audioMapPort->open("/iCubAudioAttention/Preprocesser:o");
+  outPort = new yarp::os::Port();
+  outPort->open("/iCubAudioAttention/Preprocesser:o");
   //TODO this show not be done here
   
   if (yarp::os::Network::exists("/iCubAudioAttention/Preprocesser:i"))
@@ -157,28 +136,18 @@ bool AudioPreprocesserModule::updateModule()
 		row += 2;
 	}
 
+	memoryMapperRawAudio();
+
 	gammatonAudioFilter->inputAudio(rawAudio);
-	 if (gammatonFilteredAudioPort->getOutputCount()) {
-		sendAudioMap();
-		gammatonFilteredAudioPort->setEnvelope(ts);
-		gammatonFilteredAudioPort->write(*outAudioMap);
-    }
 	beamForm->inputAudio(gammatonAudioFilter->getFilteredAudio());
 	reducedBeamFormedAudioVector = beamForm->getReducedBeamAudio();
-	if (beamFormedAudioPort->getOutputCount()) {
-		sendAudioMap();
-		beamFormedAudioPort->setEnvelope(ts);
-		beamFormedAudioPort->write(*outAudioMap);
-    }
-	spineInterp();
-	if (audioMapPort->getOutputCount()) {
-		sendAudioMap();
-		audioMapPort->setEnvelope(ts);
-		audioMapPort->write(*outAudioMap);
-    }
 
-    //Please uncomment the line below if you would you would like to memory map the audio Map
-    //memoryMapper();
+	spineInterp();
+
+	memoryMapper();
+	sendAudioMap();
+	outPort->setEnvelope(ts);
+	outPort->write(*outAudioMap);
 
 	//Timing how long the module took
 	lastframe = ts.getCount();
@@ -211,8 +180,16 @@ void AudioPreprocesserModule::createMemoryMappedFile()
 	fwrite(initializationArray, sizeof(double), sizeof(initializationArray), fid);
 	fclose(fid);
 	mappedFileID = open("/tmp/preprocessedAudioMap.tmp", O_RDWR);
-	std::cout << sizeof(initializationArray) << std::endl;
 	mappedAudioData = (double *)mmap(0, (sizeof(initializationArray)), PROT_WRITE, MAP_SHARED , mappedFileID, 0);
+
+
+	int memoryMapRawAudio = (4*frameSamples)+2;
+	double initializationRawAudioArray [memoryMapRawAudio];
+	rawFid = fopen("/tmp/preprocessedRawAudio.tmp", "w");
+	fwrite(initializationRawAudioArray, sizeof(double), sizeof(initializationRawAudioArray), rawFid);
+	fclose(rawFid);
+	mappedRawAduioFileID = open("/tmp/preprocessedRawAudio.tmp", O_RDWR);
+	mappedRawAduioData = (double *)mmap(0, (sizeof(initializationRawAudioArray)), PROT_WRITE, MAP_SHARED , mappedRawAduioFileID, 0);
 }
 
 void AudioPreprocesserModule::loadFile()
@@ -250,6 +227,21 @@ void AudioPreprocesserModule::memoryMapper()
 	}
 
 }
+void AudioPreprocesserModule::memoryMapperRawAudio()
+{
+	int currentCounter = ts.getCount();
+	double currentTime = ts.getTime();
+	int row = 0;	
+  	for (int col = 0 ; col < frameSamples; col+=1) {
+    	
+		mappedRawAduioData[row] = rawAudio[row];
+		mappedRawAduioData[row + 1] = rawAudio[row+1];
+		mappedRawAduioData[row + 2] = (double) 	(currentCounter * 4096) + col;
+    	mappedRawAduioData[row + 3]	= (double) 	(currentTime + col * (1.0 / 48000));
+    	row += 4;	
+  	}
+
+}
 void AudioPreprocesserModule::sendAudioMap()
 {
 	for (int i = 0; i < nBands; i++)
@@ -261,30 +253,7 @@ void AudioPreprocesserModule::sendAudioMap()
 		}
 		outAudioMap->setRow(i, tempV);
 	}
-}
-void AudioPreprocesserModule::sendGammatonFilteredAudio()
-{
-	for (int i = 0; i < nBands; i++)
-	{
-		yarp::sig::Vector tempV(interpellateNSamples * 2);
-		for (int j = 0; j < interpellateNSamples * 2; j++)
-		{
-			tempV[j] = highResolutionAudioMap[j][i];
-		}
-		outAudioMap->setRow(i, tempV);
-	}
-}
-void AudioPreprocesserModule::sendBeamFormedAudio()
-{
-	for (int i = 0; i < nBands; i++)
-	{
-		yarp::sig::Vector tempV(interpellateNSamples * 2);
-		for (int j = 0; j < interpellateNSamples * 2; j++)
-		{
-			tempV[j] = highResolutionAudioMap[j][i];
-		}
-		outAudioMap->setRow(i, tempV);
-	}
+
 }
 
 void AudioPreprocesserModule::spineInterp()

@@ -1,9 +1,9 @@
 // -*- mode:C++; tab-width:4; c-basic-offset:4; indent-tabs-mode:nil -*-
 
 /*
-  * Copyright (C)2016  Department of Robotics Brain and Cognitive Sciences - Istituto Italiano di Tecnologia
-  * Author:Francesco Rea
-  * email: francesco.rea@iit.it
+  * Copyright (C)2017  Department of Neuroscience - University of Lethbridge
+  * Author:Matt Tata, Marko Ilievski
+  * email: m.ilievski@uleth.ca, matthew.tata@uleth.ca, francesco.rea@iit.it
   * Permission is granted to copy, distribute, and/or modify this program
   * under the terms of the GNU General Public License, version 2 or any
   * later version published by the Free Software Foundation.
@@ -16,12 +16,6 @@
   * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
   * Public License for more details
 */
-
-/**
- * @file AudioPreprocesserRatethread.cpp
- * @brief Implementation of the eventDriven thread (see AudioPreprocesserRatethread.h).
- */
-
 #include <AudioPreprocesserRatethread.h>
 #include <cstring>
 
@@ -30,7 +24,7 @@ using namespace yarp::os;
 using namespace yarp::sig;
 using namespace std;
 
-#define THRATE 100 //ms
+#define THRATE 80 //ms
 
 AudioPreprocesserRatethread::AudioPreprocesserRatethread():RateThread(THRATE) {
     robot = "icub";        
@@ -79,19 +73,7 @@ void AudioPreprocesserRatethread::setInputPortName(string InpPort) {
 
 void AudioPreprocesserRatethread::run() {    
     //code here .....
-    if (inputPort.getInputCount()) {
-        inputImage = inputPort.read(true);   //blocking reading for synchr with the input
-        result = processing();
-    }
-
-    if (outputPort.getOutputCount()) {
-        *outputImage = outputPort.prepare();
-        outputImage->resize(inputImage->width(), inputImage->height());
-        // changing the pointer of the prepared area for the outputPort.write()
-        outputPort.prepare() = *inputImage;
-
-        outputPort.write();
-    }
+    
 
 }
 
