@@ -134,7 +134,21 @@ bool Config::getPhaseAlign()
 {
 	return phaseAlign;
 }
-
+int Config::getShortBufferSize()
+{
+	return shortBufferSize;
+}
+int Config::getMediumBufferSize()
+{
+	return mediumBufferSize;
+}
+int Config::getLongBufferSize()
+{
+	return longBufferSize;
+}
+bool Config::getEnableMultiScale(){
+	return enableMultiScale;
+}
 void Config::setPhaseAlign(std::string pa)
 {
 	for (int i = 0; i < pa.length(); i++)
@@ -202,6 +216,7 @@ void Config::setNumFramesInBuffer(int nfib)
 void Config::setNBeams()
 {
 	nBeams = (2 * nBeamsPerHemifield) + 1;
+	std::cout << nBeams << std::endl;
 }
 
 void Config::setLags()
@@ -278,14 +293,40 @@ void Config::setFrameSamples(int fs)
 {
 	frameSamples = fs;
 }
+
+void Config::setShortBufferSize(int shortBSize)
+{
+	shortBufferSize = shortBSize;
+}
+
+void Config::setMediumBufferSize(int mediumBSize)
+{
+	mediumBufferSize = mediumBSize;
+}
+
+void Config::setLongBufferSize(int longBSize)
+{
+	longBufferSize = longBSize;
+}
+void Config::setEnableMultiScale(std::string pa)
+{
+	for (int i = 0; i < pa.length(); i++)
+	{
+		pa[i] = std::toupper(pa[i]);
+
+	}
+	if (pa == "TRUE" || pa == "YES") enableMultiScale = true;
+	else enableMultiScale = false;
+}
 void Config::calculate()
 {
 
 	setNBeamsPerHemifield();
+	setNBeams();
 	/*
 	setFrameDurationSamples(0);
 	setFrameDurationSeconds();
-	setNBeams();
+	
 	setLags();
 	setAngles();
 	setframePlusOverlap();

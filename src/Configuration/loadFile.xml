@@ -3,31 +3,49 @@
 	<name>default</name>
 	<!--Define speed of sound in m/s (to be very accurate, adjust for elevation (lethbridge is at ~950m)-->
 	<C>336</C>
-	<!--define distance between microphones in m-->
+	<!--Define distance between microphones in m-->
 	<micDistance> 0.145 </MicDistance>
+	<!--Define the sampling rate of the microphones-->
 	<samplingRate> 48000 </samplingRate>
-	<!--Number of Microphones that are in used-->
+	<!--Difine the number of Microphones that are in used in the system-->
 	<nMics>2</nMics>
+	<!--Define the number of samples that will be stored for each frame-->
 	<frameSamples>4096</frameSamples>
 
-	<!--Please note that the number of bands need to be a power of 2 -->
+	<!--The number of frequencies that the gammaton filter bank will generate-->
+	<!--Please note that the number of bands need to be divisible by 2-->
 	<nBands>128</nBands>
-	<lowCf>1000</lowCf>
-	<highCf>5000</highCf>
+	<!--The lowest center frequency that will be used-->
+	<lowCf>500</lowCf>
+	<!--The lowest center frequency that will be used-->
+	<highCf>3000</highCf>
 
-	<!--PLEASE ADD THIS IT WILL BE A STRING WITH YES or NO (use tolower to make it caps independent)-->
+	<!--Currently not implemented-->
 	<phaseAlign>yes</phaseAlign>
+	<!--Currently not implemented-->
 	<requiredLagFrames>2</requiredLagFrames>
+	<!--Currently not implemented-->
 	<numFramesInBuffer>2</numFramesInBuffer>
+	<!--Currently not implemented-->
 	<frameOverlap>2</frameOverlap>
+	<!--Currently not implemented-->
 	<attentionCaptureThreshold>2</attentionCaptureThreshold>
+	<!--Currently not implemented-->
 	<radialResolutionDegrees>2</radialResolutionDegrees>
 
 
-	<!--ADD VAR THAT WILL CONTROL HOW MANY ELEMENTS WILL BE IN THE INTEREP INTO-->
+	<!--The number of samples in the front that will interrelate into-->
 	<interpellateNSamples>180</interpellateNSamples>
 
-
+	<!--Changes enable or disables the multiple time scale Bayesian maps-->
+	<enableMultiScale>yes</enableMultiScale>
+	<!--The number of frames that the short Bayesian buffers will compile-->
+	<shortBufferSize>2</shortBufferSize>
+	<!--The number of frames that the medium Bayesian buffers will compile-->
+	<mediumBufferSize>6</mediumBufferSize>
+	<!--The number of frames that the long Bayesian buffers will compile-->
+	<longBufferSize>80	</longBufferSize>
+	
 
 
 

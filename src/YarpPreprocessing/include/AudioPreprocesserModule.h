@@ -1,9 +1,9 @@
 // -*- mode:C++; tab-width:4; c-basic-offset:4; indent-tabs-mode:nil -*-
 
 /*
-  * Copyright (C)2013  Department of Robotics Brain and Cognitive Sciences - Istituto Italiano di Tecnologia
-  * Author:Francesco Rea
-  * email: francesco.reak@iit.it
+  * Copyright (C)2017  Department of Neuroscience - University of Lethbridge
+  * Author:Matt Tata, Marko Ilievski
+  * email: m.ilievski@uleth.ca, matthew.tata@uleth.ca, francesco.rea@iit.it
   * Permission is granted to copy, distribute, and/or modify this program
   * under the terms of the GNU General Public License, version 2 or any
   * later version published by the Free Software Foundation.
@@ -17,10 +17,6 @@
   * Public License for more details
 */
 
-/**
- * @file tutorialModule.h
- * @brief Simple module as tutorial.
- */
 
 
 
@@ -46,7 +42,7 @@
 #include <string>
 #include <sys/time.h>
 
-const yarp::os::NetInt16 normDivid = 32768;
+const yarp::os::NetInt16 normDivid = 32768;  //Number that is used to conver the integer number resived as the audio signal and convert it to a double audio signal
 
 class AudioPreprocesserModule: public yarp::os::RFModule
 {
@@ -78,12 +74,6 @@ class AudioPreprocesserModule: public yarp::os::RFModule
 
 
 private:
-	//Colored warnings to match YARP
-	std::string myerror;
-	std::string myinfo;
-	std::string mywarn;
-	std::string myreset;
-
 	/**
 	*	loadFile
 	*	Accesses the loadFile.xml that is found in the root directory of this
@@ -91,9 +81,10 @@ private:
 	*/
 	void loadFile();
 
+
 	/**
 	*	createMemoryMappedFile
-	*	Creates, and allocates all the data required for the memory mapping.
+	*	Creates and allocates all the data required for the memory mapping.
 	*/
 	void createMemoryMappedFile();
 
@@ -102,6 +93,12 @@ private:
 	*	Taking the Audio data 
 	*/
 	void memoryMapper();
+
+	/**
+	*	memoryMapperRawAudio
+	*	Taking the Audio data 
+	*/
+	void memoryMapperRawAudio();
 
 	/**
 	*	sendAudioMap
@@ -130,7 +127,8 @@ private:
 	double interpl(int x, int x1, int x2, double y1, double y2);
 
 	/**
-	* 	SpineInterp
+	* SpineInterp()
+	*
 	*	Taking the Audio data that is found in reducedBeamFormedAudioVector. 
 	*	Creates an interpolation of the data corresponding to the interpellateNSamples that was specified in the xml.
 	*	The data of this function will be saved in highResolutionAudioMap.
@@ -147,22 +145,14 @@ private:
 	//Variables need to time the update module
 	struct timeval st, en;
 	long mtime, seconds, useconds;
-	double oldtime;
-	int lastframe;
 
-	//Yarp Ports
-	yarp::os::BufferedPort<yarp::sig::Sound> *inPort;						//Incoming Audio Data from the iCub and remoteInterface
-	yarp::os::Port *audioMapPort;											//Outgoing port audio map after full preprocessing
-	yarp::os::Port *gammatonFilteredAudioPort;								//Outgoing port 
-	yarp::os::Port *beamFormedAudioPort;									//Outgoing port
-
-	yarp::sig::Sound* s;													//Yarp Sound that stores the incoming sound from inPort
-	yarp::os::Stamp ts;														//Contains the time stamps for the perticulare frame of sound
-	float *rawAudio;														//Contains 
-
-	yarp::sig::Matrix* outAudioMap;											//Yarp Matrix used to store preprocessed audio
-	yarp::sig::Matrix* outGammatonFilteredAudio;							//Yarp Matrix used to store audio after its been gammaton filtered
-	yarp::sig::Matrix* outBeamFormedAudio;									//Yarp Matrix used to store the beam formed audio
+	//Incoming Audio Data from the iCub and remoteInterface
+	yarp::os::BufferedPort<yarp::sig::Sound> *inPort;
+	yarp::os::Port *outPort;
+	yarp::sig::Sound* s;
+	yarp::os::Stamp ts;
+	float *rawAudio;
+	yarp::sig::Matrix* outAudioMap;
 
 	std::string fileName;
 	int frameSamples;
@@ -173,12 +163,25 @@ private:
 	GammatonFilter *gammatonAudioFilter;
 	BeamFormer *beamForm;
 
+
+	double oldtime;
+	int lastframe;
 	std::vector < std::vector < float* > > beamFormedAudioVector;
 	std::vector < std::vector < double > > reducedBeamFormedAudioVector;
 
+	//Colored warnings to match YARP
+	std::string myerror;
+	std::string myinfo;
+	std::string mywarn;
+	std::string myreset;
+	
 	FILE *fid;
+	FILE *rawFid;
 	int mappedFileID;
 	double *mappedAudioData;
+
+	int mappedRawAduioFileID;
+	double *mappedRawAduioData;
 
 };
 

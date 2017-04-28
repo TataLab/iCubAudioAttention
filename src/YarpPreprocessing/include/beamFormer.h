@@ -1,5 +1,22 @@
 // -*- mode:C++; tab-width:4; c-basic-offset:4; indent-tabs-mode:nil -*-
 
+/*
+  * Copyright (C)2017  Department of Neuroscience - University of Lethbridge
+  * Author:Matt Tata, Marko Ilievski
+  * email: m.ilievski@uleth.ca, matthew.tata@uleth.ca, francesco.rea@iit.it
+  * Permission is granted to copy, distribute, and/or modify this program
+  * under the terms of the GNU General Public License, version 2 or any
+  * later version published by the Free Software Foundation.
+  *
+  * A copy of the license can be found at
+  * http://www.robotcub.org/icub/license/gpl.txt
+  *
+  * This program is distributed in the hope that it will be useful, but
+  * WITHOUT ANY WARRANTY; without even the implied warranty of
+  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+  * Public License for more details
+*/
+
 #ifndef _BEAM_FORMER_H_
 #define _BEAM_FORMER_H_
 
@@ -59,8 +76,18 @@ private:
 	*/
 	void loadFile();
 
-
+	/**
+	*	 reducedAudioMultiThreadingLoop
+	*	 A helper function used with the C++11 multithreading to create the reducedAudioMap.
+	*	 @param i .
+	*/
 	void reducedAudioMultiThreadingLoop(int i);
+
+	/**
+	*	 audioMultiThreadingLoop
+	*	 A helper function used with the C++11 multithreading to create the audioMap.
+	*	 @param i .
+	*/
 	void audioMultiThreadingLoop(int i);
 
 
@@ -79,4 +106,3 @@ private:
 };
 
 #endif
-

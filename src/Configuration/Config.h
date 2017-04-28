@@ -202,6 +202,27 @@ public:
 	 */
 	int getInterpellateNSamples();
 
+	/**
+	 *  getShortBufferSize
+	 * 	Returns the shortest buffer length used to create the short term Gammaton bank.
+	 * 	@return [description]
+	 */
+	int getShortBufferSize();
+
+	/**
+	 *  getMediumBufferSize
+	 * 	Returns the medium buffer length used to create the medium term Gammaton bank.
+	 * 	@return [description]
+	 */
+	int getMediumBufferSize();
+
+	/**
+	 *  getLongBufferSize
+	 * 	@return Returns the longest buffer length used to create the long term Gammaton bank.
+	 */
+	int getLongBufferSize();
+
+	bool getEnableMultiScale();
 
 	/**
 	 * Sets the configuration name. This will be used when storing multiple
@@ -311,6 +332,32 @@ public:
 	void setInterpellateNSamples(int);
 
 	/**
+	 *  setShortBufferSize
+	 *
+	 * 	Sets the shortest buffer length used to create the short term Gammaton bank.
+	 * 	@return [description]
+	 */
+	void setShortBufferSize(int);
+
+	/**
+	 *  setMediumBufferSize
+	 *
+	 * 	Sets the medium buffer length used to create the medium term Gammaton bank.
+	 * 	@return [description]
+	 */
+	void setMediumBufferSize(int);
+
+	/**
+	 *  setLongBufferSize
+	 *
+	 * 	Sets the longest buffer length used to create the long term Gammaton bank.
+	 * 	@return [description]
+	 */
+	void setLongBufferSize(int);
+
+	void setEnableMultiScale(std::string);
+
+	/**
 	 * Calls all parameters that require any form of calculation.
 	 * This module makes sure that all operation are called in the correct order.
 	 */
@@ -334,6 +381,7 @@ public:
 	bool getPhaseAlign();
 
 private:
+	bool enableMultiScale;
 	std::string name;
 	double C;
 	double micDistance;
@@ -344,6 +392,10 @@ private:
 	int interpellateNSamples;
 
 	int frameDurationSamples; //divide by sample rate to get frame duration, make it evenly divisible by the frame size of the audio capture, at least as big as the frame size of audio capture, and (ideally) a power of 2
+
+	int shortBufferSize;
+	int mediumBufferSize;
+	int longBufferSize;
 
 	/**
 	 * Private Function. Use calculate()
@@ -404,7 +456,6 @@ private:
 	 *
 	 */
 	void setAngles();
-
 	int lowCf;
 	int highCf;
 	int frameOverlap;
@@ -417,6 +468,7 @@ private:
 	 */
 	void setframePlusOverlap();
 	int frameIndices;
+
 	void setFrameIndicies();
 	int nPastSeconds;
 	int nPastFrames;
@@ -432,7 +484,6 @@ private:
 	 * [setInhibitionOfCapture description]
 	 */
 	void setInhibitionOfCapture();
-
 	double radialResolutionDegrees;
 	double radialResolutionRadians;
 

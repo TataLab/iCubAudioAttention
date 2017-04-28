@@ -1,5 +1,22 @@
 // -*- mode:C++; tab-width:4; c-basic-offset:4; indent-tabs-mode:nil -*-
 
+/*
+  * Copyright (C)2017  Department of Neuroscience - University of Lethbridge
+  * Author:Matt Tata, Marko Ilievski
+  * email: m.ilievski@uleth.ca, matthew.tata@uleth.ca, francesco.rea@iit.it
+  * Permission is granted to copy, distribute, and/or modify this program
+  * under the terms of the GNU General Public License, version 2 or any
+  * later version published by the Free Software Foundation.
+  *
+  * A copy of the license can be found at
+  * http://www.robotcub.org/icub/license/gpl.txt
+  *
+  * This program is distributed in the hope that it will be useful, but
+  * WITHOUT ANY WARRANTY; without even the implied warranty of
+  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+  * Public License for more details
+*/
+
 /**
 *	This function will create a filter bank which brakes the auditory signal into
 */
@@ -53,15 +70,14 @@ public:
 	/**
 	*	getFilteredAudio
 	*	Return a vector containing the filtered audio
-	*	(first half of the vector is left channels the second half of the vector is the right channel)
-	*	@return      The a vector of arrays which
+	*	@return      The a vector of arrays in which the first half of the vector is left channels the second half of the vector is the right channel
 	*/
 	std::vector< float* > getFilteredAudio();
 
 private:
 	/**
 	*	 Generates the gammaton filter.
-	*	@param MicNumber which mic is being used to generate the current filter.
+	*	@param MicNumber which microphone is being used to generate the current filter.
 	*/
 	void generatFilter(int MicNumber);
 
@@ -86,8 +102,8 @@ private:
 	/**
 	*	HzToErbRate
 	*	Takes a Hz input and translate it into ERB
-	*	@param Hz 
-	*	@return Erb
+	*	@param The Hz frequency to be converted. 
+	*	@return The converted Erb centered frequency.
 	*/
 	double HzToErbRate(double Hz);
 
@@ -116,7 +132,7 @@ private:
 	std::string fileName;										//Path and name of the file containing all defeat perimeters
 
 	int frameSamples;											//The number of samples per audio frame
-	bool align;													//If 
+	bool align;											
 	int nMics;													//The number of microphones used
 	
 	bool hrect;
