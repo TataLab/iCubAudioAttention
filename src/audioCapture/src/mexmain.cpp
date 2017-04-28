@@ -146,7 +146,7 @@ void mexFunction(int nlhs,mxArray *plhs[],int nrhs,const mxArray *prhs[])
   Sound* s;
   int nchannels = 2;           // number of channels
   int rate = 48000;            // sampling rate
-  int nbytes = 2;              // number of bytes
+  int nbytes =4;              // number of bytes
   double time = 0.1;                // sec
   int nsamples = 4096;  // number of samples
   double sampleDur = 1.0 / rate;
@@ -185,8 +185,8 @@ void mexFunction(int nlhs,mxArray *plhs[],int nrhs,const mxArray *prhs[])
   	
   int row = 0;	
   for (int col = 0 ; col < nsamples; col+=1) {
-    NetInt16 temp_c = (NetInt16) s->get(col,0);
-    NetInt16 temp_d = (NetInt16) s->get(col,1);
+    NetInt32 temp_c = (NetInt32) s->get(col,0);
+    NetInt32 temp_d = (NetInt32 s->get(col,1);
 	c[row]        	= (double) 	temp_c / normDivid ;
 	c[row + 1] 		= (double) 	temp_d / normDivid;
 	c[row + 2] 		= (double) 	(e0 * 4096) + col;

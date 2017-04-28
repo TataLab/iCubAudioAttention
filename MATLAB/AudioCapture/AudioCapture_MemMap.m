@@ -1,31 +1,8 @@
+%AudioCapture_MemMap pulls left and right channel data into the workspace
+%from a memmory mapped file.  This is useful for getting audio from YARP in
+%a raw format
 
-% Copyright (C) 2015 Matthew Tata
-% email: matthew.tata@uleth.ca
-%
-% Permi ssion is granted to copy, distribute, and/or modify this program
-% under the terms of the GNU General Public License, version 2 or any
-% later version published by the Free Software Foundation.
-%
-% This program is distributed in the hope that it will be useful, but
-% WITHOUT ANY WARRANTY; without even the implied warranty of
-% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
-% Public License for more details
-
-
-
-
-%capture audio from a YARP stream using mex code to open and close YARP
-%ports and grab sound class
-
-%optionally use the excellent Psychophysics Toolbox to stream audio out to
-%the local audio device
-
-
-   
-    %how this works:  audioCapture is a mex function that calls a "blocking
-    %read" on a YARP port.  This means everything stops until the next
-    %frame is fully captured from the audio buffer.  audioCapture then
-    %returns a 4 x frameDuration_samples matrix in which the first two rows
+%audio data should be dumped as a 4 x frameDuration_samples matrix in which the first two rows
     %are left and right audio data, respectively, the third row contains a
     %sample sequence stamp, and the fourth row contains timestamps synched
     %to the PC104.  
@@ -37,16 +14,10 @@
     %sample is always the right-most sample in the buffer
     
     
-    %If all goes well this should execute with plenty of time to
-    %call audioCapture() again on the next loop before the next frame is
-    %fully captured. Use tic() and toc() to test (warning: tic() and toc()
-    %don't work well on Windows, but do work well on any UNIX including Mac
-    %OS)
-
-
+    
 
 %build a data structure of parameters to keep things organized
-pStruct.streamAudioOutput = 0; %flag to toggle on streaming
+pStruct.streamAudioOutput = 1; %flag to toggle on streaming
 pStruct.writeToMemMap = 1;  %flag to toggle on writing stereo signal to local shared memory (use this to expose the signal to other MATLAB instances)
 
 totalTime=tic;
@@ -75,8 +46,8 @@ if(pStruct.writeToMemMap) %set up to use memory mapping to expose the audio to o
     pStruct.numMemMapFrames=10; %think of this as echoic memory:  a raw audio data buffer
     pStruct.audioMemMapSize = pStruct.numMemMapFrames * pStruct.frameDuration_samples;  %this is a tricky part of the code.  All other processes that want to memory map this audio will need to know how big it is.  They can get that info using dir().
     %prepare memory mapping
-    pStruct.AudioMemMapFilename=['/tmp/AudioMemMap.tmp'];
-    display(['memory mapping file ' pStruct.AudioMemMapFilename ' for audio data.']);    
+    pStruct.AudioMemMapFilename='/tmp/AudioMemMap.tmp';
+    disp(['memory mapping file ' pStruct.AudioMemMapFilename ' for audio data.']);    
     try
         tempData = zeros(4,pStruct.audioMemMapSize); %2 audio channels, a counter channel, and a time stamp channel
         fileID=fopen(pStruct.AudioMemMapFilename,'w');
@@ -93,6 +64,18 @@ if(pStruct.writeToMemMap) %set up to use memory mapping to expose the audio to o
     previousLastSampleTime=0;
 end %setting up mem mapping for unfiltered stereo signal
 
+%%%%%%
+%parameters for interacting with memory mapped input audio
+%%%%%
+memMapFileName_input='/tmp/preprocessedRawAudio.tmp';
+inputDir=dir(memMapFileName_input);
+P.bufferSize_bytes = inputDir.bytes; %the  buffer size is determined by your audio capture method.  Frames on that side are hard coded to be 4096 samples.  There are 4 rows by 4096 doubles x some number of frames in the  buffer.
+P.bufferSize_samples = P.bufferSize_bytes / (8*4); %each sample is a 4 x 64-bit column (two audio data samples, sequence and time)
+
+P.rawAudio  = memmapfile(memMapFileName_input, 'Writable', false, 'format',{'double' [4 P.bufferSize_samples] 'audioD'});
+%initialization
+frame=P.rawAudio.Data(1,1).audioD(:,:); %initialize the first frame
+lastFrameStamp = frame(3,end);%ask what is the stamp of the most recent sample written (it's in the last column in the buffer)
 
 
 %%%%%%%%%%
@@ -108,10 +91,9 @@ end %setting up mem mapping for unfiltered stereo signal
 frameCounter=1;
 done=0;
 while(~done) %loop continuously
-   
     
-    
-    [frame]=audioCapture; %grab audio from YARP.  This is a blocking read.  It waits until the buffer fills.  It doesn't play nicely with streaming refills of the PsychPortAudio buffer, so if you're monitoring the audio out then you'll always be a frame behind and possibly dropping samples  
+    %grab audio out of the memory mapped file
+    frame=P.rawAudio.Data(1,1).audioD(:,:);
     
     %now you have audio data
     %do something with it
@@ -120,17 +102,17 @@ while(~done) %loop continuously
     t=tic;  %keep track of time.  you need to recall audioCapture() before 1 frame has elapsed or you'll drop samples
     
     if(pStruct.streamAudioOutput) %if you want to monitor the audio on the local audio hardware
-        [under,nextSampleStartIndex]=PsychPortAudio('FillBuffer',paoutput,frame(1:2,:),1,nextSampleStartIndex);     
+        [under,nextSampleStartIndex]=PsychPortAudio('FillBuffer',paoutput,frame(1:2,:),1,nextSampleStartIndex);
     end
     
     if(pStruct.writeToMemMap) %if you want to write the frame into a buffer of shared memory
         newBuffer=circshift(oldBuffer,[0 -pStruct.frameDuration_samples]); %shift and wrap
         newBuffer(:,end-pStruct.frameDuration_samples+1:end)=frame;  %append the most recent frame onto the buffer by overwritting the frame that got wrapped
         audioOut.Data(1,1).audioD=newBuffer;%dump the frame into the memmapped region
-        oldBuffer=newBuffer;   
+        oldBuffer=newBuffer;
     end
     
-%     %if you want to visualize the audio (this may slow too much)
+    %     %if you want to visualize the audio (this may slow too much)
     subplot(2,1,1);
     plot(audioOut.Data(1,1).audioD(1,:));
     ylim([-0.15 0.15]);
@@ -138,14 +120,28 @@ while(~done) %loop continuously
     plot(audioOut.Data(1,1).audioD(2,:));
     ylim([-0.05 0.05]);
     drawnow;
-
-%check the timing
-frameCounter=frameCounter+1;
-display(frameCounter);
-toc(totalTime);
-elapsed=toc(t);
-if(elapsed>pStruct.frameDuration_seconds)
-    display(['frame number ' num2str(frameCounter) ' ran slow by ' num2str(elapsed - pStruct.frameDuration_seconds) ' seconds.  Samples may have been dropped.']);
-end
-
+    
+    
+%     problem=1; %check to make sure that the thread had to spin.  If it didn't, you probably aren't reading audio fast enough
+%     while(P.rawAudio.Data(1,1).audioD(end-1,end)<nextFrameStamp) %check the sequence stamp of the last sample in the frame, wait until it increments before looping
+%         %spin until the next frame has been written into the buffer
+%         %display(['spinning at ' num2str(P.rawAudio.Data(1,1).audioD(end-1,end))]);
+%         problem=0;
+%     end
+%     
+%     
+%     %     %some basic error catching
+%     if(problem)
+%         disp('did not spin, probably dropped audio');
+%     end
+    
+    %check the timing
+    frameCounter=frameCounter+1;
+    display(frameCounter);
+    toc(totalTime);
+    elapsed=toc(t);
+    if(elapsed>pStruct.frameDuration_seconds)
+        disp(['frame number ' num2str(frameCounter) ' ran slow by ' num2str(elapsed - pStruct.frameDuration_seconds) ' seconds.  Samples may have been dropped.']);
+    end
+    
 end
