@@ -31,7 +31,7 @@
 #include <yarp/os/Network.h>
 #include <yarp/os/BufferedPort.h>
 #include <yarp/os/Stamp.h>
-#include <yarp/os/NetInt16.h>
+#include <yarp/os/NetInt32.h>
 #include <yarp/sig/Sound.h>
 #include <yarp/sig/Matrix.h>
 #include <yarp/sig/Vector.h>
@@ -42,7 +42,7 @@
 #include <string>
 #include <sys/time.h>
 
-const yarp::os::NetInt16 normDivid = 32768;  //Number that is used to conver the integer number resived as the audio signal and convert it to a double audio signal
+const float normDivid = pow(2,23);  //Number that is used to conver the integer number resived as the audio signal and convert it to a double audio signal
 
 class AudioPreprocesserModule: public yarp::os::RFModule
 {
@@ -145,7 +145,8 @@ private:
 	//Variables need to time the update module
 	struct timeval st, en;
 	long mtime, seconds, useconds;
-
+	double startTime, stopTime;
+	
 	//Incoming Audio Data from the iCub and remoteInterface
 	yarp::os::BufferedPort<yarp::sig::Sound> *inPort;
 	yarp::os::Port *outPort;

@@ -74,4 +74,4 @@ display(['recording that audio took ' num2str(toc(t)) ' seconds.  It should have
 recordedAudio=recordedAudio./max(max(abs(recordedAudio)));
 
 audiowrite('./test.wav',recordedAudio',sampleRate);
-sound (recordedAudio(1,:),sampleRate);
+soundsc (recordedAudio(1,:),sampleRate);

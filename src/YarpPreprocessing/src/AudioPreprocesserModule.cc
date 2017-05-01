@@ -22,6 +22,9 @@
  */
 
 #include "AudioPreprocesserModule.h"
+#define NUM_FRAME_SAMPLES 4096 //get this into resource finder!!!!
+
+
 
 using namespace yarp::os;
 
@@ -119,7 +122,10 @@ double AudioPreprocesserModule::getPeriod()
 
 bool AudioPreprocesserModule::updateModule()
 {
+
 	s = inPort->read(true);
+	
+	//to check timing
 	gettimeofday(&st, NULL);
 	inPort->getEnvelope(ts);
 
@@ -127,14 +133,21 @@ bool AudioPreprocesserModule::updateModule()
 		printf("[WARN] Too Slow\n");
 	}
 
+
 	int row = 0;
 	for (int col = 0 ; col < frameSamples; col++) {
-		yarp::os::NetInt16 temp_c = (yarp::os::NetInt16) s->get(col, 0);
-		yarp::os::NetInt16 temp_d = (yarp::os::NetInt16) s->get(col, 1);
+		yarp::os::NetInt32 temp_c = (yarp::os::NetInt32) s->get(col, 0);
+		yarp::os::NetInt32 temp_d = (yarp::os::NetInt32) s->get(col, 1);
 		rawAudio[row]   = (float) temp_c / normDivid;
 		rawAudio[row + 1]	= (float) temp_d / normDivid;
+		//printf("%d   %f",temp_c,rawAudio[row]);
+
 		row += 2;
+		
 	}
+
+
+
 
 	memoryMapperRawAudio();
 
@@ -150,13 +163,16 @@ bool AudioPreprocesserModule::updateModule()
 	outPort->write(*outAudioMap);
 
 	//Timing how long the module took
+	
 	lastframe = ts.getCount();
 	gettimeofday(&en, NULL);
 	seconds  = en.tv_sec  - st.tv_sec;
 	useconds = en.tv_usec - st.tv_usec;
 	mtime = ((seconds) * 1000 + useconds / 1000.0) + 0.5;
-	printf("[INFO] Count:%d Time:%ld milliseconds. \n", ts.getCount(),  mtime);
-
+	//printf("[INFO] Count:%d Time:%ld milliseconds. \n", ts.getCount(),  mtime);
+	stopTime=Time::now();
+	printf("elapsed time = %f\n",stopTime-startTime);
+	startTime=stopTime;
 	return true;
 }
 
@@ -182,9 +198,11 @@ void AudioPreprocesserModule::createMemoryMappedFile()
 	mappedFileID = open("/tmp/preprocessedAudioMap.tmp", O_RDWR);
 	mappedAudioData = (double *)mmap(0, (sizeof(initializationArray)), PROT_WRITE, MAP_SHARED , mappedFileID, 0);
 
-
-	int memoryMapRawAudio = (4*frameSamples)+2;
-	double initializationRawAudioArray [memoryMapRawAudio];
+	int memoryMapRawAudio = (4*NUM_FRAME_SAMPLES);
+	//printf("memoryMapRawAudio is %d\n",memoryMapRawAudio);
+	//double initializationRawAudioArray [memoryMapRawAudio];
+	double initializationRawAudioArray[4*NUM_FRAME_SAMPLES];
+	//printf("size of initializationRawAudioArray is %d\n",sizeof(initializationRawAudioArray));
 	rawFid = fopen("/tmp/preprocessedRawAudio.tmp", "w");
 	fwrite(initializationRawAudioArray, sizeof(double), sizeof(initializationRawAudioArray), rawFid);
 	fclose(rawFid);
@@ -201,6 +219,7 @@ void AudioPreprocesserModule::loadFile()
 		Config pars = (confPars->getConfig("default"));
 
 		frameSamples = pars.getFrameSamples();
+		
 		nBands = pars.getNBands();
 		nMics = pars.getNMics();
 		interpellateNSamples = pars.getInterpellateNSamples();
@@ -218,6 +237,7 @@ void AudioPreprocesserModule::memoryMapper()
 	mappedAudioData[0] = ts.getCount();
 	mappedAudioData[1] = ts.getTime();
 	int count = 0;
+	//printf("inpterellateNSamples = %d",interpellateNSamples);
 	for (int i = 0; i < interpellateNSamples * 2; i++)
 	{
 		for (int j = 0; j < nBands; j++)
@@ -232,13 +252,15 @@ void AudioPreprocesserModule::memoryMapperRawAudio()
 	int currentCounter = ts.getCount();
 	double currentTime = ts.getTime();
 	int row = 0;	
+	int j = 0;
   	for (int col = 0 ; col < frameSamples; col+=1) {
     	
-		mappedRawAduioData[row] = rawAudio[row];
-		mappedRawAduioData[row + 1] = rawAudio[row+1];
-		mappedRawAduioData[row + 2] = (double) 	(currentCounter * 4096) + col;
-    	mappedRawAduioData[row + 3]	= (double) 	(currentTime + col * (1.0 / 48000));
-    	row += 4;	
+		mappedRawAduioData[j] = 	(double)rawAudio[row];
+		mappedRawAduioData[j+1] = 	(double)rawAudio[row+1];
+		mappedRawAduioData[j+2] = 	(double)(currentCounter * frameSamples) + col;
+    	mappedRawAduioData[j+3]	= 	(double)(currentTime + col * (1.0 / 48000));
+    	row += 2;
+    	j +=4;	
   	}
 
 }

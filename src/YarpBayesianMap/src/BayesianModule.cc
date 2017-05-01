@@ -20,6 +20,7 @@
 
 #include "BayesianModule.h"
 #include <iostream>
+#define MEMORY_MAP_SIZE nBands * 360 
 int myModed(int a, int b) {
     return  a >= 0 ? a % b : (a % b) + b;
 }
@@ -54,21 +55,7 @@ BayesianModule::BayesianModule()
         longMap.push_back(tempvector);
     }
    
-    //initialize the options with the icub
-    options.put("device", "remote_controlboard");
-    options.put("local", "/AudioFocusAttention");
-    options.put("remote", "/icub/head");
-    
-    //loads the robot head module with the options configured above
-    robotHead = new yarp::dev::PolyDriver(options);
-    robotHead->view(enc);
-    robotHead->view(pos);
-    //Checks that the robot head was properly initialized and assigned to both eco(encoder data) and pos(position data)
-    if (enc == NULL || pos == NULL) {
-        printf("Cannot get interface to robot head\n");
-        robotHead->close();
-        return;
-    }
+   	
 
     //Allocates the required memory for the yarp matrix that takes the input and output to this module
     inputMatrix = new yarp::sig::Matrix(nBands, interpellateNSamples * 2);
@@ -76,7 +63,7 @@ BayesianModule::BayesianModule()
 
     //Calls the function that initalizes the the data required for memory mapping the
     //short, medium and long term Bayesian maps as needed
-    createMemoryMappedFile();
+   // createMemoryMappedFile();
 
     //Initializes the variable that keeps track of how many frames have been gathered for the noise map
     noiseBufferMap = 0;
@@ -93,6 +80,29 @@ BayesianModule::~BayesianModule()
 //This sets up the needed input and output ports needed by this module
 bool BayesianModule::configure(yarp::os::ResourceFinder &rf)
 {
+    printf(" C O N F I G U R I N G\n");
+    robotName = rf.check("robot", Value("icub"),"Robot name (string)").asString();
+    printf("name of robot is %s\n",robotName.c_str());
+    
+    std::string headPort = "/" + robotName + "/head";
+    //initialize the options with the icub
+    options.put("device", "remote_controlboard");
+    options.put("local", "/AudioFocusAttention");
+    options.put("remote", headPort.c_str());
+    //options.put("remote", "/icub/head");
+    
+    //loads the robot head module with the options configured above
+    robotHead = new yarp::dev::PolyDriver(options);
+    robotHead->view(enc);
+    robotHead->view(pos);
+    //Checks that the robot head was properly initialized and assigned to both eco(encoder data) and pos(position data)
+    if (enc == NULL || pos == NULL) {
+        printf("Cannot get interface to robot head\n");
+        robotHead->close();
+        return false;
+    }
+    
+    
     //Creates a buffered yarp port as input into this module with the name /iCubAudioAttention/BayesianMap:i
     //The expected input into this module is a yarp matrix with the size of (beams * bands) 
     //The matrix is created in the yarpPreprocessing module
@@ -116,6 +126,10 @@ bool BayesianModule::configure(yarp::os::ResourceFinder &rf)
             return false;
         }
     }
+    
+    
+    
+    
     return true;
 }
 
@@ -199,10 +213,13 @@ void BayesianModule::calcOffset()
 
 void BayesianModule::createMemoryMappedFile()
 {
-    int memoryMapSize = ((nBands * (interpellateNSamples + 1)) * 2 )+1;
-    double initializationArrayShort [memoryMapSize];
-    double initializationArrayMedium [memoryMapSize];
-    double initializationArrayLong[memoryMapSize];
+    //int memoryMapSize = ((nBands * (interpellateNSamples + 1)) * 2 )+1;
+    
+    double initializationArrayShort [MEMORY_MAP_SIZE];
+    double initializationArrayMedium [MEMORY_MAP_SIZE];
+    double initializationArrayLong[MEMORY_MAP_SIZE];
+    
+    printf("MEMORY_MAP_SIZE is %d",MEMORY_MAP_SIZE);
     fidShort = fopen("/tmp/bayesianProbabilityShortMap.tmp", "w");
     fwrite(initializationArrayShort, sizeof(double), sizeof(initializationArrayShort), fidShort);
     fclose(fidShort);

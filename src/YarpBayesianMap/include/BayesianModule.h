@@ -151,7 +151,7 @@ private:
     yarp::os::Port *outAngle;
 
 
-
+	std::string robotName;
     std::vector <std::vector <double>> longMap;
     std::vector <std::vector <double>> mediumMap;
     std::vector <std::vector <double>> shortMap;

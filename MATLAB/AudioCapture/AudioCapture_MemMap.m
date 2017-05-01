@@ -17,7 +17,7 @@
     
 
 %build a data structure of parameters to keep things organized
-pStruct.streamAudioOutput = 1; %flag to toggle on streaming
+pStruct.streamAudioOutput = 0; %flag to toggle on streaming
 pStruct.writeToMemMap = 1;  %flag to toggle on writing stereo signal to local shared memory (use this to expose the signal to other MATLAB instances)
 
 totalTime=tic;
@@ -70,7 +70,7 @@ end %setting up mem mapping for unfiltered stereo signal
 memMapFileName_input='/tmp/preprocessedRawAudio.tmp';
 inputDir=dir(memMapFileName_input);
 P.bufferSize_bytes = inputDir.bytes; %the  buffer size is determined by your audio capture method.  Frames on that side are hard coded to be 4096 samples.  There are 4 rows by 4096 doubles x some number of frames in the  buffer.
-P.bufferSize_samples = P.bufferSize_bytes / (8*4); %each sample is a 4 x 64-bit column (two audio data samples, sequence and time)
+P.bufferSize_samples = P.bufferSize_bytes / (4*8); %each sample is a 4 x 64-bit column (two audio data samples, sequence and time)
 
 P.rawAudio  = memmapfile(memMapFileName_input, 'Writable', false, 'format',{'double' [4 P.bufferSize_samples] 'audioD'});
 %initialization
@@ -114,31 +114,37 @@ while(~done) %loop continuously
     
     %     %if you want to visualize the audio (this may slow too much)
     subplot(2,1,1);
-    plot(audioOut.Data(1,1).audioD(1,:));
-    ylim([-0.15 0.15]);
+    plot(P.rawAudio.Data(1,1).audioD(1,:));
+    %ylim([-0.05 0.05]);
     subplot(2,1,2);
-    plot(audioOut.Data(1,1).audioD(2,:));
-    ylim([-0.05 0.05]);
+    plot(P.rawAudio.Data(1,1).audioD(2,:));
+    %ylim([-0.05 0.05]);
     drawnow;
     
+    %handle audio packet stuff
+    %increment for next frame
+    %display(P.rawAudio.Data(1,1).audioD(end-1,end)-lastFrameStamp);
+    nextFrameStamp=lastFrameStamp+P.bufferSize_samples; %increment
+    lastFrameStamp=nextFrameStamp;
+    frameCounter=frameCounter+1;
     
-%     problem=1; %check to make sure that the thread had to spin.  If it didn't, you probably aren't reading audio fast enough
-%     while(P.rawAudio.Data(1,1).audioD(end-1,end)<nextFrameStamp) %check the sequence stamp of the last sample in the frame, wait until it increments before looping
-%         %spin until the next frame has been written into the buffer
-%         %display(['spinning at ' num2str(P.rawAudio.Data(1,1).audioD(end-1,end))]);
-%         problem=0;
-%     end
-%     
-%     
-%     %     %some basic error catching
-%     if(problem)
-%         disp('did not spin, probably dropped audio');
-%     end
+    problem=1; %check to make sure that the thread had to spin.  If it didn't, you probably aren't reading audio fast enough
+    while(P.rawAudio.Data(1,1).audioD(end-1,end)<nextFrameStamp) %check the sequence stamp of the last sample in the frame, wait until it increments before looping
+        %spin until the next frame has been written into the buffer
+        %display(['spinning at ' num2str(P.rawAudio.Data(1,1).audioD(end-1,end))]);
+        problem=0;
+    end
+    
+    
+    %     %some basic error catching
+    if(problem)
+        disp('did not spin, probably dropped audio');
+    end
     
     %check the timing
     frameCounter=frameCounter+1;
-    display(frameCounter);
-    toc(totalTime);
+    %display(frameCounter);
+    %toc(totalTime);
     elapsed=toc(t);
     if(elapsed>pStruct.frameDuration_seconds)
         disp(['frame number ' num2str(frameCounter) ' ran slow by ' num2str(elapsed - pStruct.frameDuration_seconds) ' seconds.  Samples may have been dropped.']);
