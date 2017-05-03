@@ -158,7 +158,7 @@ bool BayesianModule::updateModule()
     sendAudioMap(longMap);
 
     //Calls the Memory maper and memory maps it to the following file: /tmp/bayesianProbabilityLongMap.tmp
-    memoryMapper(longMap,mappingFileIDLong);
+    memoryMapper(longMap,probabilityMappingLong);
     outPort->setEnvelope(ts);
     outPort->write(*outputMatrix);
 
