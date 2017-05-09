@@ -2,11 +2,11 @@
 <AudioConfig>
 	<name>default</name>
 	<!--Define speed of sound in m/s (to be very accurate, adjust for elevation (lethbridge is at ~950m)-->
-	<C>336</C>
+	<C>340</C>
 	<!--Define distance between microphones in m-->
 	<micDistance> 0.145 </MicDistance>
 	<!--Define the sampling rate of the microphones-->
-	<samplingRate> 48000 </samplingRate>
+	<samplingRate> 16000 </samplingRate>
 	<!--Difine the number of Microphones that are in used in the system-->
 	<nMics>2</nMics>
 	<!--Define the number of samples that will be stored for each frame-->
@@ -23,15 +23,15 @@
 	<!--Currently not implemented-->
 	<phaseAlign>yes</phaseAlign>
 	<!--Currently not implemented-->
-	<requiredLagFrames>2</requiredLagFrames>
+	<requiredLagFrames>1</requiredLagFrames>
 	<!--Currently not implemented-->
-	<numFramesInBuffer>2</numFramesInBuffer>
+	<numFramesInBuffer>1</numFramesInBuffer>
 	<!--Currently not implemented-->
-	<frameOverlap>2</frameOverlap>
+	<frameOverlap>1</frameOverlap>
 	<!--Currently not implemented-->
-	<attentionCaptureThreshold>2</attentionCaptureThreshold>
+	<attentionCaptureThreshold>1</attentionCaptureThreshold>
 	<!--Currently not implemented-->
-	<radialResolutionDegrees>2</radialResolutionDegrees>
+	<radialResolutionDegrees>1</radialResolutionDegrees>
 
 
 	<!--The number of samples in the front that will interrelate into-->

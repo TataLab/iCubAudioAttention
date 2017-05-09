@@ -115,7 +115,7 @@ void BeamFormer::audioMultiThreadingLoop(int i) {
 	{
 		for (int k = 0; k < frameSamples; k++)
 		{
-			beamFormedAudioVector[i][j][k] = inputSignal[j][k] + inputSignal[j + nBands][myMod(k + (18 - i), frameSamples)];
+			beamFormedAudioVector[i][j][k] = inputSignal[j][k] + inputSignal[j + nBands][myMod(k + (getNBeamsPerHemifield +1  - i), frameSamples)];
 		}
 	}
 
@@ -144,6 +144,7 @@ void BeamFormer::loadFile()
 		frameSamples = pars.getFrameSamples();
 		nMics = pars.getNMics();
 		getNBeamsPerHemifield = pars.getNBeamsPerHemifield();
+		printf("nBeamsPerHemifield = %d",getNBeamsPerHemifield);
 		totalBeams =getNBeamsPerHemifield*2+1;
 	}
 	catch (int a) {
