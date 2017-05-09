@@ -63,7 +63,7 @@ BayesianModule::BayesianModule()
 
     //Calls the function that initalizes the the data required for memory mapping the
     //short, medium and long term Bayesian maps as needed
-   // createMemoryMappedFile();
+    createMemoryMappedFile();
 
     //Initializes the variable that keeps track of how many frames have been gathered for the noise map
     noiseBufferMap = 0;
@@ -156,6 +156,9 @@ bool BayesianModule::updateModule()
 
     //copies the data in the longMap vector into the outputMatrix and sends the matrix along with the envelope via the output Port 
     sendAudioMap(longMap);
+
+    //Calls the Memory maper and memory maps it to the following file: /tmp/bayesianProbabilityLongMap.tmp
+    memoryMapper(longMap,probabilityMappingLong);
     outPort->setEnvelope(ts);
     outPort->write(*outputMatrix);
 
@@ -208,6 +211,7 @@ void BayesianModule::calcOffset()
     offset+=270;
     //Pushes the current offset into a buffer which is needed to remove "old" audio maps
     bufferedOffSet.push(offset);
+    printf("offset = %f\n",offset);
     
 }
 
@@ -245,10 +249,12 @@ void BayesianModule::memoryMapper(std::vector <std::vector <double>> probability
     {
         for (int j = 0; j <interpellateNSamples * 2; j++)
         {
+        	//printf("count = %d\n",count);
+
             probabilityMappingFileID[(count++)] = probabilityMap[i][j];
         }
     }
-    probabilityMappingFileID[(count++)] = offset;
+    //probabilityMappingFileID[(count++)] = offset;
 }
 
 void BayesianModule::sendAudioMap(std::vector <std::vector <double>> &probabilityMap)
