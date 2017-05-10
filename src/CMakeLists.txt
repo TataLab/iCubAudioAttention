@@ -3,9 +3,10 @@
 # CopyPolicy: Released under the terms of the GNU GPL v2.0.
 
 cmake_minimum_required(VERSION 2.6)
-#add_subdirectory   ( headingAudio             )
+#add_subdirectory     ( headingAudio             )
 if(ENABLE_COMPILEONPC104)
   add_subdirectory    ( remoteInterface          )
+  add_subdirectory    ( audioCaptureInterface    )
 else(ENABLE_COMPILEONPC104)
   #add_subdirectory    ( mosaicPanHead           )
   #add_subdirectory    ( gazeInterface           )
