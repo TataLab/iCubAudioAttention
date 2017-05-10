@@ -22,6 +22,8 @@
 
 #include <yarp/os/all.h>
 #include <yarp/sig/Sound.h>
+#include <yarp/sig/Image.h>
+#include <yarp/sig/Vector.h>
 #include <yarp/os/PortablePair.h>
 #include <yarp/os/ConnectionWriter.h>
 #include <yarp/os/ConnectionReader.h>
@@ -33,23 +35,31 @@ namespace audio
 
 namespace spatialSound
 {
-    class spatialSound:yarp::sig::Sound {
+    class spatialSound : public yarp::sig::Sound {
 protected:
     bool valid;                 // defines the validity of the model
     std::string type;           // defines the typology of the model
-   
+        //int frequency;              // frequency of the sound acquition
     int inputId;                // reference to the input value
     int rowA,colA;              // dimension of the matrix A
-    double paramA;              // paramA 
+        int numberOfAngles;         // number (e.g: 2 angles azimuth elevation)    
+        double paramA;              // paramA 
     double paramB;              // paramB
-        double azimuth, elevation; //
+    double azimuth, elevation;  // azimuth and elevation at the moment of the acquisition.
 
+        //void* implementation; // pointer to the implementation    
 public:
         spatialSound(int bytesPerSample);             //constructor
         spatialSound(const spatialSound &model);
         bool isValid() const        { return valid; }
         std::string getType() const { return type;  }
+
+        void setNumberOfAngles(int n) {numberOfAngles = n;};
         
+        /**
+         *@brief function that sets angles in the memory 
+         */
+        void setAngles(yarp::sig::Vector angles);
         
         int               getRowA()   const    {return rowA;   };
         int               getColA()   const    {return colA;   };
@@ -63,8 +73,32 @@ public:
          * @param param2 second paramter (eventually NULL in 1-Dimension space)
          */
         void init(double param1, double param2 = 0);
-        bool write(yarp::os::ConnectionWriter& connection);
+        /** 
+         * @brief function for the initialisation of the spatialSound class
+         * @param bytesPerSample number of bytes per sample
+         */
+        //void init(int bytesPerSample);
+
+        /**
+         * @brief function that resizes the image specifically for spatialSound
+         * @param samples the number of samples that defines the width
+         * @param channels the number os channels that defines the height (+2:azimuth, elevation)
+         */
+        void resize(int samples, int channels);
+
+        /** 
+         * @brief function that overwrites the write
+         */
+        virtual bool write(yarp::os::ConnectionWriter& connection);
+
+        /**
+         * @brief function that overwrites the read
+         */
         bool read(yarp::os::ConnectionReader& connection);
+
+        //void synchronize();
+        //void resize(int samples, int channels = 1);
+        //void set(int value, int sample, int channel = 0);        
         //virtual bool operator ==  (const predModel &pModel);
 
 };
