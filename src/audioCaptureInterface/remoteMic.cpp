@@ -34,7 +34,7 @@
 #define NUM_MICS (1 * STEREO)
 #define SAMP_BUF_SIZE 4096
 #define MAGIC_NUM 100
-#define SAMPLERATE 16000
+#define SAMPLERATE 48000
 #define IOCTL_SAMPLERATE _IOW(MAGIC_NUM, 1, int*)
 
 // parameter for the usePortAudio
@@ -61,6 +61,7 @@ int main(int argc, char *argv[]) {
   int32_t* pointermicif;
   int ExpectedReading;
   int micif_dev;
+  int sampleRate;
   
   // Open the network
   Network yarp;
@@ -78,7 +79,7 @@ int main(int argc, char *argv[]) {
       printf("====== \n");
       printf("--name           : changes the rootname of the module ports \n");
       printf("--robot          : changes the name of the robot where the module interfaces to  \n");
-      printf("--visualFeedback : indicates whether the visual feedback is active \n");
+      printf("--sampleRate     : sets the sample rate (in Hz) \n");
       printf("--name           : rootname for all the connection of the module \n");
       printf("--usePortAudio   : audio input from portaudio \n");
       printf("--useDeviceDriver: audio input from device driver \n");
@@ -90,7 +91,7 @@ int main(int argc, char *argv[]) {
 
     /* get the module name which will form the stem of all module port names */
     moduleName             = rf.check("name",
-				      Value("/remoteInterface"),
+				      Value("/audioCaptureInterface"),
 				      "module name (string)").asString();
 
     /* detects whether the preferrable input is from portaudio */
@@ -103,14 +104,21 @@ int main(int argc, char *argv[]) {
       usePortAudio = false;
       useDeviceDriver = true;
     }
-    /*                                                                                                                                    * get the robot name which will form the stem of the robot ports names                                                          
-     * and append the specific part and device required                                                                              
-     */
+    
+    /*setting robot name*/
     robotName             = rf.check("robot",
 				     Value("icub"),
 				     "Robot name (string)").asString();
     robotPortName         = "/" + robotName + "/head";
     printf("robotName: %s \n", robotName.c_str());
+
+    /* setting sample rate*/
+    sampleRate            = rf.check("sampleRate",
+				     Value(SAMPLERATE),
+				     "Sample rate in Hz (integer)").asInt();
+    
+    printf("sampleRate: %d \n", sampleRate);
+    
 
     /*********************************************************/
     // preparing the interface with the iKinGazeCtrl
@@ -191,8 +199,8 @@ int main(int argc, char *argv[]) {
       }
 
       // set the sampling rate. For example to set the frame to 12kHz the following
-      // ioctl(micif_dev, IOCTL_SAMPLERATE,12000);
-      ioctl(micif_dev, IOCTL_SAMPLERATE, SAMPLERATE);
+      // e.g.: ioctl(micif_dev, IOCTL_SAMPLERATE,12000);
+      ioctl(micif_dev, IOCTL_SAMPLERATE, sampleRate);
       
       // read from device
       //ExpectedReading = sizeof(int) * SAMP_BUF_SIZE;
