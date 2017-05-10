@@ -26,8 +26,7 @@ using namespace yarp::os;
 namespace audio
 {
 
-namespace spatialSound
-{
+
     #define HELPER(x) (*((FlexImage*)(x)))
 
     spatialSound::spatialSound(int bytesPerSample){
@@ -147,6 +146,6 @@ namespace spatialSound
         return ok;
     }
 
-}
+
 
 }

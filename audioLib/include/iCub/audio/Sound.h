@@ -4,8 +4,8 @@
  * CopyPolicy: Released under the terms of the LGPLv2.1 or later, see LGPL.TXT
  */
 
-#ifndef YARP_SIG_SOUND_H
-#define YARP_SIG_SOUND_H
+#ifndef AUDIO_SOUND_H
+#define AUDIO_SOUND_H
 
 #include <yarp/os/Portable.h>
 
@@ -118,4 +118,4 @@ protected:
     int frequency;
 };
 
-#endif // YARP_SIG_SOUND_H
+#endif // AUDIO_SOUND_H

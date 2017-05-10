@@ -5,7 +5,7 @@
  */
 
 
-#include <yarp/sig/Sound.h>
+#include <iCub/audio/Sound.h>
 #include <yarp/sig/Image.h>
 #include <yarp/os/Bottle.h>
 #include <yarp/os/PortablePair.h>
@@ -16,10 +16,12 @@
 #include <cstring>
 #include <cstdio>
 
-using namespace yarp::sig;
+//using namespace yarp::sig;
 using namespace yarp::os;
 
-#define HELPER(x) (*((FlexImage*)(x)))
+using namespace audio;
+
+#define HELPER(x) (*((yarp::sig::FlexImage*)(x)))
 
 Sound::Sound(int bytesPerSample) {
     init(bytesPerSample);
@@ -28,8 +30,8 @@ Sound::Sound(int bytesPerSample) {
 
 Sound::Sound(const Sound& alt) : yarp::os::Portable() {
     init(alt.getBytesPerSample());
-    FlexImage& img1 = HELPER(implementation);
-    FlexImage& img2 = HELPER(alt.implementation);
+    yarp::sig::FlexImage& img1 = HELPER(implementation);
+    yarp::sig::FlexImage& img2 = HELPER(alt.implementation);
     img1.copy(img2);
     frequency = alt.frequency;
     synchronize();
@@ -70,8 +72,8 @@ Sound& Sound::operator += (const Sound& alt) {
 
 const Sound& Sound::operator = (const Sound& alt) {
     yAssert(getBytesPerSample()==alt.getBytesPerSample());
-    FlexImage& img1 = HELPER(implementation);
-    FlexImage& img2 = HELPER(alt.implementation);
+    yarp::sig::FlexImage& img1 = HELPER(implementation);
+    yarp::sig::FlexImage& img2 = HELPER(alt.implementation);
     img1.copy(img2);
     frequency = alt.frequency;
     synchronize();
@@ -79,7 +81,7 @@ const Sound& Sound::operator = (const Sound& alt) {
 }
 
 void Sound::synchronize() {
-    FlexImage& img = HELPER(implementation);
+    yarp::sig::FlexImage& img = HELPER(implementation);
     samples = img.width();
     channels = img.height();
 }
@@ -129,17 +131,17 @@ Sound Sound::subSound(int first_sample, int last_sample)
 
 void Sound::init(int bytesPerSample) {
   
-    implementation = new FlexImage();
+    implementation = new yarp::sig::FlexImage();
     yAssert(implementation!=NULL);
 
     //yAssert(bytesPerSample==2); // that's all thats implemented right now
     if(bytesPerSample == 2) {
-      HELPER(implementation).setPixelSize(sizeof(PixelMono16));
+      HELPER(implementation).setPixelSize(sizeof(yarp::sig::PixelMono16));
       HELPER(implementation).setPixelCode(VOCAB_PIXEL_MONO16);
       HELPER(implementation).setQuantum(2);
     }
     else if (bytesPerSample==4){
-      HELPER(implementation).setPixelSize(sizeof(PixelInt));
+      HELPER(implementation).setPixelSize(sizeof(yarp::sig::PixelInt));
       HELPER(implementation).setPixelCode(VOCAB_PIXEL_INT);
       HELPER(implementation).setQuantum(4);
     }
@@ -158,13 +160,13 @@ Sound::~Sound() {
 }
 
 void Sound::resize(int samples, int channels) {
-    FlexImage& img = HELPER(implementation);
+    yarp::sig::FlexImage& img = HELPER(implementation);
     img.resize(samples,channels);
     synchronize();
 }
 
 int Sound::get(int location, int channel) const {
-    FlexImage& img = HELPER(implementation);
+    yarp::sig::FlexImage& img = HELPER(implementation);
     unsigned char *addr = img.getPixelAddress(location,channel);
     if (bytesPerSample==2) {
         return *((NetUint16 *)addr);
@@ -185,7 +187,7 @@ void Sound::clear()
 }
 
 void Sound::set(int value, int location, int channel) {
-    FlexImage& img = HELPER(implementation);
+    yarp::sig::FlexImage& img = HELPER(implementation);
     unsigned char *addr = img.getPixelAddress(location,channel);
     if (bytesPerSample==2) {
       //yInfo("sound only implemented for 16 bit samples");
@@ -211,9 +213,9 @@ void Sound::setFrequency(int freq) {
 
 bool Sound::read(ConnectionReader& connection) {
     // lousy format - fix soon!
-    FlexImage& img = HELPER(implementation);
+    yarp::sig::FlexImage& img = HELPER(implementation);
     Bottle bot;
-    bool ok = PortablePair<FlexImage,Bottle>::readPair(connection,img,bot);
+    bool ok = PortablePair<yarp::sig::FlexImage,Bottle>::readPair(connection,img,bot);
     frequency = bot.get(0).asInt();
     synchronize();
     return ok;
@@ -222,20 +224,20 @@ bool Sound::read(ConnectionReader& connection) {
 
 bool Sound::write(ConnectionWriter& connection) {
     // lousy format - fix soon!
-    FlexImage& img = HELPER(implementation);
+    yarp::sig::FlexImage& img = HELPER(implementation);
     //yDebug("write img pixelsize %d", img.getPixelSize());
     Bottle bot;
     bot.addInt(frequency);
     //bot.addInt(img.getPixelSize());
-    return PortablePair<FlexImage,Bottle>::writePair(connection,img,bot);
+    return PortablePair<yarp::sig::FlexImage,Bottle>::writePair(connection,img,bot);
 }
 
 unsigned char *Sound::getRawData() const {
-    FlexImage& img = HELPER(implementation);
+    yarp::sig::FlexImage& img = HELPER(implementation);
     return img.getRawImage();
 }
 
 int Sound::getRawDataSize() const {
-    FlexImage& img = HELPER(implementation);
+    yarp::sig::FlexImage& img = HELPER(implementation);
     return img.getRawImageSize();
 }
