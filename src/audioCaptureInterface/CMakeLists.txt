@@ -30,7 +30,7 @@ IF (folder_source)
     )
 
     TARGET_LINK_LIBRARIES(${KEYWORD}        
-
+      audioLib
       ${YARP_LIBRARIES}
       )	
 

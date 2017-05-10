@@ -46,7 +46,7 @@ using namespace std;
 using namespace yarp::os;
 using namespace yarp::sig;
 using namespace yarp::dev;
-using namespace audio::spatialSound;
+using namespace audio;
 
 int main(int argc, char *argv[]) {
   // initialization
@@ -54,7 +54,7 @@ int main(int argc, char *argv[]) {
   bool useDeviceDriver = false;
   bool usePortAudio    = true; // set default value
   string moduleName, robotName, robotPortName;
-  Sound s;
+  yarp::sig::Sound s;
   IAudioGrabberSound *get;
   int32_t buffermicif [NUM_MICS * SAMP_BUF_SIZE] = {0};
   int32_t bufferleft [SAMP_BUF_SIZE] = {0};
@@ -175,7 +175,7 @@ int main(int argc, char *argv[]) {
       }
 
       //Grab and send
-      Sound s;
+      audio::Sound s;
       get->startRecording(); //this is optional, the first get->getsound() will do this anyway.
     } // end of the portAudio branch
 
@@ -212,7 +212,7 @@ int main(int argc, char *argv[]) {
     
     //spatialSound* soundToSend= new spatialSound(4);
     //soundToSend->setNumberOfAngles(2);
-    Sound* soundToSend= new Sound(4);
+    audio::Sound* soundToSend= new audio::Sound(4);
     soundToSend->resize(4096,2);
     soundToSend->setFrequency(SAMPLERATE);
     
