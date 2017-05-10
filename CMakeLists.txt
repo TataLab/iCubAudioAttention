@@ -69,7 +69,7 @@ ENDIF ()
 
 
 SET(CUDAVISION_INCLUDE_DIRS   ${CMAKE_CURRENT_SOURCE_DIR}/cudaVision/include)
-SET(ATTENTIONLIB_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/attentionLib/include)
+SET(AUDIOLIB_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/audioLib/include)
 
 # default prefix for applications
 set(ICUB_APPLICATIONS_PREFIX "$ENV{ICUB_ROOT}" CACHE PATH "Application path prefix")
@@ -96,5 +96,7 @@ option(ENABLE_MATLAB  "Do you want to link against MATLAB?" OFF)
 add_subdirectory(src)
 add_subdirectory(app)
 add_subdirectory(audioLib)
+
 icubcontrib_finalize_export(audioLib)
+icubcontrib_finalize_export(iCubAudioAttention)
 icubcontrib_add_uninstall_target()        #macro added 13/11/2013
