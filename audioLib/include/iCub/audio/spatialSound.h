@@ -37,7 +37,7 @@ namespace audio
 
 namespace spatialSound
 {
-    class spatialSound : public audio::Sound {
+    class spatialSound : public Sound {
 protected:
     bool valid;                 // defines the validity of the model
     std::string type;           // defines the typology of the model
