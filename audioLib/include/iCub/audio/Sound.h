@@ -11,10 +11,10 @@
 
 #include <yarp/sig/api.h>
 
-namespace yarp {
-    namespace sig {
-        class Sound;
-    }
+namespace audio {
+    
+    class Sound;
+    
 }
 
 /**
@@ -22,7 +22,7 @@ namespace yarp {
  *
  * Class for storing sounds
  */
-class YARP_sig_API yarp::sig::Sound : public yarp::os::Portable {
+class /*YARP_sig_API*/ audio::Sound : public yarp::os::Portable {
 public:
     Sound(int bytesPerSample = 2);
 

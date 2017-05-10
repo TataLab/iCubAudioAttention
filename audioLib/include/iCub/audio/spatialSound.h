@@ -20,8 +20,10 @@
 #ifndef __SPATIAL_SOUND_H__
 #define __SPATIAL_SOUND_H__
 
+#include <iCub/audio/Sound.h>
+
 #include <yarp/os/all.h>
-#include <yarp/sig/Sound.h>
+//#include <yarp/sig/Sound.h>
 #include <yarp/sig/Image.h>
 #include <yarp/sig/Vector.h>
 #include <yarp/os/PortablePair.h>
@@ -35,7 +37,7 @@ namespace audio
 
 namespace spatialSound
 {
-    class spatialSound : public yarp::sig::Sound {
+    class spatialSound : public audio::Sound {
 protected:
     bool valid;                 // defines the validity of the model
     std::string type;           // defines the typology of the model

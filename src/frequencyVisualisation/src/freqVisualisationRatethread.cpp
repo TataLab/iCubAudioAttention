@@ -82,9 +82,9 @@ void freqVisualisationRatethread::run() {
     if (inputPort.getInputCount()) {
         Matrix* mat = inputPort.read(false);   //blocking reading for synchr with the input
         if (mat!=NULL) {
-            yDebug("matrix is not null");
+            //yDebug("matrix is not null");
             if (outputPort.getOutputCount()) {
-                yDebug("preparing the image %d %d",mat->cols(),mat->rows() );
+                //yDebug("preparing the image %d %d",mat->cols(),mat->rows() );
                 outputImage = &outputPort.prepare();
                 outputImage->resize(mat->cols(),mat->rows());
                 result = processing(mat);
@@ -93,7 +93,7 @@ void freqVisualisationRatethread::run() {
     }
 
     if (outputPort.getOutputCount()) {
-        yDebug("writing the output image out");
+        //yDebug("writing the output image out");
         // changing the pointer of the prepared area for the outputPort.write()
         //outputPort.prepare() = *inputImage;
 
@@ -106,17 +106,24 @@ bool freqVisualisationRatethread::processing(Matrix* mat){
     // here goes the processing...
     int nRows = mat->rows();
     int nCols = mat->cols();
-    yDebug("Matrix rows %d cols %d ", nRows, nCols );
+    //yDebug("Matrix rows %d cols %d ", nRows, nCols );
     imageOutWidth  = mat->cols();
     imageOutHeight = mat->rows();
     unsigned char* pImage = outputImage->getRawImage();
-    yDebug("image width %d, height %d", outputImage->width(), outputImage->height());
+    //yDebug("image width %d, height %d", outputImage->width(), outputImage->height());
     double* pMat = mat->data();
+    double value;
     int padding = outputImage->getPadding();
     for (int r = 0; r < nRows; r++) {
         for (int c = 0; c < nCols; c++) {
+            value = *pMat;
+            if (value != 0) { yDebug("%f", value); }
             *pImage = 0;
-            pImage += 3;
+            pImage++;
+            *pImage = (unsigned char) floor(255 * value);
+            pImage++;
+            *pImage = 0;
+            pImage++;
             pMat++;
         }
         pImage += padding;

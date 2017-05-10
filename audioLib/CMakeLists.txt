@@ -13,10 +13,12 @@ SET(PROJECT_INCLUDE_DIRS
 # and in principle it would be better to list these files manually.
 SET(folder_source 
   ./src/spatialSound.cpp
+  ./src/Sound.cpp
 )
 
 SET(folder_header 
   ./include/iCub/audio/spatialSound.h
+  ./include/iCub/audio/Sound.h
 )
 
 MESSAGE("folder_header ${folder_header}")
