@@ -112,7 +112,7 @@ private:
 	*	Function used to send audio after its pass though the gammaton filter. 
 	*	The audio is held in outGammatonFilteredAudio matrix and is sent though port gammatonFilteredAudioPort.
 	*/
-	void sendGammatonFilteredAudio();
+	void sendGammatonFilteredAudio(){};
 
 	/**
 	* 	sendBeamFormedAudio

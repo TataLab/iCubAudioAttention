@@ -224,6 +224,7 @@ void AudioPreprocesserModule::loadFile()
 		nMics = pars.getNMics();
 		interpellateNSamples = pars.getInterpellateNSamples();
 		totalBeams = pars.getNBeamsPerHemifield() * 2 + 1;
+		printf("total beams = %d\n",totalBeams);
 	}
 	catch (int a) {
 
