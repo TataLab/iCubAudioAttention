@@ -78,6 +78,12 @@ public:
 private:
     
     /**
+    *   voidfindPeaks(vector<double> &peakMap, const vector<double> &probabilityMap);
+    *  
+    */
+    void setAcousticMap();
+
+    /**
     *   setAcousticMap
     *  
     */
