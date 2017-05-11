@@ -78,10 +78,12 @@ public:
 private:
     
     /**
-    *   voidfindPeaks(vector<double> &peakMap, const vector<double> &probabilityMap);
-    *  
+    *   voidfindPeaks
+    *   This function will look at the vector probabilityMap which is passed in as input and find the peaks saving them to peakMap.
+    *   @param probabilityMap a map of the auditory sean with probabilities that a given sound is at a given angle. 
+    *   @param peakMap will contain ones to mark the peaks found and zeros everywhere else.   
     */
-    void setAcousticMap();
+    void findPeaks(vector<double> &peakMap, const vector<double> &probabilityMap);
 
     /**
     *   setAcousticMap
