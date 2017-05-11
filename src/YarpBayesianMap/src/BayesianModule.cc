@@ -20,7 +20,13 @@
 
 #include "BayesianModule.h"
 #include <iostream>
+
+//TO DO:  get this into resource finder
 #define MEMORY_MAP_SIZE nBands * 360 
+
+
+
+
 int myModed(int a, int b) {
     return  a >= 0 ? a % b : (a % b) + b;
 }
@@ -69,7 +75,8 @@ BayesianModule::BayesianModule()
     noiseBufferMap = 0;
     first = true;
 
-    numberOfNoiseMaps = 100;
+	
+    
 }
 
 BayesianModule::~BayesianModule()
@@ -127,7 +134,30 @@ bool BayesianModule::configure(yarp::os::ResourceFinder &rf)
         }
     }
     
-    
+    //get the noise map prior that was pre-recorded or bail out
+    FILE *fidNoise = fopen("./noiseMap.dat", "r"); //open the previously recorded noiseMap prior
+	if(fidNoise==NULL){
+		printf("\n\nYou need to pre-record a noise map prior\n\n");
+		return false;
+	}
+
+	double tempNoiseMap[nBands*interpellateNSamples*2];
+	fread(tempNoiseMap,sizeof(double),nBands*interpellateNSamples*2,fidNoise);
+	fclose(fidNoise);
+	
+	int count=0;
+	for(int i=0;i<nBands;i++){
+	
+		std::vector<double> tempvector;
+		for(int j=0;j<interpellateNSamples*2;j++){
+			tempvector.push_back(tempNoiseMap[count++]);
+		}
+		noiseMap.push_back(tempvector);
+	}
+		
+	
+	
+    //numberOfNoiseMaps = 100;
     
     
     return true;
@@ -205,6 +235,12 @@ void BayesianModule::normalizePropabilityMap(std::vector <std::vector <double>> 
 
 void BayesianModule::calcOffset()
 {
+
+	//to do:  redesign this to make use of the SpatialSound class which contains information about altitude and azimuth so that yarpBayesianMap never needs to get the 
+	//position of the head directly from the robot
+
+
+
     //TODO Figure out how to calculate this value for the red iCub
     //Checks the current position of joint 0 of the head and stores it in the offset variable
     enc->getEncoder(0, &offset);
@@ -287,6 +323,7 @@ void BayesianModule::setAcousticMap()
     //Calls a function to calculated the offset of the current audio map based on the position of the iCub head
     calcOffset();
 
+	/*To do:  this was rewritten to use a prerecorded noise map.  remove this section if it's working
     //Checks how many iterations of the noiseMaps have been created if not enough have been created then the current audio map is used to create the noise map
     if(noiseBufferMap<=numberOfNoiseMaps)
         createNoiseMaps();
@@ -297,7 +334,15 @@ void BayesianModule::setAcousticMap()
         bufferedMap.push(currentAudioMap);
         //A function is called to create the Bayesian Map. 
         createBaysianMaps();
-    }
+    }*/
+    
+    //the noise map a function is called to remove the ego locked noise from the current audio map
+    removeNoise(currentAudioMap);
+    //The current audio map is then pushed into a buffer which contains all the audioMaps needed to create the a Bayesian Map
+	bufferedMap.push(currentAudioMap);
+    //A function is called to create the Bayesian Map. 
+    createBaysianMaps();
+    
     noiseBufferMap++;
 }
 

@@ -112,14 +112,14 @@ while(~done) %loop continuously
         oldBuffer=newBuffer;
     end
     
-    %     %if you want to visualize the audio (this may slow too much)
-    subplot(2,1,1);
-    plot(P.rawAudio.Data(1,1).audioD(1,:));
-    %ylim([-0.05 0.05]);
-    subplot(2,1,2);
-    plot(P.rawAudio.Data(1,1).audioD(2,:));
-    %ylim([-0.05 0.05]);
-    drawnow;
+%     %     %if you want to visualize the audio (this may slow too much)
+%     subplot(2,1,1);
+%     plot(P.rawAudio.Data(1,1).audioD(1,:));
+%     %ylim([-0.05 0.05]);
+%     subplot(2,1,2);
+%     plot(P.rawAudio.Data(1,1).audioD(2,:));
+%     %ylim([-0.05 0.05]);
+%     drawnow;
     
     %handle audio packet stuff
     %increment for next frame

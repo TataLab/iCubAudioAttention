@@ -4,9 +4,9 @@
 	<!--Define speed of sound in m/s (to be very accurate, adjust for elevation (lethbridge is at ~950m)-->
 	<C>340</C>
 	<!--Define distance between microphones in m-->
-	<micDistance> 0.145 </MicDistance>
+	<micDistance> 0.155 </MicDistance>
 	<!--Define the sampling rate of the microphones-->
-	<samplingRate> 16000 </samplingRate>
+	<samplingRate> 48000 </samplingRate>
 	<!--Difine the number of Microphones that are in used in the system-->
 	<nMics>2</nMics>
 	<!--Define the number of samples that will be stored for each frame-->
@@ -44,7 +44,7 @@
 	<!--The number of frames that the medium Bayesian buffers will compile-->
 	<mediumBufferSize>6</mediumBufferSize>
 	<!--The number of frames that the long Bayesian buffers will compile-->
-	<longBufferSize>80	</longBufferSize>
+	<longBufferSize>50	</longBufferSize>
 	
 
 

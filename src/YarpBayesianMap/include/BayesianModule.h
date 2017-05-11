@@ -33,6 +33,7 @@
 #include <yarp/dev/IEncoders.h>
 #include <yarp/dev/IPositionControl.h>
 #include <yarp/dev/IEncoders.h>
+#include <cstring> //for hardcoded path to noiseMap
 
 #include <vector>
 #include <queue>
@@ -150,6 +151,7 @@ private:
     yarp::os::Port *outPort;
     yarp::os::Port *outAngle;
 
+	const std::string noiseMapPath="./noiseMap.dat";
 
 	std::string robotName;
     std::vector <std::vector <double>> longMap;

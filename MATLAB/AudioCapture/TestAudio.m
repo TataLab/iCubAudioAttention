@@ -59,12 +59,12 @@ for i=1:howLong_frames
 
     
     if(~wellSpun)
-        display('timing problems, you may have dropped audio data');
+        %display('timing problems, you may have dropped audio data');
     end
     
     
     
-    plot(frame(1,:));
+    %plot(frame(1,:));
     drawnow;
     %display(['that frame took ' num2str(toc(measuredFrameTime)) ' seconds.  It should have taken ' num2str(frameSize/sampleRate) ' seconds.']);
 end
