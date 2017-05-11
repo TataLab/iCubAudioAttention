@@ -25,8 +25,14 @@ GammatonFilter::GammatonFilter(std::string file)
 	fileName = file;
 	loadFile();
 
-	//TODO Give the user the option to select the type of spacing he would like
+	
+	//Calls a function that is that will be used to create the ERB center 
+	//frequencies between the lowest and highest frequency and the number
+	//of bands all specified in the configuration file.
 	makeErbCFs();
+
+	//Uncomment this if you would like Liner Center Frequencies
+	//makeLinerCFs();
 
 	for (int i = 0; i < nBands * nMics; i++)
 	{
@@ -45,12 +51,17 @@ GammatonFilter::~GammatonFilter()
 
 void GammatonFilter::inputAudio(float* inAudio)
 {
+	//Set the input of this 
 	inputSignal = inAudio;
-	generatFilter(0);
-	generatFilter(1);
+	//Calls the generate filter function for the "left" channel of audio 
+	generateFilter(0);
+	//Calls the generate filter function for the "right" channel of audio 
+	generateFilter(1);
+
+	//This can be expanded to include any number of Microphones
 }
 
-void GammatonFilter::generatFilter(int MicNumber)
+void GammatonFilter::generateFilter(int MicNumber)
 {
 
 	double u0r = 0;
@@ -82,12 +93,13 @@ void GammatonFilter::generatFilter(int MicNumber)
 
 		for (int t = 0; t < (frameSamples * nMics); t++)
 		{
+			//TODO This can once again be expanded for multiple microphones 
 			if (t % 2 != MicNumber)
 				continue;
-			float xx = inputSignal[t];
+			float currentInput = inputSignal[t];
 
-			p0r = qcos * xx + a1 * p1r + a2 * p2r + a3 * p3r + a4 * p4r;
-			p0i = qsin * xx + a1 * p1i + a2 * p2i + a3 * p3i + a4 * p4i;
+			p0r = qcos * currentInput + a1 * p1r + a2 * p2r + a3 * p3r + a4 * p4r;
+			p0i = qsin * currentInput + a1 * p1i + a2 * p2i + a3 * p3i + a4 * p4i;
 
 			if (fabs(p0r) < VERY_SMALL_NUMBER)
 				p0r = 0.0F;
@@ -126,7 +138,6 @@ void GammatonFilter::loadFile()
 		nBands = pars.getNBands();
 		frameSamples = pars.getFrameSamples();
 		nMics = pars.getNMics();
-		//TODO fix this
 		align = false;
 		hrect = false;
 	}
@@ -139,12 +150,24 @@ void GammatonFilter::loadFile()
 
 void GammatonFilter::makeErbCFs()
 {
+	//Calculates the lower bound in ERB space
 	double minERB = HzToErbRate(lowerCF);
+	//Calculates the upper bound in ERB space
 	double highERB = HzToErbRate(higherCF);
+	//Calculates
 	double incAmount = (highERB - minERB) / (nBands - 1);
 
 	for (int i = 0; i < nBands; i++) {
 		cfs.push_back(ErbRateToHz(incAmount * i + minERB));
+	}
+
+}
+
+void GammatonFilter::makeLinerCFs()
+{
+	double incAmount = (higherCF - lowerCF) / (nBands - 1);
+	for (int i = 0; i < nBands; i++) {
+		cfs.push_back(incAmount * i + lowerCF);
 	}
 
 }

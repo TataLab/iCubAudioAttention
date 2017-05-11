@@ -336,7 +336,7 @@ void BayesianModule::removeNoise(std::vector <std::vector <double>> &probability
     {
         for (int j = 0; j < interpellateNSamples * 2; j++)
         {
-            int o =  myModed((j - (int)offset), interpellateNSamples * 2);
+            int o =  myModed((j + (int)offset), interpellateNSamples * 2);
             probabilityMap[i][j] /= noiseMap[i][o];
         }
     }

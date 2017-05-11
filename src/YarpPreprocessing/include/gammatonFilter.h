@@ -79,7 +79,7 @@ private:
 	*	 Generates the gammaton filter.
 	*	@param MicNumber which microphone is being used to generate the current filter.
 	*/
-	void generatFilter(int MicNumber);
+	void generateFilter(int MicNumber);
 
 	/**
 	*	makeErbCFs
