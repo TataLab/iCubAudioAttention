@@ -1,9 +1,9 @@
 // -*- mode:C++; tab-width:4; c-basic-offset:4; indent-tabs-mode:nil -*-
 
 /*
-  * Copyright (C)2013  Department of Robotics Brain and Cognitive Sciences - Istituto Italiano di Tecnologia
+  * Copyright (C)2017  Department of Robotics Brain and Cognitive Sciences - Istituto Italiano di Tecnologia
   * Author:Francesco Rea
-  * email: francesco.reak@iit.it
+  * email: francesco.rea@iit.it
   * Permission is granted to copy, distribute, and/or modify this program
   * under the terms of the GNU General Public License, version 2 or any
   * later version published by the Free Software Foundation.
@@ -18,11 +18,11 @@
 */
 
 /**
- * @file tutorialModule.cpp
- * @brief Implementation of the tutorialModule (see header file).
+ * @file noiseCalibrationModule.cpp
+ * @brief Implementation of the noiseCalibrationModule (see header file).
  */
 
-#include "iCub/tutorialModule.h"
+#include "iCub/noiseCalibrationModule.h"
 
 using namespace yarp::os;
 using namespace yarp::sig;
@@ -36,7 +36,7 @@ using namespace std;
  *  equivalent of the "open" method.
  */
 
-bool tutorialModule::configure(yarp::os::ResourceFinder &rf) {
+bool noiseCalibrationModule::configure(yarp::os::ResourceFinder &rf) {
     /* Process all parameters from both command-line and .ini file */
 
     /* get the module name which will form the stem of all module port names */
@@ -99,12 +99,12 @@ bool tutorialModule::configure(yarp::os::ResourceFinder &rf) {
                         // so that it will then run the module
 }
 
-bool tutorialModule::interruptModule() {
+bool noiseCalibrationModule::interruptModule() {
     handlerPort.interrupt();
     return true;
 }
 
-bool tutorialModule::close() {
+bool noiseCalibrationModule::close() {
     handlerPort.close();
     /* stop the thread */
     yDebug("stopping the thread \n");
@@ -112,7 +112,7 @@ bool tutorialModule::close() {
     return true;
 }
 
-bool tutorialModule::respond(const Bottle& command, Bottle& reply) 
+bool noiseCalibrationModule::respond(const Bottle& command, Bottle& reply) 
 {
     string helpMessage =  string(getName().c_str()) + 
                 " commands are: \n" +  
@@ -133,12 +133,12 @@ bool tutorialModule::respond(const Bottle& command, Bottle& reply)
 }
 
 /* Called periodically every getPeriod() seconds */
-bool tutorialModule::updateModule()
+bool noiseCalibrationModule::updateModule()
 {
     return true;
 }
 
-double tutorialModule::getPeriod()
+double noiseCalibrationModule::getPeriod()
 {
     /* module periodicity (seconds), called implicitly by myModule */
     return 1;

@@ -18,96 +18,128 @@
 */
 
 /**
- * @file noiseCalibrationRatethread.cpp
- * @brief Implementation of the eventDriven thread (see noiseCalibrationRatethread.h).
+ * @file egoNoiseCalibModule.cpp
+ * @brief Implementation of the egoNoiseCalibModule (see header file).
  */
 
-#include <iCub/noiseCalibrationRatethread.h>
-#include <cstring>
+#include "iCub/egoNoiseCalibModule.h"
 
-using namespace yarp::dev;
 using namespace yarp::os;
 using namespace yarp::sig;
 using namespace std;
 
-#define THRATE 100 //ms
+/* 
+ * Configure method. Receive a previously initialized
+ * resource finder object. Use it to configure your module.
+ * If you are migrating from the old Module, this is the 
+ *  equivalent of the "open" method.
+ */
 
-noiseCalibrationRatethread::noiseCalibrationRatethread():RateThread(THRATE) {
-    robot = "icub";        
-}
+bool egoNoiseCalibModule::configure(yarp::os::ResourceFinder &rf) {
+    /* Process all parameters from both command-line and .ini file */
 
-noiseCalibrationRatethread::noiseCalibrationRatethread(string _robot, string _configFile):RateThread(THRATE){
-    robot = _robot;
-    configFile = _configFile;
-}
+    /* get the module name which will form the stem of all module port names */
+    moduleName            = rf.check("name", 
+                           Value("/egoNoiseCalibrator"), 
+                           "module name (string)").asString();
+    /*
+    * before continuing, set the module name before getting any other parameters, 
+    * specifically the port names which are dependent on the module name
+    */
+    setName(moduleName.c_str());
 
-noiseCalibrationRatethread::~noiseCalibrationRatethread() {
-    // do nothing
-}
+    /*
+    * get the robot name which will form the stem of the robot ports names
+    * and append the specific part and device required
+    */
+    robotName             = rf.check("robot", 
+                           Value("icub"), 
+                           "Robot name (string)").asString();
+    robotPortName         = "/" + robotName + "/head";
 
-bool noiseCalibrationRatethread::threadInit() {
-    // opening the port for direct input
-    if (!inputPort.open(getName("/image:i").c_str())) {
-        yError("unable to open port to receive input");
-        return false;  // unable to open; let RFModule know so that it won't run
-    }
-
-    if (!outputPort.open(getName("/img:o").c_str())) {
-        yError(": unable to open port to send unmasked events ");
-        return false;  // unable to open; let RFModule know so that it won't run
-    }
-
-    yInfo("Initialization of the processing thread correctly ended");
-
-    return true;
-}
-
-void noiseCalibrationRatethread::setName(string str) {
-    this->name=str;
-}
-
-
-std::string noiseCalibrationRatethread::getName(const char* p) {
-    string str(name);
-    str.append(p);
-    return str;
-}
-
-void noiseCalibrationRatethread::setInputPortName(string InpPort) {
+    inputPortName           = rf.check("inputPortName",
+			                Value(":i"),
+                            "Input port name (string)").asString();
     
-}
+    
+    /*
+    * attach a port of the same name as the module (prefixed with a /) to the module
+    * so that messages received from the port are redirected to the respond method
+    */
+    handlerPortName =  "";
+    handlerPortName += getName();         // use getName() rather than a literal 
 
-void noiseCalibrationRatethread::run() {    
-    //code here .....
-    if (inputPort.getInputCount()) {
-        inputImage = inputPort.read(true);   //blocking reading for synchr with the input
-        result = processing();
+    if (!handlerPort.open(handlerPortName.c_str())) {           
+        cout << getName() << ": Unable to open port " << handlerPortName << endl;  
+        return false;
     }
 
-    if (outputPort.getOutputCount()) {
-        *outputImage = outputPort.prepare();
-        outputImage->resize(inputImage->width(), inputImage->height());
-        // changing the pointer of the prepared area for the outputPort.write()
-        // copy(inputImage, outImage);
-        // outputPort.prepare() = *inputImage; //deprecated
-
-        outputPort.write();
+    attach(handlerPort);                  // attach to port
+    if (rf.check("config")) {
+        configFile=rf.findFile(rf.find("config").asString().c_str());
+        if (configFile=="") {
+            return false;
+        }
+    }
+    else {
+        configFile.clear();
     }
 
+
+    /* create the thread and pass pointers to the module parameters */
+    rThread = new egoNoiseCalibRatethread(robotName, configFile);
+    //rThread->setInputPortName(inputPortName.c_str());
+    rThread->setName(moduleName);
+    
+    /* now start the thread to do the work */
+    bool ret = rThread->start(); // this calls threadInit() and it if returns true, it then calls run()
+
+    return ret;       // let the RFModule know everything went well
+                        // so that it will then run the module
 }
 
-bool noiseCalibrationRatethread::processing(){
-    // here goes the processing...
+bool egoNoiseCalibModule::interruptModule() {
+    handlerPort.interrupt();
     return true;
 }
 
-
-void noiseCalibrationRatethread::threadRelease() {
-    // nothing
-    inputPort.interrupt();
-    outputPort.interrupt();
-    inputPort.close();
-    outputPort.close();
+bool egoNoiseCalibModule::close() {
+    handlerPort.close();
+    /* stop the thread */
+    yDebug("stopping the thread \n");
+    rThread->stop();
+    return true;
 }
 
+bool egoNoiseCalibModule::respond(const Bottle& command, Bottle& reply) 
+{
+    string helpMessage =  string(getName().c_str()) + 
+                " commands are: \n" +  
+                "help \n" +
+                "quit \n";
+    reply.clear(); 
+
+    if (command.get(0).asString()=="quit") {
+        reply.addString("quitting");
+        return false;     
+    }
+    else if (command.get(0).asString()=="help") {
+        cout << helpMessage;
+        reply.addString("ok");
+    }
+    
+    return true;
+}
+
+/* Called periodically every getPeriod() seconds */
+bool egoNoiseCalibModule::updateModule()
+{
+    return true;
+}
+
+double egoNoiseCalibModule::getPeriod()
+{
+    /* module periodicity (seconds), called implicitly by myModule */
+    return 1;
+}
 

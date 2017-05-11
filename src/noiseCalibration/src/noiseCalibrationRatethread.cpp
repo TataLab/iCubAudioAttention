@@ -1,9 +1,9 @@
 // -*- mode:C++; tab-width:4; c-basic-offset:4; indent-tabs-mode:nil -*-
 
 /*
-  * Copyright (C)2013  Department of Robotics Brain and Cognitive Sciences - Istituto Italiano di Tecnologia
+  * Copyright (C)2017  Department of Robotics Brain and Cognitive Sciences - Istituto Italiano di Tecnologia
   * Author:Francesco Rea
-  * email: francesco.reak@iit.it
+  * email: francesco.rea@iit.it
   * Permission is granted to copy, distribute, and/or modify this program
   * under the terms of the GNU General Public License, version 2 or any
   * later version published by the Free Software Foundation.
@@ -18,11 +18,11 @@
 */
 
 /**
- * @file tutorialRatethread.cpp
- * @brief Implementation of the eventDriven thread (see tutorialRatethread.h).
+ * @file noiseCalibrationRatethread.cpp
+ * @brief Implementation of the eventDriven thread (see noiseCalibrationRatethread.h).
  */
 
-#include <iCub/tutorialRatethread.h>
+#include <iCub/noiseCalibrationRatethread.h>
 #include <cstring>
 
 using namespace yarp::dev;
@@ -32,20 +32,20 @@ using namespace std;
 
 #define THRATE 100 //ms
 
-tutorialRatethread::tutorialRatethread():RateThread(THRATE) {
+noiseCalibrationRatethread::noiseCalibrationRatethread():RateThread(THRATE) {
     robot = "icub";        
 }
 
-tutorialRatethread::tutorialRatethread(string _robot, string _configFile):RateThread(THRATE){
+noiseCalibrationRatethread::noiseCalibrationRatethread(string _robot, string _configFile):RateThread(THRATE){
     robot = _robot;
     configFile = _configFile;
 }
 
-tutorialRatethread::~tutorialRatethread() {
+noiseCalibrationRatethread::~noiseCalibrationRatethread() {
     // do nothing
 }
 
-bool tutorialRatethread::threadInit() {
+bool noiseCalibrationRatethread::threadInit() {
     // opening the port for direct input
     if (!inputPort.open(getName("/image:i").c_str())) {
         yError("unable to open port to receive input");
@@ -62,22 +62,22 @@ bool tutorialRatethread::threadInit() {
     return true;
 }
 
-void tutorialRatethread::setName(string str) {
+void noiseCalibrationRatethread::setName(string str) {
     this->name=str;
 }
 
 
-std::string tutorialRatethread::getName(const char* p) {
+std::string noiseCalibrationRatethread::getName(const char* p) {
     string str(name);
     str.append(p);
     return str;
 }
 
-void tutorialRatethread::setInputPortName(string InpPort) {
+void noiseCalibrationRatethread::setInputPortName(string InpPort) {
     
 }
 
-void tutorialRatethread::run() {    
+void noiseCalibrationRatethread::run() {    
     //code here .....
     if (inputPort.getInputCount()) {
         inputImage = inputPort.read(true);   //blocking reading for synchr with the input
@@ -96,13 +96,13 @@ void tutorialRatethread::run() {
 
 }
 
-bool tutorialRatethread::processing(){
+bool noiseCalibrationRatethread::processing(){
     // here goes the processing...
     return true;
 }
 
 
-void tutorialRatethread::threadRelease() {
+void noiseCalibrationRatethread::threadRelease() {
     // nothing
     inputPort.interrupt();
     outputPort.interrupt();

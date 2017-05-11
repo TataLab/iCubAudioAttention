@@ -1,9 +1,9 @@
 // -*- mode:C++; tab-width:4; c-basic-offset:4; indent-tabs-mode:nil -*-
 
 /*
-  * Copyright (C)2013  Department of Robotics Brain and Cognitive Sciences - Istituto Italiano di Tecnologia
+  * Copyright (C)2017  Department of Robotics Brain and Cognitive Sciences - Istituto Italiano di Tecnologia
   * Author:Francesco Rea
-  * email: francesco.reak@iit.it
+  * email: francesco.rea@iit.it
   * Permission is granted to copy, distribute, and/or modify this program
   * under the terms of the GNU General Public License, version 2 or any
   * later version published by the Free Software Foundation.
@@ -18,13 +18,13 @@
 */
 
 /**
- * @file tutorialThread.h
- * @brief Definition of a thread that receives an RGN image from input port and sends it to the output port.
+ * @file noiseCalibrationRatethread.h
+ * @brief Definition of a thread that receives an audio frame when the head turns to work out internal noise
  */
 
 
-#ifndef _TUTORIAL_RATETHREAD_H_
-#define _TUTORIAL_RATETHREAD_H_
+#ifndef _NOISE_CALIBRATION_RATETHREAD_H_
+#define _NOISE_CALIBRATION_RATETHREAD_H_
 
 #include <yarp/sig/all.h>
 #include <yarp/os/all.h>
@@ -36,7 +36,7 @@
 #include <time.h>
 
 
-class tutorialRatethread : public yarp::os::RateThread {
+class noiseCalibrationRatethread : public yarp::os::RateThread {
 private:
     bool result;                    //result of the processing
 
@@ -56,18 +56,18 @@ public:
     /**
     * constructor default
     */
-    tutorialRatethread();
+    noiseCalibrationRatethread();
 
     /**
     * constructor 
     * @param robotname name of the robot
     */
-    tutorialRatethread(std::string robotname,std::string configFile);
+    noiseCalibrationRatethread(std::string robotname,std::string configFile);
 
     /**
      * destructor
      */
-    ~tutorialRatethread();
+    ~noiseCalibrationRatethread();
 
     /**
     *  initialises the thread
