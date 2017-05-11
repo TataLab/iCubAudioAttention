@@ -1,9 +1,9 @@
 // -*- mode:C++; tab-width:4; c-basic-offset:4; indent-tabs-mode:nil -*-
 
 /*
-  * Copyright (C)2013  Department of Robotics Brain and Cognitive Sciences - Istituto Italiano di Tecnologia
+  * Copyright (C)2017  Department of Robotics Brain and Cognitive Sciences - Istituto Italiano di Tecnologia
   * Author:Francesco Rea
-  * email: francesco.reak@iit.it
+  * email: francesco.rea@iit.it
   * Permission is granted to copy, distribute, and/or modify this program
   * under the terms of the GNU General Public License, version 2 or any
   * later version published by the Free Software Foundation.
@@ -18,20 +18,20 @@
 */
 
 /**
- * @file tutorialModule.h
+ * @file egoNoiseCalibModule.h
  * @brief Simple module as tutorial.
  */
 
-#ifndef _TUTORIAL_MODULE_H_
-#define _TUTORIAL_MODULE_H_
+#ifndef _EGO_NOISE_CALIB_MODULE_H_
+#define _EGO_NOISE_CALIB_MODULE_H_
 
 /** 
  *
- * \defgroup icub_tutorialRateThread tutorialRateThread
+ * \defgroup icub_egoNoiseCalibRateThread egoNoiseCalibRateThread
  * @ingroup icub_morphoGen
  *
- * This is a module that receives the RGB image from input connection and sends it back to output connection. The purpose
- * of the module is to shift the point of congestion in a network.
+ * This is a module that receives the audio frame from moving iCub head and
+ * computes the internal noise (e.g.: fan or 
  * 
  *
  * 
@@ -46,14 +46,14 @@
  * The following key-value pairs can be specified as command-line parameters by prefixing \c -- to the key 
  * (e.g. \c --from file.ini. The value part can be changed to suit your needs; the default values are shown below. 
  *
- * - \c from \c tutorialRateThread.ini \n 
+ * - \c from \c egoNoiseCalibRateThread.ini \n 
  *   specifies the configuration file
  *
- * - \c context \c tutorialRateThread/conf \n
+ * - \c context \c egoNoiseCalibRateThread/conf \n
  *   specifies the sub-path from \c $ICUB_ROOT/icub/app to the configuration file
  *
- * - \c name \c tutorialRateThread \n 
- *   specifies the name of the tutorialRateThread (used to form the stem of tutorialRateThread port names)  
+ * - \c name \c egoNoiseCalibRateThread \n 
+ *   specifies the name of the egoNoiseCalibRateThread (used to form the stem of egoNoiseCalibRateThread port names)  
  *
  * - \c robot \c icub \n 
  *   specifies the name of the robot (used to form the root of robot port names)
@@ -75,8 +75,8 @@
  *
  *  <b>Input ports</b>
  *
- *  - \c /tutorialRateThread \n
- *    This port is used to change the parameters of the tutorialRateThread at run time or stop the tutorialRateThread. \n
+ *  - \c /egoNoiseCalibRateThread \n
+ *    This port is used to change the parameters of the egoNoiseCalibRateThread at run time or stop the egoNoiseCalibRateThread. \n
  *    The following commands are available
  * 
  *  -  \c help \n
@@ -84,21 +84,21 @@
  *
  *    Note that the name of this port mirrors whatever is provided by the \c --name parameter value
  *    The port is attached to the terminal so that you can type in commands and receive replies.
- *    The port can be used by other tutorialRateThreads but also interactively by a user through the yarp rpc directive, viz.: \c yarp \c rpc \c /tutorialRateThread
+ *    The port can be used by other egoNoiseCalibRateThreads but also interactively by a user through the yarp rpc directive, viz.: \c yarp \c rpc \c /egoNoiseCalibRateThread
  *    This opens a connection from a terminal to the port and allows the user to then type in commands and receive replies.
  *       
- *  - \c /tutorialRateThread/image:i \n
+ *  - \c /egoNoiseCalibRateThread/image:i \n
  *
  * <b>Output ports</b>
  *
- *  - \c /tutorialRateThread \n
+ *  - \c /egoNoiseCalibRateThread \n
  *    see above
  *
- *  - \c /tutorialRateThread/image:o \n
+ *  - \c /egoNoiseCalibRateThread/image:o \n
  *
  * <b>Port types</b>
  *
- * The functional specification only names the ports to be used to communicate with the tutorialRateThread 
+ * The functional specification only names the ports to be used to communicate with the egoNoiseCalibRateThread 
  * but doesn't say anything about the data transmitted on the ports. This is defined by the following code. 
  *
  * \c BufferedPort<ImageOf<PixelRgb> >   \c myInputPort; \n 
@@ -114,8 +114,8 @@
  *
  * \section conf_file_sec Configuration Files
  *
- * \c tutorialRateThread.ini  in \c $ICUB_ROOT/app/tutorialRateThread/conf \n
- * \c icubEyes.ini  in \c $ICUB_ROOT/app/tutorialRateThread/conf
+ * \c egoNoiseCalibRateThread.ini  in \c $ICUB_ROOT/app/egoNoiseCalibRateThread/conf \n
+ * \c icubEyes.ini  in \c $ICUB_ROOT/app/egoNoiseCalibRateThread/conf
  * 
  * \section tested_os_sec Tested OS
  *
@@ -123,13 +123,13 @@
  *
  * \section example_sec Example Instantiation of the Module
  * 
- * <tt>tutorialRateThread --name tutorialRateThread --context tutorialRateThread/conf --from tutorialRateThread.ini --robot icub</tt>
+ * <tt>egoNoiseCalibRateThread --name egoNoiseCalibRateThread --context egoNoiseCalibRateThread/conf --from egoNoiseCalibRateThread.ini --robot icub</tt>
  *
  * \author Rea Francesco
  *
  * Copyright (C) 2011 RobotCub Consortium\n
  * CopyPolicy: Released under the terms of the GNU GPL v2.0.\n
- * This file can be edited at \c $ATTENTION_ROOT/src/tutorial/tutorialRateThread/include/iCub/tutorialRateThread.h
+ * This file can be edited at \c $ATTENTION_ROOT/src/egoNoiseCalib/egoNoiseCalibRateThread/include/iCub/egoNoiseCalibRateThread.h
  * 
  */
 
@@ -143,12 +143,12 @@
 #include <yarp/os/Network.h>
 #include <yarp/os/Thread.h>
 #include <yarp/os/Log.h>
-#include <iCub/attention/commandDictionary.h>
+
 
 //within project includes  
-#include <iCub/tutorialRatethread.h>
+#include <iCub/egoNoiseCalibRatethread.h>
 
-class tutorialModule:public yarp::os::RFModule {
+class egoNoiseCalibModule:public yarp::os::RFModule {
     
     std::string moduleName;                  // name of the module
     std::string robotName;                   // name of the robot 
@@ -160,11 +160,11 @@ class tutorialModule:public yarp::os::RFModule {
     
     yarp::os::Port handlerPort;              // a port to handle messages 
     /*  */
-    tutorialRatethread *rThread;             // pointer to a new thread to be created and started in configure() and stopped in close()
+    egoNoiseCalibRatethread *rThread;             // pointer to a new thread to be created and started in configure() and stopped in close()
 
 public:
     /**
-    *  configure all the tutorial parameters and return true if successful
+    *  configure all the egoNoiseCalib parameters and return true if successful
     * @param rf reference to the resource finder
     * @return flag for the success
     */
@@ -176,7 +176,7 @@ public:
     bool interruptModule();                    
 
     /**
-    *  close and shut down the tutorial
+    *  close and shut down the egoNoiseCalib
     */
     bool close();
 
@@ -200,7 +200,7 @@ public:
 };
 
 
-#endif // _TUTORIAL_MODULE_H__
+#endif // _EGO_NOISE_CALIB_MODULE_H__
 
 //----- end-of-file --- ( next line intentionally left blank ) ------------------
 
