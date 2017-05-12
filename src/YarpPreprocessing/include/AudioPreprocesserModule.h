@@ -47,13 +47,13 @@ const float normDivid = pow(2,23);  //Number that is used to conver the integer 
 class AudioPreprocesserModule: public yarp::os::RFModule
 {
  private:
-  std::string moduleName;                  // name of the module 
+  std::string moduleName;                  // name of the module
   std::string robotPortName;               // name of robot port
   std::string inputPortName;               // name of the input port for events
   std::string robotName;                   // name of the robot
   std::string configFile;                  // name of the configFile that the resource Finder will seek
   AudioPreprocesserRatethread* apr;         // ratethread handling the processing in the module
-  
+
  public:
 	/**
 	* default constructor
@@ -90,21 +90,21 @@ private:
 
 	/**
 	*	memoryMapper
-	*	Taking the Audio data 
+	*	Taking the Audio data
 	*/
 	void memoryMapper();
 
 	/**
 	*	memoryMapperRawAudio
-	*	Taking the Audio data 
+	*	Taking the Audio data
 	*/
 	void memoryMapperRawAudio();
 
 	/**
 	*	memoryMapperRawAudio
-	*	Taking the Audio data 
+	*	Taking the Audio data
 	*/
-	void memoryMapperGammaToneFilteredAudio(const std::vector<float*> & gammatonAudio);
+	void memoryMapperGammaToneFilteredAudio(const std::vector<float*>  gammatonAudio);
 
 	/**
 	*	sendAudioMap
@@ -115,7 +115,7 @@ private:
 
 	/**
 	*	sendGammatonFilteredAudio
-	*	Function used to send audio after its pass though the gammaton filter. 
+	*	Function used to send audio after its pass though the gammaton filter.
 	*	The audio is held in outGammatonFilteredAudio matrix and is sent though port gammatonFilteredAudioPort.
 	*/
 	void sendGammatonFilteredAudio(const std::vector<float*> &gammatonAudio);
@@ -135,7 +135,7 @@ private:
 	/**
 	* SpineInterp()
 	*
-	*	Taking the Audio data that is found in reducedBeamFormedAudioVector. 
+	*	Taking the Audio data that is found in reducedBeamFormedAudioVector.
 	*	Creates an interpolation of the data corresponding to the interpellateNSamples that was specified in the xml.
 	*	The data of this function will be saved in highResolutionAudioMap.
 	*/
@@ -152,7 +152,7 @@ private:
 	struct timeval st, en;
 	long mtime, seconds, useconds;
 	double startTime, stopTime;
-	
+
 	//Incoming Audio Data from the iCub and remoteInterface
 	yarp::os::BufferedPort<yarp::sig::Sound> *inPort;
 	yarp::os::Port *outPort;
@@ -160,7 +160,7 @@ private:
 	yarp::sig::Sound* s;
 	yarp::os::Stamp ts;
 	float *rawAudio;
-	
+
 	yarp::sig::Matrix* outAudioMap;
 	yarp::sig::Matrix* outGammaToneFilteredAudioMap;
 
@@ -184,7 +184,7 @@ private:
 	std::string myinfo;
 	std::string mywarn;
 	std::string myreset;
-	
+
 	FILE *fid;
 	int mappedFileID;
 	double *mappedAudioData;
