@@ -1,11 +1,26 @@
+// -*- mode:C++; tab-width:4; c-basic-offset:4; indent-tabs-mode:nil -*-
+
 /*
- * Copyright: (C) 2017 RBCS Robotics Brain and Cognitive Sciences
- * Authors: Francesco Rea
- * CopyPolicy: Released under the terms of the LGPLv2.1 or later, see LGPL.TXT
- */
+  * Copyright (C)2017  Department of Robotics Brain and Cognitive Sciences - Istituto Italiano di Tecnologia
+  * Author:Francesco Rea
+  * email: francesco.rea@iit.it
+  * Permission is granted to copy, distribute, and/or modify this program
+  * under the terms of the GNU General Public License, version 2 or any
+  * later version published by the Free Software Foundation.
+  *
+  * A copy of the license can be found at
+  * http://www.robotcub.org/icub/license/gpl.txt
+  *
+  * This program is distributed in the hope that it will be useful, but
+  * WITHOUT ANY WARRANTY; without even the implied warranty of
+  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+  * Public License for more details
+*/
+
 
 #include <stdio.h>
 #include <string>
+#include <cstring>
 #include <unistd.h>
 #include <errno.h>
 #include <signal.h>
@@ -37,35 +52,65 @@
 #define SAMPLERATE 48000
 #define IOCTL_SAMPLERATE _IOW(MAGIC_NUM, 1, int*)
 
-// parameter for the usePortAudio
-const double rec_seconds = 0.1;
-const int rate = 48000;
-const int fixedNSample = 4096;
-
 using namespace std;
 using namespace yarp::os;
 using namespace yarp::sig;
 using namespace yarp::dev;
 using namespace audio;
 
-int main(int argc, char *argv[]) {
-  // initialization
-  bool clientGazeCtrlAvailable = false;
-  bool useDeviceDriver = false;
-  bool usePortAudio    = true; // set default value
-  string moduleName, robotName, robotPortName;
-  yarp::sig::Sound s;
-  IAudioGrabberSound *get;
-  int32_t buffermicif [NUM_MICS * SAMP_BUF_SIZE] = {0};
-  int32_t bufferleft [SAMP_BUF_SIZE] = {0};
-  int32_t* pointermicif;
-  int ExpectedReading;
-  int micif_dev;
-  int sampleRate;
-  
-  // Open the network
-  Network yarp;
 
+// WAVE file header format
+struct HEADER {
+	unsigned char riff[4];						// RIFF string
+	unsigned int overall_size	;				// overall size of file in bytes
+	unsigned char wave[4];						// WAVE string
+	unsigned char fmt_chunk_marker[4];			        // fmt string with trailing null char
+	unsigned int length_of_fmt;					// length of the format data
+	unsigned int format_type;					// format type. 1-PCM, 3- IEEE float, 6 - 8bit A law, 7 - 8bit mu law
+	unsigned int channels;						// no.of channels
+	unsigned int sample_rate;					// sampling rate (blocks per second)
+	unsigned int byterate;						// SampleRate * NumChannels * BitsPerSample/8
+	unsigned int block_align;					// NumChannels * BitsPerSample/8
+	unsigned int bits_per_sample;				        // bits per sample, 8- 8bits, 16- 16 bits etc
+	unsigned char data_chunk_header [4];		                // DATA string or FLLR string
+	unsigned int data_size;						// NumSamples * NumChannels * BitsPerSample/8 - size of the next chunk that will be read
+};
+
+
+// parameter for the usePortAudio
+const double rec_seconds = 0.1;
+const int rate = 48000;
+const int fixedNSample = 4096;
+
+struct HEADER header;
+FILE *ptr;
+unsigned char buffer4[4];
+unsigned char buffer2[2];
+
+//prototypes
+bool readWavFile();
+char* seconds_to_time(float seconds);
+
+int main(int argc, char *argv[]) {
+    // initialization
+    bool clientGazeCtrlAvailable = false;
+    bool useDeviceDriver = false;  // set default value
+    bool usePortAudio    = true;   // set default value
+    bool usePrerecorded  = false;  // set default value
+    string moduleName, robotName, robotPortName;
+    string prerecordedFilePath;
+    yarp::sig::Sound s;
+    IAudioGrabberSound *get;
+    int32_t buffermicif [NUM_MICS * SAMP_BUF_SIZE] = {0};
+    int32_t bufferleft [SAMP_BUF_SIZE] = {0};
+    int32_t* pointermicif;
+    int ExpectedReading;
+    int micif_dev;
+    int sampleRate;
+    
+    // Open the network
+    Network yarp;
+    
     ResourceFinder rf;
     rf.setVerbose(true);
     rf.setDefaultConfigFile("remoteInterface.ini");      //overridden by --from parameter
@@ -73,21 +118,22 @@ int main(int argc, char *argv[]) {
     rf.configure(argc,argv);
     
     /*********************************************************/
-
+    
     if(rf.check("help")) {
-      printf("HELP \n");
-      printf("====== \n");
-      printf("--name           : changes the rootname of the module ports \n");
-      printf("--robot          : changes the name of the robot where the module interfaces to  \n");
-      printf("--sampleRate     : sets the sample rate (in Hz) \n");
-      printf("--name           : rootname for all the connection of the module \n");
-      printf("--usePortAudio   : audio input from portaudio \n");
-      printf("--useDeviceDriver: audio input from device driver \n");
-      printf(" \n");
-      printf("press CTRL-C to stop... \n");
-      return true;
+        printf("HELP \n");
+        printf("====== \n");
+        printf("--name           : changes the rootname of the module ports \n");
+        printf("--robot          : changes the name of the robot where the module interfaces to  \n");
+        printf("--sampleRate     : sets the sample rate (in Hz) \n");
+        printf("--name           : rootname for all the connection of the module \n");
+        printf("--usePortAudio   : audio input from portaudio \n");
+        printf("--useDeviceDriver: audio input from device driver \n");
+        printf("--usePrerecorded : audio input from prerecorded file \n");
+        printf(" \n");
+        printf("press CTRL-C to stop... \n");
+        return true;
     }
-
+    
 
     /* get the module name which will form the stem of all module port names */
     moduleName             = rf.check("name",
@@ -97,12 +143,27 @@ int main(int argc, char *argv[]) {
     /* detects whether the preferrable input is from portaudio */
     if(rf.check("usePortAudio")){
       printf("acquiring from portaudio \n");
+      usePortAudio = true;
+      useDeviceDriver = false;
+      usePrerecorded = false;
     }
     /* detects whether the preferrable input is from deviceDriver */
-    if(rf.check("useDeviceDriver")){
+    else if(rf.check("useDeviceDriver")){
       printf("acquiring from deviceDriver \n");
       usePortAudio = false;
       useDeviceDriver = true;
+      usePrerecorded = false;
+    }
+    /* detects whether the preferrable input is from prerecorded file */
+    else if(rf.check("usePrerecorded")){
+
+      prerecordedFilePath             = rf.check("usePrerecorded",
+					Value("audio.wav"),
+					"file path (string)").asString();
+      yInfo("acquiring from preRecorded file %s \n", prerecordedFilePath.c_str());
+      usePortAudio = false;
+      useDeviceDriver = true;
+      usePrerecorded = true;
     }
     
     /*setting robot name*/
@@ -118,6 +179,11 @@ int main(int argc, char *argv[]) {
 				     "Sample rate in Hz (integer)").asInt();
     
     printf("sampleRate: %d \n", sampleRate);
+    
+    // Opening the output port
+    // BufferedPort<Sound> p;
+    Port p;
+    p.open("/sender");
     
 
     /*********************************************************/
@@ -155,11 +221,10 @@ int main(int argc, char *argv[]) {
     //}
     
     /*********************************************************/
-    //BufferedPort<Sound> p;
-    Port p;
-    p.open("/sender");
+
 
     if(usePortAudio) {
+      yInfo("reading from the portaudio device \n");
       // Get a portaudio read device.
       Property conf;
       conf.put("device","portaudio");
@@ -168,7 +233,6 @@ int main(int argc, char *argv[]) {
       conf.put("samples", fixedNSample);
       conf.put("rate", rate);
       PolyDriver poly(conf);
-
 
       // Make sure we can read sound
       poly.view(get);
@@ -186,9 +250,11 @@ int main(int argc, char *argv[]) {
       audio::Sound s;
       get->startRecording(); //this is optional, the first get->getsound() will do this anyway.
     } // end of the portAudio branch
-
+    
+    //******************************************************************************
+    
     if(useDeviceDriver) {
-      printf("reading from the device drive \n");
+      yInfo("reading from the device drive \n");
       // reading direclty from the device drive.
       micif_dev = -1;
       micif_dev = open("/dev/micif_dev", O_RDONLY);
@@ -214,8 +280,14 @@ int main(int argc, char *argv[]) {
     
     //******************************************************************************
 
+    if(usePrerecorded) {
+      yInfo("reading from the Prerecorded file \n");
+      
+
+    } // end of the usePrerecorded branch 
     
-    //printf("saving the file size %lu of %d \n", sizeof(data), sizeof(int16));
+    //******************************************************************************
+ 
     
     
     //spatialSound* soundToSend= new spatialSound(4);
@@ -231,53 +303,218 @@ int main(int argc, char *argv[]) {
      
     while (true)
     {
-      double t1=yarp::os::Time::now();
-      ts.update();
+        double t1=yarp::os::Time::now();
+        ts.update();
+        
+        //********************************************
+        
+        //Bottle b = p.prepare();
+        if(usePortAudio) {
+            get->getSound(s);
+        }
+        else if(useDeviceDriver) {
+            int readDim = read(micif_dev, buffermicif, dimensionToRead);
+            pointermicif = &buffermicif[0];
+            
+            //if(clientGazeCtrlAvailable) {
+            //   igaze->getAngles(angles,&anglesStamp);
+            //   soundToSend->setAngles(angles);
+            //}
+            
+            //prepare soundToSend
+            for (int sample=0; sample < SAMP_BUF_SIZE; sample++) {
+                //s.set(int value, int sample, int channel=0)
+                //printf("value %d %d \n",sample,buffermicif[sample * NUM_MICS]);
+                //printf("value %d %d \n",sample,buffermicif[sample * NUM_MICS + 1]);
+                //soundToSend->set(buffermicif[sample * NUM_MICS],sample,0);
+                //soundToSend->set(buffermicif[sample * NUM_MICS + 1], sample,1);
+                soundToSend->set(*pointermicif, sample, 0);
+                //bufferleft[sample] = *pointermicif;
+                //int32_t v = *pointermicif;
+                //printf("%08X \n", v);
+                pointermicif++;
+                soundToSend->set(*pointermicif, sample, 1);
+                pointermicif++;
+            }
+            
+            //FILE* fid = fopen("/tmp/audioFromZTurn.tmp", "w");
+            //fwrite(&bufferleft[0], sizeof(int32_t), SAMP_BUF_SIZE, fid);
+            //fclose(fid);
+            
+        }
+        else if(usePrerecorded) {
 
-      //********************************************
-
-      //Bottle b = p.prepare();
-      if(usePortAudio) {
-	get->getSound(s);
-      }
-      if(useDeviceDriver) {
-	read(micif_dev, buffermicif, dimensionToRead);
-	pointermicif = &buffermicif[0];
-
-	//if(clientGazeCtrlAvailable) {
-	//   igaze->getAngles(angles,&anglesStamp);
-	//   soundToSend->setAngles(angles);
-	//}
-	
-	//prepare soundToSend
-	for (int sample=0; sample < SAMP_BUF_SIZE; sample++) {
-	  //s.set(int value, int sample, int channel=0)
-	  //printf("value %d %d \n",sample,buffermicif[sample * NUM_MICS]);
-	  //printf("value %d %d \n",sample,buffermicif[sample * NUM_MICS + 1]);
-	  //soundToSend->set(buffermicif[sample * NUM_MICS],sample,0);
-	  //soundToSend->set(buffermicif[sample * NUM_MICS + 1], sample,1);
-	  soundToSend->set(*pointermicif, sample, 0);
-	  //bufferleft[sample] = *pointermicif;
-	  //int32_t v = *pointermicif;
-	  //printf("%08X \n", v);
-	  pointermicif++;
-	  soundToSend->set(*pointermicif, sample, 1);
-	  pointermicif++;
-	}
-
-	//FILE* fid = fopen("/tmp/audioFromZTurn.tmp", "w");
-	//fwrite(&bufferleft[0], sizeof(int32_t), SAMP_BUF_SIZE, fid);
-	//fclose(fid);
-      }
-      p.setEnvelope(ts);
-      p.write(*soundToSend);
-
-      //*********************************************************************
-
-      double t2=yarp::os::Time::now();
-      printf(" %d acquired %f seconds \n",ExpectedReading, t2-t1);
+        }
+        else {
+            yInfo("IDLE.....");
+        }
+        p.setEnvelope(ts);
+        p.write(*soundToSend);
+        
+        //*********************************************************************
+        
+        double t2=yarp::os::Time::now();
+        printf(" %d acquired %f seconds \n",ExpectedReading, t2-t1);
     }
     get->stopRecording();  //stops recording.
-
+    
     return 0;
 }
+
+
+bool readWavFile() {
+    // open file
+    printf("Opening  file..\n");
+    string filename("audio.wav");
+    ptr = fopen(filename.c_str(), "rb");
+    if (ptr == NULL) {
+        printf("Error opening file\n");
+        return false;
+    }
+    
+    int read = 0;
+    
+    // read header parts
+    
+    read = fread(header.riff, sizeof(header.riff), 1, ptr);
+    printf("(1-4): %s \n", header.riff); 
+    
+    read = fread(buffer4, sizeof(buffer4), 1, ptr);
+    printf("%u %u %u %u\n", buffer4[0], buffer4[1], buffer4[2], buffer4[3]);
+    
+    // convert little endian to big endian 4 byte int
+    header.overall_size  = buffer4[0] | 
+        (buffer4[1]<<8) | 
+        (buffer4[2]<<16) | 
+        (buffer4[3]<<24);
+    
+    printf("(5-8) Overall size: bytes:%u, Kb:%u \n", header.overall_size, header.overall_size/1024);
+    
+    read = fread(header.wave, sizeof(header.wave), 1, ptr);
+    printf("(9-12) Wave marker: %s\n", header.wave);
+    
+    read = fread(header.fmt_chunk_marker, sizeof(header.fmt_chunk_marker), 1, ptr);
+    printf("(13-16) Fmt marker: %s\n", header.fmt_chunk_marker);
+    
+    read = fread(buffer4, sizeof(buffer4), 1, ptr);
+    printf("%u %u %u %u\n", buffer4[0], buffer4[1], buffer4[2], buffer4[3]);
+    
+    // convert little endian to big endian 4 byte integer
+    header.length_of_fmt = buffer4[0] |
+        (buffer4[1] << 8) |
+        (buffer4[2] << 16) |
+        (buffer4[3] << 24);
+    printf("(17-20) Length of Fmt header: %u \n", header.length_of_fmt);
+    
+    read = fread(buffer2, sizeof(buffer2), 1, ptr); printf("%u %u \n", buffer2[0], buffer2[1]);
+    
+    header.format_type = buffer2[0] | (buffer2[1] << 8);
+    char format_name[10] = "";
+    if (header.format_type == 1)
+        strcpy(format_name,"PCM"); 
+    else if (header.format_type == 6)
+        strcpy(format_name, "A-law");
+    else if (header.format_type == 7)
+        strcpy(format_name, "Mu-law");
+    
+    printf("(21-22) Format type: %u %s \n", header.format_type, format_name);
+    
+    read = fread(buffer2, sizeof(buffer2), 1, ptr);
+    printf("%u %u \n", buffer2[0], buffer2[1]);
+    
+    header.channels = buffer2[0] | (buffer2[1] << 8);
+    printf("(23-24) Channels: %u \n", header.channels);
+    
+    read = fread(buffer4, sizeof(buffer4), 1, ptr);
+    printf("%u %u %u %u\n", buffer4[0], buffer4[1], buffer4[2], buffer4[3]);
+    
+    header.sample_rate = buffer4[0] |
+        (buffer4[1] << 8) |
+        (buffer4[2] << 16) |
+        (buffer4[3] << 24);
+
+    printf("(25-28) Sample rate: %u\n", header.sample_rate);
+
+    read = fread(buffer4, sizeof(buffer4), 1, ptr);
+    printf("%u %u %u %u\n", buffer4[0], buffer4[1], buffer4[2], buffer4[3]);
+
+    header.byterate  = buffer4[0] |
+        (buffer4[1] << 8) |
+        (buffer4[2] << 16) |
+        (buffer4[3] << 24);
+    printf("(29-32) Byte Rate: %u , Bit Rate:%u\n", header.byterate, header.byterate*8);
+
+    read = fread(buffer2, sizeof(buffer2), 1, ptr);
+    printf("%u %u \n", buffer2[0], buffer2[1]);
+
+    header.block_align = buffer2[0] |
+        (buffer2[1] << 8);
+    printf("(33-34) Block Alignment: %u \n", header.block_align);
+
+    read = fread(buffer2, sizeof(buffer2), 1, ptr);
+    printf("%u %u \n", buffer2[0], buffer2[1]);
+
+    header.bits_per_sample = buffer2[0] |
+        (buffer2[1] << 8);
+    printf("(35-36) Bits per sample: %u \n", header.bits_per_sample);
+
+    read = fread(header.data_chunk_header, sizeof(header.data_chunk_header), 1, ptr);
+    printf("(37-40) Data Marker: %s \n", header.data_chunk_header);
+
+    read = fread(buffer4, sizeof(buffer4), 1, ptr);
+    printf("%u %u %u %u\n", buffer4[0], buffer4[1], buffer4[2], buffer4[3]);
+
+    header.data_size = buffer4[0] |
+        (buffer4[1] << 8) |
+        (buffer4[2] << 16) | 
+				(buffer4[3] << 24 );
+    printf("(41-44) Size of data chunk: %u \n", header.data_size);
+
+
+    // calculate no.of samples
+    long num_samples = (8 * header.data_size) / (header.channels * header.bits_per_sample);
+    printf("Number of samples:%lu \n", num_samples);
+
+    long size_of_each_sample = (header.channels * header.bits_per_sample) / 8;
+    printf("Size of each sample:%ld bytes\n", size_of_each_sample);
+
+    // calculate duration of file
+    float duration_in_seconds = (float) header.overall_size / header.byterate;
+    printf("Approx.Duration in seconds=%f\n", duration_in_seconds);
+    printf("Approx.Duration in h:m:s=%s\n", seconds_to_time(duration_in_seconds));
+
+}
+
+
+/**
+ * Convert seconds into hh:mm:ss format
+ * Params:
+ *	seconds - seconds value
+ * Returns: hms - formatted string
+ **/
+char* seconds_to_time(float raw_seconds) {
+    char *hms;
+    int hours, hours_residue, minutes, seconds, milliseconds;
+    hms = (char*) malloc(100);
+    
+    sprintf(hms, "%f", raw_seconds);
+    
+    hours = (int) raw_seconds/3600;
+    hours_residue = (int) raw_seconds % 3600;
+    minutes = hours_residue/60;
+    seconds = hours_residue % 60;
+    milliseconds = 0;
+    
+    // get the decimal part of raw_seconds to get milliseconds
+    char *pos;
+    pos = strchr(hms, '.');
+    int ipos = (int) (pos - hms);
+    char decimalpart[15];
+    memset(decimalpart, ' ', sizeof(decimalpart));
+    strncpy(decimalpart, &hms[ipos+1], 3);
+    milliseconds = atoi(decimalpart);	
+    
+    sprintf(hms, "%d:%d:%d.%d", hours, minutes, seconds, milliseconds);
+    return hms;
+}
+
