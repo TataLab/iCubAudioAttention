@@ -169,7 +169,7 @@ private:
     std::vector <std::vector <double>> currentAudioMap;
     std::vector <std::vector <double>> noiseMap;
 
-    std::vector <double> lognProbabilityAngleMap;
+    std::vector <double> longProbabilityAngleMap;
 
     yarp::sig::Matrix *inputMatrix;
     yarp::sig::Matrix *outputMatrix;
@@ -195,6 +195,10 @@ private:
     FILE *fidLong;
     int mappingFileIDLong;
     double *probabilityMappingLong;
+
+    FILE *fidLongProbabilityAngle;
+    int mappingFileIDLongProbabilityAngle;
+    double *probabilityMappingLongProbabilityAngle;
 
 
     int nBands;

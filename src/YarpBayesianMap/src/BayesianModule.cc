@@ -61,7 +61,7 @@ BayesianModule::BayesianModule()
         longMap.push_back(tempvector);
     }
    
-   	lognProbabilityAngleMap.assign(interpellateNSamples * 2,0);
+   	longProbabilityAngleMap.assign(interpellateNSamples * 2,0);
 
     //Allocates the required memory for the yarp matrix that takes the input and output to this module
     inputMatrix = new yarp::sig::Matrix(nBands, interpellateNSamples * 2);
@@ -275,6 +275,14 @@ void BayesianModule::createMemoryMappedFile()
     probabilityMappingMedium= (double *)mmap(0, (sizeof(initializationArrayMedium)), PROT_WRITE, MAP_SHARED , mappingFileIDMedium, 0);
     mappingFileIDLong = open("/tmp/bayesianProbabilityLongMap.tmp", O_RDWR);
     probabilityMappingLong= (double *)mmap(0, (sizeof(initializationArrayLong)), PROT_WRITE, MAP_SHARED , mappingFileIDLong, 0);
+
+
+    double initializationLongProbabilityAngleMapArray[(interpellateNSamples+1) * 2];
+    fidLongProbabilityAngle = fopen("/tmp/preprocessedGammaToneFilteredAudio.tmp", "w");
+    fwrite(initializationLongProbabilityAngleMapArray, sizeof(double), sizeof(initializationLongProbabilityAngleMapArray), fidLongProbabilityAngle);
+    fclose(fidLongProbabilityAngle);
+    mappingFileIDLongProbabilityAngle = open("/tmp/preprocessedGammaToneFilteredAudio.tmp", O_RDWR);
+    probabilityMappingLongProbabilityAngle = (double *)mmap(0, (sizeof(initializationLongProbabilityAngleMapArray)), PROT_WRITE, MAP_SHARED , mappingFileIDLongProbabilityAngle, 0);
 }
 
 void BayesianModule::memoryMapper(std::vector <std::vector <double>> probabilityMap, double* probabilityMappingFileID)
@@ -337,7 +345,7 @@ void BayesianModule::setAcousticMap()
     }*/
     
     //the noise map a function is called to remove the ego locked noise from the current audio map
-    //removeNoise(currentAudioMap);
+    removeNoise(currentAudioMap);
 
     //The current audio map is then pushed into a buffer which contains all the audioMaps needed to create the a Bayesian Map
 	bufferedMap.push(currentAudioMap);
@@ -345,7 +353,7 @@ void BayesianModule::setAcousticMap()
     createBaysianMaps();
 
 
-    collapseMap(longMap,lognProbabilityAngleMap);
+    collapseMap(longMap,longProbabilityAngleMap);
     //noiseBufferMap++;
 }
 

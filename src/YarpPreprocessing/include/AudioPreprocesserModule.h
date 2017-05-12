@@ -118,7 +118,7 @@ private:
 	*	Function used to send audio after its pass though the gammaton filter. 
 	*	The audio is held in outGammatonFilteredAudio matrix and is sent though port gammatonFilteredAudioPort.
 	*/
-	void sendGammatonFilteredAudio();
+	void sendGammatonFilteredAudio(const std::vector<float*> &gammatonAudio);
 
 	/**
 	* 	sendBeamFormedAudio
@@ -156,10 +156,13 @@ private:
 	//Incoming Audio Data from the iCub and remoteInterface
 	yarp::os::BufferedPort<yarp::sig::Sound> *inPort;
 	yarp::os::Port *outPort;
+	yarp::os::Port *outGammaToneFilteredAudioPort;
 	yarp::sig::Sound* s;
 	yarp::os::Stamp ts;
 	float *rawAudio;
+	
 	yarp::sig::Matrix* outAudioMap;
+	yarp::sig::Matrix* outGammaToneFilteredAudioMap;
 
 	std::string fileName;
 	int frameSamples;

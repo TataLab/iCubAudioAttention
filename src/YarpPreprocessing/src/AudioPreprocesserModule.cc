@@ -57,6 +57,7 @@ AudioPreprocesserModule::AudioPreprocesserModule()
 	}
 
 	outAudioMap = new yarp::sig::Matrix(nBands, interpellateNSamples * 2);
+	outGammaToneFilteredAudioMap = new yarp::sig::Matrix(nBands*2, frameSamples);
 	createMemoryMappedFile();
 
 }
@@ -72,46 +73,49 @@ AudioPreprocesserModule::~AudioPreprocesserModule()
 bool AudioPreprocesserModule::configure(yarp::os::ResourceFinder &rf)
 {
   
-  inPort = new yarp::os::BufferedPort<yarp::sig::Sound>();
-  inPort->open("/iCubAudioAttention/Preprocesser:i");
-  
-  outPort = new yarp::os::Port();
-  outPort->open("/iCubAudioAttention/Preprocesser:o");
-  //TODO this show not be done here
-  
-  if (yarp::os::Network::exists("/iCubAudioAttention/Preprocesser:i"))
-    {
-      if (yarp::os::Network::connect("/sender", "/iCubAudioAttention/Preprocesser:i") == false)
-	{
-	  std::cout << myerror << "[ERROR]" << myreset << " Could not make connection to /sender. Exiting.\n";
-	  yError("Could not make connection to /sender. Exiting");
-	  return false;
-	}
-    }
-  else
-    {
-      return false;
-    }
+	inPort = new yarp::os::BufferedPort<yarp::sig::Sound>();
+	inPort->open("/iCubAudioAttention/Preprocesser:i");
 
-  if (rf.check("config")) {
-        configFile=rf.findFile(rf.find("config").asString().c_str());
-        if (configFile=="") {
-            return false;
-        }
-    }
-    else {
-        configFile.clear();
-    }
-  
+	outPort = new yarp::os::Port();
+	outPort->open("/iCubAudioAttention/Preprocesser:o");
+  //TODO this show not be done here
+
+	outGammaToneFilteredAudioPort = new yarp::os::Port();
+	outGammaToneFilteredAudioPort->open("/iCubAudioAttention/GammaToneFilteredAudio:o");
+
+	if (yarp::os::Network::exists("/iCubAudioAttention/Preprocesser:i"))
+	{
+		if (yarp::os::Network::connect("/sender", "/iCubAudioAttention/Preprocesser:i") == false)
+		{
+			std::cout << myerror << "[ERROR]" << myreset << " Could not make connection to /sender. Exiting.\n";
+			yError("Could not make connection to /sender. Exiting");
+			return false;
+		}
+	}
+	else
+	{
+		return false;
+	}
+
+	if (rf.check("config")) {
+		configFile=rf.findFile(rf.find("config").asString().c_str());
+		if (configFile=="") {
+			return false;
+		}
+	}
+	else {
+		configFile.clear();
+	}
+
   /* create the thread and pass pointers to the module parameters */
-  apr = new AudioPreprocesserRatethread(robotName, configFile);
-  apr->setName(getName().c_str());
+	apr = new AudioPreprocesserRatethread(robotName, configFile);
+	apr->setName(getName().c_str());
   //rThread->setInputPortName(inputPortName.c_str());
-  
+
   /* now start the thread to do the work */
   //apr->start(); // this calls threadInit() and it if returns true, it then calls run()
-  
-  return true;
+
+	return true;
 }
 
 double AudioPreprocesserModule::getPeriod()
@@ -153,6 +157,13 @@ bool AudioPreprocesserModule::updateModule()
 
 	gammatonAudioFilter->inputAudio(rawAudio);
 	beamForm->inputAudio(gammatonAudioFilter->getFilteredAudio());
+	
+	//TODO Test that this works
+	memoryMapperGammaToneFilteredAudio(gammatonAudioFilter->getFilteredAudio());
+	sendGammatonFilteredAudio(gammatonAudioFilter->getFilteredAudio());
+	outGammaToneFilteredAudioPort->setEnvelope(ts);
+	outGammaToneFilteredAudioPort->write(*outGammaToneFilteredAudioMap);
+
 	reducedBeamFormedAudioVector = beamForm->getReducedBeamAudio();
 
 	spineInterp();
@@ -163,7 +174,6 @@ bool AudioPreprocesserModule::updateModule()
 	outPort->write(*outAudioMap);
 
 	//Timing how long the module took
-	
 	lastframe = ts.getCount();
 	gettimeofday(&en, NULL);
 	seconds  = en.tv_sec  - st.tv_sec;
@@ -290,6 +300,28 @@ void AudioPreprocesserModule::memoryMapperGammaToneFilteredAudio(const std::vect
 		}
 	}
 	
+
+}
+
+void AudioPreprocesserModule::sendGammatonFilteredAudio(const std::vector<float*> &gammatonAudio){
+	for (int i = 0; i < nBands; i++)
+	{
+		yarp::sig::Vector tempV(frameSamples);
+		for (int j = 0; j < frameSamples; j++)
+		{
+			tempV[j] = gammatonAudio[i][j];
+		}
+		outGammaToneFilteredAudioMap->setRow(i, tempV);
+	}
+	for (int i = 0; i < nBands; i++)
+	{
+		yarp::sig::Vector tempV(frameSamples);
+		for (int j = 0; j < frameSamples; j++)
+		{
+			tempV[j] = gammatonAudio[i+nBands][j];
+		}
+		outGammaToneFilteredAudioMap->setRow(i+nBands, tempV);
+	}
 
 }
 
