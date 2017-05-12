@@ -354,6 +354,7 @@ void BayesianModule::setAcousticMap()
 
 
     collapseMap(longMap,longProbabilityAngleMap);
+    memoryProbabilityAngleMap(longProbabilityAngleMap);
     //noiseBufferMap++;
 }
 
@@ -489,5 +490,13 @@ void BayesianModule::collapseMap(const std::vector <std::vector <double>> &input
     for (int j = 0; j < interpellateNSamples * 2; j++)
     {
         outputProbabilityMap[j]/=sum;
+    }
+}
+
+void BayesianModule::memoryProbabilityAngleMap(std::vector <double> probabilityMap)
+{
+    for (int i = 0; i < interpellateNSamples * 2; i++)
+    {
+        probabilityMappingLongProbabilityAngle[i]+=probabilityMap[i];
     }
 }

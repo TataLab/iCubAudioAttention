@@ -158,7 +158,6 @@ bool AudioPreprocesserModule::updateModule()
 	gammatonAudioFilter->inputAudio(rawAudio);
 	beamForm->inputAudio(gammatonAudioFilter->getFilteredAudio());
 
-	//TODO Test that this works
 	memoryMapperGammaToneFilteredAudio(gammatonAudioFilter->getFilteredAudio());
 	sendGammatonFilteredAudio(gammatonAudioFilter->getFilteredAudio());
 	outGammaToneFilteredAudioPort->setEnvelope(ts);
@@ -289,9 +288,7 @@ void AudioPreprocesserModule::memoryMapperGammaToneFilteredAudio(const std::vect
 	{
 		for (int j = 0; j < frameSamples; j++)
 		{
-
 			mappedGammaToneFilteredAduioData[(i*frameSamples)+j] = (double)gammatonAudio[i][j];
-
 		}
 	}
 	int visted = (nBands*frameSamples);

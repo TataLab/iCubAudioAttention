@@ -126,6 +126,12 @@ private:
     void memoryMapper(std::vector <std::vector <double>> probabilityMap, double* probabilityMappingFileID);
 
     /**
+    *   memoryMapperRawAudio
+    *   Taking the Audio data
+    */
+    void memoryProbabilityAngleMap(std::vector <double> probabilityMap);
+
+    /**
     *   sendAudioMap
     *   Sends the audio map VIA the output port provided.
     *   @param 
