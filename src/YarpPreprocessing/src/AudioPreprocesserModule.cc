@@ -282,7 +282,7 @@ void AudioPreprocesserModule::memoryMapperRawAudio()
 
 }
 
-//TODO confirm that this works
+
 void AudioPreprocesserModule::memoryMapperGammaToneFilteredAudio(const std::vector<float*> gammatonAudio){
 
 	for (int i = 0; i < nBands; i++)
