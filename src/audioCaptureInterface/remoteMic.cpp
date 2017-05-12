@@ -282,8 +282,8 @@ int main(int argc, char *argv[]) {
 
     if(usePrerecorded) {
       yInfo("reading from the Prerecorded file \n");
+      bool res = readWavFile();
       
-
     } // end of the usePrerecorded branch 
     
     //******************************************************************************
