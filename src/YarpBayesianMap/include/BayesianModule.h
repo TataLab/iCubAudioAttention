@@ -83,7 +83,7 @@ private:
     *   @param probabilityMap a map of the auditory sean with probabilities that a given sound is at a given angle. 
     *   @param peakMap will contain ones to mark the peaks found and zeros everywhere else.   
     */
-    void findPeaks(vector<double> &peakMap, const vector<double> &probabilityMap);
+    void findPeaks(std::vector<double> &peakMap, const std::vector<double> &probabilityMap);
 
     /**
     *   setAcousticMap
@@ -145,10 +145,10 @@ private:
     void createNoiseMaps();
 
     void removeNoise(std::vector <std::vector <double>> &probabilityMap);
-
     void removeMap(std::vector <std::vector <double>> &probabilityMap, std::vector <std::vector <double>> &cAM);
     void addMap(std::vector <std::vector <double>> &probabilityMap, std::vector <std::vector <double>> &cAM);
 
+    void collapseMap(const std::vector <std::vector <double>> &inputMap, std::vector <double> &outputProbabilityMap);
 
     //Variables need to time the update module
     struct timeval st, en;
@@ -168,7 +168,9 @@ private:
 
     std::vector <std::vector <double>> currentAudioMap;
     std::vector <std::vector <double>> noiseMap;
-    
+
+    std::vector <double> lognProbabilityAngleMap;
+
     yarp::sig::Matrix *inputMatrix;
     yarp::sig::Matrix *outputMatrix;
 

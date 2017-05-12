@@ -199,15 +199,20 @@ void AudioPreprocesserModule::createMemoryMappedFile()
 	mappedAudioData = (double *)mmap(0, (sizeof(initializationArray)), PROT_WRITE, MAP_SHARED , mappedFileID, 0);
 
 	int memoryMapRawAudio = (4*NUM_FRAME_SAMPLES);
-	//printf("memoryMapRawAudio is %d\n",memoryMapRawAudio);
-	//double initializationRawAudioArray [memoryMapRawAudio];
 	double initializationRawAudioArray[4*NUM_FRAME_SAMPLES];
-	//printf("size of initializationRawAudioArray is %d\n",sizeof(initializationRawAudioArray));
 	rawFid = fopen("/tmp/preprocessedRawAudio.tmp", "w");
 	fwrite(initializationRawAudioArray, sizeof(double), sizeof(initializationRawAudioArray), rawFid);
 	fclose(rawFid);
 	mappedRawAduioFileID = open("/tmp/preprocessedRawAudio.tmp", O_RDWR);
 	mappedRawAduioData = (double *)mmap(0, (sizeof(initializationRawAudioArray)), PROT_WRITE, MAP_SHARED , mappedRawAduioFileID, 0);
+
+	int memoryMapGammaToneFilteredAudio = (nMics*nBands*NUM_FRAME_SAMPLES);
+	double initializationGammaToneFilteredAudioArray[nMics*nBands*NUM_FRAME_SAMPLES];
+	gammaToneFilteredFid = fopen("/tmp/preprocessedGammaToneFilteredAudio.tmp", "w");
+	fwrite(initializationGammaToneFilteredAudioArray, sizeof(double), sizeof(initializationGammaToneFilteredAudioArray), gammaToneFilteredFid);
+	fclose(gammaToneFilteredFid);
+	mappedGammaToneFilteredAduioFileID = open("/tmp/preprocessedGammaToneFilteredAudio.tmp", O_RDWR);
+	mappedGammaToneFilteredAduioData = (double *)mmap(0, (sizeof(initializationGammaToneFilteredAudioArray)), PROT_WRITE, MAP_SHARED , mappedGammaToneFilteredAduioFileID, 0);
 }
 
 void AudioPreprocesserModule::loadFile()
@@ -265,6 +270,29 @@ void AudioPreprocesserModule::memoryMapperRawAudio()
   	}
 
 }
+
+//TODO confirm that this works
+void AudioPreprocesserModule::memoryMapperGammaToneFilteredAudio(const std::vector<float*> &gammatonAudio){
+	
+	for (int i = 0; i < nBands; i++)
+	{
+		for (int j = 0; j < frameSamples; j++)
+		{
+			mappedRawAduioData[(i*frameSamples)+j] = (double)gammatonAudio[i][j];
+		}
+	}
+	int visted = (nBands*frameSamples);
+	for (int i = 0; i < nBands; i++)
+	{
+		for (int j = 0; j < frameSamples; j++)
+		{
+			mappedRawAduioData[(i*frameSamples)+j+visted] = (double)gammatonAudio[i + nBands][j];
+		}
+	}
+	
+
+}
+
 void AudioPreprocesserModule::sendAudioMap()
 {
 	for (int i = 0; i < nBands; i++)

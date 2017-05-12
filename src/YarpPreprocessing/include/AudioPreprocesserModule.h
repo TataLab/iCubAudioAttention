@@ -101,6 +101,12 @@ private:
 	void memoryMapperRawAudio();
 
 	/**
+	*	memoryMapperRawAudio
+	*	Taking the Audio data 
+	*/
+	void memoryMapperGammaToneFilteredAudio(const std::vector<float*> & gammatonAudio);
+
+	/**
 	*	sendAudioMap
 	*	Function used to send audio map after its been though the gammaton, beamforming, and reduction steps.
 	*	The audio map is stored in outAudioMap and sent though port audioMapPort.
@@ -112,7 +118,7 @@ private:
 	*	Function used to send audio after its pass though the gammaton filter. 
 	*	The audio is held in outGammatonFilteredAudio matrix and is sent though port gammatonFilteredAudioPort.
 	*/
-	void sendGammatonFilteredAudio(){};
+	void sendGammatonFilteredAudio();
 
 	/**
 	* 	sendBeamFormedAudio
@@ -177,12 +183,16 @@ private:
 	std::string myreset;
 	
 	FILE *fid;
-	FILE *rawFid;
 	int mappedFileID;
 	double *mappedAudioData;
 
+	FILE *rawFid;
 	int mappedRawAduioFileID;
 	double *mappedRawAduioData;
+
+	FILE *gammaToneFilteredFid;
+	int mappedGammaToneFilteredAduioFileID;
+	double *mappedGammaToneFilteredAduioData;
 
 };
 

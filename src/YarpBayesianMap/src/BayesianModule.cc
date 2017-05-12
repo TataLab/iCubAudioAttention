@@ -61,7 +61,7 @@ BayesianModule::BayesianModule()
         longMap.push_back(tempvector);
     }
    
-   	
+   	lognProbabilityAngleMap.assign(interpellateNSamples * 2,0);
 
     //Allocates the required memory for the yarp matrix that takes the input and output to this module
     inputMatrix = new yarp::sig::Matrix(nBands, interpellateNSamples * 2);
@@ -337,13 +337,16 @@ void BayesianModule::setAcousticMap()
     }*/
     
     //the noise map a function is called to remove the ego locked noise from the current audio map
-    removeNoise(currentAudioMap);
+    //removeNoise(currentAudioMap);
+
     //The current audio map is then pushed into a buffer which contains all the audioMaps needed to create the a Bayesian Map
 	bufferedMap.push(currentAudioMap);
     //A function is called to create the Bayesian Map. 
     createBaysianMaps();
-    
-    noiseBufferMap++;
+
+
+    collapseMap(longMap,lognProbabilityAngleMap);
+    //noiseBufferMap++;
 }
 
 void BayesianModule::addMap(std::vector <std::vector <double>> &probabilityMap, std::vector <std::vector <double>> &inputCurrentAudioMap)
@@ -455,4 +458,28 @@ void BayesianModule::loadFile()
     longTimeFrame = pars.getLongBufferSize();
 
 
+}
+
+//TODO Check that this is working
+void BayesianModule::collapseMap(const std::vector <std::vector <double>> &inputMap, std::vector <double> &outputProbabilityMap)
+{
+    for (int j = 0; j < interpellateNSamples * 2; j++)
+    {
+
+        for (int i = 0; i <  nBands; i++)
+        {
+            //TODO This is extremely slow however I could not think of a better 
+            outputProbabilityMap[j]+=inputMap[i][j];
+        }
+
+    }
+    double sum = 0;
+    for (int j = 0; j < interpellateNSamples * 2; j++)
+    {
+        sum+=outputProbabilityMap[j];
+    }
+    for (int j = 0; j < interpellateNSamples * 2; j++)
+    {
+        outputProbabilityMap[j]/=sum;
+    }
 }
