@@ -317,6 +317,7 @@ void BayesianModule::sendAudioMap(std::vector <std::vector <double>> &probabilit
 
 void BayesianModule::findPeaks(std::vector<double> &peakMap, const std::vector<double> &probabilityMap)
 {
+    /*Comment this out until it works
     // store the size of the map
     int mapSize = probabilityMap.size() - 1;
 
@@ -352,6 +353,7 @@ void BayesianModule::findPeaks(std::vector<double> &peakMap, const std::vector<d
     if (probabilityMap[mapSize] - probabilityMap[mapSize-1] > thresh &&
         probabilityMap[0] - probabilityMap[1] > thresh)
         peakMap[mapSize] = peakMap[0] = 1;
+        */
 }
 
 

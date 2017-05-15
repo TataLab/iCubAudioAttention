@@ -85,7 +85,7 @@ bool AudioPreprocesserModule::configure(yarp::os::ResourceFinder &rf)
 
 	if (yarp::os::Network::exists("/iCubAudioAttention/Preprocesser:i"))
 	{
-		if (yarp::os::Network::connect("/sender", "/iCubAudioAttention/Preprocesser:i") == false)
+		if (yarp::os::Network::connect("/audioGrabber/sender", "/iCubAudioAttention/Preprocesser:i") == false)
 		{
 			std::cout << myerror << "[ERROR]" << myreset << " Could not make connection to /sender. Exiting.\n";
 			yError("Could not make connection to /sender. Exiting");
