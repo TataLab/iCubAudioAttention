@@ -51,6 +51,8 @@
 #define MAGIC_NUM 100
 #define SAMPLERATE 48000
 #define IOCTL_SAMPLERATE _IOW(MAGIC_NUM, 1, int*)
+#define TRUE 1 
+#define FALSE 0
 
 using namespace std;
 using namespace yarp::os;
@@ -64,15 +66,15 @@ struct HEADER {
 	unsigned char riff[4];						// RIFF string
 	unsigned int overall_size	;				// overall size of file in bytes
 	unsigned char wave[4];						// WAVE string
-	unsigned char fmt_chunk_marker[4];			        // fmt string with trailing null char
+	unsigned char fmt_chunk_marker[4];			// fmt string with trailing null char
 	unsigned int length_of_fmt;					// length of the format data
 	unsigned int format_type;					// format type. 1-PCM, 3- IEEE float, 6 - 8bit A law, 7 - 8bit mu law
 	unsigned int channels;						// no.of channels
 	unsigned int sample_rate;					// sampling rate (blocks per second)
 	unsigned int byterate;						// SampleRate * NumChannels * BitsPerSample/8
 	unsigned int block_align;					// NumChannels * BitsPerSample/8
-	unsigned int bits_per_sample;				        // bits per sample, 8- 8bits, 16- 16 bits etc
-	unsigned char data_chunk_header [4];		                // DATA string or FLLR string
+	unsigned int bits_per_sample;				// bits per sample, 8- 8bits, 16- 16 bits etc
+	unsigned char data_chunk_header [4];		// DATA string or FLLR string
 	unsigned int data_size;						// NumSamples * NumChannels * BitsPerSample/8 - size of the next chunk that will be read
 };
 
@@ -86,9 +88,13 @@ struct HEADER header;
 FILE *ptr;
 unsigned char buffer4[4];
 unsigned char buffer2[2];
+long size_of_each_sample;
+long num_samples;
+//int read;
 
 //prototypes
-bool readWavFile();
+bool readWavFile(string filename);
+bool streamWavFile(int numberFrames, audio::Sound* soundToSend);
 char* seconds_to_time(float seconds);
 
 int main(int argc, char *argv[]) {
@@ -107,6 +113,7 @@ int main(int argc, char *argv[]) {
     int ExpectedReading;
     int micif_dev;
     int sampleRate;
+    int numberFrames = 0;
     
     // Open the network
     Network yarp;
@@ -162,7 +169,7 @@ int main(int argc, char *argv[]) {
 					"file path (string)").asString();
       yInfo("acquiring from preRecorded file %s \n", prerecordedFilePath.c_str());
       usePortAudio = false;
-      useDeviceDriver = true;
+      useDeviceDriver = false;
       usePrerecorded = true;
     }
     
@@ -183,7 +190,7 @@ int main(int argc, char *argv[]) {
     // Opening the output port
     // BufferedPort<Sound> p;
     Port p;
-    p.open("/sender");
+    p.open("/audioGrabber/sender");
     
 
     /*********************************************************/
@@ -224,57 +231,57 @@ int main(int argc, char *argv[]) {
 
 
     if(usePortAudio) {
-      yInfo("reading from the portaudio device \n");
-      // Get a portaudio read device.
-      Property conf;
-      conf.put("device","portaudio");
-      conf.put("read", "");
-      // conf.put("samples", rate * rec_seconds);
-      conf.put("samples", fixedNSample);
-      conf.put("rate", rate);
-      PolyDriver poly(conf);
-
-      // Make sure we can read sound
-      poly.view(get);
-      if (get==NULL) {
-	printf("cannot open interface");
-	return 1;
-      }
-      else{
-	printf("correctly opened the interface rate: %d, number of samples: %f, number of channels %d \n",rate, rate*rec_seconds, 2);
-	//Grab and send
-	get->startRecording(); //this is optional, the first get->getsound() will do this anyway
-      }
-
-      //Grab and send
-      audio::Sound s;
-      get->startRecording(); //this is optional, the first get->getsound() will do this anyway.
+        yInfo("reading from the portaudio device \n");
+        // Get a portaudio read device.
+        Property conf;
+        conf.put("device","portaudio");
+        conf.put("read", "");
+        // conf.put("samples", rate * rec_seconds);
+        conf.put("samples", fixedNSample);
+        conf.put("rate", rate);
+        PolyDriver poly(conf);
+        
+        // Make sure we can read sound
+        poly.view(get);
+        if (get==NULL) {
+            printf("cannot open interface");
+            return 1;
+        }
+        else{
+            printf("correctly opened the interface rate: %d, number of samples: %f, number of channels %d \n",rate, rate*rec_seconds, 2);
+            //Grab and send
+            get->startRecording(); //this is optional, the first get->getsound() will do this anyway
+        }
+        
+        //Grab and send
+        audio::Sound s;
+        get->startRecording(); //this is optional, the first get->getsound() will do this anyway.
     } // end of the portAudio branch
     
     //******************************************************************************
     
     if(useDeviceDriver) {
-      yInfo("reading from the device drive \n");
-      // reading direclty from the device drive.
-      micif_dev = -1;
-      micif_dev = open("/dev/micif_dev", O_RDONLY);
-      printf("read from the device \n");
-      if(micif_dev<0) {
-	fprintf(stderr, "Error opening %s:", MICIFDEVICE);
-	return -1;
-      }
+        yInfo("reading from the device drive \n");
+        // reading direclty from the device drive.
+        micif_dev = -1;
+        micif_dev = open("/dev/micif_dev", O_RDONLY);
+        printf("read from the device \n");
+        if(micif_dev<0) {
+            fprintf(stderr, "Error opening %s:", MICIFDEVICE);
+            return -1;
+        }
 
-      // set the sampling rate. For example to set the frame to 12kHz the following
-      // e.g.: ioctl(micif_dev, IOCTL_SAMPLERATE,12000);
-      ioctl(micif_dev, IOCTL_SAMPLERATE, sampleRate);
+        // set the sampling rate. For example to set the frame to 12kHz the following
+        // e.g.: ioctl(micif_dev, IOCTL_SAMPLERATE,12000);
+        ioctl(micif_dev, IOCTL_SAMPLERATE, sampleRate);
       
-      // read from device
-      //ExpectedReading = sizeof(int) * SAMP_BUF_SIZE;
-      ///if(read(micif_dev, buffermicif, ExpectedReading) < 0)
-      //return -1;
-      //else {
-      //printf("success in reading from the device \n");
-      //}
+        // read from device
+        //ExpectedReading = sizeof(int) * SAMP_BUF_SIZE;
+        ///if(read(micif_dev, buffermicif, ExpectedReading) < 0)
+        //return -1;
+        //else {
+        //printf("success in reading from the device \n");
+        //}
 
     } // end of the useDeviceDriver branch 
     
@@ -282,8 +289,8 @@ int main(int argc, char *argv[]) {
 
     if(usePrerecorded) {
       yInfo("reading from the Prerecorded file \n");
-      bool res = readWavFile();
-      
+      bool res = readWavFile(prerecordedFilePath);
+      Time::delay(1);      
     } // end of the usePrerecorded branch 
     
     //******************************************************************************
@@ -293,7 +300,7 @@ int main(int argc, char *argv[]) {
     //spatialSound* soundToSend= new spatialSound(4);
     //soundToSend->setNumberOfAngles(2);
     audio::Sound* soundToSend= new audio::Sound(4);
-    soundToSend->resize(4096,2);
+    soundToSend->resize(SAMP_BUF_SIZE,STEREO);
     soundToSend->setFrequency(SAMPLERATE);
     
     Stamp ts;
@@ -343,7 +350,17 @@ int main(int argc, char *argv[]) {
             
         }
         else if(usePrerecorded) {
-
+            // read each sample from data chunk if PCM
+            //printf("starting stream Wav...");
+            if((numberFrames + 1) * SAMP_BUF_SIZE < num_samples) {
+                bool ret = streamWavFile(numberFrames, soundToSend);
+                Time::delay(0.080);
+                numberFrames++;
+            }
+            else {
+                yInfo("preRecorded file ended");
+                Time::delay(0.080);
+            }
         }
         else {
             yInfo("IDLE.....");
@@ -354,7 +371,7 @@ int main(int argc, char *argv[]) {
         //*********************************************************************
         
         double t2=yarp::os::Time::now();
-        printf(" %d acquired %f seconds \n",ExpectedReading, t2-t1);
+        printf("acquired %f in seconds \n", t2-t1);
     }
     get->stopRecording();  //stops recording.
     
@@ -362,20 +379,129 @@ int main(int argc, char *argv[]) {
 }
 
 
-bool readWavFile() {
+bool streamWavFile(int numberFrames, audio::Sound* soundToSend) {
+    int read = 0;
+    //yDebug("streamWavFile");
+    if (header.format_type == 1) { // PCM
+                
+        long i =0;
+        char data_buffer[size_of_each_sample];
+        int  size_is_correct = TRUE;
+
+        // make sure that the bytes-per-sample is completely divisible by num.of channels
+        long bytes_in_each_channel = (size_of_each_sample / header.channels);
+        //printf("size_of_each_sample %d bytes in each channel %d", size_of_each_sample,bytes_in_each_channel );
+        
+        if ((bytes_in_each_channel  * header.channels) != size_of_each_sample) {
+            printf("Error: %ld x %ud <> %ld\n", bytes_in_each_channel, header.channels, size_of_each_sample);
+            size_is_correct = FALSE;
+        }
+ 
+        if (size_is_correct) { 
+            // the valid amplitude range for values based on the bits per sample
+            long low_limit = 0l;
+            long high_limit = 0l;
+
+            switch (header.bits_per_sample) {
+            case 8:
+                low_limit = -128;
+                high_limit = 127;
+                break;
+            case 16:
+                low_limit = -32768;
+                high_limit = 32767;
+                break;
+            case 32:
+                low_limit = -2147483648;
+                high_limit = 2147483647;
+                break;
+            }					
+
+            //for (int j= 0; j < SAMP_BUF_SIZE; j++) {
+            //    read = fread(data_buffer, sizeof(data_buffer),  1 , ptr);
+            //}
+
+            
+            
+            //printf("\n\n.Valid range for data values : %ld to %ld \n", low_limit, high_limit);
+            //for (i =1; i <= num_samples; i++) {
+            for  (i =1; i <= SAMP_BUF_SIZE; i++) {
+                //printf("==========Sample %ld / %ld=============\n", SAMP_BUF_SIZE * numberFrames + i, num_samples);
+                read = fread(data_buffer, sizeof(data_buffer), 1, ptr);
+                
+                if (/*read == 1*/ true) {
+				
+                    // dump the data read
+                    unsigned int  xchannels = 0;
+                    int data_in_channel = 0;
+
+                    for (xchannels = 0; xchannels < header.channels; xchannels ++ ) {
+                        
+                        //printf("(size_of_each_sample %d) Channel#%d : ",size_of_each_sample, (xchannels+1));
+                        
+                        if (bytes_in_each_channel == 4) {
+                            // // convert data from little endian in each channel sample
+                            /*data_in_channel =	data_buffer[3] | 
+                                (data_buffer[2]<<8) | 
+                                (data_buffer[1]<<16) | 
+                                (data_buffer[0]<<24);
+                            */
+                            
+                            // convert data from little endian to big endian based on bytes in each channel sample
+                            data_in_channel =	data_buffer[0 + xchannels * 4] | 
+                                (data_buffer[1 + xchannels * 4]<<8) | 
+                                (data_buffer[2 + xchannels * 4]<<16) | 
+                                (data_buffer[3 + xchannels * 4]<<24);
+
+                            
+                            
+                        }
+                        else if (bytes_in_each_channel == 2) {
+                            data_in_channel = data_buffer[0] |
+                                (data_buffer[1] << 8);
+                        }
+                        else if (bytes_in_each_channel == 1) {
+                            data_in_channel = data_buffer[0];
+                        }
+                        //printf("%d ", data_in_channel);
+                        soundToSend->set(data_in_channel, i - 1, xchannels);
+
+                        // check if value was in range
+                        if (data_in_channel < low_limit || data_in_channel > high_limit) {
+                            printf("**value out of range\n");
+                        }
+
+                        //printf(" | ");
+                    }
+
+                    //printf("\n");
+                }
+                else {
+                    printf("Error reading file. %d bytes\n", read);
+                    break;
+                }
+            } // 	for (i =1; i <= num_samples; i++) {
+            //Time::delay(1);
+        } // 	if (size_is_correct)                
+    } //  if (header.format_type == 1)
+
+    //printf("returning...");
+    return true;
+}
+
+bool readWavFile(string filename) {
     // open file
-    printf("Opening  file..\n");
-    string filename("audio.wav");
+    printf("Opening  file.. %s\n", filename.c_str());
+    //string filename("audio.wav");
     ptr = fopen(filename.c_str(), "rb");
     if (ptr == NULL) {
         printf("Error opening file\n");
         return false;
     }
-    
+
     int read = 0;
     
     // read header parts
-    
     read = fread(header.riff, sizeof(header.riff), 1, ptr);
     printf("(1-4): %s \n", header.riff); 
     
@@ -472,10 +598,10 @@ bool readWavFile() {
 
 
     // calculate no.of samples
-    long num_samples = (8 * header.data_size) / (header.channels * header.bits_per_sample);
+    num_samples = (8 * header.data_size) / (header.channels * header.bits_per_sample);
     printf("Number of samples:%lu \n", num_samples);
 
-    long size_of_each_sample = (header.channels * header.bits_per_sample) / 8;
+    size_of_each_sample = (header.channels * header.bits_per_sample) / 8;
     printf("Size of each sample:%ld bytes\n", size_of_each_sample);
 
     // calculate duration of file
