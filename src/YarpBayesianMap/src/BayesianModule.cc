@@ -315,6 +315,46 @@ void BayesianModule::sendAudioMap(std::vector <std::vector <double>> &probabilit
     }
 }
 
+void BayesianModule::findPeaks(std::vector<double> &peakMap, const std::vector<double> &probabilityMap)
+{
+    // store the size of the map
+    int mapSize = probabilityMap.size() - 1;
+
+    // some threshold parameter. can be changed.
+    double thresh = 0.1;
+
+    // scan through the probability map looking for peaks
+    for (int i = 1; i < mapSize; ++i)
+    {
+        // look for the beginning of a peak
+        if (probabilityMap[i] - probabilityMap[i-1] > thresh)
+        {
+            // find the highest points of the peak
+            while (probabilityMap[i] - probabilityMap[i-1] > thresh && i < mapSize) i++;
+
+            // exiting the previous loop means we are either currently 
+            // on a peak, or went past a peak of length 1
+            peakMap[i-1] = 1;
+
+            // mark the existence of peaks until the start of a decent
+            while (std::abs(probabilityMap[i] - probabilityMap[i-1]) <= thresh && i < mapSize)
+            {
+                peakMap[i] = 1; 
+                i++;
+            }
+            // then loop back and look for 
+            // the next beginning of a peak
+        }
+    }
+
+    // after itterating through, the probability map, 
+    // check the boundary edge case
+    if (probabilityMap[mapSize] - probabilityMap[mapSize-1] > thresh &&
+        probabilityMap[0] - probabilityMap[1] > thresh)
+        peakMap[mapSize] = peakMap[0] = 1;
+}
+
+
 void BayesianModule::setAcousticMap()
 {
     //This takes the input matrix and copies each element into the currentAudioMap
