@@ -23,7 +23,7 @@ pStruct.writeToMemMap = 1;  %flag to toggle on writing stereo signal to local sh
 totalTime=tic;
 %set up some parameters of the audio grabber.  Careful: some of this is
 %hard coded into the mex function.
-pStruct.sampleRate=16000;
+pStruct.sampleRate=48000;
 pStruct.frameDuration_samples = 4096;  %must match the settings in the mex function. should be integer multiple of the page size to keep memory access fast
 pStruct.frameDuration_seconds=pStruct.frameDuration_samples/pStruct.sampleRate;
 

@@ -172,6 +172,7 @@ int Sound::get(int location, int channel) const {
         return *((NetUint16 *)addr);
     }
     else if (bytesPerSample==4) {
+    	//yInfo("getting sound at 4 bytes per sample");
       return *((NetUint32 *)addr);
     }
     
@@ -213,6 +214,7 @@ void Sound::setFrequency(int freq) {
 
 bool Sound::read(ConnectionReader& connection) {
     // lousy format - fix soon!
+    //yInfo("getting sound at 4 bytes per sample");
     yarp::sig::FlexImage& img = HELPER(implementation);
     Bottle bot;
     bool ok = PortablePair<yarp::sig::FlexImage,Bottle>::readPair(connection,img,bot);

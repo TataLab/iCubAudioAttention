@@ -33,6 +33,7 @@
 #include <yarp/os/Stamp.h>
 #include <yarp/os/NetInt32.h>
 #include <yarp/sig/Sound.h>
+//#include <iCub/audio/Sound.h>
 #include <yarp/sig/Matrix.h>
 #include <yarp/sig/Vector.h>
 
@@ -155,9 +156,12 @@ private:
 
 	//Incoming Audio Data from the iCub and remoteInterface
 	yarp::os::BufferedPort<yarp::sig::Sound> *inPort;
+	//yarp::os::BufferedPort<audio::Sound> *inPort;
+	
 	yarp::os::Port *outPort;
 	yarp::os::Port *outGammaToneFilteredAudioPort;
 	yarp::sig::Sound* s;
+	//audio::Sound* s;
 	yarp::os::Stamp ts;
 	float *rawAudio;
 

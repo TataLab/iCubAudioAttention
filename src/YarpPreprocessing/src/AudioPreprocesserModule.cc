@@ -75,6 +75,7 @@ bool AudioPreprocesserModule::configure(yarp::os::ResourceFinder &rf)
 {
 
 	inPort = new yarp::os::BufferedPort<yarp::sig::Sound>();
+	//inPort = new yarp::os::BufferedPort<audio::Sound>();
 	inPort->open("/iCubAudioAttention/Preprocesser:i");
 
 	outPort = new yarp::os::Port();
