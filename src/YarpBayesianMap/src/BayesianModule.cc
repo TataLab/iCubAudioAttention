@@ -24,13 +24,13 @@
 //TO DO:  get this into resource finder
 #define MEMORY_MAP_SIZE nBands * 360 
 
-
-
-
 int myModed(int a, int b) {
     return  a >= 0 ? a % b : (a % b) + b;
 }
- 
+
+double myABS(double a) {
+    return  a >= 0 ? a : ((a) * -1);
+}
 
 BayesianModule::BayesianModule()
 {
@@ -315,9 +315,9 @@ void BayesianModule::sendAudioMap(std::vector <std::vector <double>> &probabilit
     }
 }
 
-void BayesianModule::findPeaks(std::vector<double> &peakMap, const std::vector<double> &probabilityMap)
+void findPeaks(std::vector<double> &peakMap, const std::vector<double> &probabilityMap)
 {
-    /*Comment this out until it works
+    //Comment this out until it works
     // store the size of the map
     int mapSize = probabilityMap.size() - 1;
 
@@ -338,7 +338,7 @@ void BayesianModule::findPeaks(std::vector<double> &peakMap, const std::vector<d
             peakMap[i-1] = 1;
 
             // mark the existence of peaks until the start of a decent
-            while (std::abs(probabilityMap[i] - probabilityMap[i-1]) <= thresh && i < mapSize)
+            while (myABS(probabilityMap[i] - probabilityMap[i-1]) <= thresh && i < mapSize)
             {
                 peakMap[i] = 1; 
                 i++;
@@ -353,9 +353,8 @@ void BayesianModule::findPeaks(std::vector<double> &peakMap, const std::vector<d
     if (probabilityMap[mapSize] - probabilityMap[mapSize-1] > thresh &&
         probabilityMap[0] - probabilityMap[1] > thresh)
         peakMap[mapSize] = peakMap[0] = 1;
-        */
+        
 }
-
 
 void BayesianModule::setAcousticMap()
 {
