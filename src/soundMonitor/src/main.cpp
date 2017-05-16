@@ -22,7 +22,7 @@
  * @brief main code for the tutorial module.
  */
 
-#include "iCub/egoNoiseCalibModule.h" 
+#include "iCub/soundMonitorModule.h" 
 
 using namespace yarp::os;
 using namespace yarp::sig;
@@ -32,12 +32,12 @@ int main(int argc, char * argv[])
 {
     
     Network yarp;
-    egoNoiseCalibModule module; 
+    soundMonitorModule module; 
 
     ResourceFinder rf;
     rf.setVerbose(true);
-    rf.setDefaultConfigFile("cameraTest.ini");    //overridden by --from parameter
-    rf.setDefaultContext("morphoGenApp/conf");    //overridden by --context parameter
+    rf.setDefaultConfigFile("soundMonitor.ini");        //overridden by --from parameter
+    rf.setDefaultContext("iCubAudioAttention/conf");    //overridden by --context parameter
     rf.configure(argc, argv);  
  
     module.runModule(rf);

@@ -18,11 +18,11 @@
 */
 
 /**
- * @file egoNoiseCalibModule.cpp
- * @brief Implementation of the egoNoiseCalibModule (see header file).
+ * @file soundMonitorModule.cpp
+ * @brief Implementation of the soundMonitorModule (see header file).
  */
 
-#include "iCub/egoNoiseCalibModule.h"
+#include "iCub/soundMonitorModule.h"
 
 using namespace yarp::os;
 using namespace yarp::sig;
@@ -35,12 +35,12 @@ using namespace std;
  *  equivalent of the "open" method.
  */
 
-bool egoNoiseCalibModule::configure(yarp::os::ResourceFinder &rf) {
+bool soundMonitorModule::configure(yarp::os::ResourceFinder &rf) {
     /* Process all parameters from both command-line and .ini file */
 
     /* get the module name which will form the stem of all module port names */
     moduleName            = rf.check("name", 
-                           Value("/egoNoiseCalibrator"), 
+                           Value("/soundMonitor"), 
                            "module name (string)").asString();
     /*
     * before continuing, set the module name before getting any other parameters, 
@@ -87,7 +87,7 @@ bool egoNoiseCalibModule::configure(yarp::os::ResourceFinder &rf) {
 
 
     /* create the thread and pass pointers to the module parameters */
-    rThread = new egoNoiseCalibRatethread(robotName, configFile);
+    rThread = new soundMonitorRatethread(robotName, configFile);
     //rThread->setInputPortName(inputPortName.c_str());
     rThread->setName(moduleName);
     
@@ -98,12 +98,12 @@ bool egoNoiseCalibModule::configure(yarp::os::ResourceFinder &rf) {
                         // so that it will then run the module
 }
 
-bool egoNoiseCalibModule::interruptModule() {
+bool soundMonitorModule::interruptModule() {
     handlerPort.interrupt();
     return true;
 }
 
-bool egoNoiseCalibModule::close() {
+bool soundMonitorModule::close() {
     handlerPort.close();
     /* stop the thread */
     yDebug("stopping the thread \n");
@@ -111,7 +111,7 @@ bool egoNoiseCalibModule::close() {
     return true;
 }
 
-bool egoNoiseCalibModule::respond(const Bottle& command, Bottle& reply) 
+bool soundMonitorModule::respond(const Bottle& command, Bottle& reply) 
 {
     string helpMessage =  string(getName().c_str()) + 
                 " commands are: \n" +  
@@ -132,12 +132,12 @@ bool egoNoiseCalibModule::respond(const Bottle& command, Bottle& reply)
 }
 
 /* Called periodically every getPeriod() seconds */
-bool egoNoiseCalibModule::updateModule()
+bool soundMonitorModule::updateModule()
 {
     return true;
 }
 
-double egoNoiseCalibModule::getPeriod()
+double soundMonitorModule::getPeriod()
 {
     /* module periodicity (seconds), called implicitly by myModule */
     return 1;

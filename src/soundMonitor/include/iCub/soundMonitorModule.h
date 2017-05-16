@@ -18,16 +18,16 @@
 */
 
 /**
- * @file egoNoiseCalibModule.h
+ * @file soundMonitorModule.h
  * @brief Simple module as tutorial.
  */
 
-#ifndef _EGO_NOISE_CALIB_MODULE_H_
-#define _EGO_NOISE_CALIB_MODULE_H_
+#ifndef _SOUND_MONITOR_MODULE_H_
+#define _SOUND_MONITOR_MODULE_H_
 
 /** 
  *
- * \defgroup icub_egoNoiseCalibRateThread egoNoiseCalibRateThread
+ * \defgroup icub_soundMonitorRateThread soundMonitorRateThread
  * @ingroup icub_morphoGen
  *
  * This is a module that receives the audio frame from moving iCub head and
@@ -46,14 +46,14 @@
  * The following key-value pairs can be specified as command-line parameters by prefixing \c -- to the key 
  * (e.g. \c --from file.ini. The value part can be changed to suit your needs; the default values are shown below. 
  *
- * - \c from \c egoNoiseCalibRateThread.ini \n 
+ * - \c from \c soundMonitorRateThread.ini \n 
  *   specifies the configuration file
  *
- * - \c context \c egoNoiseCalibRateThread/conf \n
+ * - \c context \c soundMonitorRateThread/conf \n
  *   specifies the sub-path from \c $ICUB_ROOT/icub/app to the configuration file
  *
- * - \c name \c egoNoiseCalibRateThread \n 
- *   specifies the name of the egoNoiseCalibRateThread (used to form the stem of egoNoiseCalibRateThread port names)  
+ * - \c name \c soundMonitorRateThread \n 
+ *   specifies the name of the soundMonitorRateThread (used to form the stem of soundMonitorRateThread port names)  
  *
  * - \c robot \c icub \n 
  *   specifies the name of the robot (used to form the root of robot port names)
@@ -75,8 +75,8 @@
  *
  *  <b>Input ports</b>
  *
- *  - \c /egoNoiseCalibRateThread \n
- *    This port is used to change the parameters of the egoNoiseCalibRateThread at run time or stop the egoNoiseCalibRateThread. \n
+ *  - \c /soundMonitorRateThread \n
+ *    This port is used to change the parameters of the soundMonitorRateThread at run time or stop the soundMonitorRateThread. \n
  *    The following commands are available
  * 
  *  -  \c help \n
@@ -84,21 +84,21 @@
  *
  *    Note that the name of this port mirrors whatever is provided by the \c --name parameter value
  *    The port is attached to the terminal so that you can type in commands and receive replies.
- *    The port can be used by other egoNoiseCalibRateThreads but also interactively by a user through the yarp rpc directive, viz.: \c yarp \c rpc \c /egoNoiseCalibRateThread
+ *    The port can be used by other soundMonitorRateThreads but also interactively by a user through the yarp rpc directive, viz.: \c yarp \c rpc \c /soundMonitorRateThread
  *    This opens a connection from a terminal to the port and allows the user to then type in commands and receive replies.
  *       
- *  - \c /egoNoiseCalibRateThread/image:i \n
+ *  - \c /soundMonitorRateThread/image:i \n
  *
  * <b>Output ports</b>
  *
- *  - \c /egoNoiseCalibRateThread \n
+ *  - \c /soundMonitorRateThread \n
  *    see above
  *
- *  - \c /egoNoiseCalibRateThread/image:o \n
+ *  - \c /soundMonitorRateThread/image:o \n
  *
  * <b>Port types</b>
  *
- * The functional specification only names the ports to be used to communicate with the egoNoiseCalibRateThread 
+ * The functional specification only names the ports to be used to communicate with the soundMonitorRateThread 
  * but doesn't say anything about the data transmitted on the ports. This is defined by the following code. 
  *
  * \c BufferedPort<ImageOf<PixelRgb> >   \c myInputPort; \n 
@@ -114,8 +114,8 @@
  *
  * \section conf_file_sec Configuration Files
  *
- * \c egoNoiseCalibRateThread.ini  in \c $ICUB_ROOT/app/egoNoiseCalibRateThread/conf \n
- * \c icubEyes.ini  in \c $ICUB_ROOT/app/egoNoiseCalibRateThread/conf
+ * \c soundMonitorRateThread.ini  in \c $ICUB_ROOT/app/soundMonitorRateThread/conf \n
+ * \c icubEyes.ini  in \c $ICUB_ROOT/app/soundMonitorRateThread/conf
  * 
  * \section tested_os_sec Tested OS
  *
@@ -123,13 +123,13 @@
  *
  * \section example_sec Example Instantiation of the Module
  * 
- * <tt>egoNoiseCalibRateThread --name egoNoiseCalibRateThread --context egoNoiseCalibRateThread/conf --from egoNoiseCalibRateThread.ini --robot icub</tt>
+ * <tt>soundMonitorRateThread --name soundMonitorRateThread --context soundMonitorRateThread/conf --from soundMonitorRateThread.ini --robot icub</tt>
  *
  * \author Rea Francesco
  *
  * Copyright (C) 2011 RobotCub Consortium\n
  * CopyPolicy: Released under the terms of the GNU GPL v2.0.\n
- * This file can be edited at \c $ATTENTION_ROOT/src/egoNoiseCalib/egoNoiseCalibRateThread/include/iCub/egoNoiseCalibRateThread.h
+ * This file can be edited at \c $ATTENTION_ROOT/src/soundMonitor/soundMonitorRateThread/include/iCub/soundMonitorRateThread.h
  * 
  */
 
@@ -146,9 +146,9 @@
 
 
 //within project includes  
-#include <iCub/egoNoiseCalibRatethread.h>
+#include <iCub/soundMonitorRatethread.h>
 
-class egoNoiseCalibModule:public yarp::os::RFModule {
+class soundMonitorModule:public yarp::os::RFModule {
     
     std::string moduleName;                  // name of the module
     std::string robotName;                   // name of the robot 
@@ -160,11 +160,11 @@ class egoNoiseCalibModule:public yarp::os::RFModule {
     
     yarp::os::Port handlerPort;              // a port to handle messages 
     /*  */
-    egoNoiseCalibRatethread *rThread;             // pointer to a new thread to be created and started in configure() and stopped in close()
+    soundMonitorRatethread *rThread;         // pointer to a new thread to be created and started in configure() and stopped in close()
 
 public:
     /**
-    *  configure all the egoNoiseCalib parameters and return true if successful
+    *  configure all the soundMonitor parameters and return true if successful
     * @param rf reference to the resource finder
     * @return flag for the success
     */
@@ -176,7 +176,7 @@ public:
     bool interruptModule();                    
 
     /**
-    *  close and shut down the egoNoiseCalib
+    *  close and shut down the soundMonitor
     */
     bool close();
 
@@ -200,7 +200,7 @@ public:
 };
 
 
-#endif // _EGO_NOISE_CALIB_MODULE_H__
+#endif // _SOUND_MONITOR_MODULE_H__
 
 //----- end-of-file --- ( next line intentionally left blank ) ------------------
 

@@ -18,11 +18,11 @@
 */
 
 /**
- * @file egoNoiseCalibRatethread.cpp
- * @brief Implementation of the eventDriven thread (see egoNoiseCalibRatethread.h).
+ * @file soundMonitorRatethread.cpp
+ * @brief Implementation of the eventDriven thread (see soundMonitorRatethread.h).
  */
 
-#include <iCub/egoNoiseCalibRatethread.h>
+#include <iCub/soundMonitorRatethread.h>
 #include <cstring>
 
 using namespace yarp::dev;
@@ -35,7 +35,7 @@ using namespace std;
 
 const std::string test = "hello";
 
-egoNoiseCalibRatethread::egoNoiseCalibRatethread():RateThread(THRATE) {
+soundMonitorRatethread::soundMonitorRatethread():RateThread(THRATE) {
     robot = "icub";
     alfa = 1.0;
     counterFrames = 0;
@@ -43,7 +43,7 @@ egoNoiseCalibRatethread::egoNoiseCalibRatethread():RateThread(THRATE) {
     memset(&sum[0],0,sizeof(double) * SUMDIM);
 }
 
-egoNoiseCalibRatethread::egoNoiseCalibRatethread(string _robot, string _configFile):RateThread(THRATE){
+soundMonitorRatethread::soundMonitorRatethread(string _robot, string _configFile):RateThread(THRATE){
     robot = _robot;
     configFile = _configFile;
     alfa = 1.0;
@@ -52,12 +52,12 @@ egoNoiseCalibRatethread::egoNoiseCalibRatethread(string _robot, string _configFi
     memset(&sum[0],0,sizeof(double) * SUMDIM);
 }
 
-egoNoiseCalibRatethread::~egoNoiseCalibRatethread() {
+soundMonitorRatethread::~soundMonitorRatethread() {
     free(&sum[0]);
 }
 
 
-bool egoNoiseCalibRatethread::threadInit() {
+bool soundMonitorRatethread::threadInit() {
     // opening the port for direct input
     if (!inputPort.open(getName("/image:i").c_str())) {
         yError("unable to open port to receive input");
@@ -69,47 +69,6 @@ bool egoNoiseCalibRatethread::threadInit() {
         return false;  // unable to open; let RFModule know so that it won't run
     }
 
-    //--------------------------------------------------------------------
-   
-    string headPort = "/" + robot + "/head";
-    string nameLocal("egoNoiseCalibrator");
-
-    //initialising the head polydriver
-    optionsHead.put("device", "remote_controlboard");
-    optionsHead.put("local", ("/" + nameLocal + "/localhead").c_str());
-    optionsHead.put("remote", headPort.c_str());
-    robotHead = new PolyDriver (optionsHead);
-
-    if (!robotHead->isValid()){
-        yError("cannot connect to robot head\n");
-        return false;
-    }
-    robotHead->view(encHead);
-   
-    robotHead->view(posHead);
-    jnts = 0;
-    posHead->getAxes(&jnts);
-    encoders.resize(jnts);
-    encHead->getEncoders(encoders.data());
-    
-    yInfo("head encoders data %f", encoders[2]);
-    Vector tmp; tmp.resize(jnts);
-    command_position.resize(jnts);
-    int i;
-    for (i = 0; i < jnts; i++) {
-        tmp[i] = 40.0;
-    }
-    posHead->setRefSpeeds(tmp.data());
-    command_position = encoders;
-    int value = encoders[2];
-    command_position[2] = -40.0;
-    bool ok = posHead->positionMove(command_position.data());
-    Time::delay(2.0);
-
-    encHead->getEncoders(encoders.data());
-    yInfo("head encoders data %s", encoders.toString().c_str());
-    yInfo("head encoders data %f", encoders[2]);
-    
     //-------------------------------------------------------------------
 
     pFile = fopen("noiseMap.dat", "wb");
@@ -125,22 +84,22 @@ bool egoNoiseCalibRatethread::threadInit() {
     return true;
 }
 
-void egoNoiseCalibRatethread::setName(string str) {
+void soundMonitorRatethread::setName(string str) {
     this->name=str;
 }
 
 
-std::string egoNoiseCalibRatethread::getName(const char* p) {
+std::string soundMonitorRatethread::getName(const char* p) {
     string str(name);
     str.append(p);
     return str;
 }
 
-void egoNoiseCalibRatethread::setInputPortName(string InpPort) {
+void soundMonitorRatethread::setInputPortName(string InpPort) {
     
 }
 
-void egoNoiseCalibRatethread::headMovePan() {
+void soundMonitorRatethread::headMovePan() {
     counterAngles++;
     command_position = encoders;
     if(command_position[2] > 40) {
@@ -156,7 +115,7 @@ void egoNoiseCalibRatethread::headMovePan() {
     yInfo("head encoders data %f; alfa = %f", encoders[2], alfa);
 }
 
-void egoNoiseCalibRatethread::saveEgoNoise() {
+void soundMonitorRatethread::saveEgoNoise() {
     for(int i = 0; i < SUMDIM; i++) {
         sum[i] = sum[i] / counterFrames;
     }
@@ -165,16 +124,13 @@ void egoNoiseCalibRatethread::saveEgoNoise() {
 }
 
 
-void egoNoiseCalibRatethread::run() {    
+void soundMonitorRatethread::run() {    
     // input ports
     if (inputPort.getInputCount()) {
         if(counterAngles < MAXCOUNTERFRAMES) { 
             Bottle* b = inputPort.read(true);   //blocking reading for synchr with the input
             result = processing(b);
-            if(counterFrames % 10 == 0) {
-                // head pan execution
-                headMovePan();
-            }
+            
         }
         else {
             saveEgoNoise();
@@ -186,8 +142,10 @@ void egoNoiseCalibRatethread::run() {
     if (outputPort.getOutputCount()) {
         *outputImage = outputPort.prepare();
         outputImage->resize(inputImage->width(), inputImage->height());
-        // changing the pointer of the prepared area for the outputPort.write()
-        // copy(inputImage, outImage);
+        // preparing the spectrogramm
+        spectrogram();
+        // 
+        prepareImage(outputImage);
         // outputPort.prepare() = *inputImage; //deprecated
 
         outputPort.write();
@@ -195,22 +153,38 @@ void egoNoiseCalibRatethread::run() {
 
 }
 
-bool egoNoiseCalibRatethread::processing(Bottle* b){
+
+bool soundMonitorRatethread::spectrogram() {
+
+
+}
+
+bool soundMonitorRatethread::prepareImage(yarp::sig::ImageOf<yarp::sig::PixelRgb>* outputImage) {
+    unsigned char* p = outputImage->getRawImage();
+    int padding = outputImage->getPadding();
+    for (int r = 0; r < outputImage->width(); r++) {
+        for (int c = 0; c < outputImage->height(); c++) {
+            
+        }
+    }
+
+}
+
+bool soundMonitorRatethread::processing(Bottle* b){
     counterFrames++;
     yDebug("COUNTERFRAMES: %d bottle length %d",counterFrames, b->size());
-    Bottle* matrixBottle = b->get(2).asList();
+    Bottle* matrixBottle = b->get(0).asList();
     yDebug("COUNTERFRAMES: %d bottle MATRIX length %d",counterFrames, matrixBottle->size());
     for(int i = 0; i < SUMDIM; i++) {
         double value = matrixBottle->get(i).asDouble();
-        sum[i] = sum[i] + value;
+        sum[i] = value;
     }
     return true;
 }
 
 
-void egoNoiseCalibRatethread::threadRelease() {
+void soundMonitorRatethread::threadRelease() {
     fclose(pFile);
-    robotHead->close(); 
     inputPort.interrupt();
     outputPort.interrupt();
     inputPort.close();

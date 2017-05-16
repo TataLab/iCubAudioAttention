@@ -23,8 +23,8 @@
  */
 
 
-#ifndef _EGO_NOISE_CALIB_RATETHREAD_H_
-#define _EGO_NOISE_CALIB_RATETHREAD_H_
+#ifndef _SOUND_MONITOR_RATETHREAD_H_
+#define _SOUND_MONITOR_RATETHREAD_H_
 
 #include <yarp/sig/all.h>
 #include <yarp/os/all.h>
@@ -37,7 +37,7 @@
 
 #define SUMDIM 46080
 
-class egoNoiseCalibRatethread : public yarp::os::RateThread {
+class soundMonitorRatethread : public yarp::os::RateThread {
 private:
     int jnts;
     int counterFrames;
@@ -71,18 +71,18 @@ public:
     /**
     * constructor default
     */
-    egoNoiseCalibRatethread();
+    soundMonitorRatethread();
 
     /**
     * constructor 
     * @param robotname name of the robot
     */
-    egoNoiseCalibRatethread(std::string robotname,std::string configFile);
+    soundMonitorRatethread(std::string robotname,std::string configFile);
 
     /**
      * destructor
      */
-    ~egoNoiseCalibRatethread();
+    ~soundMonitorRatethread();
 
     /**
     *  initialises the thread
@@ -128,12 +128,22 @@ public:
     void headMovePan();
 
     /**
+     * @brief: spectrogram
+     */
+    bool spectrogram();
+    
+    /**
+     *
+     */
+    bool prepareImage(yarp::sig::ImageOf<yarp::sig::PixelRgb>* outputImage);
+    
+    /**
      * @brief save the egoNoise Matrix into a file
      **/
     void saveEgoNoise();
 };
 
-#endif  //_EGO_NOISE_CALIB_THREAD_H_
+#endif  //_SOUND_MONITOR_THREAD_H_
 
 //----- end-of-file --- ( next line intentionally left blank ) ------------------
 

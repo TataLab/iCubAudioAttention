@@ -2,7 +2,7 @@
 # Authors: Francesco Rea
 # CopyPolicy: Released under the terms of the GNU GPL v2.0.
 
-SET(KEYWORD "egoNoiseCalibrator")
+SET(KEYWORD "soundMonitor")
 PROJECT(${KEYWORD})
 cmake_minimum_required(VERSION 2.6)
 
@@ -14,7 +14,6 @@ INCLUDE_DIRECTORIES(
     ${YARP_INCLUDE_DIRS} 	
     ${ICUB_INCLUDE_DIRS}	
     ${ICUB_CONTRIB_DIRS}
-    ${ATTENTIONLIB_INCLUDE_DIRS}
 )
 
 # Search for source code.
@@ -31,7 +30,6 @@ IF (folder_source)
     )
 
     TARGET_LINK_LIBRARIES(${KEYWORD}        
-
       ${YARP_LIBRARIES}
       )	
 
