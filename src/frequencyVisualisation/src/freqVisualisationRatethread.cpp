@@ -30,6 +30,48 @@ using namespace yarp::os;
 using namespace yarp::sig;
 using namespace std;
 
+/*
+   Return a RGB colour value given a scalar v in the range [vmin,vmax]
+   In this case each colour component ranges from 0 (no contribution) to
+   1 (fully saturated), modifications for other ranges is trivial.
+   The colour is clipped at the end of the scales if v is outside
+   the range [vmin,vmax]
+*/
+
+typedef struct {
+    double r,g,b;
+} COLOUR;
+
+COLOUR GetColour(double v,double vmin,double vmax)
+{
+   COLOUR c = {1.0,1.0,1.0}; // white
+   double dv;
+
+   if (v < vmin)
+      v = vmin;
+   if (v > vmax)
+      v = vmax;
+   dv = vmax - vmin;
+
+   if (v < (vmin + 0.25 * dv)) {
+      c.r = 0;
+      c.g = 4 * (v - vmin) / dv;
+   } else if (v < (vmin + 0.5 * dv)) {
+      c.r = 0;
+      c.b = 1 + 4 * (vmin + 0.25 * dv - v) / dv;
+   } else if (v < (vmin + 0.75 * dv)) {
+      c.r = 4 * (v - vmin - 0.5 * dv) / dv;
+      c.b = 0;
+   } else {
+      c.g = 1 + 4 * (vmin + 0.75 * dv - v) / dv;
+      c.b = 0;
+   }
+
+   return(c);
+}
+
+
+#define gain   500
 #define THRATE 100 //ms
 
 freqVisualisationRatethread::freqVisualisationRatethread():RateThread(THRATE) {
@@ -117,12 +159,15 @@ bool freqVisualisationRatethread::processing(Matrix* mat){
     for (int r = 0; r < nRows; r++) {
         for (int c = 0; c < nCols; c++) {
             value = *pMat;
-            if (value != 0) { yDebug("%f", value); }
-            *pImage = 0;
+            COLOUR col = GetColour(value * 150, 0.0, 1.0);
+            //*pImage = 0;
+            *pImage = col.r * 255;
             pImage++;
-            *pImage = (unsigned char) floor(255 * value);
+            //*pImage = (unsigned char) floor(255 * gain * value);
+            *pImage = col.g * 255;
             pImage++;
-            *pImage = 0;
+            //*pImage = 0;
+            *pImage = col.b * 255;
             pImage++;
             pMat++;
         }

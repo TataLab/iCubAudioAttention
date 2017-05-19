@@ -37,31 +37,11 @@ AudioPreprocesserModule::AudioPreprocesserModule()
 	mywarn = "\033[0;33m";
 	myreset = "\033[0m";
 
-	//Set the file which the module uses to grab the config information
-	fileName = "../../src/Configuration/loadFile.xml";
-	//calls the parser and the config file to configure the needed variables in this class
-	loadFile();
-    yInfo("file successfully load");
 
-	//preparing gammatonFilter
-	gammatonAudioFilter = new GammatonFilter(fileName);
-	beamForm = new BeamFormer(fileName);
 
-	rawAudio = new float[(frameSamples * nMics)];
-	oldtime = 0;
 
-	for (int i = 0; i < interpellateNSamples * 2; i++) {
-		std::vector<double> tempvector;
-		for (int j = 0; j < nBands; j++) {
-			tempvector.push_back(0);
-		}
-		highResolutionAudioMap.push_back(tempvector);
-	}
 
-	outAudioMap = new yarp::sig::Matrix(nBands, interpellateNSamples * 2);
-	outGammaToneFilteredAudioMap = new yarp::sig::Matrix(nBands*2, frameSamples);
 
-	createMemoryMappedFile();
 
 }
 
@@ -75,7 +55,7 @@ AudioPreprocesserModule::~AudioPreprocesserModule()
 
 bool AudioPreprocesserModule::configure(yarp::os::ResourceFinder &rf)
 {
-
+    yInfo("Configuring the module");
 	inPort = new yarp::os::BufferedPort<yarp::sig::Sound>();
 	//inPort = new yarp::os::BufferedPort<audio::Sound>();
 	inPort->open("/iCubAudioAttention/Preprocesser:i");
@@ -110,14 +90,41 @@ bool AudioPreprocesserModule::configure(yarp::os::ResourceFinder &rf)
 		configFile.clear();
 	}
 
-  /* create the thread and pass pointers to the module parameters */
+   	//Set the file which the module uses to grab the config information
+    yInfo("loading configuration file");
+	fileName = "../../src/Configuration/loadFile.xml";
+	//calls the parser and the config file to configure the needed variables in this class
+	loadFile();
+    yInfo("file successfully load");
+    
+    //preparing gammatonFilter and beamForming
+	gammatonAudioFilter = new GammatonFilter(fileName);
+	beamForm = new BeamFormer(fileName);
+
+    // preparing other memory structures
+    rawAudio = new float[(frameSamples * nMics)];
+	oldtime = 0;
+
+	for (int i = 0; i < interpellateNSamples * 2; i++) {
+		std::vector<double> tempvector;
+		for (int j = 0; j < nBands; j++) {
+			tempvector.push_back(0);
+		}
+		highResolutionAudioMap.push_back(tempvector);
+	}
+
+	outAudioMap = new yarp::sig::Matrix(nBands, interpellateNSamples * 2);
+	outGammaToneFilteredAudioMap = new yarp::sig::Matrix(nBands*2, frameSamples);
+	createMemoryMappedFile();
+    
+    /* create the thread and pass pointers to the module parameters */
 	apr = new AudioPreprocesserRatethread(robotName, configFile);
 	apr->setName(getName().c_str());
-  //rThread->setInputPortName(inputPortName.c_str());
-
-  /* now start the thread to do the work */
-  //apr->start(); // this calls threadInit() and it if returns true, it then calls run()
-
+    //rThread->setInputPortName(inputPortName.c_str());
+    
+    /* now start the thread to do the work */
+    //apr->start(); // this calls threadInit() and it if returns true, it then calls run()
+    
 	return true;
 }
 
@@ -140,7 +147,6 @@ bool AudioPreprocesserModule::updateModule()
 		printf("[WARN] Too Slow\n");
 	}
 
-
 	int row = 0;
 	for (int col = 0 ; col < frameSamples; col++) {
 		yarp::os::NetInt32 temp_c = (yarp::os::NetInt32) s->get(col, 0);
@@ -148,13 +154,8 @@ bool AudioPreprocesserModule::updateModule()
 		rawAudio[row]   = (float) temp_c / normDivid;
 		rawAudio[row + 1]	= (float) temp_d / normDivid;
 		//printf("%d   %f",temp_c,rawAudio[row]);
-
 		row += 2;
-
 	}
-
-
-
 
 	memoryMapperRawAudio();
 
@@ -230,22 +231,58 @@ void AudioPreprocesserModule::createMemoryMappedFile()
 
 void AudioPreprocesserModule::loadFile()
 {
-
+    yarp::os::ResourceFinder rf;
+    int argc;
+    char** argv;
+    yInfo("Resource Finder looks into %s", configFile.c_str());
+    rf.setDefaultConfigFile(configFile.c_str());
+    rf.setDefaultContext("iCubAudioAttention");
+    rf.setVerbose(true);
+    rf.configure(argc, argv);
 	ConfigParser *confPars;
 	try {
 		confPars = ConfigParser::getInstance(fileName);
 		Config pars = (confPars->getConfig("default"));
-
 		frameSamples = pars.getFrameSamples();
-
 		nBands = pars.getNBands();
 		nMics = pars.getNMics();
 		interpellateNSamples = pars.getInterpellateNSamples();
 		totalBeams = pars.getNBeamsPerHemifield() * 2 + 1;
-		printf("total beams = %d\n",totalBeams);
+
+        int _frameSamples  = rf.check("frameSamples", 
+                           Value("4098"), 
+                           "frame samples (int)").asInt();
+        int _nBands  = rf.check("nBands", 
+                           Value("128"), 
+                           "numberBands (int)").asInt();
+        int _nMics  = rf.check("nMics", 
+                           Value("2"), 
+                           "number mics (int)").asInt();
+        int _interpellateNSamples  = rf.check("interpellateNSamples", 
+                           Value("180"), 
+                           "interpellate N samples (int)").asInt();
+        double _micDistance = rf.check("micDistance", 
+                           Value("0.145"), 
+                           "micDistance (double)").asDouble();
+        int _C = rf.check("C", 
+                           Value("338"), 
+                           "C speed of sound (int)").asInt();
+        int _samplingRate = rf.check("samplingRate", 
+                           Value("48000"), 
+                           "sampling rate (int)").asInt();
+        
+        int _nBeamsPerHemi  = (int)((_micDistance / _C) * _samplingRate) - 1;
+        yInfo("_beamsPerHemi = %f / %d * %d", _micDistance, _C, _samplingRate);
+        int _totalBeams = _nBeamsPerHemi * 2 + 1;
+        yInfo("frameSamples = %d, %d", frameSamples, _frameSamples);
+        yInfo("nBands = %d, %d", nBands, nBands);
+        yInfo("nMics = %d, %d", nMics, _nMics);
+        yInfo("interpellateNSamples = %d, %d", interpellateNSamples, interpellateNSamples);
+		yInfo("total beams = %d, %d",totalBeams, _totalBeams);
+        Time::delay(5.0);
 	}
 	catch (int a) {
-
+        yError("Error in the loading of file");
 	}
 
 

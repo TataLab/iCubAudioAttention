@@ -12,6 +12,9 @@ int main(int argc, char * argv[])
 
 
     yarp::os::ResourceFinder rf;
+    rf.setVerbose(true);
+    rf.setDefaultConfigFile("cameraTest.ini");    //overridden by --from parameter
+    rf.setDefaultContext("morphoGenApp");    //overridden by --context parameter
     rf.configure(argc, argv);
     rf.setVerbose(true);
     std::cout << "[INFO] Configuring and starting module. \n";
