@@ -30,7 +30,8 @@ using namespace yarp::os;
 
 AudioPreprocesserModule::AudioPreprocesserModule()
 {
-	//Colouring to match the colour code of yarp
+    yDebug("AudioProcesserModule");
+    //Colouring to match the colour code of yarp
 	myerror = "\033[0;31m";
 	myinfo = "\033[0;32m";
 	mywarn = "\033[0;33m";
@@ -40,8 +41,9 @@ AudioPreprocesserModule::AudioPreprocesserModule()
 	fileName = "../../src/Configuration/loadFile.xml";
 	//calls the parser and the config file to configure the needed variables in this class
 	loadFile();
+    yInfo("file successfully load");
 
-	//
+	//preparing gammatonFilter
 	gammatonAudioFilter = new GammatonFilter(fileName);
 	beamForm = new BeamFormer(fileName);
 
