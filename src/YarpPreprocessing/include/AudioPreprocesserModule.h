@@ -24,7 +24,7 @@
 #define _AUDIO_PREPROCESSER_MODULE_H_
 
 #include "AudioPreprocesserRatethread.h"
-#include "gammatonFilter.h"
+#include "gammatoneFilter.h"
 #include "beamFormer.h"
 
 #include <yarp/os/RFModule.h>
@@ -105,7 +105,7 @@ private:
 	*	memoryMapperRawAudio
 	*	Taking the Audio data
 	*/
-	void memoryMapperGammaToneFilteredAudio(const std::vector<float*>  gammatonAudio);
+	void memoryMapperGammaToneFilteredAudio(const std::vector<float*>  gammatoneAudio);
 
 	/**
 	*	sendAudioMap
@@ -115,11 +115,11 @@ private:
 	void sendAudioMap();
 
 	/**
-	*	sendGammatonFilteredAudio
+	*	sendGammatoneFilteredAudio
 	*	Function used to send audio after its pass though the gammaton filter.
-	*	The audio is held in outGammatonFilteredAudio matrix and is sent though port gammatonFilteredAudioPort.
+	*	The audio is held in outGammatoneFilteredAudio matrix and is sent though port GammatoneFilteredAudioPort.
 	*/
-	void sendGammatonFilteredAudio(const std::vector<float*> &gammatonAudio);
+	void sendGammatoneFilteredAudio(const std::vector<float*> &gammatoneAudio);
 
 	/**
 	* 	sendBeamFormedAudio
@@ -174,7 +174,7 @@ private:
 	int totalBeams;
 	int nMics;
 
-	GammatonFilter *gammatonAudioFilter;
+	GammatoneFilter *gammatoneAudioFilter;
 	BeamFormer *beamForm;
 
 

@@ -20,7 +20,7 @@
 #ifndef _BEAM_FORMER_H_
 #define _BEAM_FORMER_H_
 
-#include "gammatonFilter.h"
+#include "gammatoneFilter.h"
 #include "../../Configuration/ConfigParser.h"
 
 #include <string>

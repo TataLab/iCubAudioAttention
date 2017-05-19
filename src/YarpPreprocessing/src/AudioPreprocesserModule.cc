@@ -47,7 +47,7 @@ AudioPreprocesserModule::AudioPreprocesserModule()
 
 AudioPreprocesserModule::~AudioPreprocesserModule()
 {
-	delete gammatonAudioFilter;
+	delete gammatoneAudioFilter;
 	delete beamForm;
 	delete rawAudio;
 
@@ -97,8 +97,8 @@ bool AudioPreprocesserModule::configure(yarp::os::ResourceFinder &rf)
 	loadFile();
     yInfo("file successfully load");
     
-    //preparing gammatonFilter and beamForming
-	gammatonAudioFilter = new GammatonFilter(fileName);
+    //preparing GammatoneFilter and beamForming
+	gammatoneAudioFilter = new GammatoneFilter(fileName);
 	beamForm = new BeamFormer(fileName);
 
     // preparing other memory structures
@@ -159,11 +159,11 @@ bool AudioPreprocesserModule::updateModule()
 
 	memoryMapperRawAudio();
 
-	gammatonAudioFilter->inputAudio(rawAudio);
-	beamForm->inputAudio(gammatonAudioFilter->getFilteredAudio());
+	gammatoneAudioFilter->inputAudio(rawAudio);
+	beamForm->inputAudio(gammatoneAudioFilter->getFilteredAudio());
 
-	memoryMapperGammaToneFilteredAudio(gammatonAudioFilter->getFilteredAudio());
-	sendGammatonFilteredAudio(gammatonAudioFilter->getFilteredAudio());
+	memoryMapperGammaToneFilteredAudio(gammatoneAudioFilter->getFilteredAudio());
+	sendGammatoneFilteredAudio(gammatoneAudioFilter->getFilteredAudio());
 	outGammaToneFilteredAudioPort->setEnvelope(ts);
 	outGammaToneFilteredAudioPort->write(*outGammaToneFilteredAudioMap);
 
@@ -322,13 +322,13 @@ void AudioPreprocesserModule::memoryMapperRawAudio()
 }
 
 
-void AudioPreprocesserModule::memoryMapperGammaToneFilteredAudio(const std::vector<float*> gammatonAudio){
+void AudioPreprocesserModule::memoryMapperGammaToneFilteredAudio(const std::vector<float*> gammatoneAudio){
 
 	for (int i = 0; i < nBands; i++)
 	{
 		for (int j = 0; j < frameSamples; j++)
 		{
-			mappedGammaToneFilteredAduioData[(i*frameSamples)+j] = (double)gammatonAudio[i][j];
+			mappedGammaToneFilteredAduioData[(i*frameSamples)+j] = (double)gammatoneAudio[i][j];
 		}
 	}
 	int visted = (nBands*frameSamples);
@@ -336,20 +336,20 @@ void AudioPreprocesserModule::memoryMapperGammaToneFilteredAudio(const std::vect
 	{
 		for (int j = 0; j < frameSamples; j++)
 		{
-			mappedGammaToneFilteredAduioData[(i*frameSamples)+j+visted] = (double)gammatonAudio[i + nBands][j];
+			mappedGammaToneFilteredAduioData[(i*frameSamples)+j+visted] = (double)gammatoneAudio[i + nBands][j];
 		}
 	}
 
 
 }
 
-void AudioPreprocesserModule::sendGammatonFilteredAudio(const std::vector<float*> &gammatonAudio){
+void AudioPreprocesserModule::sendGammatoneFilteredAudio(const std::vector<float*> &gammatoneAudio){
 	for (int i = 0; i < nBands; i++)
 	{
 		yarp::sig::Vector tempV(frameSamples);
 		for (int j = 0; j < frameSamples; j++)
 		{
-			tempV[j] = gammatonAudio[i][j];
+			tempV[j] = gammatoneAudio[i][j];
 		}
 		outGammaToneFilteredAudioMap->setRow(i, tempV);
 	}
@@ -358,7 +358,7 @@ void AudioPreprocesserModule::sendGammatonFilteredAudio(const std::vector<float*
 		yarp::sig::Vector tempV(frameSamples);
 		for (int j = 0; j < frameSamples; j++)
 		{
-			tempV[j] = gammatonAudio[i+nBands][j];
+			tempV[j] = gammatoneAudio[i+nBands][j];
 		}
 		outGammaToneFilteredAudioMap->setRow(i+nBands, tempV);
 	}
