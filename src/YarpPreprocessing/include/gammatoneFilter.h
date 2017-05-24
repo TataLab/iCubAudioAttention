@@ -30,16 +30,8 @@
 #define M_PI               3.14159265358979323846
 #endif
 
-
-
-#include "../../Configuration/ConfigParser.h"
-
 #include <vector>
-#include <string>
-#include <stdio.h>
 #include <math.h>
-#include <string>
-#include <thread>
 #include <fstream>
 
 class GammatoneFilter {
@@ -50,8 +42,16 @@ public:
 	*	Calls loadFile()
 	*	Calls makeErbCFs()
 	*	Pre-allocates the data structures that will hold the inputAudio as well as the filteredAudio
+	*	@param SampleRate
+	*	@param lowCF
+	*	@param highCF
+	*	@param numBands
+	*	@param nSamples
+	*	@param numMics
+	*	@param al
+	*	@param hr
 	*/
-	GammatoneFilter(std::string file);
+	GammatoneFilter(int SampleRate, int lowCF, int highCF, int numBands, int nSamples, int numMics, bool al, bool hr);
 	
 	/**
 	*	 Default De-constructor
@@ -59,32 +59,36 @@ public:
 	~GammatoneFilter();
 
 	/**
-	*	inputAudio
-	*	Sets the audio file that is passed into this file as the audio to be filtered
-	*	TODO make an Error check function that will check if the input audio is valid
-	*	Calls generatFilter()
-	*	@param  inAudio An array which contains audio data. The left channel are all the even index's and right channels are all the odd indexs.
-	*/
-	void inputAudio(float *inAudio);
-	
-	/**
 	*	getFilteredAudio
 	*	Return a vector containing the filtered audio
 	*	@return      The a vector of arrays in which the first half of the vector is left channels the second half of the vector is the right channel
 	*/
 	std::vector< float* > getFilteredAudio();
 
-
-
+	/**
+	*	gammatoneFilterBank
+	*	Filters the passed in audio file thorugh the gammatone filter bank.
+	*	@param  inAudio An array which contains audio data. The left channel are all the even index's and right channels are all the odd indexs.
+	*/
 	void gammatoneFilterBank(float *inAudio);
+
+	/**
+	*	reverseFilterBank
+	*	Filters the passed in audio file thorugh the gammatone filter bank.
+	*	@param  inAudio An array which contains audio data. The left channel are all the even index's and right channels are all the odd indexs.
+	*/
+	float* reverseFilterBank(std::vector< float* >& inAudio);
+
+	/**
+	*	reverseFilterBank
+	*	Filters the passed in audio file thorugh the gammatone filter bank.
+	*	@param  inAudio An array which contains audio data. The left channel are all the even index's and right channels are all the odd indexs.
+	*	@param  maskWeights
+	*/
+	float* reverseFilterBank(std::vector< float* >& inAudio, std::vector< double > maskWeights);
 
 
 private:
-	/**
-	*	 Generates the gammaton filter.
-	*	@param MicNumber which microphone is being used to generate the current filter.
-	*/
-	void generateFilter(int MicNumber);
 
 	/**
 	*	makeErbCFs
@@ -97,12 +101,6 @@ private:
 	*	Fills the vector called cfs using the Liner spaced centered frequencies.
 	*/
 	void makeLinerCFs();
-	/**
-	*	loadFile
-	*	Accesses the loadFile.xml that is found in the Configuration directory
-	*	load all required parameters for the gammatone filter bank.
-	*/
-	void loadFile();
 
 	/**
 	*	HzToErbRate
@@ -128,6 +126,8 @@ private:
 	int nBands;
 	std::vector< float* > filteredAudio;						//filtered audio 
 
+	std::vector< float* > inputSplitAudio;
+
 	const float *inputSignal;									//input audio
 
 	int samplingRate;											//Sampling frequency is calculated in Hz
@@ -135,8 +135,6 @@ private:
 	std::vector<double> cfs;									//Perimeters to calculate the center frequencies that the gammaton filter bank will use
 	int lowerCF;												//Lowest center frequency to use in the gammaton filter
 	int higherCF;												//Highest center frequency to use in the gammaton filter
-
-	std::string fileName;										//Path and name of the file containing all defeat perimeters
 
 	int frameSamples;											//The number of samples per audio frame
 	bool align;											

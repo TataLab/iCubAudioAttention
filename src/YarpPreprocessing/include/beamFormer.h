@@ -23,9 +23,7 @@
 #include "gammatoneFilter.h"
 #include "../../Configuration/ConfigParser.h"
 
-#include <string>
 #include <iostream>
-#include <fstream>
 #include <vector>
 #include <thread>
 
@@ -38,7 +36,7 @@ public:
 	*	Pre-allocates the data structures that will hold the inputAudio as well as the filteredAudio
 	*	@param file A string that contains the filename location of the initialization file
 	*/
-	BeamFormer(std::string file);
+	BeamFormer(int numBands, int nSamples, int numMics, int getNBeamsPerHemifield);
 
 	/**
 	*	 Default De-constructor
@@ -70,13 +68,6 @@ public:
 private:
 
 	/**
-	*	loadFile
-	*	Accesses the loadFile.xml that is found in the root directory of this
-	*	module and load all required parameters for the beam former.
-	*/
-	void loadFile();
-
-	/**
 	*	 reducedAudioMultiThreadingLoop
 	*	 A helper function used with the C++11 multithreading to create the reducedAudioMap.
 	*	 @param i .
@@ -99,7 +90,6 @@ private:
 	int frameSamples;														//The number of samples in each frame of audio data
 	int nBands;																//The maximum number of bands for the given spacing of the mics
 
-	std::string fileName;													//The path and file name of the .xml configuration file
 	int getNBeamsPerHemifield;												//The maximum number of bands in each hemifield
 	int totalBeams;															//Total number of beams that is used
 

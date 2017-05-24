@@ -201,6 +201,9 @@ private:
 	int mappedGammaToneFilteredAduioFileID;
 	double *mappedGammaToneFilteredAduioData;
 
+
+	int samplingRate;
+
 };
 
 #endif

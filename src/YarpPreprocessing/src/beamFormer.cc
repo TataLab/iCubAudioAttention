@@ -22,12 +22,9 @@
 int myMod(int a, int b) {
 	return  a >= 0 ? a % b : (a % b) + b;
 }
-BeamFormer::BeamFormer(std::string file)
+BeamFormer::BeamFormer(int numBands, int nSamples, int numMics, int nBeamsHemifield):
+nMics(numMics), frameSamples(nSamples), nBands(numBands), getNBeamsPerHemifield(nBeamsHemifield), totalBeams((nBeamsHemifield*2) + 1)
 {
-	//Set the file which the module uses to grab the config information in this case the file name is passed into the function as input
-	fileName = file;
-	//calls the parser and the config file to configure the needed variables in this class
-	loadFile();
 
 	//Allocating the required vectors to create the beamFormed audio 
 	for (int i = 0; i < totalBeams; i++)
@@ -126,27 +123,6 @@ void BeamFormer::reducedAudioMultiThreadingLoop(int i) {
 			reducedBeamFormedAudioVector[i][j] += pow((inputSignal[j][k] + inputSignal[j + nBands][myMod(k + ((getNBeamsPerHemifield-1) - i), frameSamples)]), 2);
 		}
 		reducedBeamFormedAudioVector[i][j] = sqrt((static_cast<double>(1) / frameSamples) * (reducedBeamFormedAudioVector[i][j]));
-	}
-
-}
-
-void BeamFormer::loadFile()
-{
-
-	ConfigParser *confPars;
-	try {
-		confPars = ConfigParser::getInstance(fileName);
-		Config pars = (confPars->getConfig("default"));
-		nBands = pars.getNBands();
-		frameSamples = pars.getFrameSamples();
-		nMics = pars.getNMics();
-		getNBeamsPerHemifield = pars.getNBeamsPerHemifield();
-		printf("nBeamsPerHemifield = %d",getNBeamsPerHemifield);
-		totalBeams =getNBeamsPerHemifield*2+1;
-	}
-	catch (int a) {
-
-		//TODO try diffrent paths to the file (Dont know if this is the best way to do this)
 	}
 
 }

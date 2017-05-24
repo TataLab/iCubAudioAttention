@@ -68,7 +68,7 @@ bool AudioPreprocesserModule::configure(yarp::os::ResourceFinder &rf)
 
 	if (yarp::os::Network::exists("/iCubAudioAttention/Preprocesser:i"))
 	{
-		if (yarp::os::Network::connect("/audioGrabber/sender", "/iCubAudioAttention/Preprocesser:i") == false)
+		if (yarp::os::Network::connect("/sender", "/iCubAudioAttention/Preprocesser:i") == false)
 		{
 			std::cout << myerror << "[ERROR]" << myreset << " Could not make connection to /sender. Exiting.\n";
 			yError("Could not make connection to /sender. Exiting");
@@ -80,8 +80,8 @@ bool AudioPreprocesserModule::configure(yarp::os::ResourceFinder &rf)
 		return false;
 	}
 
-	if (rf.check("config")) {
-		configFile=rf.findFile(rf.find("config").asString().c_str());
+	if (rf.check("audioConfig")) {
+		configFile=rf.findFile(rf.find("audioConfig").asString().c_str());
 		if (configFile=="") {
 			return false;
 		}
@@ -98,8 +98,8 @@ bool AudioPreprocesserModule::configure(yarp::os::ResourceFinder &rf)
     yInfo("file successfully load");
     
     //preparing GammatoneFilter and beamForming
-	gammatoneAudioFilter = new GammatoneFilter(fileName);
-	beamForm = new BeamFormer(fileName);
+	gammatoneAudioFilter = new GammatoneFilter(samplingRate, 5, 100, nBands, frameSamples, nMics, false, false);
+	beamForm = new BeamFormer(nBands, frameSamples, nMics, 20);
 
     // preparing other memory structures
     rawAudio = new float[(frameSamples * nMics)];
@@ -159,7 +159,7 @@ bool AudioPreprocesserModule::updateModule()
 
 	memoryMapperRawAudio();
 
-	gammatoneAudioFilter->inputAudio(rawAudio);
+	gammatoneAudioFilter->gammatoneFilterBank(rawAudio);
 	beamForm->inputAudio(gammatoneAudioFilter->getFilteredAudio());
 
 	memoryMapperGammaToneFilteredAudio(gammatoneAudioFilter->getFilteredAudio());
@@ -235,8 +235,8 @@ void AudioPreprocesserModule::loadFile()
     int argc;
     char** argv;
     yInfo("Resource Finder looks into %s", configFile.c_str());
-    rf.setDefaultConfigFile(configFile.c_str());
-    rf.setDefaultContext("iCubAudioAttention");
+    rf.setDefaultConfigFile("../../app/iCubAudioAttention/conf/audioConfig.ini");
+    rf.setDefaultContext("iCubAudioAttention/conf");
     rf.setVerbose(true);
     rf.configure(argc, argv);
 	ConfigParser *confPars;
@@ -250,7 +250,7 @@ void AudioPreprocesserModule::loadFile()
 		totalBeams = pars.getNBeamsPerHemifield() * 2 + 1;
 
         int _frameSamples  = rf.check("frameSamples", 
-                           Value("4098"), 
+                           Value("4096"), 
                            "frame samples (int)").asInt();
         int _nBands  = rf.check("nBands", 
                            Value("128"), 
@@ -267,17 +267,17 @@ void AudioPreprocesserModule::loadFile()
         int _C = rf.check("C", 
                            Value("338"), 
                            "C speed of sound (int)").asInt();
-        int _samplingRate = rf.check("samplingRate", 
+        samplingRate = rf.check("samplingRate", 
                            Value("48000"), 
                            "sampling rate (int)").asInt();
         
-        int _nBeamsPerHemi  = (int)((_micDistance / _C) * _samplingRate) - 1;
-        yInfo("_beamsPerHemi = %f / %d * %d", _micDistance, _C, _samplingRate);
+        int _nBeamsPerHemi  = (int)((_micDistance / _C) * samplingRate) - 1;
+        yInfo("_beamsPerHemi = %f / %d * %d", _micDistance, _C, samplingRate);
         int _totalBeams = _nBeamsPerHemi * 2 + 1;
         yInfo("frameSamples = %d, %d", frameSamples, _frameSamples);
-        yInfo("nBands = %d, %d", nBands, nBands);
+        yInfo("nBands = %d, %d", nBands, _nBands);
         yInfo("nMics = %d, %d", nMics, _nMics);
-        yInfo("interpellateNSamples = %d, %d", interpellateNSamples, interpellateNSamples);
+        yInfo("interpellateNSamples = %d, %d", interpellateNSamples, _interpellateNSamples);
 		yInfo("total beams = %d, %d",totalBeams, _totalBeams);
         Time::delay(5.0);
 	}
