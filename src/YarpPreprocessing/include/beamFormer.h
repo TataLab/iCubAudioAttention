@@ -21,7 +21,7 @@
 #define _BEAM_FORMER_H_
 
 #include "gammatoneFilter.h"
-#include "../../Configuration/ConfigParser.h"
+
 
 #include <iostream>
 #include <vector>
@@ -59,7 +59,7 @@ public:
 	*/
 	std::vector<std::vector<float*> > getBeamAudio();
 	/**
-	*	 getBeamAudio
+	*	 getReducedBeamAudio
 	*	 Function that will run multithread function that will calculate the Beam formed Audio from information that is stored in inputSignal.
 	*	 This Function then compresses the data in the time frame by running RMS(root mean square).
 	*	 @return Compressed beam formed data that is stored in vector of size(totalBeams) containing a vector of size(number of Bands) that contains the average power in each frame.

@@ -34,6 +34,8 @@ double myABS(double a) {
 
 BayesianModule::BayesianModule()
 {
+
+
     //Set the file which the module uses to grab the config information
     this->fileName = "../../src/Configuration/loadFile.xml";
     //calls the parser and the config file to configure the needed variables in this class
@@ -133,7 +135,17 @@ bool BayesianModule::configure(yarp::os::ResourceFinder &rf)
             return false;
         }
     }
-    
+        
+    if (rf.check("audioConfig")) {
+        configFile=rf.findFile(rf.find("audioConfig").asString().c_str());
+        if (configFile=="") {
+            return false;
+        }
+    }
+    else {
+        configFile.clear();
+    }
+        
     //get the noise map prior that was pre-recorded or bail out
     FILE *fidNoise = fopen("./noiseMap.dat", "r"); //open the previously recorded noiseMap prior
 	if(fidNoise==NULL){
@@ -491,6 +503,35 @@ std::vector <std::vector <double>> BayesianModule::getShortProbabilityMap()
 
 void BayesianModule::loadFile()
 {
+    yarp::os::ResourceFinder rf;
+    int argc;
+    char** argv;
+    yInfo("Resource Finder looks into %s", configFile.c_str());
+    rf.setDefaultConfigFile("../../app/iCubAudioAttention/conf/audioConfig.ini");
+    rf.setDefaultContext("iCubAudioAttention/conf");
+    rf.setVerbose(true);
+    rf.configure(argc, argv);
+
+    int _nBands  = rf.check("nBands", 
+                           Value("128"), 
+                           "numberBands (int)").asInt();
+
+    int _interpellateNSamples  = rf.check("interpellateNSamples", 
+                           Value("180"), 
+                           "interpellate N samples (int)").asInt();
+
+    int _shortTimeFrame = rf.check("shortBufferSize", 
+                           Value("10"), 
+                           "short Buffer Size (int)").asInt();
+
+    int _mediumTimeFrame = rf.check("mediumBufferSize", 
+                           Value("100"), 
+                           "medium Buffer Size (int)").asInt();
+
+    int _longTimeFrame = rf.check("longBufferSize", 
+                           Value("360"), 
+                           "long Buffer Size (int)").asInt();
+
     //Creates or if previously created used the create Configuration Parser, this is used to read the config.xml file
     ConfigParser *confPars;
     //Give the parser the path to the .xml file

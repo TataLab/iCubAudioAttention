@@ -219,6 +219,8 @@ private:
 
     int noiseBufferMap;
     bool first;
+
+    std::string configFile;                  // name of the configFile that the resource Finder will seek
 };
 
 #endif
