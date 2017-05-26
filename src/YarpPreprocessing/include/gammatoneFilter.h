@@ -18,7 +18,7 @@
 */
 
 /**
-*	This function will create a filter bank which brakes the auditory signal into
+*	This function will filter given audio input using a gammatone filter bank into any number of frequency bands.
 */
 
 #ifndef _GAMMATONE_FILTER_H_
@@ -42,14 +42,14 @@ public:
 	*	Calls loadFile()
 	*	Calls makeErbCFs()
 	*	Pre-allocates the data structures that will hold the inputAudio as well as the filteredAudio
-	*	@param SampleRate
-	*	@param lowCF
-	*	@param highCF
-	*	@param numBands
-	*	@param nSamples
-	*	@param numMics
-	*	@param al
-	*	@param hr
+	*	@param 	SampleRate The sampling rate at which the audio is captured.
+	*	@param 	lowCF The lower frequency bound that the gammatone filter bank will use.
+	*	@param 	highCF The highest frequency bound that the gammatone filter bank will use.
+	*	@param 	numBands The number of bands that should be created by the filter bank.
+	*	@param 	nSamples The number of recorded samples that are in the current audio frame.
+	*	@param 	numMics The number of microphones used to record the audio
+	*	@param 	al
+	*	@param 	hr
 	*/
 	GammatoneFilter(int SampleRate, int lowCF, int highCF, int numBands, int nSamples, int numMics, bool al, bool hr);
 	
@@ -61,28 +61,28 @@ public:
 	/**
 	*	getFilteredAudio
 	*	Return a vector containing the filtered audio
-	*	@return      The a vector of arrays in which the first half of the vector is left channels the second half of the vector is the right channel
+	*	@return  The a vector of arrays in which the first half of the vector is left channels the second half of the vector is the right channel
 	*/
 	std::vector< float* > getFilteredAudio();
 
 	/**
 	*	gammatoneFilterBank
-	*	Filters the passed in audio file thorugh the gammatone filter bank.
-	*	@param  inAudio An array which contains audio data. The left channel are all the even index's and right channels are all the odd indexs.
+	*	Filters the passed in audio through the gammatone filter bank using the parameters given in the constructor.
+	*	@param 	inAudio An array which contains audio data. The left channel are all the even index's and right channels are all the odd index's.
 	*/
 	void gammatoneFilterBank(float *inAudio);
 
 	/**
 	*	reverseFilterBank
-	*	Filters the passed in audio file thorugh the gammatone filter bank.
-	*	@param  inAudio An array which contains audio data. The left channel are all the even index's and right channels are all the odd indexs.
+	*	Takes a vector of gammatone filtered audio and reverses the filter bank returning the audio into its previous state.
+	*	@param  inAudio An array which contains audio data. The first n values correspond to .
 	*/
 	float* reverseFilterBank(std::vector< float* >& inAudio);
 
 	/**
 	*	reverseFilterBank
-	*	Filters the passed in audio file thorugh the gammatone filter bank.
-	*	@param  inAudio An array which contains audio data. The left channel are all the even index's and right channels are all the odd indexs.
+	*	Takes a vector of gammatone filtered audio and a given mask and reverses the filter bank using the mask weight to recreate the audio stream.
+	*	@param  inAudio An array which contains audio data. The left channel are all the even index's and right channels are all the odd index's.
 	*	@param  maskWeights
 	*/
 	float* reverseFilterBank(std::vector< float* >& inAudio, std::vector< double > maskWeights);
@@ -105,7 +105,7 @@ private:
 	/**
 	*	HzToErbRate
 	*	Takes a Hz input and translate it into ERB
-	*	@param The Hz frequency to be converted. 
+	*	@param 	The Hz frequency to be converted. 
 	*	@return The converted Erb centered frequency.
 	*/
 	double HzToErbRate(double Hz);
@@ -113,11 +113,19 @@ private:
 	/**
 	*	ErbRateToHz
 	*	Takes a Erb input and translate it into Hz
-	*	@param Erb
-	*	@return Hz 
+	*	@param 	Erb input to be converted.
+	*	@return The converted Hz frequency. 
 	*/
 	double ErbRateToHz(double Erb);
 
+	/**
+	*	singleFilter
+	*	Function that takes any input steam and applies a gammatone filter centered at a given center frequency. 
+	*	This is the "meat" of this class.
+	*	@param	input Currently audio stream that is being processed.
+	*	@param	centerFreqency The center frequency around which the gammatone filter will be applied.
+	*	@return The gammatone filtered audio. 
+	*/
 	float* singleFilter(float* input, double centerFreqency);
 
 
@@ -126,15 +134,15 @@ private:
 	int nBands;
 	std::vector< float* > filteredAudio;						//filtered audio 
 
-	std::vector< float* > inputSplitAudio;
+	std::vector< float* > inputSplitAudio;						//Splits the input 
 
 	const float *inputSignal;									//input audio
 
 	int samplingRate;											//Sampling frequency is calculated in Hz
 
-	std::vector<double> cfs;									//Perimeters to calculate the center frequencies that the gammaton filter bank will use
-	int lowerCF;												//Lowest center frequency to use in the gammaton filter
-	int higherCF;												//Highest center frequency to use in the gammaton filter
+	std::vector<double> cfs;									//Perimeters to calculate the center frequencies that the gammatone filter bank will use
+	int lowerCF;												//Lowest center frequency to use in the gammatone filter
+	int higherCF;												//Highest center frequency to use in the gammatone filter
 
 	int frameSamples;											//The number of samples per audio frame
 	bool align;											

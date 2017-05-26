@@ -53,7 +53,13 @@ nMics(numMics), frameSamples(nSamples), nBands(numBands), getNBeamsPerHemifield(
 
 BeamFormer::~BeamFormer()
 {
-	//This function is intentionally left blank. Nothing needs to be de-allocated as vectors were used.
+	for(int i = 0; i < inputSignal.size();i++){
+		delete[] inputSignal[i];
+	}
+	for(int i = 0; i < beamFormedAudioVector.size();i++){
+		for(int j = 0; j < beamFormedAudioVector[i].size();j++)
+		delete[] beamFormedAudioVector[i][j];
+	}
 }
 
 void BeamFormer::inputAudio(std::vector< float* > inAudio)
@@ -120,7 +126,8 @@ void BeamFormer::reducedAudioMultiThreadingLoop(int i) {
 	{
 		for (int k = 0; k < frameSamples; k++)
 		{
-			reducedBeamFormedAudioVector[i][j] += pow((inputSignal[j][k] + inputSignal[j + nBands][myMod(k + ((getNBeamsPerHemifield-1) - i), frameSamples)]), 2);
+			reducedBeamFormedAudioVector[i][j] += (inputSignal[j][k] + inputSignal[j + nBands][myMod(k + ((getNBeamsPerHemifield-1) - i), frameSamples)]);
+			reducedBeamFormedAudioVector[i][j] *= reducedBeamFormedAudioVector[i][j];
 		}
 		reducedBeamFormedAudioVector[i][j] = sqrt((static_cast<double>(1) / frameSamples) * (reducedBeamFormedAudioVector[i][j]));
 	}

@@ -102,7 +102,7 @@ float* GammatoneFilter::reverseFilterBank(std::vector< float* >& inAudio)
 			for(int j=0; j<frameSamples; j++)
 				result[(frameSamples-j-1)*nMics+i] += rereverse[j];
 
-				delete[] rereverse;
+			delete[] rereverse;
 		}
 	}
 	return result;
@@ -133,7 +133,7 @@ float* GammatoneFilter::reverseFilterBank(std::vector< float* >& inAudio,  std::
 			for(int j=0; j<frameSamples; j++)
 				result[(frameSamples-j-1)*nMics+i] += rereverse[j] * maskWeights[ch];
 
-				delete[] rereverse;
+			delete[] rereverse;
 		}
 	}
 	return result;
