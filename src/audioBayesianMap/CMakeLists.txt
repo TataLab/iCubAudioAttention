@@ -36,7 +36,7 @@ add_definitions(${YARP_DEFINES})
 include(YarpInstallationHelpers)
 
 
-SET(KEYWORD "yarpBayesianMap")
+SET(KEYWORD "audioBayesianMap")
 PROJECT(${KEYWORD})
 
 set(ICUB_CONTRIB_DIRS $ENV{ICUB_DIR}/include)

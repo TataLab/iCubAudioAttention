@@ -1,7 +1,7 @@
 #include <yarp/os/all.h>
 #include <yarp/dev/all.h>
 #include <iostream>
-#include "BayesianModule.h"
+#include "audioBayesianModule.h"
 
 using namespace yarp::os;
 using namespace yarp::dev;

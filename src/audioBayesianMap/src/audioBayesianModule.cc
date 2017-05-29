@@ -18,7 +18,7 @@
 */
 
 
-#include "BayesianModule.h"
+#include "audioBayesianModule.h"
 #include <iostream>
 
 //TO DO:  get this into resource finder

@@ -36,7 +36,7 @@ add_definitions(${YARP_DEFINES})
 include(YarpInstallationHelpers)
 
 
-SET(KEYWORD "yarpPreprocessing")
+SET(KEYWORD "audioPreprocessing")
 PROJECT(${KEYWORD})
 
 set(ICUB_CONTRIB_DIRS $ENV{ICUB_DIR}/include)
