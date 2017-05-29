@@ -82,7 +82,7 @@ private:
 	*	Accesses the loadFile.xml that is found in the root directory of this
 	*	module and load all required parameters for the beam former.
 	*/
-	void loadFile();
+	void loadFile(yarp::os::ResourceFinder &rf);
 
 
 	/**
@@ -205,6 +205,11 @@ private:
 
 
 	int samplingRate;
+	int lowCf;
+	int highCf;
+
+	int longBufferSize;
+	int nBeamsPerHemi;
 
 };
 

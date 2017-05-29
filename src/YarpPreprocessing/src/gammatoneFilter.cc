@@ -225,6 +225,6 @@ float* GammatoneFilter::singleFilter(float* input, double centerFreqency)
 		qsin = coscf * qsin - sincf * oldcs;
 	}
 	
-
+	return filteredAudio;
 }
 

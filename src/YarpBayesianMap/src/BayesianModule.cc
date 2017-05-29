@@ -34,10 +34,22 @@ double myABS(double a) {
 
 BayesianModule::BayesianModule()
 {
+    	
+    
+}
+
+BayesianModule::~BayesianModule()
+{
+
+}
+
+//This sets up the needed input and output ports needed by this module
+bool BayesianModule::configure(yarp::os::ResourceFinder &rf)
+{
     //Set the file which the module uses to grab the config information
     this->fileName = "../../src/Configuration/loadFile.xml";
     //calls the parser and the config file to configure the needed variables in this class
-    loadFile();
+    loadFile(rf);
 
     //Allocating the required vectors for the modules to function properly  
     for (int i = 0; i < nBands; i++)
@@ -61,7 +73,7 @@ BayesianModule::BayesianModule()
         longMap.push_back(tempvector);
     }
    
-   	longProbabilityAngleMap.assign(interpellateNSamples * 2,0);
+    longProbabilityAngleMap.assign(interpellateNSamples * 2,0);
 
     //Allocates the required memory for the yarp matrix that takes the input and output to this module
     inputMatrix = new yarp::sig::Matrix(nBands, interpellateNSamples * 2);
@@ -75,18 +87,6 @@ BayesianModule::BayesianModule()
     noiseBufferMap = 0;
     first = true;
 
-	
-    
-}
-
-BayesianModule::~BayesianModule()
-{
-
-}
-
-//This sets up the needed input and output ports needed by this module
-bool BayesianModule::configure(yarp::os::ResourceFinder &rf)
-{
     printf(" C O N F I G U R I N G\n");
     robotName = rf.check("robot", Value("icub"),"Robot name (string)").asString();
     printf("name of robot is %s\n",robotName.c_str());
@@ -489,16 +489,9 @@ std::vector <std::vector <double>> BayesianModule::getShortProbabilityMap()
     return shortMap;
 }
 
-void BayesianModule::loadFile()
+void BayesianModule::loadFile(yarp::os::ResourceFinder &rf)
 {
-    yarp::os::ResourceFinder rf;
-    int argc;
-    char** argv;
-    yInfo("Resource Finder looks into %s", configFile.c_str());
-    rf.setDefaultConfigFile("../../app/iCubAudioAttention/conf/audioConfig.ini");
-    rf.setDefaultContext("iCubAudioAttention/conf");
-    rf.setVerbose(true);
-    rf.configure(argc, argv);
+    
 
     int _nBands  = rf.check("nBands", 
                            Value("128"), 

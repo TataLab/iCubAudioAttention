@@ -80,26 +80,26 @@ bool AudioPreprocesserModule::configure(yarp::os::ResourceFinder &rf)
 		return false;
 	}
 
-	if (rf.check("audioConfig")) {
-		configFile=rf.findFile(rf.find("audioConfig").asString().c_str());
-		if (configFile=="") {
-			return false;
-		}
-	}
-	else {
-		configFile.clear();
-	}
+	// if (rf.check("audioConfig")) {
+	// 	configFile=rf.findFile(rf.find("audioConfig").asString().c_str());
+	// 	if (configFile=="") {
+	// 		return false;
+	// 	}
+	// }
+	// else {
+	// 	configFile.clear();
+	// }
 
    	//Set the file which the module uses to grab the config information
     yInfo("loading configuration file");
 	fileName = "../../src/Configuration/loadFile.xml";
 	//calls the parser and the config file to configure the needed variables in this class
-	loadFile();
-    yInfo("file successfully load");
+	loadFile(rf);
+    
     
     //preparing GammatoneFilter and beamForming
-	gammatoneAudioFilter = new GammatoneFilter(samplingRate, 5, 100, nBands, frameSamples, nMics, false, false);
-	beamForm = new BeamFormer(nBands, frameSamples, nMics, 20);
+	gammatoneAudioFilter = new GammatoneFilter(samplingRate, lowCf, highCf, nBands, frameSamples, nMics, false, false);
+	beamForm = new BeamFormer(nBands, frameSamples, nMics, nBeamsPerHemi);
 
     // preparing other memory structures
     rawAudio = new float[(frameSamples * nMics)];
@@ -144,7 +144,7 @@ bool AudioPreprocesserModule::updateModule()
 	inPort->getEnvelope(ts);
 
 	if (ts.getCount() != lastframe + 1) {
-		printf("[WARN] Too Slow\n");
+		
 	}
 
 	int row = 0;
@@ -162,13 +162,13 @@ bool AudioPreprocesserModule::updateModule()
 	gammatoneAudioFilter->gammatoneFilterBank(rawAudio);
 	beamForm->inputAudio(gammatoneAudioFilter->getFilteredAudio());
 
-	memoryMapperGammaToneFilteredAudio(gammatoneAudioFilter->getFilteredAudio());
-	sendGammatoneFilteredAudio(gammatoneAudioFilter->getFilteredAudio());
-	outGammaToneFilteredAudioPort->setEnvelope(ts);
-	outGammaToneFilteredAudioPort->write(*outGammaToneFilteredAudioMap);
+	// memoryMapperGammaToneFilteredAudio(gammatoneAudioFilter->getFilteredAudio());
+	// sendGammatoneFilteredAudio(gammatoneAudioFilter->getFilteredAudio());
+	// outGammaToneFilteredAudioPort->setEnvelope(ts);
+	// outGammaToneFilteredAudioPort->write(*outGammaToneFilteredAudioMap);
 
 	reducedBeamFormedAudioVector = beamForm->getReducedBeamAudio();
-
+	yInfo("file successfully load");
 	spineInterp();
 
 	memoryMapper();
@@ -229,16 +229,8 @@ void AudioPreprocesserModule::createMemoryMappedFile()
 	mappedGammaToneFilteredAduioData = (double *)mmap(0, memoryMapGammaToneFilteredAudio*8, PROT_WRITE, MAP_SHARED , mappedGammaToneFilteredAduioFileID, 0);
 }
 
-void AudioPreprocesserModule::loadFile()
+void AudioPreprocesserModule::loadFile(yarp::os::ResourceFinder &rf)
 {
-    yarp::os::ResourceFinder rf;
-    int argc;
-    char** argv;
-    yInfo("Resource Finder looks into %s", configFile.c_str());
-    rf.setDefaultConfigFile("../../app/iCubAudioAttention/conf/audioConfig.ini");
-    rf.setDefaultContext("iCubAudioAttention/conf");
-    rf.setVerbose(true);
-    rf.configure(argc, argv);
 	ConfigParser *confPars;
 	try {
 		confPars = ConfigParser::getInstance(fileName);
@@ -267,19 +259,20 @@ void AudioPreprocesserModule::loadFile()
         int _C = rf.check("C", 
                            Value("338"), 
                            "C speed of sound (int)").asInt();
-        samplingRate = rf.check("samplingRate", 
-                           Value("48000"), 
-                           "sampling rate (int)").asInt();
-        
-        int _nBeamsPerHemi  = (int)((_micDistance / _C) * samplingRate) - 1;
-        yInfo("_beamsPerHemi = %f / %d * %d", _micDistance, _C, samplingRate);
-        int _totalBeams = _nBeamsPerHemi * 2 + 1;
+        samplingRate = rf.find("samplingRate").asInt();
+        lowCf = rf.find("lowCf").asInt();
+		highCf = rf.find("highCf").asInt();
+		longBufferSize = rf.find("longBufferSize").asInt();
+
+        nBeamsPerHemi  = (int)((_micDistance / _C) * samplingRate) - 1;
+        yInfo("_beamsPerHemi %d = %f / %d * %d", nBeamsPerHemi, _micDistance, _C, samplingRate);
+        int _totalBeams = nBeamsPerHemi * 2 + 1;
         yInfo("frameSamples = %d, %d", frameSamples, _frameSamples);
         yInfo("nBands = %d, %d", nBands, _nBands);
         yInfo("nMics = %d, %d", nMics, _nMics);
         yInfo("interpellateNSamples = %d, %d", interpellateNSamples, _interpellateNSamples);
 		yInfo("total beams = %d, %d",totalBeams, _totalBeams);
-        Time::delay(5.0);
+        //Time::delay(5.0);
 	}
 	catch (int a) {
         yError("Error in the loading of file");

@@ -18,14 +18,15 @@
 */
 
 #include "beamFormer.h"
-
+#include <iostream>
 int myMod(int a, int b) {
 	return  a >= 0 ? a % b : (a % b) + b;
 }
-BeamFormer::BeamFormer(int numBands, int nSamples, int numMics, int nBeamsHemifield):
-nMics(numMics), frameSamples(nSamples), nBands(numBands), getNBeamsPerHemifield(nBeamsHemifield), totalBeams((nBeamsHemifield*2) + 1)
+BeamFormer::BeamFormer(int numBands, int nSamples, int numMics, int numBeamsHemifield):
+nMics(numMics), frameSamples(nSamples), nBands(numBands), getNBeamsPerHemifield(numBeamsHemifield) 
 {
-
+	totalBeams = (getNBeamsPerHemifield*2) + 1;
+	
 	//Allocating the required vectors to create the beamFormed audio 
 	for (int i = 0; i < totalBeams; i++)
 	{
@@ -126,8 +127,7 @@ void BeamFormer::reducedAudioMultiThreadingLoop(int i) {
 	{
 		for (int k = 0; k < frameSamples; k++)
 		{
-			reducedBeamFormedAudioVector[i][j] += (inputSignal[j][k] + inputSignal[j + nBands][myMod(k + ((getNBeamsPerHemifield-1) - i), frameSamples)]);
-			reducedBeamFormedAudioVector[i][j] *= reducedBeamFormedAudioVector[i][j];
+			reducedBeamFormedAudioVector[i][j] += pow((inputSignal[j][k] + inputSignal[j + nBands][myMod(k + ((getNBeamsPerHemifield-1) - i), frameSamples)]), 2);
 		}
 		reducedBeamFormedAudioVector[i][j] = sqrt((static_cast<double>(1) / frameSamples) * (reducedBeamFormedAudioVector[i][j]));
 	}
