@@ -23,7 +23,7 @@
 #ifndef _AUDIO_PREPROCESSER_MODULE_H_
 #define _AUDIO_PREPROCESSER_MODULE_H_
 
-#include "AudioPreprocesserRatethread.h"
+#include "audioPreprocesserRatethread.h"
 #include "gammatoneFilter.h"
 #include "beamFormer.h"
 

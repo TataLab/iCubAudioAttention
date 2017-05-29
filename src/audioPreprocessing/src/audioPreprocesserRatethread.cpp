@@ -16,7 +16,7 @@
   * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
   * Public License for more details
 */
-#include <AudioPreprocesserRatethread.h>
+#include <audioPreprocesserRatethread.h>
 #include <cstring>
 
 using namespace yarp::dev;

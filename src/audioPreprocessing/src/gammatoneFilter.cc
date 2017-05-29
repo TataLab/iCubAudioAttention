@@ -197,7 +197,7 @@ float* GammatoneFilter::singleFilter(float* input, double centerFreqency)
 	double qcos = 1;
 	double qsin = 0;
 
-	float filteredAudio[frameSamples]; 
+	float *filteredAudio = new float[frameSamples]; 
 
 	for (int t = 0; t < (frameSamples); t++)
 	{

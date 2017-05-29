@@ -21,7 +21,7 @@
  * @brief Implementation of the processing module
  */
 
-#include "AudioPreprocesserModule.h"
+#include "audioPreprocesserModule.h"
 #define NUM_FRAME_SAMPLES 4096 //get this into resource finder!!!!
 
 

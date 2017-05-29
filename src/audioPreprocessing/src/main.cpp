@@ -1,4 +1,4 @@
-#include "AudioPreprocesserModule.h"
+#include "audioPreprocesserModule.h"
 
 #include <yarp/os/all.h>
 #include <yarp/dev/all.h>
