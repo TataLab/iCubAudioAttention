@@ -15,7 +15,7 @@ int main(int argc, char * argv[])
     ResourceFinder rf;
     rf.setVerbose(true);
     rf.setDefaultConfigFile("audioConfig.ini");    //overridden by --from parameter
-    rf.setDefaultContext("iCubAudioAttention/conf");    //overridden by --context parameter
+    rf.setDefaultContext("icubAudioAttention/conf");    //overridden by --context parameter
     rf.configure(argc, argv);
     std::cout << "[INFO] Configuring and starting module. \n";
 

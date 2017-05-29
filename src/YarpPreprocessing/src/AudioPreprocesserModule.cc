@@ -31,17 +31,6 @@ using namespace yarp::os;
 AudioPreprocesserModule::AudioPreprocesserModule()
 {
     yDebug("AudioProcesserModule");
-    //Colouring to match the colour code of yarp
-	myerror = "\033[0;31m";
-	myinfo = "\033[0;32m";
-	mywarn = "\033[0;33m";
-	myreset = "\033[0m";
-
-
-
-
-
-
 
 }
 
@@ -70,8 +59,8 @@ bool AudioPreprocesserModule::configure(yarp::os::ResourceFinder &rf)
 	{
 		if (yarp::os::Network::connect("/sender", "/iCubAudioAttention/Preprocesser:i") == false)
 		{
-			std::cout << myerror << "[ERROR]" << myreset << " Could not make connection to /sender. Exiting.\n";
-			yError("Could not make connection to /sender. Exiting");
+			
+			yError("Could not make connection to /sender. \nExiting. \n");
 			return false;
 		}
 	}
@@ -83,7 +72,6 @@ bool AudioPreprocesserModule::configure(yarp::os::ResourceFinder &rf)
 
    	//Set the file which the module uses to grab the config information
     yInfo("loading configuration file");
-	fileName = "../../src/Configuration/loadFile.xml";
 	//calls the parser and the config file to configure the needed variables in this class
 	loadFile(rf);
     yInfo("file successfully load");
@@ -215,48 +203,45 @@ void AudioPreprocesserModule::createMemoryMappedFile()
 
 void AudioPreprocesserModule::loadFile(yarp::os::ResourceFinder &rf)
 {
-	ConfigParser *confPars;
+	
 	try {
-		confPars = ConfigParser::getInstance(fileName);
-		Config pars = (confPars->getConfig("default"));
-		frameSamples = pars.getFrameSamples();
-		nBands = pars.getNBands();
-		nMics = pars.getNMics();
-		interpellateNSamples = pars.getInterpellateNSamples();
-		totalBeams = pars.getNBeamsPerHemifield() * 2 + 1;
-
-        int _frameSamples  = rf.check("frameSamples", 
+		frameSamples  = rf.check("frameSamples", 
                            Value("4096"), 
                            "frame samples (int)").asInt();
-        int _nBands  = rf.check("nBands", 
+        nBands  = rf.check("nBands", 
                            Value("128"), 
                            "numberBands (int)").asInt();
-        int _nMics  = rf.check("nMics", 
+        nMics  = rf.check("nMics", 
                            Value("2"), 
                            "number mics (int)").asInt();
-        int _interpellateNSamples  = rf.check("interpellateNSamples", 
+        interpellateNSamples  = rf.check("interpellateNSamples", 
                            Value("180"), 
                            "interpellate N samples (int)").asInt();
-        double _micDistance = rf.check("micDistance", 
+        micDistance = rf.check("micDistance", 
                            Value("0.145"), 
                            "micDistance (double)").asDouble();
-        int _C = rf.check("C", 
+       	C = rf.check("C", 
                            Value("338"), 
                            "C speed of sound (int)").asInt();
-        samplingRate = rf.find("samplingRate").asInt();
-        lowCf = rf.find("lowCf").asInt();
-		highCf = rf.find("highCf").asInt();
-		longBufferSize = rf.find("longBufferSize").asInt();
+        samplingRate = rf.check("samplingRate", 
+                           Value("48000"), 
+                           "sampling rate of mics (int)").asInt();
+        lowCf = rf.check("lowCf", 
+                           Value("1000"), 
+                           "lowest center frequency(int)").asInt();
+		highCf = rf.check("highCf", 
+                           Value("3000"), 
+                           "highest center frequency(int)").asInt();
+		
 
-        nBeamsPerHemi  = (int)((_micDistance / _C) * samplingRate) - 1;
-        yInfo("_beamsPerHemi %d = %f / %d * %d", nBeamsPerHemi, _micDistance, _C, samplingRate);
-        int _totalBeams = nBeamsPerHemi * 2 + 1;
-        yInfo("frameSamples = %d, %d", frameSamples, _frameSamples);
-        yInfo("nBands = %d, %d", nBands, _nBands);
-        yInfo("nMics = %d, %d", nMics, _nMics);
-        yInfo("interpellateNSamples = %d, %d", interpellateNSamples, _interpellateNSamples);
-		yInfo("total beams = %d, %d",totalBeams, _totalBeams);
-        //Time::delay(5.0);
+        nBeamsPerHemi  = (int)((micDistance / C) * samplingRate) - 1;
+        yInfo("_beamsPerHemi %d = %f / %d * %d", nBeamsPerHemi, micDistance, C, samplingRate);
+        totalBeams = nBeamsPerHemi * 2 + 1;
+        yInfo("frameSamples = %d", frameSamples);
+        yInfo("nBands = %d", nBands);
+        yInfo("nMics = %d", nMics);
+        yInfo("interpellateNSamples = %d", interpellateNSamples );
+		yInfo("total beams = %d",totalBeams);
 	}
 	catch (int a) {
         yError("Error in the loading of file");

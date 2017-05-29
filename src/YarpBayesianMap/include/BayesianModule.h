@@ -20,13 +20,14 @@
 #ifndef _BAYESIAN_MODULE_H_
 #define _BAYESIAN_MODULE_H_
 
-#include "../../Configuration/ConfigParser.h"
 
+#include <yarp/os/Time.h>
 #include <yarp/os/RFModule.h>
 #include <yarp/os/Network.h>
 #include <yarp/os/BufferedPort.h>
 #include <yarp/os/Stamp.h>
 #include <yarp/os/Property.h>
+#include <yarp/os/NetInt32.h>
 #include <yarp/sig/Matrix.h>
 #include <yarp/sig/Vector.h>
 #include <yarp/dev/PolyDriver.h>
@@ -156,16 +157,14 @@ private:
 
     void collapseMap(const std::vector <std::vector <double>> &inputMap, std::vector <double> &outputProbabilityMap);
 
-    //Variables need to time the update module
-    struct timeval st, en;
-    long mtime, seconds, useconds;
-
+    
+double startTime, stopTime;
 
     yarp::os::BufferedPort<yarp::sig::Matrix> *inPort;
     yarp::os::Port *outPort;
     yarp::os::Port *outAngle;
 
-	const std::string noiseMapPath="./noiseMap.dat";
+	const std::string noiseMapPath= "./noiseMap.dat";
 
 	std::string robotName;
     std::vector <std::vector <double>> longMap;

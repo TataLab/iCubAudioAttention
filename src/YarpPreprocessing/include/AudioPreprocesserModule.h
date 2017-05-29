@@ -23,8 +23,6 @@
 #ifndef _AUDIO_PREPROCESSER_MODULE_H_
 #define _AUDIO_PREPROCESSER_MODULE_H_
 
-#include "../../Configuration/ConfigParser.h"
-
 #include "AudioPreprocesserRatethread.h"
 #include "gammatoneFilter.h"
 #include "beamFormer.h"
@@ -43,7 +41,7 @@
 #include <sys/mman.h>
 #include <fcntl.h>
 #include <string>
-#include <sys/time.h>
+
 
 const float normDivid = pow(2,23);  //Number that is used to conver the integer number resived as the audio signal and convert it to a double audio signal
 
@@ -144,17 +142,12 @@ private:
 	*/
 	void spineInterp();
 
-
+	double startTime, stopTime;
 
 	int interpellateNSamples;
 
 	std::vector < std::vector < double > > highResolutionAudioMap;
 
-
-	//Variables need to time the update module
-	struct timeval st, en;
-	long mtime, seconds, useconds;
-	double startTime, stopTime;
 
 	//Incoming Audio Data from the iCub and remoteInterface
 	yarp::os::BufferedPort<yarp::sig::Sound> *inPort;
@@ -179,17 +172,10 @@ private:
 	GammatoneFilter *gammatoneAudioFilter;
 	BeamFormer *beamForm;
 
-
 	double oldtime;
 	int lastframe;
 	std::vector < std::vector < float* > > beamFormedAudioVector;
 	std::vector < std::vector < double > > reducedBeamFormedAudioVector;
-
-	//Colored warnings to match YARP
-	std::string myerror;
-	std::string myinfo;
-	std::string mywarn;
-	std::string myreset;
 
 	FILE *fid;
 	int mappedFileID;
@@ -210,6 +196,9 @@ private:
 
 	int longBufferSize;
 	int nBeamsPerHemi;
+
+	int micDistance;
+	int C;
 
 };
 

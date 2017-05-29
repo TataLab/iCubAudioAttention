@@ -46,8 +46,7 @@ BayesianModule::~BayesianModule()
 //This sets up the needed input and output ports needed by this module
 bool BayesianModule::configure(yarp::os::ResourceFinder &rf)
 {
-    //Set the file which the module uses to grab the config information
-    this->fileName = "../../src/Configuration/loadFile.xml";
+    
     //calls the parser and the config file to configure the needed variables in this class
     loadFile(rf);
 
@@ -178,9 +177,7 @@ bool BayesianModule::updateModule()
 
     //Gathers the time/counter envelope that was associated with the last message
     inPort->getEnvelope(ts);
-    //Asks linux for the exact time of day currently and saves it in the st(start) variable
-    gettimeofday(&st, NULL);
-
+    
     //Calls a function that will take the current audio map and create the Bayesian maps
     setAcousticMap();
 
@@ -192,13 +189,9 @@ bool BayesianModule::updateModule()
     outPort->setEnvelope(ts);
     outPort->write(*outputMatrix);
 
-    //Asks linux for the exact time of day currently and saves it in the en(end) variable
-    gettimeofday(&en, NULL);
-    //Calculates the difference between the start and end times of this module to figure out exactly how long this module took to run
-    seconds  = en.tv_sec  - st.tv_sec;
-    useconds = en.tv_usec - st.tv_usec;
-    mtime = ((seconds) * 1000 + useconds / 1000.0) + 0.5;
-    printf("[INFO] Count:%d Time:%ld milliseconds. \n", ts.getCount(),  mtime);
+    stopTime=yarp::os::Time::now();
+    printf("[INFO] Count:%d Time:%f. \n", ts.getCount(),  stopTime-startTime);
+    startTime=stopTime;
     return true;
 }
 
@@ -493,46 +486,29 @@ void BayesianModule::loadFile(yarp::os::ResourceFinder &rf)
 {
     
 
-    int _nBands  = rf.check("nBands", 
+    nBands  = rf.check("nBands", 
                            Value("128"), 
                            "numberBands (int)").asInt();
 
-    int _interpellateNSamples  = rf.check("interpellateNSamples", 
+    interpellateNSamples  = rf.check("interpellateNSamples", 
                            Value("180"), 
                            "interpellate N samples (int)").asInt();
 
-    int _shortTimeFrame = rf.check("shortBufferSize", 
+    shortTimeFrame = rf.check("shortBufferSize", 
                            Value("10"), 
                            "short Buffer Size (int)").asInt();
 
-    int _mediumTimeFrame = rf.check("mediumBufferSize", 
-                           Value("10"), 
+    mediumTimeFrame = rf.check("mediumBufferSize", 
+                           Value("100"), 
                            "medium Buffer Size (int)").asInt();
 
-    int _longTimeFrame = rf.check("longBufferSize", 
+    longTimeFrame = rf.check("longBufferSize", 
                            Value("360"), 
                            "long Buffer Size (int)").asInt();
 
-    //Creates or if previously created used the create Configuration Parser, this is used to read the config.xml file
-    ConfigParser *confPars;
-    //Give the parser the path to the .xml file
-    confPars = ConfigParser::getInstance(fileName);
-    //Selects the default setting to be used from the give .xml file
-    Config pars = (confPars->getConfig("default"));
-    //Grabs the number of bands
-    nBands = pars.getNBands();
-    //Grabs the number of interpolated samples
-    interpellateNSamples = pars.getInterpellateNSamples();
-
-    //The time frames of different Buffers
-    shortTimeFrame = pars.getShortBufferSize();
-    mediumTimeFrame = pars.getMediumBufferSize();
-    longTimeFrame = pars.getLongBufferSize();
-
+   
 
 }
-
-//TODO Check that this is working
 void BayesianModule::collapseMap(const std::vector <std::vector <double>> &inputMap, std::vector <double> &outputProbabilityMap)
 {
     for (int j = 0; j < interpellateNSamples * 2; j++)
