@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<AudioConfig>
+	<name>default</name>
+	<!--Define speed of sound in m/s (to be very accurate, adjust for elevation (lethbridge is at ~950m)-->
+	<C>338</C>
+	<!--Define distance between microphones in m-->
+	<micDistance> 0.145 </MicDistance>
+	<!--Define the sampling rate of the microphones-->
+	<samplingRate> 48000 </samplingRate>
+	<!--Difine the number of Microphones that are in used in the system-->
+	<nMics>2</nMics>
+	<!--Define the number of samples that will be stored for each frame-->
+	<frameSamples>4096</frameSamples>
+
+	<!--The number of frequencies that the gammaton filter bank will generate-->
+	<!--Please note that the number of bands need to be divisible by 2-->
+	<nBands>128</nBands>
+	<!--The lowest center frequency that will be used-->
+	<lowCf>500</lowCf>
+	<!--The lowest center frequency that will be used-->
+	<highCf>3000</highCf>
+
+	<!--Currently not implemented-->
+	<phaseAlign>yes</phaseAlign>
+	<!--Currently not implemented-->
+	<requiredLagFrames>1</requiredLagFrames>
+	<!--Currently not implemented-->
+	<numFramesInBuffer>1</numFramesInBuffer>
+	<!--Currently not implemented-->
+	<frameOverlap>1</frameOverlap>
+	<!--Currently not implemented-->
+	<attentionCaptureThreshold>1</attentionCaptureThreshold>
+	<!--Currently not implemented-->
+	<radialResolutionDegrees>1</radialResolutionDegrees>
+
+
+	<!--The number of samples in the front that will interrelate into-->
+	<interpellateNSamples>180</interpellateNSamples>
+
+	<!--Changes enable or disables the multiple time scale Bayesian maps-->
+	<enableMultiScale>yes</enableMultiScale>
+	<!--The number of frames that the short Bayesian buffers will compile-->
+	<shortBufferSize>2</shortBufferSize>
+	<!--The number of frames that the medium Bayesian buffers will compile-->
+	<mediumBufferSize>6</mediumBufferSize>
+	<!--The number of frames that the long Bayesian buffers will compile-->
+	<longBufferSize>50	</longBufferSize>
+	
+
+
+
+</AudioConfig>
