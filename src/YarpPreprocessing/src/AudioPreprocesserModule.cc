@@ -80,22 +80,13 @@ bool AudioPreprocesserModule::configure(yarp::os::ResourceFinder &rf)
 		return false;
 	}
 
-	// if (rf.check("audioConfig")) {
-	// 	configFile=rf.findFile(rf.find("audioConfig").asString().c_str());
-	// 	if (configFile=="") {
-	// 		return false;
-	// 	}
-	// }
-	// else {
-	// 	configFile.clear();
-	// }
 
    	//Set the file which the module uses to grab the config information
     yInfo("loading configuration file");
 	fileName = "../../src/Configuration/loadFile.xml";
 	//calls the parser and the config file to configure the needed variables in this class
 	loadFile(rf);
-    
+    yInfo("file successfully load");
     
     //preparing GammatoneFilter and beamForming
 	gammatoneAudioFilter = new GammatoneFilter(samplingRate, lowCf, highCf, nBands, frameSamples, nMics, false, false);
@@ -139,8 +130,6 @@ bool AudioPreprocesserModule::updateModule()
 
 	s = inPort->read(true);
 
-	//to check timing
-	gettimeofday(&st, NULL);
 	inPort->getEnvelope(ts);
 
 	if (ts.getCount() != lastframe + 1) {
@@ -162,13 +151,13 @@ bool AudioPreprocesserModule::updateModule()
 	gammatoneAudioFilter->gammatoneFilterBank(rawAudio);
 	beamForm->inputAudio(gammatoneAudioFilter->getFilteredAudio());
 
-	// memoryMapperGammaToneFilteredAudio(gammatoneAudioFilter->getFilteredAudio());
-	// sendGammatoneFilteredAudio(gammatoneAudioFilter->getFilteredAudio());
-	// outGammaToneFilteredAudioPort->setEnvelope(ts);
-	// outGammaToneFilteredAudioPort->write(*outGammaToneFilteredAudioMap);
+	memoryMapperGammaToneFilteredAudio(gammatoneAudioFilter->getFilteredAudio());
+	sendGammatoneFilteredAudio(gammatoneAudioFilter->getFilteredAudio());
+	outGammaToneFilteredAudioPort->setEnvelope(ts);
+	outGammaToneFilteredAudioPort->write(*outGammaToneFilteredAudioMap);
 
 	reducedBeamFormedAudioVector = beamForm->getReducedBeamAudio();
-	yInfo("file successfully load");
+	
 	spineInterp();
 
 	memoryMapper();
@@ -178,13 +167,8 @@ bool AudioPreprocesserModule::updateModule()
 
 	//Timing how long the module took
 	lastframe = ts.getCount();
-	gettimeofday(&en, NULL);
-	seconds  = en.tv_sec  - st.tv_sec;
-	useconds = en.tv_usec - st.tv_usec;
-	mtime = ((seconds) * 1000 + useconds / 1000.0) + 0.5;
-	//printf("[INFO] Count:%d Time:%ld milliseconds. \n", ts.getCount(),  mtime);
 	stopTime=Time::now();
-	printf("elapsed time = %f\n",stopTime-startTime);
+	yInfo("elapsed time = %f\n",stopTime-startTime);
 	startTime=stopTime;
 	return true;
 }
