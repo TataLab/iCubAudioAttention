@@ -6,8 +6,9 @@
 
 
 #add_subdirectory ( audiovisualAttention )				
-add_subdirectory ( bayesianMapApp )
-add_subdirectory ( icubAudioAttention)
+add_subdirectory ( bayesianMapApp 			)
+add_subdirectory ( icubAudioAttention		)
+add_subdirectory ( memoryMapper				)
 
 ## make all applications show up as single target
 #icub_app_all()
