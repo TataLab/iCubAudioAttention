@@ -89,7 +89,7 @@ freqVisualisationRatethread::~freqVisualisationRatethread() {
 
 bool freqVisualisationRatethread::threadInit() {
     // opening the port for direct input
-    if (!inputPort.open(getName("/bayesian:i").c_str())) {
+    if (!inputPort.open(getName("/map:i").c_str())) {
         yError("unable to open port to receive input");
         return false;  // unable to open; let RFModule know so that it won't run
     }
