@@ -7,17 +7,62 @@
   </dependencies>
 
   <module>
-      <name>handProfiler</name>
-      <parameters>--gazeTracking </parameters>
-      <node>localhost</node>
+      <name>audioCaptureInterface</name>
+      <parameters>--useDeviceDriver </parameters>
+      <node>machinekit</node>
   </module>
+  <module>
+      <name>audioPreprocessing</name>
+      <parameters> </parameters>
+      <node>icub14</node>
+  </module>
+  <module>
+      <name>audioBayesianMap</name>
+      <parameters> </parameters>
+      <node>icub14</node>
+  </module>
+  <module>
+      <name>frequencyVisualisation</name>
+      <parameters>--name /egoVis </parameters>
+      <node>icub14</node>
+  </module>
+  <module>
+      <name>frequencyVisualisation</name>
+      <parameters>--name /alloVis </parameters>
+      <node>icub14</node>
+  </module>
+  <module>
+      <name>yarpview</name>
+      <parameters>--name /egoView </parameters>
+      <node>icub14</node>
+  </module>
+  <module>
+      <name>yarpview</name>
+      <parameters>--name /alloview </parameters>
+      <node>icub14</node>
+  </module>
+  
 
   <connection>
-    <from> /handProfile/command:o</from>
-    <to> /iCubGui/objects </to>
-    <protocol> udp </protocol>
+    <from>/iCubAudioAttention/Preprocesser:o </from>
+    <to>/egoVis/map:i</to>
+    <protocol>tcp</protocol>
   </connection>
-
-
+  <connection>
+    <from>/egoVis/img:o </from>
+    <to>/egoView</to>
+    <protocol>tcp</protocol>
+  </connection>
+  <connection>
+    <from>/iCubAudioAttention/Preprocesser:o </from>
+    <to>/alloVis/map:i</to>
+    <protocol>tcp</protocol>
+  </connection>
+  <connection>
+    <from>/alloVis/img:o </from>
+    <to>/alloView</to>
+    <protocol>tcp</protocol>
+  </connection>
+ 
 </application>
 
