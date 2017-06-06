@@ -47,7 +47,7 @@ private:
     double sum[SUMDIM];
     
     yarp::sig::Vector command_position;
-    yarp::sig::Vector encoders;
+    yarp::sig::Vector* frequency;
         
     bool result;                    //result of the processing
 

@@ -113,6 +113,8 @@ bool soundMonitorModule::close() {
 
 bool soundMonitorModule::respond(const Bottle& command, Bottle& reply) 
 {
+    bool ok = false;
+    bool rec = false; // is the command recognized?
     string helpMessage =  string(getName().c_str()) + 
                 " commands are: \n" +  
                 "help \n" +
@@ -127,7 +129,95 @@ bool soundMonitorModule::respond(const Bottle& command, Bottle& reply)
         cout << helpMessage;
         reply.addString("ok");
     }
+    mutex.wait();
+    switch (command.get(0).asVocab()) {
+    case COMMAND_VOCAB_HELP:
+        rec = true;
+        {
+            reply.addVocab(Vocab::encode("many"));
+            reply.addString("help");
+
+            //reply.addString();
+            reply.addString("set fn \t: general set command ");
+            reply.addString("get fn \t: general get command ");
+            //reply.addString();
+
+            
+            //reply.addString();
+            reply.addString("seek red \t : looking for a red color object");
+            reply.addString("seek rgb \t : looking for a general color object");
+            reply.addString("sus  \t : suspending");
+            reply.addString("res  \t : resuming");
+            //reply.addString();
+
+
+            ok = true;
+        }
+        break;
+    case COMMAND_VOCAB_SUSPEND:
+        rec = true;
+        {
+            //prioritiser->suspend();
+            ok = true;
+        }
+        break;
+    case COMMAND_VOCAB_STOP:
+        rec = true;
+        {
+            //prioritiser->suspend();
+            //prioritiser->resume();
+            ok = true;
+        }
+        break;
+    case COMMAND_VOCAB_RESUME:
+    rec = true;
+        {
+            //prioritiser->resume();
+            ok = true;
+        }
+        break;
+    case COMMAND_VOCAB_SBEG:
+        rec = true;
+        {
+            yInfo("Start saving the Sound");
+            //prioritiser->suspend();
+            //prioritiser->seek(command);
+            //prioritiser->resume();
+            ok = true;
+        }
+        break;
+    case COMMAND_VOCAB_SEND:
+        rec = true;
+        {
+            /*switch (command.get(1).asVocab()) {
+            case COMMAND_VOCAB_CENT:
+                {
+                    printf("Fixating in Center \n");
+                    //prioritiser->fixCenter(1000);
+                }
+                break;
+            }
+            */
+            yInfo("Stop saving the Sound");
+            ok = true;
+        }
+        break;
+    default: {
+                
+    }
+        break;    
+    }
+    mutex.post();
+
+    if (!rec)
+        ok = RFModule::respond(command,reply);
     
+    if (!ok) {
+        reply.clear();
+        reply.addVocab(COMMAND_VOCAB_FAILED);
+    }
+    else
+        reply.addVocab(COMMAND_VOCAB_OK);
     return true;
 }
 
