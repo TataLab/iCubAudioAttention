@@ -41,6 +41,8 @@ soundMonitorRatethread::soundMonitorRatethread():RateThread(THRATE) {
     counterFrames = 0;
     counterAngles = 0;
     memset(&sum[0],0,sizeof(double) * SUMDIM);
+    frequency=new Vector();
+    frequency->resize(240);
 }
 
 soundMonitorRatethread::soundMonitorRatethread(string _robot, string _configFile):RateThread(THRATE){
@@ -50,6 +52,8 @@ soundMonitorRatethread::soundMonitorRatethread(string _robot, string _configFile
     counterFrames = 0;
     counterAngles = 0;
     memset(&sum[0],0,sizeof(double) * SUMDIM);
+    frequency=new Vector();
+    frequency->resize(240);
 }
 
 soundMonitorRatethread::~soundMonitorRatethread() {
@@ -100,19 +104,7 @@ void soundMonitorRatethread::setInputPortName(string InpPort) {
 }
 
 void soundMonitorRatethread::headMovePan() {
-    counterAngles++;
-    command_position = encoders;
-    if(command_position[2] > 40) {
-        alfa = -1.0;
-    }
-    else if(command_position[2] < -40) {
-        alfa = 1.0;
-    }
-    command_position[2] += alfa;
-    bool ok = posHead->positionMove(command_position.data());
-    Time::delay(1);
-    encHead->getEncoders(encoders.data());
-    yInfo("head encoders data %f; alfa = %f", encoders[2], alfa);
+    counterAngles++;    
 }
 
 void soundMonitorRatethread::saveEgoNoise() {
@@ -140,11 +132,14 @@ void soundMonitorRatethread::run() {
 
     //output port
     if (outputPort.getOutputCount()) {
-        *outputImage = outputPort.prepare();
-        outputImage->resize(inputImage->width(), inputImage->height());
+        yDebug("preparing the pointer to image");
+        outputImage = &outputPort.prepare();
+        outputImage->resize(320, 240);
         // preparing the spectrogramm
+        yDebug("preparing the sprectrogram");
         spectrogram();
-        // 
+        //
+        yDebug("preparing the image");
         prepareImage(outputImage);
         // outputPort.prepare() = *inputImage; //deprecated
 
@@ -155,17 +150,31 @@ void soundMonitorRatethread::run() {
 
 
 bool soundMonitorRatethread::spectrogram() {
-
-
+    yDebug("spectrogram");
+    for(int i = 0; i < 240; i++) {
+        (*frequency)[i] = 0.5;
+    }
 }
 
 bool soundMonitorRatethread::prepareImage(yarp::sig::ImageOf<yarp::sig::PixelRgb>* outputImage) {
     unsigned char* p = outputImage->getRawImage();
     int padding = outputImage->getPadding();
-    for (int r = 0; r < outputImage->width(); r++) {
-        for (int c = 0; c < outputImage->height(); c++) {
-            
+    for (int r = 0; r < outputImage->height(); r++) {
+        double vFreq = (*frequency)[r];
+        int limit = (int)(320.0 * vFreq);
+        for (int c = 0; c < outputImage->width(); c++) {
+            if (c > limit) {
+                *p = 0; p++;
+                *p = 0; p++;
+                *p = 0; p++;
+            }
+            else {
+                *p = 255; p++;
+                *p = 255; p++;
+                *p = 255; p++;
+            }
         }
+        p+=padding;
     }
 
 }
