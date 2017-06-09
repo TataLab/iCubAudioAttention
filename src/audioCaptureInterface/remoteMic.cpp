@@ -185,13 +185,13 @@ int main(int argc, char *argv[]) {
     printf("robotName: %s \n", robotName.c_str());
 
     /* setting sample rate*/
-    bufferSize           = rf.check("sampleRate",
+    sampleRate           = rf.check("sampleRate",
 				     Value(SAMPLERATE),
 				     "Sample rate in Hz (integer)").asInt();
     yInfo("sampleRate: %d", sampleRate);
 
     /* get the preferable dimension of the frame*/
-    moduleName             = rf.check("bufferSize",
+    bufferSize             = rf.check("bufferSize",
 				      Value(4096),
 				      "Buffer size (int)").asInt();
     yInfo("bufferSize: %d", bufferSize);
