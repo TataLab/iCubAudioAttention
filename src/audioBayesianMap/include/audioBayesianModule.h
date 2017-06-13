@@ -38,9 +38,7 @@
 
 #include <vector>
 #include <queue>
-#include <sys/mman.h>
-#include <fcntl.h>
-#include <sys/time.h>
+
 
 using namespace yarp::os;
 using namespace yarp::sig;
@@ -183,22 +181,6 @@ double startTime, stopTime;
     IPositionControl *pos;
 
     yarp::os::Stamp ts;
-
-    //Memory mapping variables
-    FILE *fidShort;
-    int mappingFileIDShort;
-    double *probabilityMappingShort;
-    FILE *fidMedium;
-    int mappingFileIDMedium;
-    double *probabilityMappingMedium;
-    FILE *fidLong;
-    int mappingFileIDLong;
-    double *probabilityMappingLong;
-
-    FILE *fidLongProbabilityAngle;
-    int mappingFileIDLongProbabilityAngle;
-    double *probabilityMappingLongProbabilityAngle;
-
 
     int nBands;
     std::string fileName;

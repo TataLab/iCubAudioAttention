@@ -153,19 +153,6 @@ private:
 	std::vector < std::vector < float* > > beamFormedAudioVector;
 	std::vector < std::vector < double > > reducedBeamFormedAudioVector;
 
-	FILE *fid;
-	int mappedFileID;
-	double *mappedAudioData;
-
-	FILE *rawFid;
-	int mappedRawAduioFileID;
-	double *mappedRawAduioData;
-
-	FILE *gammaToneFilteredFid;
-	int mappedGammaToneFilteredAduioFileID;
-	double *mappedGammaToneFilteredAduioData;
-
-
 	int samplingRate;
 	int lowCf;
 	int highCf;
