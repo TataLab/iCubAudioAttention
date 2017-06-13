@@ -110,19 +110,7 @@ private:
     */
     void calcOffset();
 
-    /**
-    *   memoryMapper
-    *   Memory maps the given probability map to file given by the probablilityMapID
-    *   @param
-    *   @param probabilityMappingFileID
-    */
-    void memoryMapper(std::vector <std::vector <double>> probabilityMap, double* probabilityMappingFileID);
 
-    /**
-    *   memoryMapperRawAudio
-    *   Taking the Audio data
-    */
-    void memoryProbabilityAngleMap(std::vector <double> probabilityMap);
 
     /**
     *   sendAudioMap
@@ -181,6 +169,7 @@ double startTime, stopTime;
     IPositionControl *pos;
 
     yarp::os::Stamp ts;
+
 
     int nBands;
     std::string fileName;
