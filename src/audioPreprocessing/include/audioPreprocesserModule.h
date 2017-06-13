@@ -84,30 +84,6 @@ private:
 
 
 	/**
-	*	createMemoryMappedFile
-	*	Creates and allocates all the data required for the memory mapping.
-	*/
-	void createMemoryMappedFile();
-
-	/**
-	*	memoryMapper
-	*	Taking the Audio data
-	*/
-	void memoryMapper();
-
-	/**
-	*	memoryMapperRawAudio
-	*	Taking the Audio data
-	*/
-	void memoryMapperRawAudio();
-
-	/**
-	*	memoryMapperRawAudio
-	*	Taking the Audio data
-	*/
-	void memoryMapperGammaToneFilteredAudio(const std::vector<float*>  gammatoneAudio);
-
-	/**
 	*	sendAudioMap
 	*	Function used to send audio map after its been though the gammaton, beamforming, and reduction steps.
 	*	The audio map is stored in outAudioMap and sent though port audioMapPort.
@@ -197,7 +173,7 @@ private:
 	int longBufferSize;
 	int nBeamsPerHemi;
 
-	int micDistance;
+	double micDistance;
 	int C;
 
 };

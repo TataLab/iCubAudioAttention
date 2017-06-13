@@ -30,6 +30,11 @@
 #include <fstream>
 #include <time.h>
 
+  //Memory mapping requirements
+#include <sys/mman.h>
+#include <fcntl.h>
+#include <string>
+
 
 class audioMemoryMapperRateThread : public yarp::os::RateThread {
 private:
@@ -39,10 +44,82 @@ private:
     std::string configFile;         // name of the configFile where the parameter of the camera are set
     std::string inputPortName;      // name of input port for incoming events, typically from aexGrabber
 
-    yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelRgb> > inputPort;
-    yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelRgb> > outputPort;     // output port to plot event
+    yarp::os::BufferedPort<yarp::sig::Sound>   rawAudioPort;
+    yarp::os::BufferedPort<yarp::sig::Matrix>  gammaToneAudioPort;
+    yarp::os::BufferedPort<yarp::sig::Matrix>  beamFormedAudioPort;
+    yarp::os::BufferedPort<yarp::sig::Matrix>  audioMapEgoPort;
+    yarp::os::BufferedPort<yarp::sig::Matrix>  audioMapAloPort;
+    yarp::os::BufferedPort<yarp::sig::Matrix>  longTermBayesianMapPort;
+    yarp::os::BufferedPort<yarp::sig::Matrix>  collapesedBayesianMapPort;
+
+    bool  rawAudioPortActive;
+    bool  gammaToneAudioPortActive;
+    bool  beamFormedAudioPortActive;
+    bool  audioMapEgoPortActive;
+    bool  audioMapAloPortActive;
+    bool  longTermBayesianMapPortActive;
+    bool  collapesedBayesianMapPortActive;
+
+    std::string  rawAudioPortName;
+    std::string  gammaToneAudioPortName;
+    std::string  beamFormedAudioPortName;
+    std::string  audioMapEgoPortName;
+    std::string  audioMapAloPortName;
+    std::string  longTermBayesianMapPortName;
+    std::string  collapesedBayesianMapPortName;
+
+    FILE *rawAudioFid;
+    int rawAudioMappedFileID;
+    double *rawAudioData;
+
+    FILE *gammaToneAudioFid;
+    int gammaToneAudioFileID;
+    double *gammaToneAudioData;
+
+    FILE *beamFormedAudioFid;
+    int beamFormedAudioFileID;
+    double *beamFormedAudioData;
+
+    FILE *audioMapEgoFid;
+    int audioMapEgoFileID;
+    double *audioMapEgoData;
+
+    FILE *audioMapAloFid;
+    int audioMapAloFileID;
+    double *audioMapAloData;
+
+    FILE *longTermBayesianMapFid;
+    int longTermBayesianMapFileID;
+    double *longTermBayesianMapData;
+
+    FILE *collapesedBayesianMapFid;
+    int collapesedBayesianMapFileID;
+    double *collapesedBayesianMapData;
+
+    int frameSamples;
+    int nBands;
+    int nMics;
+    int interpellateNSamples;
+    double micDistance;
+    int C;
+    int samplingRate;
+    int longTimeFrame;
+    int nBeamsPerHemi;
+    int totalBeams;
+
     std::string name;                                                                // rootname of all the ports opened by this thread
     
+
+    void createMemoryMappingSection();
+
+    
+    void memoryMapRawAudio();
+    void memoryMapGammaToneAudio();
+    void memoryMapBeamFormedAudio();
+    void memoryMapAudioMapEgo();
+    void memoryMapAudioMapAlo();
+    void memoryMapLongTermBayesianMap();
+    void memoryMapCollapesedBayesianMap();
 public:
     /**
     * constructor default
@@ -63,7 +140,7 @@ public:
     /**
     *  initialises the thread
     */
-    bool threadInit();
+    bool threadInit(yarp::os::ResourceFinder &rf);
 
     /**
     *  correctly releases the thread
@@ -89,14 +166,12 @@ public:
     std::string getName(const char* p);
 
     /**
-    * function that sets the inputPort name
-    */
-    void setInputPortName(std::string inpPrtName);
-
-    /**
      * method for the processing in the ratethread
      **/
     bool processing();
+
+
+
 };
 
 #endif  //_AUDIO_PREPROCESSER_THREAD_H_

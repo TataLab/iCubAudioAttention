@@ -113,12 +113,6 @@ private:
     void calcOffset();
 
     /**
-    *   createMemoryMappedFile
-    *   Allocates the required memory needed and the FID need for the memory mapped locations. 
-    */
-    void createMemoryMappedFile();
-
-    /**
     *   memoryMapper
     *   Memory maps the given probability map to file given by the probablilityMapID
     *   @param

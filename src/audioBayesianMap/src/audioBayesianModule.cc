@@ -78,9 +78,6 @@ bool BayesianModule::configure(yarp::os::ResourceFinder &rf)
     inputMatrix = new yarp::sig::Matrix(nBands, interpellateNSamples * 2);
     outputMatrix = new yarp::sig::Matrix(nBands, interpellateNSamples * 2);
 
-    //Calls the function that initalizes the the data required for memory mapping the
-    //short, medium and long term Bayesian maps as needed
-    createMemoryMappedFile();
 
     //Initializes the variable that keeps track of how many frames have been gathered for the noise map
     noiseBufferMap = 0;
@@ -185,7 +182,7 @@ bool BayesianModule::updateModule()
     sendAudioMap(longMap);
 
     //Calls the Memory maper and memory maps it to the following file: /tmp/bayesianProbabilityLongMap.tmp
-    memoryMapper(longMap,probabilityMappingLong);
+    
     outPort->setEnvelope(ts);
     outPort->write(*outputMatrix);
 
@@ -244,55 +241,8 @@ void BayesianModule::calcOffset()
     
 }
 
-void BayesianModule::createMemoryMappedFile()
-{
-    //int memoryMapSize = ((nBands * (interpellateNSamples + 1)) * 2 )+1;
-    
-    double initializationArrayShort [MEMORY_MAP_SIZE];
-    double initializationArrayMedium [MEMORY_MAP_SIZE];
-    double initializationArrayLong[MEMORY_MAP_SIZE];
-    
-    printf("MEMORY_MAP_SIZE is %d",MEMORY_MAP_SIZE);
-    fidShort = fopen("/tmp/bayesianProbabilityShortMap.tmp", "w");
-    fwrite(initializationArrayShort, sizeof(double), sizeof(initializationArrayShort), fidShort);
-    fclose(fidShort);
-    fidMedium = fopen("/tmp/bayesianProbabilityMediumMap.tmp", "w");
-    fwrite(initializationArrayMedium, sizeof(double), sizeof(initializationArrayMedium), fidMedium);
-    fclose(fidMedium);
-    fidLong = fopen("/tmp/bayesianProbabilityLongMap.tmp", "w");
-    fwrite(initializationArrayLong, sizeof(double), sizeof(initializationArrayLong), fidLong);
-    fclose(fidLong);
-    mappingFileIDShort = open("/tmp/bayesianProbabilityShortMap.tmp", O_RDWR);
-    probabilityMappingShort= (double *)mmap(0, (sizeof(initializationArrayShort)), PROT_WRITE, MAP_SHARED , mappingFileIDShort, 0);
-    mappingFileIDMedium = open("/tmp/bayesianProbabilityMediumMap.tmp", O_RDWR);
-    probabilityMappingMedium= (double *)mmap(0, (sizeof(initializationArrayMedium)), PROT_WRITE, MAP_SHARED , mappingFileIDMedium, 0);
-    mappingFileIDLong = open("/tmp/bayesianProbabilityLongMap.tmp", O_RDWR);
-    probabilityMappingLong= (double *)mmap(0, (sizeof(initializationArrayLong)), PROT_WRITE, MAP_SHARED , mappingFileIDLong, 0);
 
 
-    double initializationLongProbabilityAngleMapArray[(interpellateNSamples+1) * 2];
-    fidLongProbabilityAngle = fopen("/tmp/preprocessedGammaToneFilteredAudio.tmp", "w");
-    fwrite(initializationLongProbabilityAngleMapArray, sizeof(double), sizeof(initializationLongProbabilityAngleMapArray), fidLongProbabilityAngle);
-    fclose(fidLongProbabilityAngle);
-    mappingFileIDLongProbabilityAngle = open("/tmp/preprocessedGammaToneFilteredAudio.tmp", O_RDWR);
-    probabilityMappingLongProbabilityAngle = (double *)mmap(0, (sizeof(initializationLongProbabilityAngleMapArray)), PROT_WRITE, MAP_SHARED , mappingFileIDLongProbabilityAngle, 0);
-}
-
-void BayesianModule::memoryMapper(std::vector <std::vector <double>> probabilityMap, double* probabilityMappingFileID)
-{
-    //Loops though the input(probabilityMap) and does a deep copy of all the elements into a memory mapped location identified by the probabilityMappingFileID
-    int count = 0;
-    for (int i = 0; i <  nBands; i++)
-    {
-        for (int j = 0; j <interpellateNSamples * 2; j++)
-        {
-        	//printf("count = %d\n",count);
-
-            probabilityMappingFileID[(count++)] = probabilityMap[i][j];
-        }
-    }
-    //probabilityMappingFileID[(count++)] = offset;
-}
 
 void BayesianModule::sendAudioMap(std::vector <std::vector <double>> &probabilityMap)
 {
@@ -516,7 +466,7 @@ void BayesianModule::collapseMap(const std::vector <std::vector <double>> &input
 
         for (int i = 0; i <  nBands; i++)
         {
-            //TODO This is extremely slow however I could not think of a better 
+            //TODO This is extremely slow however I could not think of a better way to complete it.
             outputProbabilityMap[j]+=inputMap[i][j];
         }
 

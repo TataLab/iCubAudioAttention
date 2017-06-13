@@ -27,7 +27,7 @@
 audioMemoryMapperModule::audioMemoryMapperModule()
 {
     yDebug("AudioProcesserModule");
-
+    rateThread = new audioMemoryMapperRateThread();
 }
 
 audioMemoryMapperModule::~audioMemoryMapperModule()
@@ -37,7 +37,7 @@ audioMemoryMapperModule::~audioMemoryMapperModule()
 
 bool audioMemoryMapperModule::configure(yarp::os::ResourceFinder &rf)
 {
-   
+   true;
 }
 
 double audioMemoryMapperModule::getPeriod()
@@ -49,7 +49,7 @@ double audioMemoryMapperModule::getPeriod()
 bool audioMemoryMapperModule::updateModule()
 {
 
-
+	return true;
 }
 
 bool audioMemoryMapperModule::interruptModule()

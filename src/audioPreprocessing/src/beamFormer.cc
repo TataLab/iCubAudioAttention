@@ -116,7 +116,7 @@ void BeamFormer::audioMultiThreadingLoop(int i) {
 	{
 		for (int k = 0; k < frameSamples; k++)
 		{
-			beamFormedAudioVector[i][j][k] = inputSignal[j][k] + inputSignal[j + nBands][myMod(k + ((getNBeamsPerHemifield-1) - i), frameSamples)];
+			beamFormedAudioVector[i][j][k] = (inputSignal[j][k] + inputSignal[j + nBands][myMod(k + ((getNBeamsPerHemifield-1) - i), frameSamples)]);
 		}
 	}
 

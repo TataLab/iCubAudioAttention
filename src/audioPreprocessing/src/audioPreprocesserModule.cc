@@ -57,7 +57,7 @@ bool AudioPreprocesserModule::configure(yarp::os::ResourceFinder &rf)
 
 	if (yarp::os::Network::exists("/iCubAudioAttention/Preprocesser:i"))
 	{
-		if (yarp::os::Network::connect("/audioGrabber/sender", "/iCubAudioAttention/Preprocesser:i") == false)
+		if (yarp::os::Network::connect("/sender", "/iCubAudioAttention/Preprocesser:i") == false)
 		{
 			
 			yError("Could not make connection to /sender. \nExiting. \n");
@@ -94,7 +94,7 @@ bool AudioPreprocesserModule::configure(yarp::os::ResourceFinder &rf)
 
 	outAudioMap = new yarp::sig::Matrix(nBands, interpellateNSamples * 2);
 	outGammaToneFilteredAudioMap = new yarp::sig::Matrix(nBands*2, frameSamples);
-	createMemoryMappedFile();
+
     
     /* create the thread and pass pointers to the module parameters */
 	apr = new AudioPreprocesserRatethread(robotName, configFile);
@@ -134,21 +134,20 @@ bool AudioPreprocesserModule::updateModule()
 		row += 2;
 	}
 
-	memoryMapperRawAudio();
 
+	//yError("Error in the loading of file");
 	gammatoneAudioFilter->gammatoneFilterBank(rawAudio);
 	beamForm->inputAudio(gammatoneAudioFilter->getFilteredAudio());
 
-	memoryMapperGammaToneFilteredAudio(gammatoneAudioFilter->getFilteredAudio());
 	sendGammatoneFilteredAudio(gammatoneAudioFilter->getFilteredAudio());
 	outGammaToneFilteredAudioPort->setEnvelope(ts);
 	outGammaToneFilteredAudioPort->write(*outGammaToneFilteredAudioMap);
 
 	reducedBeamFormedAudioVector = beamForm->getReducedBeamAudio();
-	
+	beamFormedAudioVector = beamForm->getBeamAudio();
 	spineInterp();
 
-	memoryMapper();
+
 	sendAudioMap();
 	outPort->setEnvelope(ts);
 	outPort->write(*outAudioMap);
@@ -173,33 +172,6 @@ bool AudioPreprocesserModule::close()
 	return true;
 }
 
-void AudioPreprocesserModule::createMemoryMappedFile()
-{
-	int memoryMapSize = ((nBands * (interpellateNSamples + 1)) * 2 + 2);
-	double initializationArray [memoryMapSize];
-	fid = fopen("/tmp/preprocessedAudioMap.tmp", "w");
-	fwrite(initializationArray, sizeof(double), sizeof(initializationArray), fid);
-	fclose(fid);
-	mappedFileID = open("/tmp/preprocessedAudioMap.tmp", O_RDWR);
-	mappedAudioData = (double *)mmap(0, (sizeof(initializationArray)), PROT_WRITE, MAP_SHARED , mappedFileID, 0);
-
-	int memoryMapRawAudio = (4*NUM_FRAME_SAMPLES);
-	double initializationRawAudioArray[4*NUM_FRAME_SAMPLES];
-	rawFid = fopen("/tmp/preprocessedRawAudio.tmp", "w");
-	fwrite(initializationRawAudioArray, sizeof(double), sizeof(initializationRawAudioArray), rawFid);
-	fclose(rawFid);
-	mappedRawAduioFileID = open("/tmp/preprocessedRawAudio.tmp", O_RDWR);
-	mappedRawAduioData = (double *)mmap(0, (sizeof(initializationRawAudioArray)), PROT_WRITE, MAP_SHARED , mappedRawAduioFileID, 0);
-
-	int memoryMapGammaToneFilteredAudio = ((nBands*2)*NUM_FRAME_SAMPLES);
-	double *initializationGammaToneFilteredAudioArray = new double[memoryMapGammaToneFilteredAudio];
-	gammaToneFilteredFid = fopen("/tmp/GammaToneFilteredAudio.tmp", "w");
-	std::cerr << memoryMapGammaToneFilteredAudio << std::endl;
-	fwrite(initializationGammaToneFilteredAudioArray, sizeof(double), memoryMapGammaToneFilteredAudio*8, gammaToneFilteredFid);
-	fclose(gammaToneFilteredFid);
-	mappedGammaToneFilteredAduioFileID = open("/tmp/GammaToneFilteredAudio.tmp", O_RDWR);
-	mappedGammaToneFilteredAduioData = (double *)mmap(0, memoryMapGammaToneFilteredAudio*8, PROT_WRITE, MAP_SHARED , mappedGammaToneFilteredAduioFileID, 0);
-}
 
 void AudioPreprocesserModule::loadFile(yarp::os::ResourceFinder &rf)
 {
@@ -233,7 +205,7 @@ void AudioPreprocesserModule::loadFile(yarp::os::ResourceFinder &rf)
                            Value("3000"), 
                            "highest center frequency(int)").asInt();
 		
-
+		yInfo("micDistance = %f", micDistance);
         nBeamsPerHemi  = (int)((micDistance / C) * samplingRate) - 1;
         yInfo("_beamsPerHemi %d = %f / %d * %d", nBeamsPerHemi, micDistance, C, samplingRate);
         totalBeams = nBeamsPerHemi * 2 + 1;
@@ -250,60 +222,6 @@ void AudioPreprocesserModule::loadFile(yarp::os::ResourceFinder &rf)
 
 }
 
-void AudioPreprocesserModule::memoryMapper()
-{
-	mappedAudioData[0] = ts.getCount();
-	mappedAudioData[1] = ts.getTime();
-	int count = 0;
-	//printf("inpterellateNSamples = %d",interpellateNSamples);
-	for (int i = 0; i < interpellateNSamples * 2; i++)
-	{
-		for (int j = 0; j < nBands; j++)
-		{
-			mappedAudioData[(count++) + 2] = highResolutionAudioMap[i][j];
-		}
-	}
-
-}
-void AudioPreprocesserModule::memoryMapperRawAudio()
-{
-	int currentCounter = ts.getCount();
-	double currentTime = ts.getTime();
-	int row = 0;
-	int j = 0;
-  	for (int col = 0 ; col < frameSamples; col+=1) {
-
-		mappedRawAduioData[j] = 	(double)rawAudio[row];
-		mappedRawAduioData[j+1] = 	(double)rawAudio[row+1];
-		mappedRawAduioData[j+2] = 	(double)(currentCounter * frameSamples) + col;
-    	mappedRawAduioData[j+3]	= 	(double)(currentTime + col * (1.0 / 48000));
-    	row += 2;
-    	j +=4;
-  	}
-
-}
-
-
-void AudioPreprocesserModule::memoryMapperGammaToneFilteredAudio(const std::vector<float*> gammatoneAudio){
-
-	for (int i = 0; i < nBands; i++)
-	{
-		for (int j = 0; j < frameSamples; j++)
-		{
-			mappedGammaToneFilteredAduioData[(i*frameSamples)+j] = (double)gammatoneAudio[i][j];
-		}
-	}
-	int visted = (nBands*frameSamples);
-	for (int i = 0; i < nBands; i++)
-	{
-		for (int j = 0; j < frameSamples; j++)
-		{
-			mappedGammaToneFilteredAduioData[(i*frameSamples)+j+visted] = (double)gammatoneAudio[i + nBands][j];
-		}
-	}
-
-
-}
 
 void AudioPreprocesserModule::sendGammatoneFilteredAudio(const std::vector<float*> &gammatoneAudio){
 	for (int i = 0; i < nBands; i++)

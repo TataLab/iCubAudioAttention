@@ -39,7 +39,7 @@
 #include <fcntl.h>
 #include <string>
 
-
+#include <audioMemoryMapperRateThread.h>
 
 class audioMemoryMapperModule: public yarp::os::RFModule
 {
@@ -49,6 +49,8 @@ class audioMemoryMapperModule: public yarp::os::RFModule
   std::string inputPortName;               // name of the input port for events
   std::string robotName;                   // name of the robot
   std::string configFile;                  // name of the configFile that the resource Finder will seek
+
+  audioMemoryMapperRateThread *rateThread;
 
  public:
 	/**
