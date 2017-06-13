@@ -113,6 +113,7 @@ int main(int argc, char *argv[]) {
     int ExpectedReading;
     int micif_dev;
     int sampleRate;
+    int bufferSize;
     int numberFrames = 0;
     
     // Open the network
@@ -132,6 +133,7 @@ int main(int argc, char *argv[]) {
         printf("--name           : changes the rootname of the module ports \n");
         printf("--robot          : changes the name of the robot where the module interfaces to  \n");
         printf("--sampleRate     : sets the sample rate (in Hz) \n");
+        printf("--bufferSize     : sets the size of the buffer \n");
         printf("--name           : rootname for all the connection of the module \n");
         printf("--usePortAudio   : audio input from portaudio \n");
         printf("--useDeviceDriver: audio input from device driver \n");
@@ -146,6 +148,8 @@ int main(int argc, char *argv[]) {
     moduleName             = rf.check("name",
 				      Value("/audioCaptureInterface"),
 				      "module name (string)").asString();
+
+
 
     /* detects whether the preferrable input is from portaudio */
     if(rf.check("usePortAudio")){
@@ -181,11 +185,16 @@ int main(int argc, char *argv[]) {
     printf("robotName: %s \n", robotName.c_str());
 
     /* setting sample rate*/
-    sampleRate            = rf.check("sampleRate",
+    sampleRate           = rf.check("sampleRate",
 				     Value(SAMPLERATE),
 				     "Sample rate in Hz (integer)").asInt();
-    
-    printf("sampleRate: %d \n", sampleRate);
+    yInfo("sampleRate: %d", sampleRate);
+
+    /* get the preferable dimension of the frame*/
+    bufferSize             = rf.check("bufferSize",
+				      Value(4096),
+				      "Buffer size (int)").asInt();
+    yInfo("bufferSize: %d", bufferSize);
     
     // Opening the output port
     // BufferedPort<Sound> p;
