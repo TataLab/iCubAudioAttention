@@ -298,12 +298,65 @@ void AudioPreprocesserModule::linerInterpolate()
 
 double AudioPreprocesserModule::splineApproximation(double x, double x1, double y1, double x2, double y2, double x3, double y3)
 {
+	knotValues k = calcSplineKnots(x1, y1, x2, y2, x3, y3);
 
+   // determine which side
+   // of the center x is
+   double xs1, xs2, ys1, ys2, ks1, ks2;
+
+   if (x > x2) {
+      xs1 = x2; ys1 = y2; ks1 = k.k1;
+      xs2 = x3; ys2 = y3; ks2 = k.k2;
+   }
+
+   else        {
+      xs1 = x1; ys1 = y1; ks1 = k.k0;
+      xs2 = x2; ys2 = y2; ks2 = k.k1;  
+   }
+
+   // calculate the value of the y
+   double t = (x - xs1) / (xs2 - xs1);
+   double a =  ks1 * (xs2 - xs1) - (ys2 - ys1);
+   double b = -ks2 * (xs2 - xs1) + (ys2 - ys1);
+   double y = (1 - t) * ys1 + t * ys2 + t * (1 - t) * (a * (1 - t) + b * t);
+   return y;
 }
 
 knotValues AudioPreprocesserModule::calcSplineKnots(double x1, double y1, double x2, double y2, double x3, double y3)
 {
+	int matSize = 3;
 
+   yarp::sig::Matrix a(matSize,matSize), aI(matSize,matSize);
+   yarp::sig::Vector b(matSize);
+   /*double b[matSize];*/
+   
+   // get the matrix a
+   a[0][0] = 2 / (x2 - x1);
+   a[0][1] = 1 / (x2 - x1);
+   a[0][2] = 0;
+   a[1][0] = 1 / (x2 - x1);
+   a[1][1] = 2 * ( (1 / (x2 - x1)) + (1 / (x3 - x2)) );
+   a[1][2] = 1 / (x3 - x2);
+   a[2][0] = 0;
+   a[2][1] = 1 / (x3 - x2);
+   a[2][2] = 2 / (x3 - x2);
+
+   aI = yarp::math::luinv(a);
+
+   // get matrix b
+   b[0] = 3 * ( (y2 - y1) / ( (x2 - x1) * (x2 - x1) ) );
+   b[1] = 3 * ( (y2 - y1) / ( (x2 - x1) * (x2 - x1) ) 
+              + (y3 - y2) / ( (x3 - x2) * (x3 - x2) ) );
+   b[2] = 3 * ( (y3 - y2) / ( (x3 - x2) * (x3 - x2) ) );
+
+   // matrix ks being the knot values
+   // for the spline which is aI * b
+   knotValues knots;
+   knots.k0 = ( aI[0][0] * b[0] ) + ( aI[0][1] * b[1] ) + ( aI[0][2] * b[2] );
+   knots.k1 = ( aI[1][0] * b[0] ) + ( aI[1][1] * b[1] ) + ( aI[1][2] * b[2] );
+   knots.k2 = ( aI[2][0] * b[0] ) + ( aI[2][1] * b[1] ) + ( aI[2][2] * b[2] );
+   
+   return knots;
 }
 
 void AudioPreprocesserModule::splineInterpolate()
