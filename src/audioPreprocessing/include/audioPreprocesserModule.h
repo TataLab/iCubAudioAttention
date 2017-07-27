@@ -45,6 +45,10 @@
 
 const float normDivid = pow(2,23);  //Number that is used to conver the integer number resived as the audio signal and convert it to a double audio signal
 
+struct knotValues {
+   double k0, k1, k2;
+};
+
 class AudioPreprocesserModule: public yarp::os::RFModule
 {
  private:
@@ -104,23 +108,64 @@ private:
 	void sendBeamFormedAudio();
 
 	/**
-	* 	interpl
-	*	Helper function used by spineInterp to do liner interpolation between points (x1,y1) and (x2,y2).
+	* 	linerApproximation
+	*	Helper function used by linerInterp to do liner interpolation between points (x1,y1) and (x2,y2).
 	*/
-	double interpl(int x, int x1, int x2, double y1, double y2);
+	inline double linerApproximation(int x, int x1, int x2, double y1, double y2);
 
 	/**
-	* SpineInterp()
+	* linerInterpolate
 	*
 	*	Taking the Audio data that is found in reducedBeamFormedAudioVector.
-	*	Creates an interpolation of the data corresponding to the interpellateNSamples that was specified in the xml.
+	*	Creates an interpolation of the data corresponding to the interpolateNSamples that was specified in the xml.
 	*	The data of this function will be saved in highResolutionAudioMap.
 	*/
-	void spineInterp();
+	void linerInterpolate();
+
+	/*
+	* calcSpline
+ 	* Given a particular x on a curve
+ 	* Return its y value.
+ 	*
+ 	* @param  x : the position on the curve being looked for
+ 	* @param x1 : x coordinate for point 1 
+ 	* @param y1 : y coordinate for point 1
+ 	* @param x2 : x coordinate for point 2
+ 	* @param y2 : y coordinate for point 2
+ 	* @param x3 : x coordinate for point 3
+ 	* @param y3 : y coordinate for point 3
+ 	* @return the y value of the asked x
+ 	*/
+	double splineApproximation(double x, double x1, double y1, double x2, double y2, double x3, double y3);
+
+	/*
+	* calcSplineKnots
+ 	* Given three coordinates, find the value of the 
+ 	* knots for each point.
+ 	* 
+ 	* @param x1 : x coordinate for point 1 
+ 	* @param y1 : y coordinate for point 1
+ 	* @param x2 : x coordinate for point 2
+ 	* @param y2 : y coordinate for point 2
+ 	* @param x3 : x coordinate for point 3
+ 	* @param y3 : y coordinate for point 3
+ 	*/  
+	knotValues calcSplineKnots(double x1, double y1, double x2, double y2, double x3, double y3);
+
+	/**
+	* splineInterpolate
+	*
+	*	Taking the Audio data that is found in reducedBeamFormedAudioVector.
+	*	Creates an interpolation of the data corresponding to the interpolateNSamples that was specified in the xml.
+	*	The data of this function will be saved in highResolutionAudioMap.
+	*/
+	void splineInterpolate();
+
+
 
 	double startTime, stopTime;
 
-	int interpellateNSamples;
+	int interpolateNSamples;
 
 	std::vector < std::vector < double > > highResolutionAudioMap;
 
@@ -129,8 +174,10 @@ private:
 	yarp::os::BufferedPort<yarp::sig::Sound> *inPort;
 	//yarp::os::BufferedPort<audio::Sound> *inPort;
 	
-	yarp::os::Port *outPort;
-	yarp::os::Port *outGammaToneFilteredAudioPort;
+	yarp::os::Port *outGammaToneAudioPort;
+    yarp::os::Port *outBeamFormedAudioPort;
+    yarp::os::Port *outAudioMapEgoPort;
+
 	yarp::sig::Sound* s;
 	//audio::Sound* s;
 	yarp::os::Stamp ts;
@@ -148,7 +195,6 @@ private:
 	GammatoneFilter *gammatoneAudioFilter;
 	BeamFormer *beamForm;
 
-	double oldtime;
 	int lastframe;
 	std::vector < std::vector < float* > > beamFormedAudioVector;
 	std::vector < std::vector < double > > reducedBeamFormedAudioVector;

@@ -5,8 +5,7 @@
 #cmake_minimum_required(VERSION 2.6)
 
 
-#add_subdirectory ( audiovisualAttention )				
-add_subdirectory ( bayesianMapApp 			)
+#add_subdirectory ( audioVisualAttention )				
 add_subdirectory ( icubAudioAttention		)
 add_subdirectory ( memoryMapper				)
 

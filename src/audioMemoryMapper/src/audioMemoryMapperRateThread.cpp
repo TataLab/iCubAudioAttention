@@ -131,7 +131,7 @@ bool audioMemoryMapperRateThread::threadInit(yarp::os::ResourceFinder &rf) {
     nMics  = rff.check("nMics", 
         Value("2"), 
         "number mics (int)").asInt();
-    interpellateNSamples  = rff.check("interpellateNSamples", 
+    interpolateNSamples  = rff.check("interpolateNSamples", 
          Value("180"), 
          "interpellate N samples (int)").asInt();
     micDistance = rff.check("micDistance", 
@@ -153,7 +153,7 @@ bool audioMemoryMapperRateThread::threadInit(yarp::os::ResourceFinder &rf) {
     yInfo("frameSamples = %d", frameSamples);
     yInfo("nBands = %d", nBands);
     yInfo("nMics = %d", nMics);
-    yInfo("interpellateNSamples = %d", interpellateNSamples );
+    yInfo("interpolateNSamples = %d", interpolateNSamples );
     yInfo("total beams = %d",totalBeams);
 }
 
@@ -310,8 +310,8 @@ void audioMemoryMapperRateThread::memoryMapAudioMapEgo(){
   // mappedAudioData[0] = ts.getCount();
   // mappedAudioData[1] = ts.getTime();
   // int count = 0;
-  // //printf("inpterellateNSamples = %d",interpellateNSamples);
-  // for (int i = 0; i < interpellateNSamples * 2; i++)
+  // //printf("inpterellateNSamples = %d",interpolateNSamples);
+  // for (int i = 0; i < interpolateNSamples * 2; i++)
   // {
   //   for (int j = 0; j < nBands; j++)
   //   {
@@ -323,8 +323,8 @@ void audioMemoryMapperRateThread::memoryMapAudioMapAlo(){
 // mappedAudioData[0] = ts.getCount();
 //   mappedAudioData[1] = ts.getTime();
 //   int count = 0;
-//   //printf("inpterellateNSamples = %d",interpellateNSamples);
-//   for (int i = 0; i < interpellateNSamples * 2; i++)
+//   //printf("inpterellateNSamples = %d",interpolateNSamples);
+//   for (int i = 0; i < interpolateNSamples * 2; i++)
 //   {
 //     for (int j = 0; j < nBands; j++)
 //     {
@@ -337,7 +337,7 @@ void audioMemoryMapperRateThread::memoryMapLongTermBayesianMap(){
    //  int count = 0;
    //  for (int i = 0; i <  nBands; i++)
    //  {
-   //      for (int j = 0; j <interpellateNSamples * 2; j++)
+   //      for (int j = 0; j <interpolateNSamples * 2; j++)
    //      {
    //        //printf("count = %d\n",count);
 

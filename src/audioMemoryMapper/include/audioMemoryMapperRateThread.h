@@ -99,7 +99,7 @@ private:
     int frameSamples;
     int nBands;
     int nMics;
-    int interpellateNSamples;
+    int interpolateNSamples;
     double micDistance;
     int C;
     int samplingRate;
@@ -176,4 +176,4 @@ public:
 
 #endif  //_AUDIO_PREPROCESSER_THREAD_H_
 
-//----- end-of-file --- ( next line intentionally left blank ) ------------------
+//----- end-of-file --- ( next line intentionally left blank ) ------------------ 

@@ -174,11 +174,17 @@ double startTime, stopTime;
     int nBands;
     std::string fileName;
     double offset;
-    int interpellateNSamples;
+    int interpolateNSamples;
     int longTimeFrame;
     int mediumTimeFrame;
     int shortTimeFrame;
 
+
+    int micDistance;
+    int totalBeams;
+    int nMics;
+
+    double nBeamsPerHemi;
     int numberOfNoiseMaps;
 
     int noiseBufferMap;

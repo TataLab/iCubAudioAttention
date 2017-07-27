@@ -24,13 +24,9 @@
 //TO DO:  get this into resource finder
 #define MEMORY_MAP_SIZE nBands * 360 
 
-int myModed(int a, int b) {
-    return  a >= 0 ? a % b : (a % b) + b;
-}
+inline int myModed(int a, int b) { return  a >= 0 ? a % b : (a % b) + b; }
 
-double myABS(double a) {
-    return  a >= 0 ? a : ((a) * -1);
-}
+inline double myABS(double a) { return  a >= 0 ? a : ((a) * -1); }
 
 BayesianModule::BayesianModule()
 {
@@ -54,7 +50,7 @@ bool BayesianModule::configure(yarp::os::ResourceFinder &rf)
     for (int i = 0; i < nBands; i++)
     {   
         std::vector<double> tempvector;
-        for (int j = 0; j < interpellateNSamples * 2; j++)
+        for (int j = 0; j < interpolateNSamples * 2; j++)
         {
             tempvector.push_back(1.0);
         }
@@ -72,11 +68,11 @@ bool BayesianModule::configure(yarp::os::ResourceFinder &rf)
         longMap.push_back(tempvector);
     }
    
-    longProbabilityAngleMap.assign(interpellateNSamples * 2,0);
+    longProbabilityAngleMap.assign(interpolateNSamples * 2,0);
 
     //Allocates the required memory for the yarp matrix that takes the input and output to this module
-    inputMatrix = new yarp::sig::Matrix(nBands, interpellateNSamples * 2);
-    outputMatrix = new yarp::sig::Matrix(nBands, interpellateNSamples * 2);
+    inputMatrix = new yarp::sig::Matrix(nBands, interpolateNSamples * 2);
+    outputMatrix = new yarp::sig::Matrix(nBands, interpolateNSamples * 2);
 
 
     //Initializes the variable that keeps track of how many frames have been gathered for the noise map
@@ -137,15 +133,15 @@ bool BayesianModule::configure(yarp::os::ResourceFinder &rf)
 		return false;
 	}
 
-	double tempNoiseMap[nBands*interpellateNSamples*2];
-	fread(tempNoiseMap,sizeof(double),nBands*interpellateNSamples*2,fidNoise);
+	double tempNoiseMap[nBands*interpolateNSamples*2];
+	fread(tempNoiseMap,sizeof(double),nBands*interpolateNSamples*2,fidNoise);
 	fclose(fidNoise);
 	
 	int count=0;
 	for(int i=0;i<nBands;i++){
 	
 		std::vector<double> tempvector;
-		for(int j=0;j<interpellateNSamples*2;j++){
+		for(int j=0;j<interpolateNSamples*2;j++){
 			tempvector.push_back(tempNoiseMap[count++]);
 		}
 		noiseMap.push_back(tempvector);
@@ -211,11 +207,11 @@ void BayesianModule::normalizePropabilityMap(std::vector <std::vector <double>> 
     for (int i = 0; i <  nBands; i++)
     {
         double sum = 0;
-        for (int j = 0; j < interpellateNSamples * 2; j++)
+        for (int j = 0; j < interpolateNSamples * 2; j++)
         {
             sum += probabilityMap[i][j];
         }
-        for (int j = 0; j < interpellateNSamples * 2; j++)
+        for (int j = 0; j < interpolateNSamples * 2; j++)
         {
             probabilityMap[i][j] /= sum;
         }
@@ -249,8 +245,8 @@ void BayesianModule::sendAudioMap(std::vector <std::vector <double>> &probabilit
     //Loops though the input(probabilityMap) and does a deep copy of all the elements into a the outPutMatrix which is used to send out the output of this module
     for (int i = 0; i < nBands; i++)
     {
-        yarp::sig::Vector tempV(interpellateNSamples * 2);
-        for (int j = 0; j < interpellateNSamples * 2; j++)
+        yarp::sig::Vector tempV(interpolateNSamples * 2);
+        for (int j = 0; j < interpolateNSamples * 2; j++)
         {
             tempV[j] = probabilityMap[i][j];
         }
@@ -305,7 +301,7 @@ void BayesianModule::setAcousticMap()
     int count = 0;
     for (int i = 0; i < nBands; i++)
     {
-        for (int j = 0; j < interpellateNSamples * 2; j++)
+        for (int j = 0; j < interpolateNSamples * 2; j++)
         {
             currentAudioMap[i][j] = *(inputMatrix->data()+(count++));
         }
@@ -339,7 +335,6 @@ void BayesianModule::setAcousticMap()
 
     collapseMap(longMap,longProbabilityAngleMap);
     
-    //noiseBufferMap++;
 }
 
 void BayesianModule::addMap(std::vector <std::vector <double>> &probabilityMap, std::vector <std::vector <double>> &inputCurrentAudioMap)
@@ -349,9 +344,9 @@ void BayesianModule::addMap(std::vector <std::vector <double>> &probabilityMap, 
     //In brief this adds the map inputCurrentAudioMap to the Bayesian map corresponding to the input probabilityMap
     for (int i = 0; i <  nBands; i++)
     {
-        for (int j = 0; j < interpellateNSamples * 2; j++)
+        for (int j = 0; j < interpolateNSamples * 2; j++)
         {
-            int o =  myModed((j + (int)offset), interpellateNSamples * 2);
+            int o =  myModed((j + (int)offset), interpolateNSamples * 2);
             probabilityMap[i][j] *= inputCurrentAudioMap[i][o];   
         }
     }
@@ -363,9 +358,9 @@ void BayesianModule::removeMap(std::vector <std::vector <double>> &probabilityMa
     //In brief this removes the map inputCurrentAudioMap from the Bayesian map corresponding to the input probabilityMap
     for (int i = 0; i <  nBands; i++)
     {
-        for (int j = 0; j < interpellateNSamples * 2; j++)
+        for (int j = 0; j < interpolateNSamples * 2; j++)
         {
-            int o =  myModed((j + (int)bufferedOffSet.front()), interpellateNSamples * 2);
+            int o =  myModed((j + (int)bufferedOffSet.front()), interpolateNSamples * 2);
             probabilityMap[i][j] /= inputCurrentAudioMap[i][o];
         }
     }
@@ -375,9 +370,9 @@ void BayesianModule::removeNoise(std::vector <std::vector <double>> &probability
     //In brief this removes the noise map from the Bayesian map corresponding to the input probabilityMap
     for (int i = 0; i <  nBands; i++)
     {
-        for (int j = 0; j < interpellateNSamples * 2; j++)
+        for (int j = 0; j < interpolateNSamples * 2; j++)
         {
-            int o =  myModed((j + (int)offset), interpellateNSamples * 2);
+            int o =  myModed((j + (int)offset), interpolateNSamples * 2);
             probabilityMap[i][j] /= noiseMap[i][o];
         }
     }
@@ -389,7 +384,7 @@ void BayesianModule::createNoiseMaps()
     //(this is done to take the average of the numberOfNoiseMaps specified in that variable to currentAudioMaps to create a noise map)
     for (int i = 0; i <  nBands; i++)
     {
-        for (int j = 0; j < interpellateNSamples * 2; j++)
+        for (int j = 0; j < interpolateNSamples * 2; j++)
         {
             noiseMap[i][j] += currentAudioMap[i][j];
             if(noiseBufferMap==numberOfNoiseMaps){
@@ -440,28 +435,27 @@ void BayesianModule::loadFile(yarp::os::ResourceFinder &rf)
                            Value("128"), 
                            "numberBands (int)").asInt();
 
-    interpellateNSamples  = rf.check("interpellateNSamples", 
+    interpolateNSamples  = rf.check("interpolateNSamples", 
                            Value("180"), 
                            "interpellate N samples (int)").asInt();
-
-    shortTimeFrame = rf.check("shortBufferSize", 
-                           Value("10"), 
-                           "short Buffer Size (int)").asInt();
-
-    mediumTimeFrame = rf.check("mediumBufferSize", 
-                           Value("100"), 
-                           "medium Buffer Size (int)").asInt();
 
     longTimeFrame = rf.check("longBufferSize", 
                            Value("360"), 
                            "long Buffer Size (int)").asInt();
 
+
+
+
+    yInfo("nBands = %d", nBands);
+    yInfo("nMics = %d", nMics);
+    yInfo("interpolateNSamples = %d", interpolateNSamples );
+    
    
 
 }
 void BayesianModule::collapseMap(const std::vector <std::vector <double>> &inputMap, std::vector <double> &outputProbabilityMap)
 {
-    for (int j = 0; j < interpellateNSamples * 2; j++)
+    for (int j = 0; j < interpolateNSamples * 2; j++)
     {
 
         for (int i = 0; i <  nBands; i++)
@@ -472,11 +466,11 @@ void BayesianModule::collapseMap(const std::vector <std::vector <double>> &input
 
     }
     double sum = 0;
-    for (int j = 0; j < interpellateNSamples * 2; j++)
+    for (int j = 0; j < interpolateNSamples * 2; j++)
     {
         sum+=outputProbabilityMap[j];
     }
-    for (int j = 0; j < interpellateNSamples * 2; j++)
+    for (int j = 0; j < interpolateNSamples * 2; j++)
     {
         outputProbabilityMap[j]/=sum;
     }

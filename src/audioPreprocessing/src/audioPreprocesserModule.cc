@@ -24,8 +24,6 @@
 #include "audioPreprocesserModule.h"
 #define NUM_FRAME_SAMPLES 4096 //get this into resource finder!!!!
 
-
-
 using namespace yarp::os;
 
 AudioPreprocesserModule::AudioPreprocesserModule()
@@ -47,13 +45,18 @@ bool AudioPreprocesserModule::configure(yarp::os::ResourceFinder &rf)
     yInfo("Configuring the module");
 	inPort = new yarp::os::BufferedPort<yarp::sig::Sound>();
 	//inPort = new yarp::os::BufferedPort<audio::Sound>();
-	inPort->open("/iCubAudioAttention/Preprocesser:i");
+	inPort->open("/iCubAudioAttention/AudioPreprocesser:i");
 
-	outPort = new yarp::os::Port();
-	outPort->open("/iCubAudioAttention/Preprocesser:o");
+	outAudioMapEgoPort = new yarp::os::Port();
+	outAudioMapEgoPort->open("/iCubAudioAttention/AudioMapEgo:o");
 
-	outGammaToneFilteredAudioPort = new yarp::os::Port();
-	outGammaToneFilteredAudioPort->open("/iCubAudioAttention/GammaToneFilteredAudio:o");
+	outGammaToneAudioPort = new yarp::os::Port();
+	outGammaToneAudioPort->open("/iCubAudioAttention/GammaToneFilteredAudio:o");
+
+	outBeamFormedAudioPort= new yarp::os::Port();
+	outBeamFormedAudioPort->open("/iCubAudioAttention/BeamFormedAudio:o");
+
+
 
 	if (yarp::os::Network::exists("/iCubAudioAttention/Preprocesser:i"))
 	{
@@ -69,22 +72,18 @@ bool AudioPreprocesserModule::configure(yarp::os::ResourceFinder &rf)
 		return false;
 	}
 
-
    	//Set the file which the module uses to grab the config information
-    yInfo("loading configuration file");
-	//calls the parser and the config file to configure the needed variables in this class
+    //calls the parser and the config file to configure the needed variables in this class
 	loadFile(rf);
-    yInfo("file successfully load");
-    
+        
     //preparing GammatoneFilter and beamForming
 	gammatoneAudioFilter = new GammatoneFilter(samplingRate, lowCf, highCf, nBands, frameSamples, nMics, false, false);
 	beamForm = new BeamFormer(nBands, frameSamples, nMics, nBeamsPerHemi);
 
     // preparing other memory structures
     rawAudio = new float[(frameSamples * nMics)];
-	oldtime = 0;
 
-	for (int i = 0; i < interpellateNSamples * 2; i++) {
+	for (int i = 0; i < interpolateNSamples * 2; i++) {
 		std::vector<double> tempvector;
 		for (int j = 0; j < nBands; j++) {
 			tempvector.push_back(0);
@@ -92,10 +91,9 @@ bool AudioPreprocesserModule::configure(yarp::os::ResourceFinder &rf)
 		highResolutionAudioMap.push_back(tempvector);
 	}
 
-	outAudioMap = new yarp::sig::Matrix(nBands, interpellateNSamples * 2);
+	outAudioMap = new yarp::sig::Matrix(nBands, interpolateNSamples * 2);
 	outGammaToneFilteredAudioMap = new yarp::sig::Matrix(nBands*2, frameSamples);
 
-    
     /* create the thread and pass pointers to the module parameters */
 	apr = new AudioPreprocesserRatethread(robotName, configFile);
 	apr->setName(getName().c_str());
@@ -124,33 +122,38 @@ bool AudioPreprocesserModule::updateModule()
 		
 	}
 
-	int row = 0;
 	for (int col = 0 ; col < frameSamples; col++) {
-		yarp::os::NetInt32 temp_c = (yarp::os::NetInt32) s->get(col, 0);
-		yarp::os::NetInt32 temp_d = (yarp::os::NetInt32) s->get(col, 1);
-		rawAudio[row]   = (float) temp_c / normDivid;
-		rawAudio[row + 1]	= (float) temp_d / normDivid;
-		//printf("%d   %f",temp_c,rawAudio[row]);
-		row += 2;
+		for(int micLoop = 0; micLoop < nMics; micLoop++)
+			rawAudio[col*nMics + micLoop] = s->get(col, micLoop) / normDivid;
 	}
 
-
-	//yError("Error in the loading of file");
 	gammatoneAudioFilter->gammatoneFilterBank(rawAudio);
+	//if (outGammaToneAudioPort->getOutputCount()) {
+	//	sendGammatoneFilteredAudio(gammatoneAudioFilter->getFilteredAudio());
+	//	outGammaToneAudioPort->setEnvelope(ts);
+	//	outGammaToneAudioPort->write(*outGammaToneFilteredAudioMap,false);
+	//}
+
 	beamForm->inputAudio(gammatoneAudioFilter->getFilteredAudio());
-
-	sendGammatoneFilteredAudio(gammatoneAudioFilter->getFilteredAudio());
-	outGammaToneFilteredAudioPort->setEnvelope(ts);
-	outGammaToneFilteredAudioPort->write(*outGammaToneFilteredAudioMap);
-
 	reducedBeamFormedAudioVector = beamForm->getReducedBeamAudio();
+	//if (outGammaToneAudioPort->getOutputCount()) {
+	//	sendGammatoneFilteredAudio(gammatoneAudioFilter->getFilteredAudio());
+	//	outGammaToneAudioPort->setEnvelope(ts);
+	//	outGammaToneAudioPort->write(*outGammaToneFilteredAudioMap,false);
+	//}
 	beamFormedAudioVector = beamForm->getBeamAudio();
-	spineInterp();
+	//if (outBeamFormedAudioPort->getOutputCount()) {
+	//	sendBeamFormedAudio(beamFormedAudioVector);
+	//	outBeamFormedAudioPort->setEnvelope(ts);
+	//	outBeamFormedAudioPort->write(*outGammaToneFilteredAudioMap,false);
+	//}
+	linerInterpolate();
 
-
-	sendAudioMap();
-	outPort->setEnvelope(ts);
-	outPort->write(*outAudioMap);
+	//if (outAudioMapEgoPort->getOutputCount()) {
+		sendAudioMap();
+		outAudioMapEgoPort->setEnvelope(ts);
+		outAudioMapEgoPort->write(*outAudioMap);
+	//}
 
 	//Timing how long the module took
 	lastframe = ts.getCount();
@@ -162,20 +165,19 @@ bool AudioPreprocesserModule::updateModule()
 
 bool AudioPreprocesserModule::interruptModule()
 {
-	fprintf(stderr, "[WARN] Interrupting\n");
+	yInfo("Interrupting\n");
 	return true;
 }
 
 bool AudioPreprocesserModule::close()
 {
-	fprintf(stderr, "[INFO] Calling close\n");
+	yInfo("Calling close\n");
 	return true;
 }
 
-
 void AudioPreprocesserModule::loadFile(yarp::os::ResourceFinder &rf)
 {
-	
+	yInfo("loading configuration file");
 	try {
 		frameSamples  = rf.check("frameSamples", 
                            Value("4096"), 
@@ -186,7 +188,7 @@ void AudioPreprocesserModule::loadFile(yarp::os::ResourceFinder &rf)
         nMics  = rf.check("nMics", 
                            Value("2"), 
                            "number mics (int)").asInt();
-        interpellateNSamples  = rf.check("interpellateNSamples", 
+        interpolateNSamples  = rf.check("interpolateNSamples", 
                            Value("180"), 
                            "interpellate N samples (int)").asInt();
         micDistance = rf.check("micDistance", 
@@ -212,16 +214,15 @@ void AudioPreprocesserModule::loadFile(yarp::os::ResourceFinder &rf)
         yInfo("frameSamples = %d", frameSamples);
         yInfo("nBands = %d", nBands);
         yInfo("nMics = %d", nMics);
-        yInfo("interpellateNSamples = %d", interpellateNSamples );
+        yInfo("interpolateNSamples = %d", interpolateNSamples );
 		yInfo("total beams = %d",totalBeams);
 	}
 	catch (int a) {
         yError("Error in the loading of file");
 	}
-
+	yInfo("file successfully load");
 
 }
-
 
 void AudioPreprocesserModule::sendGammatoneFilteredAudio(const std::vector<float*> &gammatoneAudio){
 	for (int i = 0; i < nBands; i++)
@@ -249,8 +250,8 @@ void AudioPreprocesserModule::sendAudioMap()
 {
 	for (int i = 0; i < nBands; i++)
 	{
-		yarp::sig::Vector tempV(interpellateNSamples * 2);
-		for (int j = 0; j < interpellateNSamples * 2; j++)
+		yarp::sig::Vector tempV(interpolateNSamples * 2);
+		for (int j = 0; j < interpolateNSamples * 2; j++)
 		{
 			tempV[j] = highResolutionAudioMap[j][i];
 		}
@@ -259,38 +260,82 @@ void AudioPreprocesserModule::sendAudioMap()
 
 }
 
-void AudioPreprocesserModule::spineInterp()
+inline double AudioPreprocesserModule::linerApproximation(int x, int x1, int x2, double y1, double y2)
 {
-	double offset = (interpellateNSamples / (double)totalBeams);
+	return y1 + ((y2 - y1) * (x - x1)) / (x2 - x1);
+}
+
+void AudioPreprocesserModule::linerInterpolate()
+{
+	double offset = (interpolateNSamples / (double)totalBeams);
 	for (int i = 0; i < nBands; i++)
 	{
 		int k = 0;
 		double curroffset = 0;
-		for (int j = 0; j < interpellateNSamples; j++)
+		for (int j = 0; j < interpolateNSamples; j++)
 		{
 			if (j == (int)curroffset && k < (totalBeams - 1))
 			{
 				curroffset += offset;
 				k++;
 			}
-			highResolutionAudioMap[j][i] = interpl(j, curroffset - offset, curroffset , reducedBeamFormedAudioVector[k - 1][i], reducedBeamFormedAudioVector[k][i]);
+			highResolutionAudioMap[j][i] = linerApproximation(j, curroffset - offset, curroffset , reducedBeamFormedAudioVector[k - 1][i], reducedBeamFormedAudioVector[k][i]);
 		}
-		curroffset = interpellateNSamples;
-		for (int j = interpellateNSamples; j < interpellateNSamples * 2; j++)
+		curroffset = interpolateNSamples;
+		for (int j = interpolateNSamples; j < interpolateNSamples * 2; j++)
 		{
 			if (j == (int)curroffset && k > 1)
 			{
-				if (j != interpellateNSamples)
+				if (j != interpolateNSamples)
 					k--;
 				curroffset += offset;
 			}
-			highResolutionAudioMap[j][i] = interpl(j, curroffset - offset, curroffset, reducedBeamFormedAudioVector[k][i], reducedBeamFormedAudioVector[k - 1][i]);
+			highResolutionAudioMap[j][i] = linerApproximation(j, curroffset - offset, curroffset, reducedBeamFormedAudioVector[k][i], reducedBeamFormedAudioVector[k - 1][i]);
 		}
 	}
 
 }
 
-double AudioPreprocesserModule::interpl(int x, int x1, int x2, double y1, double y2)
+double AudioPreprocesserModule::splineApproximation(double x, double x1, double y1, double x2, double y2, double x3, double y3)
 {
-	return y1 + ((y2 - y1) * (x - x1)) / (x2 - x1);
+
 }
+
+knotValues AudioPreprocesserModule::calcSplineKnots(double x1, double y1, double x2, double y2, double x3, double y3)
+{
+
+}
+
+void AudioPreprocesserModule::splineInterpolate()
+{
+	double offset = (interpolateNSamples / (double)totalBeams);
+	for (int i = 0; i < nBands; i++)
+	{
+		int k = 0;
+		double curroffset = 0;
+		for (int j = 0; j < interpolateNSamples; j++)
+		{
+			if (j == (int)curroffset && k < (totalBeams - 1))
+			{
+				curroffset += offset;
+				k++;
+			}
+			highResolutionAudioMap[j][i] = splineApproximation(j, curroffset - offset, reducedBeamFormedAudioVector[k - 1][i], curroffset , reducedBeamFormedAudioVector[k][i], curroffset + offset , reducedBeamFormedAudioVector[k+1][i]);
+		}
+		curroffset = interpolateNSamples;
+		for (int j = interpolateNSamples; j < interpolateNSamples * 2; j++)
+		{
+			if (j == (int)curroffset && k > 1)
+			{
+				if (j != interpolateNSamples)
+					k--;
+				curroffset += offset;
+			}
+			highResolutionAudioMap[j][i] = splineApproximation(j, curroffset - offset, reducedBeamFormedAudioVector[k][i], curroffset, reducedBeamFormedAudioVector[k - 1][i], curroffset + offset , reducedBeamFormedAudioVector[k-2][i]);
+		}
+	}
+
+}
+
+
+
