@@ -37,64 +37,78 @@ AudioPreprocesserModule::~AudioPreprocesserModule()
 	delete gammatoneAudioFilter;
 	delete beamForm;
 	delete rawAudio;
-
 }
 
 bool AudioPreprocesserModule::configure(yarp::os::ResourceFinder &rf)
 {
+
     yInfo("Configuring the module");
-	inPort = new yarp::os::BufferedPort<yarp::sig::Sound>();
-	//inPort = new yarp::os::BufferedPort<audio::Sound>();
+
+    // input port for receiving raw audio
+	inPort = new yarp::os::BufferedPort<yarp::sig::Sound>(); //inPort = new yarp::os::BufferedPort<audio::Sound>();
 	inPort->open("/iCubAudioAttention/AudioPreprocesser:i");
 
-	outAudioMapEgoPort = new yarp::os::Port();
-	outAudioMapEgoPort->open("/iCubAudioAttention/AudioMapEgo:o");
-
+	
+	// output port for sending GammaTone Filtered Audio
 	outGammaToneAudioPort = new yarp::os::Port();
 	outGammaToneAudioPort->open("/iCubAudioAttention/GammaToneFilteredAudio:o");
 
+
+	// output port for sending BeamFormed Audio
 	outBeamFormedAudioPort= new yarp::os::Port();
 	outBeamFormedAudioPort->open("/iCubAudioAttention/BeamFormedAudio:o");
 
 
+	// output port for sending the Audio Map
+	outAudioMapEgoPort = new yarp::os::Port();
+	outAudioMapEgoPort->open("/iCubAudioAttention/AudioMapEgo:o");
 
-	if (yarp::os::Network::exists("/iCubAudioAttention/Preprocesser:i"))
-	{
-		if (yarp::os::Network::connect("/sender", "/iCubAudioAttention/Preprocesser:i") == false)
-		{
-			
+
+	// error checking 
+	if (yarp::os::Network::exists("/iCubAudioAttention/Preprocesser:i")) {
+		if (yarp::os::Network::connect("/sender", "/iCubAudioAttention/Preprocesser:i") == false) {
 			yError("Could not make connection to /sender. \nExiting. \n");
 			return false;
 		}
 	}
-	else
-	{
+
+	else {
 		return false;
 	}
 
-   	//Set the file which the module uses to grab the config information
-    //calls the parser and the config file to configure the needed variables in this class
+   	// Set the file which the module uses to grab the config information calls the
+    // parser and the config file to configure the needed variables in this class
 	loadFile(rf);
         
-    //preparing GammatoneFilter and beamForming
+    // prepare GammatoneFilter object
 	gammatoneAudioFilter = new GammatoneFilter(samplingRate, lowCf, highCf, nBands, frameSamples, nMics, false, false);
+	
+	// prepare BeamFormer object
 	beamForm = new BeamFormer(nBands, frameSamples, nMics, nBeamsPerHemi);
 
-    // preparing other memory structures
+    // prepare other memory structures
     rawAudio = new float[(frameSamples * nMics)];
 
+    // initialize a two dimentianl vector that
+    // is 2 * interpolateNSamples x nBands 
 	for (int i = 0; i < interpolateNSamples * 2; i++) {
+		
 		std::vector<double> tempvector;
+		
 		for (int j = 0; j < nBands; j++) {
 			tempvector.push_back(0);
 		}
+
 		highResolutionAudioMap.push_back(tempvector);
 	}
 
+	// construct a yarp Matrix for sending an Audio Map
 	outAudioMap = new yarp::sig::Matrix(nBands, interpolateNSamples * 2);
+
+	// construct a yarp Matrix for sending GammaTone Filtered Audio
 	outGammaToneFilteredAudioMap = new yarp::sig::Matrix(nBands*2, frameSamples);
 
-    /* create the thread and pass pointers to the module parameters */
+    // create the thread and pass pointers to the module parameters
 	apr = new AudioPreprocesserRatethread(robotName, configFile);
 	apr->setName(getName().c_str());
     //rThread->setInputPortName(inputPortName.c_str());
@@ -113,53 +127,79 @@ double AudioPreprocesserModule::getPeriod()
 
 bool AudioPreprocesserModule::updateModule()
 {
-
+	// read in raw audio
 	s = inPort->read(true);
 
+	// set ts to be the envelope 
+	// count for the inPort
 	inPort->getEnvelope(ts);
 
 	if (ts.getCount() != lastframe + 1) {
 		
 	}
 
+	// initialize rawAudio to be usable 
 	for (int col = 0 ; col < frameSamples; col++) {
-		for(int micLoop = 0; micLoop < nMics; micLoop++)
+		for(int micLoop = 0; micLoop < nMics; micLoop++) {
 			rawAudio[col*nMics + micLoop] = s->get(col, micLoop) / normDivid;
+		}
 	}
 
+	// run the Filter Bank on the raw Audio
 	gammatoneAudioFilter->gammatoneFilterBank(rawAudio);
+
 	//if (outGammaToneAudioPort->getOutputCount()) {
 	//	sendGammatoneFilteredAudio(gammatoneAudioFilter->getFilteredAudio());
 	//	outGammaToneAudioPort->setEnvelope(ts);
 	//	outGammaToneAudioPort->write(*outGammaToneFilteredAudioMap,false);
 	//}
 
+	// set the beamformers audio to be the filtered audio
 	beamForm->inputAudio(gammatoneAudioFilter->getFilteredAudio());
+
+	// run the reduced-beamformer on the set audio
 	reducedBeamFormedAudioVector = beamForm->getReducedBeamAudio();
+
 	//if (outGammaToneAudioPort->getOutputCount()) {
 	//	sendGammatoneFilteredAudio(gammatoneAudioFilter->getFilteredAudio());
 	//	outGammaToneAudioPort->setEnvelope(ts);
 	//	outGammaToneAudioPort->write(*outGammaToneFilteredAudioMap,false);
 	//}
+
+	// run the beamformer on the set audio
 	beamFormedAudioVector = beamForm->getBeamAudio();
+
 	//if (outBeamFormedAudioPort->getOutputCount()) {
 	//	sendBeamFormedAudio(beamFormedAudioVector);
 	//	outBeamFormedAudioPort->setEnvelope(ts);
 	//	outBeamFormedAudioPort->write(*outGammaToneFilteredAudioMap,false);
 	//}
+
+	// do an interpolate on the reducedBeamFormedAudioVector
+	// to produce a highResolutionAudioMap
 	linerInterpolate();
 
 	//if (outAudioMapEgoPort->getOutputCount()) {
-		sendAudioMap();
-		outAudioMapEgoPort->setEnvelope(ts);
-		outAudioMapEgoPort->write(*outAudioMap);
+	
+	// format the highResolutionAudioMap into 
+	// a sendable format
+	sendAudioMap();
+
+	// set the envelope for the Audio Map port
+	outAudioMapEgoPort->setEnvelope(ts);
+
+	// publish the map onto the network
+	outAudioMapEgoPort->write(*outAudioMap);
+	
 	//}
 
-	//Timing how long the module took
+	// timing how long the module took
 	lastframe = ts.getCount();
 	stopTime=Time::now();
 	yInfo("elapsed time = %f\n",stopTime-startTime);
 	startTime=stopTime;
+
+	// complete
 	return true;
 }
 
@@ -177,6 +217,7 @@ bool AudioPreprocesserModule::close()
 
 void AudioPreprocesserModule::loadFile(yarp::os::ResourceFinder &rf)
 {
+	// import all relevant data fron the .ini file 
 	yInfo("loading configuration file");
 	try {
 		frameSamples  = rf.check("frameSamples", 
@@ -217,47 +258,55 @@ void AudioPreprocesserModule::loadFile(yarp::os::ResourceFinder &rf)
         yInfo("interpolateNSamples = %d", interpolateNSamples );
 		yInfo("total beams = %d",totalBeams);
 	}
+
 	catch (int a) {
         yError("Error in the loading of file");
 	}
-	yInfo("file successfully load");
 
+	yInfo("file successfully load");
 }
 
 void AudioPreprocesserModule::sendGammatoneFilteredAudio(const std::vector<float*> &gammatoneAudio){
-	for (int i = 0; i < nBands; i++)
-	{
+	
+	for (int i = 0; i < nBands; i++) {
+
 		yarp::sig::Vector tempV(frameSamples);
-		for (int j = 0; j < frameSamples; j++)
-		{
+		
+		for (int j = 0; j < frameSamples; j++) {
+		
 			tempV[j] = gammatoneAudio[i][j];
 		}
+		
 		outGammaToneFilteredAudioMap->setRow(i, tempV);
 	}
+	
 	for (int i = 0; i < nBands; i++)
 	{
+	
 		yarp::sig::Vector tempV(frameSamples);
-		for (int j = 0; j < frameSamples; j++)
-		{
+	
+		for (int j = 0; j < frameSamples; j++) {
+			
 			tempV[j] = gammatoneAudio[i+nBands][j];
 		}
+
 		outGammaToneFilteredAudioMap->setRow(i+nBands, tempV);
 	}
-
 }
 
 void AudioPreprocesserModule::sendAudioMap()
 {
-	for (int i = 0; i < nBands; i++)
-	{
+	for (int i = 0; i < nBands; i++) {
+
 		yarp::sig::Vector tempV(interpolateNSamples * 2);
-		for (int j = 0; j < interpolateNSamples * 2; j++)
-		{
+		
+		for (int j = 0; j < interpolateNSamples * 2; j++) {
+			
 			tempV[j] = highResolutionAudioMap[j][i];
 		}
+
 		outAudioMap->setRow(i, tempV);
 	}
-
 }
 
 inline double AudioPreprocesserModule::linerApproximation(int x, int x1, int x2, double y1, double y2)
@@ -268,32 +317,37 @@ inline double AudioPreprocesserModule::linerApproximation(int x, int x1, int x2,
 void AudioPreprocesserModule::linerInterpolate()
 {
 	double offset = (interpolateNSamples / (double)totalBeams);
-	for (int i = 0; i < nBands; i++)
-	{
+
+	for (int i = 0; i < nBands; i++) {
+		
 		int k = 0;
 		double curroffset = 0;
-		for (int j = 0; j < interpolateNSamples; j++)
-		{
-			if (j == (int)curroffset && k < (totalBeams - 1))
-			{
+		
+		// interpolation for the first half
+		for (int j = 0; j < interpolateNSamples; j++) {
+			if (j == (int)curroffset && k < (totalBeams - 1)) {
 				curroffset += offset;
 				k++;
 			}
+
 			highResolutionAudioMap[j][i] = linerApproximation(j, curroffset - offset, curroffset , reducedBeamFormedAudioVector[k - 1][i], reducedBeamFormedAudioVector[k][i]);
 		}
+
 		curroffset = interpolateNSamples;
-		for (int j = interpolateNSamples; j < interpolateNSamples * 2; j++)
-		{
-			if (j == (int)curroffset && k > 1)
-			{
-				if (j != interpolateNSamples)
+
+		// interpolation for the second half
+		for (int j = interpolateNSamples; j < interpolateNSamples * 2; j++) {
+			if (j == (int)curroffset && k > 1) {
+				if (j != interpolateNSamples) {
 					k--;
+				}
+
 				curroffset += offset;
 			}
+
 			highResolutionAudioMap[j][i] = linerApproximation(j, curroffset - offset, curroffset, reducedBeamFormedAudioVector[k][i], reducedBeamFormedAudioVector[k - 1][i]);
 		}
 	}
-
 }
 
 double AudioPreprocesserModule::splineApproximation(double x, double x1, double y1, double x2, double y2, double x3, double y3)
@@ -324,13 +378,12 @@ double AudioPreprocesserModule::splineApproximation(double x, double x1, double 
 
 knotValues AudioPreprocesserModule::calcSplineKnots(double x1, double y1, double x2, double y2, double x3, double y3)
 {
-	int matSize = 3;
+   int matSize = 3;
 
    yarp::sig::Matrix a(matSize,matSize), aI(matSize,matSize);
    yarp::sig::Vector b(matSize);
-   /*double b[matSize];*/
    
-   // get the matrix a
+   // get the tridiagonal linear matrix a
    a[0][0] = 2 / (x2 - x1);
    a[0][1] = 1 / (x2 - x1);
    a[0][2] = 0;
@@ -341,6 +394,7 @@ knotValues AudioPreprocesserModule::calcSplineKnots(double x1, double y1, double
    a[2][1] = 1 / (x3 - x2);
    a[2][2] = 2 / (x3 - x2);
 
+   // get the inverse of matrix a
    aI = yarp::math::luinv(a);
 
    // get matrix b
@@ -349,8 +403,8 @@ knotValues AudioPreprocesserModule::calcSplineKnots(double x1, double y1, double
               + (y3 - y2) / ( (x3 - x2) * (x3 - x2) ) );
    b[2] = 3 * ( (y3 - y2) / ( (x3 - x2) * (x3 - x2) ) );
 
-   // matrix ks being the knot values
-   // for the spline which is aI * b
+   // matrix ks being the knot values for
+   // the spline which is matrix aI * b
    knotValues knots;
    knots.k0 = ( aI[0][0] * b[0] ) + ( aI[0][1] * b[1] ) + ( aI[0][2] * b[2] );
    knots.k1 = ( aI[1][0] * b[0] ) + ( aI[1][1] * b[1] ) + ( aI[1][2] * b[2] );
@@ -362,32 +416,37 @@ knotValues AudioPreprocesserModule::calcSplineKnots(double x1, double y1, double
 void AudioPreprocesserModule::splineInterpolate()
 {
 	double offset = (interpolateNSamples / (double)totalBeams);
-	for (int i = 0; i < nBands; i++)
-	{
+
+	for (int i = 0; i < nBands; i++) {
+		
 		int k = 0;
 		double curroffset = 0;
-		for (int j = 0; j < interpolateNSamples; j++)
-		{
-			if (j == (int)curroffset && k < (totalBeams - 1))
-			{
+		
+		// interpolation for the first half
+		for (int j = 0; j < interpolateNSamples; j++) {
+			if (j == (int)curroffset && k < (totalBeams - 1)) {
 				curroffset += offset;
 				k++;
 			}
+
 			highResolutionAudioMap[j][i] = splineApproximation(j, curroffset - offset, reducedBeamFormedAudioVector[k - 1][i], curroffset , reducedBeamFormedAudioVector[k][i], curroffset + offset , reducedBeamFormedAudioVector[k+1][i]);
 		}
+
 		curroffset = interpolateNSamples;
-		for (int j = interpolateNSamples; j < interpolateNSamples * 2; j++)
-		{
-			if (j == (int)curroffset && k > 1)
-			{
-				if (j != interpolateNSamples)
+
+		// interpolation for the second half
+		for (int j = interpolateNSamples; j < interpolateNSamples * 2; j++)	{
+			if (j == (int)curroffset && k > 1) {
+				if (j != interpolateNSamples) {
 					k--;
+				}
+
 				curroffset += offset;
 			}
+
 			highResolutionAudioMap[j][i] = splineApproximation(j, curroffset - offset, reducedBeamFormedAudioVector[k][i], curroffset, reducedBeamFormedAudioVector[k - 1][i], curroffset + offset , reducedBeamFormedAudioVector[k-2][i]);
 		}
 	}
-
 }
 
 

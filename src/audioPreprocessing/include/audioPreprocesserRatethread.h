@@ -45,13 +45,15 @@ private:
     
 public:
     /**
-    * constructor default
+    *   constructor default
     */
     AudioPreprocesserRatethread();
 
     /**
-    * constructor 
-    * @param robotname name of the robot
+    *   constructor 
+    *   @param  robotname : name of the robot
+    *   @param configFile : 
+    * 
     */
     AudioPreprocesserRatethread(std::string robotname,std::string configFile);
 
