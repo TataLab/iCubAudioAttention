@@ -22,7 +22,6 @@
  */
 
 #include "audioPreprocesserModule.h"
-#define NUM_FRAME_SAMPLES 4096 //get this into resource finder!!!!
 
 using namespace yarp::os;
 
@@ -58,6 +57,10 @@ bool AudioPreprocesserModule::configure(yarp::os::ResourceFinder &rf)
 	outBeamFormedAudioPort= new yarp::os::Port();
 	outBeamFormedAudioPort->open("/iCubAudioAttention/BeamFormedAudio:o");
 
+	// output port for sending BeamFormed Audio
+	outReducedBeamFormedAudioPort= new yarp::os::Port();
+	outReducedBeamFormedAudioPort->open("/iCubAudioAttention/ReducedBeamFormedAudio:o");
+
 
 	// output port for sending the Audio Map
 	outAudioMapEgoPort = new yarp::os::Port();
@@ -65,13 +68,12 @@ bool AudioPreprocesserModule::configure(yarp::os::ResourceFinder &rf)
 
 
 	// error checking 
-	if (yarp::os::Network::exists("/iCubAudioAttention/Preprocesser:i")) {
-		if (yarp::os::Network::connect("/sender", "/iCubAudioAttention/Preprocesser:i") == false) {
+	if (yarp::os::Network::exists("/iCubAudioAttention/AudioPreprocesser:i")) {
+		if (yarp::os::Network::connect("/sender", "/iCubAudioAttention/AudioPreprocesser:i") == false) {
 			yError("Could not make connection to /sender. \nExiting. \n");
 			return false;
 		}
 	}
-
 	else {
 		return false;
 	}
@@ -127,6 +129,7 @@ double AudioPreprocesserModule::getPeriod()
 
 bool AudioPreprocesserModule::updateModule()
 {
+
 	// read in raw audio
 	s = inPort->read(true);
 
@@ -137,7 +140,6 @@ bool AudioPreprocesserModule::updateModule()
 	if (ts.getCount() != lastframe + 1) {
 		
 	}
-
 	// initialize rawAudio to be usable 
 	for (int col = 0 ; col < frameSamples; col++) {
 		for(int micLoop = 0; micLoop < nMics; micLoop++) {
@@ -146,52 +148,50 @@ bool AudioPreprocesserModule::updateModule()
 	}
 
 	// run the Filter Bank on the raw Audio
+
 	gammatoneAudioFilter->gammatoneFilterBank(rawAudio);
 
-	//if (outGammaToneAudioPort->getOutputCount()) {
-	//	sendGammatoneFilteredAudio(gammatoneAudioFilter->getFilteredAudio());
-	//	outGammaToneAudioPort->setEnvelope(ts);
-	//	outGammaToneAudioPort->write(*outGammaToneFilteredAudioMap,false);
-	//}
+	if (outGammaToneAudioPort->getOutputCount()) {
+		sendGammatoneFilteredAudio(gammatoneAudioFilter->getFilteredAudio());
+		outGammaToneAudioPort->setEnvelope(ts);
+		outGammaToneAudioPort->write(*outGammaToneFilteredAudioMap);
+	}
 
 	// set the beamformers audio to be the filtered audio
+	
 	beamForm->inputAudio(gammatoneAudioFilter->getFilteredAudio());
-
+	
 	// run the reduced-beamformer on the set audio
 	reducedBeamFormedAudioVector = beamForm->getReducedBeamAudio();
-
-	//if (outGammaToneAudioPort->getOutputCount()) {
-	//	sendGammatoneFilteredAudio(gammatoneAudioFilter->getFilteredAudio());
-	//	outGammaToneAudioPort->setEnvelope(ts);
-	//	outGammaToneAudioPort->write(*outGammaToneFilteredAudioMap,false);
-	//}
+	
+	if (outBeamFormedAudioPort->getOutputCount()) {
+		//sendGammatoneFilteredAudio(gammatoneAudioFilter->getFilteredAudio());
+		//outBeamFormedAudioPort->setEnvelope(ts);
+		//outBeamFormedAudioPort->write(*outGammaToneFilteredAudioMap);
+	}
 
 	// run the beamformer on the set audio
 	beamFormedAudioVector = beamForm->getBeamAudio();
 
-	//if (outBeamFormedAudioPort->getOutputCount()) {
+	if (outReducedBeamFormedAudioPort->getOutputCount()) {
 	//	sendBeamFormedAudio(beamFormedAudioVector);
 	//	outBeamFormedAudioPort->setEnvelope(ts);
 	//	outBeamFormedAudioPort->write(*outGammaToneFilteredAudioMap,false);
-	//}
+	}
 
 	// do an interpolate on the reducedBeamFormedAudioVector
 	// to produce a highResolutionAudioMap
 	linerInterpolate();
 
-	//if (outAudioMapEgoPort->getOutputCount()) {
-	
-	// format the highResolutionAudioMap into 
-	// a sendable format
-	sendAudioMap();
-
-	// set the envelope for the Audio Map port
-	outAudioMapEgoPort->setEnvelope(ts);
-
-	// publish the map onto the network
-	outAudioMapEgoPort->write(*outAudioMap);
-	
-	//}
+	if (outAudioMapEgoPort->getOutputCount()) {
+		// format the highResolutionAudioMap into 
+		// a sendable format
+		sendAudioMap();
+		// set the envelope for the Audio Map port
+		outAudioMapEgoPort->setEnvelope(ts);
+		// publish the map onto the network
+		outAudioMapEgoPort->write(*outAudioMap);
+	}
 
 	// timing how long the module took
 	lastframe = ts.getCount();
@@ -219,7 +219,7 @@ void AudioPreprocesserModule::loadFile(yarp::os::ResourceFinder &rf)
 {
 	// import all relevant data fron the .ini file 
 	yInfo("loading configuration file");
-	try {
+	try{
 		frameSamples  = rf.check("frameSamples", 
                            Value("4096"), 
                            "frame samples (int)").asInt();
@@ -257,11 +257,11 @@ void AudioPreprocesserModule::loadFile(yarp::os::ResourceFinder &rf)
         yInfo("nMics = %d", nMics);
         yInfo("interpolateNSamples = %d", interpolateNSamples );
 		yInfo("total beams = %d",totalBeams);
-	}
-
-	catch (int a) {
-        yError("Error in the loading of file");
-	}
+	
+}
+	 catch (int a) {
+         yError("Error in the loading of file");
+	 }
 
 	yInfo("file successfully load");
 }
@@ -304,7 +304,7 @@ void AudioPreprocesserModule::sendAudioMap()
 			
 			tempV[j] = highResolutionAudioMap[j][i];
 		}
-
+		
 		outAudioMap->setRow(i, tempV);
 	}
 }

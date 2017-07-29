@@ -117,35 +117,38 @@ bool BayesianModule::configure(yarp::os::ResourceFinder &rf)
 
     //TODO I believe that this connection should not be established here
     //Checks if the output of the YarpPreProcessing module exists if it does it creates a connection between the two modules, if it does not this function will return an error
-    if (yarp::os::Network::exists("/iCubAudioAttention/Preprocesser:o"))
+    if (yarp::os::Network::exists("/iCubAudioAttention/AudioMapEgo:o"))
     {
-        if (yarp::os::Network::connect( "/iCubAudioAttention/Preprocesser:o", "/iCubAudioAttention/BayesianMap:i") == false)
+        if (yarp::os::Network::connect( "/iCubAudioAttention/AudioMapEgo:o", "/iCubAudioAttention/BayesianMap:i") == false)
         {
             std::cout <<"[ERROR]" <<" Could not make connection to /sender. Exiting.\n";
             return false;
         }
     }
+    else{
+        return false;
+    }
     
     //get the noise map prior that was pre-recorded or bail out
-    FILE *fidNoise = fopen("./noiseMap.dat", "r"); //open the previously recorded noiseMap prior
-	if(fidNoise==NULL){
-		printf("\n\nYou need to pre-record a noise map prior\n\n");
-		return false;
-	}
+     FILE *fidNoise = fopen("./noiseMap.dat", "r"); //open the previously recorded noiseMap prior
+	// if(fidNoise==NULL){
+	// 	printf("\n\nYou need to pre-record a noise map prior\n\n");
+	// 	return false;
+	// }
 
-	double tempNoiseMap[nBands*interpolateNSamples*2];
-	fread(tempNoiseMap,sizeof(double),nBands*interpolateNSamples*2,fidNoise);
-	fclose(fidNoise);
+	// double tempNoiseMap[nBands*interpolateNSamples*2];
+	// fread(tempNoiseMap,sizeof(double),nBands*interpolateNSamples*2,fidNoise);
+	// fclose(fidNoise);
 	
 	int count=0;
-	for(int i=0;i<nBands;i++){
+	// for(int i=0;i<nBands;i++){
 	
-		std::vector<double> tempvector;
-		for(int j=0;j<interpolateNSamples*2;j++){
-			tempvector.push_back(tempNoiseMap[count++]);
-		}
-		noiseMap.push_back(tempvector);
-	}
+	// 	std::vector<double> tempvector;
+	// 	for(int j=0;j<interpolateNSamples*2;j++){
+	// 		tempvector.push_back(tempNoiseMap[count++]);
+	// 	}
+	// 	noiseMap.push_back(tempvector);
+	// }
 		
 	
 	
@@ -164,13 +167,14 @@ double BayesianModule::getPeriod()
 //Does all the processing for this module
 bool BayesianModule::updateModule()
 {
+    
     //Reads the a matrix from the input port
     //This is a blocking call thus the module will wait until it has acquired the required matrix
     inputMatrix = inPort->read(true);
 
     //Gathers the time/counter envelope that was associated with the last message
     inPort->getEnvelope(ts);
-    
+        
     //Calls a function that will take the current audio map and create the Bayesian maps
     setAcousticMap();
 
@@ -443,6 +447,9 @@ void BayesianModule::loadFile(yarp::os::ResourceFinder &rf)
                            Value("360"), 
                            "long Buffer Size (int)").asInt();
 
+    nMics  = rf.check("nMics", 
+                           Value("2"), 
+                           "numberBands (int)").asInt();
 
 
 

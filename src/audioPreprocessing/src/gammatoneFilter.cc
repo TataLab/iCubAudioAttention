@@ -31,6 +31,8 @@ GammatoneFilter::GammatoneFilter(int SampleRate, int lowCF, int highCF, int numB
 	//Uncomment this if you would like Liner Center Frequencies
 	//makeLinerCFs();
 
+	tempFilteredAudio = new float[frameSamples]; 
+
 	for(int i = 0; i < nMics;i++)
 	{
 		float* currentMicArray = new float[frameSamples];
@@ -55,6 +57,9 @@ GammatoneFilter::~GammatoneFilter()
 {
 	for(int i=0; i<inputSplitAudio.size(); i++)
 		delete[] inputSplitAudio[i];
+
+	delete tempFilteredAudio; 
+	delete P;
 }
 
 void GammatoneFilter::gammatoneFilterBank(float *inAudio)
@@ -197,7 +202,7 @@ float* GammatoneFilter::singleFilter(float* input, double centerFreqency)
 	double qcos = 1;
 	double qsin = 0;
 
-	float *filteredAudio = new float[frameSamples]; 
+	
 
 	for (int t = 0; t < (frameSamples); t++)
 	{
@@ -216,15 +221,15 @@ float* GammatoneFilter::singleFilter(float* input, double centerFreqency)
 		p4i = p3i; p3i = p2i; p2i = p1i; p1i = p0i;
 
 
-		filteredAudio[t] = (u0r * qcos + u0i * qsin) * gain;
-		if (hrect && filteredAudio[t] < 0) {
-			filteredAudio[t] = 0;
+		tempFilteredAudio[t] = (u0r * qcos + u0i * qsin) * gain;
+		if (hrect && tempFilteredAudio[t] < 0) {
+			tempFilteredAudio[t] = 0;
 		}
 
 		qcos = coscf * (oldcs = qcos) + sincf * qsin;
 		qsin = coscf * qsin - sincf * oldcs;
 	}
 	
-	return filteredAudio;
+	return tempFilteredAudio;
 }
 

@@ -198,6 +198,7 @@ private:
 	//yarp::os::BufferedPort<audio::Sound> *inPort;
 	
 	yarp::os::Port *outGammaToneAudioPort;
+    yarp::os::Port *outReducedBeamFormedAudioPort;
     yarp::os::Port *outBeamFormedAudioPort;
     yarp::os::Port *outAudioMapEgoPort;
 

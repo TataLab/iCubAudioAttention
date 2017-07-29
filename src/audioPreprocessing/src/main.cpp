@@ -13,7 +13,7 @@ int main(int argc, char * argv[])
 
     yarp::os::ResourceFinder rf;
     rf.setVerbose(true);
-    rf.setDefaultConfigFile("../../app/icubAudioAttention/conf/audioConfig.ini");    //overridden by --from parameter
+    rf.setDefaultConfigFile("audioConfig.ini");    //overridden by --from parameter
     rf.setDefaultContext("icubAudioAttention");    //overridden by --context parameter
     rf.configure(argc, argv);
     std::cout << "[INFO] Configuring and starting module. \n";

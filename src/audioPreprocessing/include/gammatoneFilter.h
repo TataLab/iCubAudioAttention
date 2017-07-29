@@ -133,6 +133,7 @@ private:
 
 	int nBands;
 	std::vector< float* > filteredAudio;						//filtered audio 
+	float *tempFilteredAudio; 
 
 	std::vector< float* > inputSplitAudio;						//Splits the input 
 
