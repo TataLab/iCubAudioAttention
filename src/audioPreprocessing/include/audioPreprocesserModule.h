@@ -32,6 +32,7 @@
 #include <yarp/os/BufferedPort.h>
 #include <yarp/os/Stamp.h>
 #include <yarp/os/NetInt32.h>
+#include <yarp/math/Math.h>
 #include <yarp/sig/Sound.h>
 //#include <iCub/audio/Sound.h>
 #include <yarp/sig/Matrix.h>
