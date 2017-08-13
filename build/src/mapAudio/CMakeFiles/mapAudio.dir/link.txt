@@ -1,0 +1,1 @@
+/usr/bin/c++    -pthread -std=c++11 -O3 -O3 -DNDEBUG   CMakeFiles/mapAudio.dir/src/main.cpp.o  -o ../../bin/mapAudio -rdynamic /usr/local/lib/libYARP_dev.so.2.3.68 /usr/local/lib/libYARP_name.so.2.3.68 /usr/local/lib/libYARP_init.so.2.3.68 /usr/local/lib/libYARP_math.so.2.3.68 /usr/local/lib/libYARP_sig.so.2.3.68 /usr/local/lib/libYARP_OS.so.2.3.68 -Wl,-rpath,/usr/local/lib: 
