@@ -1,2 +1,0 @@
-/usr/bin/ar qc ../lib/libaudioLib.a  CMakeFiles/audioLib.dir/src/spatialSound.cpp.o CMakeFiles/audioLib.dir/src/Sound.cpp.o
-/usr/bin/ranlib ../lib/libaudioLib.a
