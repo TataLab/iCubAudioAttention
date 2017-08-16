@@ -52,6 +52,8 @@ private:
     yarp::os::BufferedPort<yarp::sig::Matrix>  longTermBayesianMapPort;
     yarp::os::BufferedPort<yarp::sig::Matrix>  collapesedBayesianMapPort;
 
+    yarp::sig::Matrix*  audioMapEgoMatrix;
+
     bool  rawAudioPortActive;
     bool  gammaToneAudioPortActive;
     bool  beamFormedAudioPortActive;
@@ -71,30 +73,37 @@ private:
     FILE *rawAudioFid;
     int rawAudioMappedFileID;
     double *rawAudioData;
+    double *initializationRawAudioArray;
 
     FILE *gammaToneAudioFid;
     int gammaToneAudioFileID;
     double *gammaToneAudioData;
+    double *initializationGammaToneAudioArray;
 
     FILE *beamFormedAudioFid;
     int beamFormedAudioFileID;
     double *beamFormedAudioData;
+    double *initializationBeamFormedAudioArray;
 
     FILE *audioMapEgoFid;
     int audioMapEgoFileID;
     double *audioMapEgoData;
+    double *initializationAudioMapEgoArray;
 
     FILE *audioMapAloFid;
     int audioMapAloFileID;
     double *audioMapAloData;
+    double *initializationAudioMapAloArray;
 
     FILE *longTermBayesianMapFid;
     int longTermBayesianMapFileID;
     double *longTermBayesianMapData;
+    double *initializationLongTermBayesianMapArray;
 
     FILE *collapesedBayesianMapFid;
     int collapesedBayesianMapFileID;
     double *collapesedBayesianMapData;
+    double *initializationCollapesedBayesianMapArray;
 
     int frameSamples;
     int nBands;
@@ -108,11 +117,20 @@ private:
     int totalBeams;
 
     std::string name;                                                                // rootname of all the ports opened by this thread
-    
+
 
     void createMemoryMappingSection();
 
-    
+    /**
+     *  loadFile
+     *
+     *  Accesses the loadFile.xml that is found in the root directory of this
+     *  module and load all required parameters for the beam former.
+     *
+     *  @param rf : resource finder object containing the values of presets
+     */
+    void loadFile(yarp::os::ResourceFinder &rf);
+
     void memoryMapRawAudio();
     void memoryMapGammaToneAudio();
     void memoryMapBeamFormedAudio();
@@ -127,10 +145,10 @@ public:
     audioMemoryMapperRateThread();
 
     /**
-    * constructor 
+    * constructor
     * @param robotname name of the robot
     */
-    audioMemoryMapperRateThread(std::string robotname,std::string configFile);
+    audioMemoryMapperRateThread(std::string robotname,yarp::os::ResourceFinder &rf);
 
     /**
      * destructor
@@ -140,7 +158,7 @@ public:
     /**
     *  initialises the thread
     */
-    bool threadInit(yarp::os::ResourceFinder &rf);
+    bool threadInit();
 
     /**
     *  correctly releases the thread
@@ -150,18 +168,18 @@ public:
     /**
     *  active part of the thread
     */
-    void run(); 
+    void run();
 
     /**
     * function that sets the rootname of all the ports that are going to be created by the thread
     * @param str rootnma
     */
     void setName(std::string str);
-    
+
     /**
     * function that returns the original root name and appends another string iff passed as parameter
     * @param p pointer to the string that has to be added
-    * @return rootname 
+    * @return rootname
     */
     std::string getName(const char* p);
 
@@ -176,4 +194,4 @@ public:
 
 #endif  //_AUDIO_PREPROCESSER_THREAD_H_
 
-//----- end-of-file --- ( next line intentionally left blank ) ------------------ 
+//----- end-of-file --- ( next line intentionally left blank ) ------------------
