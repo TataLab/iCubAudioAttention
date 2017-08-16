@@ -53,16 +53,6 @@ class audioMemoryMapperModule: public yarp::os::RFModule
   audioMemoryMapperRateThread *rateThread;
 
  public:
-	/**
-	* default constructor
-	*/
-	audioMemoryMapperModule();
-
-	/**
-	* destructor
-	*/
-	~audioMemoryMapperModule();
-
 
 	bool configure(yarp::os::ResourceFinder &rf);
 	double getPeriod();

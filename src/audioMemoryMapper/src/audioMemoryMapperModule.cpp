@@ -23,21 +23,13 @@
 
 #include "audioMemoryMapperModule.h"
 
-
-audioMemoryMapperModule::audioMemoryMapperModule()
-{
-    yDebug("AudioProcesserModule");
-    rateThread = new audioMemoryMapperRateThread();
-}
-
-audioMemoryMapperModule::~audioMemoryMapperModule()
-{
-
-}
-
 bool audioMemoryMapperModule::configure(yarp::os::ResourceFinder &rf)
 {
-   true;
+  std::string robotName = "icub";
+  rateThread = new audioMemoryMapperRateThread(robotName,rf);
+  rateThread->setName("moduleName");
+  bool ret = rateThread->start();
+  return ret;
 }
 
 double audioMemoryMapperModule::getPeriod()
@@ -63,4 +55,3 @@ bool audioMemoryMapperModule::close()
 	fprintf(stderr, "[INFO] Calling close\n");
 	return true;
 }
-
