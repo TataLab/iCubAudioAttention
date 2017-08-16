@@ -77,7 +77,7 @@ void BeamFormer::inputAudio(std::vector< float* > inAudio) {
 
 
 std::vector<std::vector<float*> > BeamFormer::getBeamAudio() {
-
+/*
 	int i = 0, j = 0, limit = std::thread::hardware_concurrency() * 4;
 
 	std::vector<std::thread> myThread(limit);
@@ -94,8 +94,8 @@ std::vector<std::vector<float*> > BeamFormer::getBeamAudio() {
 		for (int k = 0; j < i; j++, k++) 
 			myThread[k].join();
 	}
-
-	/* OLD CODE
+*/
+	// OLD CODE
 	std::vector<std::thread> myThread;
 
 	//Starting all the threads
@@ -111,7 +111,7 @@ std::vector<std::vector<float*> > BeamFormer::getBeamAudio() {
 		othread->join();
 		othread++;
 	}
-	*/
+	
 
 	return beamFormedAudioVector;
 }
@@ -119,6 +119,7 @@ std::vector<std::vector<float*> > BeamFormer::getBeamAudio() {
 
 std::vector<std::vector<double> > BeamFormer::getReducedBeamAudio() {
 
+/*
 	int i = 0, j = 0, limit = std::thread::hardware_concurrency() * 4;
 
 	std::vector<std::thread> myThread(limit);
@@ -136,8 +137,10 @@ std::vector<std::vector<double> > BeamFormer::getReducedBeamAudio() {
 			myThread[k].join();
 	}
 
+*/
+	
 
-	/* 	OLD CODE
+	// 	OLD CODE
 	std::vector<std::thread> myThread;
 	//Starting all the threads
 	for (int i = 0; i < totalBeams; i++)
@@ -152,7 +155,7 @@ std::vector<std::vector<double> > BeamFormer::getReducedBeamAudio() {
 		othread->join();
 		othread++;
 	}
-	*/
+	
 
 	return reducedBeamFormedAudioVector;
 }
