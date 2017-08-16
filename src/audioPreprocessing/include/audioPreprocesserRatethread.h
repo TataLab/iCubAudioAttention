@@ -56,15 +56,10 @@ private:
     std::string name;               // rootname of all the ports opened by this thread
     std::string robot;              // name of the robot
 
-
-    yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelRgb> >  inputPort; // input port of events
-    yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelRgb> > outputPort; // output port to plot event
-
-    
     //
     // Incoming Audio Data from the iCub and remoteInterface
     //
-    yarp::os::BufferedPort<yarp::sig::Sound> *inPort; 
+    yarp::os::BufferedPort<yarp::sig::Sound> *inPort;
     yarp::os::Port *outGammaToneAudioPort;
     yarp::os::Port *outReducedBeamFormedAudioPort;
     yarp::os::Port *outBeamFormedAudioPort;
@@ -72,18 +67,20 @@ private:
 
     yarp::os::Stamp ts;
     yarp::sig::Sound* s;
-    
+
 
     //
     // containers for processed data
     //
     yarp::sig::Matrix* outAudioMap;
     yarp::sig::Matrix* outGammaToneFilteredAudioMap;
+    yarp::sig::Matrix* outBeamFormedAudioMap;
+    yarp::sig::Matrix* outReducedBeamFormedAudioMap;
 
     std::vector < std::vector < float* > > beamFormedAudioVector;
     std::vector < std::vector < double > > highResolutionAudioMap;
     std::vector < std::vector < double > > reducedBeamFormedAudioVector;
-    
+
     float *rawAudio;
 
 
@@ -119,7 +116,7 @@ private:
     int samplingRate;
 
     double micDistance;
-    
+
 
 public:
     /**
@@ -129,7 +126,7 @@ public:
 
 
     /**
-     *  constructor 
+     *  constructor
      *
      *  set robotname and configFile, the calls loadFile
      *  on the passed in resource finder
@@ -168,7 +165,7 @@ public:
      *
      *  active part of the thread
      */
-    void run(); 
+    void run();
 
 
     /**
@@ -179,7 +176,7 @@ public:
      *  @param str : the rootname used for all ports opened by this thread
      */
     void setName(std::string str);
-    
+
 
     /**
      *  getName
@@ -188,7 +185,7 @@ public:
      *
      *  @param p : pointer to the string that has to be added
      *
-     *  @return rootname 
+     *  @return rootname
      */
     std::string getName(const char* p);
 
@@ -249,14 +246,20 @@ public:
      *
      *  Function used to send beam formed audio that is held in outBeamFormedAudio though port beamFormedAudioPort.
      */
-    void sendBeamFormedAudio();
+    void sendBeamFormedAudio(const std::vector<std::vector<float*> > &beamFormedAudio);
 
+    /**
+     *  sendReducedBeamFormedAudio
+     *
+     *  Function used to send beam formed audio that is held in outBeamFormedAudio though port beamFormedAudioPort.
+     */
+    void sendReducedBeamFormedAudio(const std::vector<std::vector<double> > &reducedBeamFormedAudio);
 
     /**
      *  linerApproximation
      *
      *  Helper function used by linerInterp to do liner interpolation between points (x1,y1) and (x2,y2).
-     *   
+     *
      *  @param  x : the position on the curve being looked for
      *  @param x1 : x coordinate for point 1
      *  @param x2 : x coordinate for point 2
@@ -284,7 +287,7 @@ public:
      *  Given a particular x on a curve, return its y value.
      *
      *  @param  x : the position on the curve being looked for
-     *  @param x1 : x coordinate for point 1 
+     *  @param x1 : x coordinate for point 1
      *  @param y1 : y coordinate for point 1
      *  @param x2 : x coordinate for point 2
      *  @param y2 : y coordinate for point 2
@@ -300,8 +303,8 @@ public:
      *  calcSplineKnots
      *
      *  Given three coordinates, find the value of the knots for each point.
-     * 
-     *  @param x1 : x coordinate for point 1 
+     *
+     *  @param x1 : x coordinate for point 1
      *  @param y1 : y coordinate for point 1
      *  @param x2 : x coordinate for point 2
      *  @param y2 : y coordinate for point 2
@@ -309,7 +312,7 @@ public:
      *  @param y3 : y coordinate for point 3
      *
      *  @return the calculated value of the curves knots
-     */  
+     */
     knotValues calcSplineKnots(double x1, double y1, double x2, double y2, double x3, double y3);
 
 
@@ -327,4 +330,3 @@ public:
 #endif  //_AUDIO_PREPROCESSER_THREAD_H_
 
 //----- end-of-file --- ( next line intentionally left blank ) ------------------
-
