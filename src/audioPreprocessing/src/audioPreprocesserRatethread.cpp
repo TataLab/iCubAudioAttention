@@ -82,7 +82,7 @@ bool AudioPreprocesserRatethread::threadInit() {
     }
 
     // prepare GammatoneFilter object
-    gammatoneAudioFilter = new GammatoneFilter(samplingRate, lowCf, highCf, nBands, frameSamples, nMics, false, false);
+    gammatoneAudioFilter = new GammatoneFilter(samplingRate, lowCf, highCf, nBands, frameSamples, nMics, false);
 
     // prepare BeamFormer object
     beamForm = new BeamFormer(nBands, frameSamples, nMics, nBeamsPerHemi);
@@ -155,7 +155,7 @@ void AudioPreprocesserRatethread::run() {
 
     // run the Filter Bank on the raw Audio
     gammatoneAudioFilter->gammatoneFilterBank(rawAudio);
-
+    
     if (outGammaToneAudioPort->getOutputCount()) {
       sendGammatoneFilteredAudio(gammatoneAudioFilter->getFilteredAudio());
       outGammaToneAudioPort->setEnvelope(ts);

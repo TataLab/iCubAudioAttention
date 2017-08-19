@@ -71,8 +71,8 @@ public:
 	 *	@return Beamformed data that is stored in vector of size(totalBeams) containing a vector of 
 	 * 			size(number of Bands) that contains a array of float with a size(samples in frame).
 	 */
-	std::vector<std::vector<float*> > getBeamAudio();
-
+	//std::vector<std::vector<float*> > getBeamAudio();
+	 std::vector<std::vector<std::vector<float> > > getBeamAudio();
 
 	/**
 	 *	getReducedBeamAudio
@@ -115,9 +115,9 @@ private:
 	int getNBeamsPerHemifield;		// The maximum number of bands in each hemifield
 	int totalBeams;					// Total number of beams that is used
 
-	std::vector< float* > inputSignal;										// The input audio signal
-	std::vector < std::vector < float* > > beamFormedAudioVector;			// The uncompressed beamformed data if getBeamAudio() was called
-	std::vector < std::vector < double > > reducedBeamFormedAudioVector;	// The compressed beamformed data if getReducedBeamAudio() was called
+	std::vector< float* > inputSignal;											 // The input audio signal
+	std::vector < std::vector < std::vector < float > > > beamFormedAudioVector; // The uncompressed beamformed data if getBeamAudio() was called
+	std::vector < std::vector < double > > reducedBeamFormedAudioVector;		 // The compressed beamformed data if getReducedBeamAudio() was called
 };
 
 #endif

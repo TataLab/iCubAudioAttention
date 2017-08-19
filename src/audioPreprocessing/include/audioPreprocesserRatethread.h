@@ -77,7 +77,8 @@ private:
     yarp::sig::Matrix* outBeamFormedAudioMap;
     yarp::sig::Matrix* outReducedBeamFormedAudioMap;
 
-    std::vector < std::vector < float* > > beamFormedAudioVector;
+    std::vector < std::vector < std::vector < float > > > beamFormedAudioVector;
+    //std::vector < std::vector < float* > > beamFormedAudioVector;
     std::vector < std::vector < double > > highResolutionAudioMap;
     std::vector < std::vector < double > > reducedBeamFormedAudioVector;
 
