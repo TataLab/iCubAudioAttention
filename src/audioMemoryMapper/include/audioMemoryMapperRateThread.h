@@ -52,7 +52,14 @@ private:
     yarp::os::BufferedPort<yarp::sig::Matrix>  longTermBayesianMapPort;
     yarp::os::BufferedPort<yarp::sig::Matrix>  collapesedBayesianMapPort;
 
-    yarp::sig::Matrix*  audioMapEgoMatrix;
+    yarp::os::Stamp ts;
+    yarp::sig::Sound*  rawAudioSoundObj;
+    yarp::sig::Matrix* gammaToneAudioMatrix;
+    yarp::sig::Matrix* beamFormedAudioMatrix;
+    yarp::sig::Matrix* audioMapEgoMatrix;
+    yarp::sig::Matrix* audioMapAloMatrix;
+    yarp::sig::Matrix* longTermBayesianMatrix;
+    yarp::sig::Matrix* collapesedBayesianMatrix;
 
     bool  rawAudioPortActive;
     bool  gammaToneAudioPortActive;

@@ -23,12 +23,11 @@ inline int myMod(int a, int b) {
 	return  a >= 0 ? a % b : (a % b) + b;
 }
 
-
 BeamFormer::BeamFormer(int numBands, int nSamples, int numMics, int numBeamsHemifield):
 nMics(numMics), frameSamples(nSamples), nBands(numBands), getNBeamsPerHemifield(numBeamsHemifield) {
 	
 	totalBeams = (getNBeamsPerHemifield*2) + 1;
-
+	
 	//Allocating the required vectors to create the beamFormed audio 
 	for (int i = 0; i < totalBeams; i++) {
 
@@ -83,7 +82,7 @@ std::vector<std::vector<std::vector<float> > > BeamFormer::getBeamAudio() {
 		for (int k = 0; j < i; j++, k++) 
 			myThread[k].join();
 	}
-
+	
 	return beamFormedAudioVector;
 }
 

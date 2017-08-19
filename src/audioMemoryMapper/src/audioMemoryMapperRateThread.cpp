@@ -18,6 +18,7 @@
 */
 #include <audioMemoryMapperRateThread.h>
 #include <cstring>
+#include <iostream>
 
 using namespace yarp::dev;
 using namespace yarp::os;
@@ -48,6 +49,7 @@ bool audioMemoryMapperRateThread::threadInit() {
 
 
     if(rawAudioPortActive){
+      std::cout << rawAudioPortName.c_str()  << "::"<< std::endl;
       if(!rawAudioPort.open(rawAudioPortName.c_str())) {
         yError("unable to open port to receive input");
           return false;  // unable to open; let RFModule know so that it won't run
@@ -104,26 +106,29 @@ std::string audioMemoryMapperRateThread::getName(const char* p) {
 }
 
 void audioMemoryMapperRateThread::run() {
-    if(rawAudioPortActive){
-
+  
+  if(rawAudioPortActive){
+    memoryMapRawAudio();
   }
   if(gammaToneAudioPortActive){
-
+    memoryMapGammaToneAudio();
   }
   if(beamFormedAudioPortActive){
-
+    memoryMapBeamFormedAudio();
   }
   if(audioMapEgoPortActive){
-
+    std::cout << "Here \n";
+    memoryMapAudioMapEgo();
+    std::cout << "Here \n";
   }
   if(audioMapAloPortActive){
-
+    memoryMapAudioMapAlo();
   }
   if(longTermBayesianMapPortActive){
-
+    memoryMapLongTermBayesianMap();
   }
   if(collapesedBayesianMapPortActive){
-
+    memoryMapCollapesedBayesianMap();
   }
 
 
@@ -176,7 +181,7 @@ void audioMemoryMapperRateThread::createMemoryMappingSection(){
     int audioMapEgoSize = (nBands * interpolateNSamples * 2);
     initializationAudioMapEgoArray  = new double(audioMapEgoSize);
     audioMapEgoFid = fopen("/tmp/audioMapEgo.tmp", "w");
-    fwrite(initializationAudioMapEgoArray, sizeof(double), sizeof(initializationAudioMapEgoArray), audioMapEgoFid);
+    fwrite(initializationAudioMapEgoArray, sizeof(double), audioMapEgoSize, audioMapEgoFid);
     fclose(audioMapEgoFid);
     audioMapEgoFileID = open("/tmp/audioMapEgo.tmp", O_RDWR);
     audioMapEgoData = (double *)mmap(0, (sizeof(initializationAudioMapEgoArray)*audioMapEgoSize), PROT_WRITE, MAP_SHARED , audioMapEgoFileID, 0);
@@ -296,8 +301,10 @@ void audioMemoryMapperRateThread::loadFile(yarp::os::ResourceFinder &rf)
 
 
 void audioMemoryMapperRateThread::memoryMapRawAudio(){
-  // int currentCounter = ts.getCount();
-  // double currentTime = ts.getTime();
+  rawAudioSoundObj = rawAudioPort.read(true);
+  rawAudioPort.getEnvelope(ts);
+  int currentCounter = ts.getCount();
+  double currentTime = ts.getTime();
   // int row = 0;
   // int j = 0;
   //   for (int col = 0 ; col < frameSamples; col+=1) {
@@ -311,6 +318,7 @@ void audioMemoryMapperRateThread::memoryMapRawAudio(){
   //   }
 }
 void audioMemoryMapperRateThread::memoryMapGammaToneAudio(){
+  gammaToneAudioMatrix = gammaToneAudioPort.read(true);
   // for (int i = 0; i < nBands; i++)
   // {
   //   for (int j = 0; j < frameSamples; j++)
@@ -328,6 +336,7 @@ void audioMemoryMapperRateThread::memoryMapGammaToneAudio(){
   // }
 }
 void audioMemoryMapperRateThread::memoryMapBeamFormedAudio(){
+  beamFormedAudioMatrix = beamFormedAudioPort.read(true);
 
 }
 void audioMemoryMapperRateThread::memoryMapAudioMapEgo(){
@@ -343,6 +352,7 @@ void audioMemoryMapperRateThread::memoryMapAudioMapEgo(){
   }
 }
 void audioMemoryMapperRateThread::memoryMapAudioMapAlo(){
+  audioMapAloMatrix = audioMapAloPort.read(true);
 // mappedAudioData[0] = ts.getCount();
 //   mappedAudioData[1] = ts.getTime();
 //   int count = 0;
@@ -356,6 +366,7 @@ void audioMemoryMapperRateThread::memoryMapAudioMapAlo(){
 //   }
 }
 void audioMemoryMapperRateThread::memoryMapLongTermBayesianMap(){
+  longTermBayesianMatrix = collapesedBayesianMapPort.read(true);
    // //Loops though the input(probabilityMap) and does a deep copy of all the elements into a memory mapped location identified by the probabilityMappingFileID
    //  int count = 0;
    //  for (int i = 0; i <  nBands; i++)
@@ -370,5 +381,5 @@ void audioMemoryMapperRateThread::memoryMapLongTermBayesianMap(){
    //  //probabilityMappingFileID[(count++)] = offset;
 }
 void audioMemoryMapperRateThread::memoryMapCollapesedBayesianMap(){
-
+  collapesedBayesianMatrix = collapesedBayesianMapPort.read(true);
 }
