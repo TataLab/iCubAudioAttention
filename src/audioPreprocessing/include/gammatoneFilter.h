@@ -186,8 +186,7 @@ private:
 	std::vector< double > cfs;				// Perimeters to calculate the center frequencies that the gammatone filter bank will use
 	
 	const float *inputSignal;				// input audio
-
-	float *tempFilteredAudio; 
+		  float *tempFilteredAudio; 		// temp container for filter calculations
 
 
 	// 
@@ -206,7 +205,6 @@ private:
 	double p4i;
 	double oldcs;
 	double tpt;
-
 };
 
 #endif

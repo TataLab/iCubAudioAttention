@@ -48,7 +48,7 @@ bool AudioPreprocesserModule::configure(yarp::os::ResourceFinder &rf) {
     robotPortName         = "/" + robotName + "/head";
 
     inputPortName         = rf.check("inputPortName",
-			                Value(":i"),
+			                      Value(":i"),
                             "Input port name (string)").asString();
     
 
@@ -103,7 +103,6 @@ bool AudioPreprocesserModule::close() {
 
 double AudioPreprocesserModule::getPeriod() {
 	// TODO Should this all ways stay this low
-	// in smModule this is set to 1?
 	return 0.05; 
 }
 

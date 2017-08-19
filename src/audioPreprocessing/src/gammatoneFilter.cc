@@ -18,8 +18,6 @@
 */
 #include "gammatoneFilter.h"
 
-#include <iostream>
-
 #define erb(x)         ( 24.7 * ( 4.37e-3 * ( x ) + 1.0 ) )
 
 GammatoneFilter::GammatoneFilter(int SampleRate, int lowCF, int highCF, int numBands, int nSamples, int numMics, bool hr) 

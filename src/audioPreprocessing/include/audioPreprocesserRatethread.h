@@ -39,7 +39,8 @@
 #include "gammatoneFilter.h"
 #include "beamFormer.h"
 
-const float normDivid = pow(2,23);  //Number that is used to conver the integer number resived as the audio signal and convert it to a double audio signal
+const float normDivid = pow(2,23);  // Number that is used to conver the integer number resived
+                                    // as the audio signal and convert it to a double audio signal
 
 struct knotValues {
    double k0, k1, k2;

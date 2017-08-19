@@ -50,6 +50,7 @@ bool AudioPreprocesserRatethread::threadInit() {
     inPort = new yarp::os::BufferedPort<yarp::sig::Sound>(); //inPort = new yarp::os::BufferedPort<audio::Sound>();
     inPort->open("/iCubAudioAttention/AudioPreprocesser:i");
 
+
     // output port for sending GammaTone Filtered Audio
     outGammaToneAudioPort = new yarp::os::Port();
     outGammaToneAudioPort->open("/iCubAudioAttention/GammaToneFilteredAudio:o");
@@ -58,6 +59,7 @@ bool AudioPreprocesserRatethread::threadInit() {
     // output port for sending BeamFormed Audio
     outBeamFormedAudioPort= new yarp::os::Port();
     outBeamFormedAudioPort->open("/iCubAudioAttention/BeamFormedAudio:o");
+
 
     // output port for sending BeamFormed Audio
     outReducedBeamFormedAudioPort= new yarp::os::Port();
@@ -148,8 +150,8 @@ void AudioPreprocesserRatethread::run() {
 
     // initialize rawAudio to be usable
     for (int col = 0 ; col < frameSamples; col++) {
-       for(int micLoop = 0; micLoop < nMics; micLoop++) {
-         rawAudio[col*nMics + micLoop] = s->get(col, micLoop) / normDivid;
+       for (int micLoop = 0; micLoop < nMics; micLoop++) {
+          rawAudio[col*nMics + micLoop] = s->get(col, micLoop) / normDivid;
       }
     }
 
@@ -304,6 +306,7 @@ void AudioPreprocesserRatethread::sendGammatoneFilteredAudio(const std::vector<f
 
 }
 
+
 void AudioPreprocesserRatethread::sendBeamFormedAudio(const std::vector<std::vector<float*> > &beamFormedAudio){
   for (int i = 0; i < nBands; i++) {
     yarp::sig::Vector tempV(totalBeams);
@@ -315,6 +318,7 @@ void AudioPreprocesserRatethread::sendBeamFormedAudio(const std::vector<std::vec
 
 }
 
+
 void AudioPreprocesserRatethread::sendReducedBeamFormedAudio(const std::vector<std::vector<double> > &reducedBeamFormedAudio){
   for (int i = 0; i < nBands; i++) {
     yarp::sig::Vector tempV(totalBeams);
@@ -323,8 +327,8 @@ void AudioPreprocesserRatethread::sendReducedBeamFormedAudio(const std::vector<s
     }
     outReducedBeamFormedAudioMap->setRow(i, tempV);
   }
-
 }
+
 
 void AudioPreprocesserRatethread::sendAudioMap()
 {
@@ -335,7 +339,6 @@ void AudioPreprocesserRatethread::sendAudioMap()
     }
     outAudioMap->setRow(i, tempV);
   }
-
 }
 
 
