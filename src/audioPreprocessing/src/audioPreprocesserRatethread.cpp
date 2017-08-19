@@ -339,7 +339,7 @@ void AudioPreprocesserRatethread::sendAudioMap()
 }
 
 
-inline double AudioPreprocesserRatethread::linerApproximation(int x, int x1, int x2, double y1, double y2) {
+inline double AudioPreprocesserRatethread::linerApproximation(int x, int x1, double y1, int x2, double y2) {
   return y1 + ((y2 - y1) * (x - x1)) / (x2 - x1);
 }
 
@@ -360,7 +360,7 @@ void AudioPreprocesserRatethread::linerInterpolate() {
         k++;
       }
 
-      highResolutionAudioMap[j][i] = linerApproximation(j, curroffset - offset, curroffset , reducedBeamFormedAudioVector[k - 1][i], reducedBeamFormedAudioVector[k][i]);
+      highResolutionAudioMap[j][i] = linerApproximation(j, curroffset - offset, reducedBeamFormedAudioVector[k - 1][i], curroffset, reducedBeamFormedAudioVector[k][i]);
     }
 
     curroffset = interpolateNSamples;
@@ -375,7 +375,7 @@ void AudioPreprocesserRatethread::linerInterpolate() {
         curroffset += offset;
       }
 
-      highResolutionAudioMap[j][i] = linerApproximation(j, curroffset - offset, curroffset, reducedBeamFormedAudioVector[k][i], reducedBeamFormedAudioVector[k - 1][i]);
+      highResolutionAudioMap[j][i] = linerApproximation(j, curroffset - offset, reducedBeamFormedAudioVector[k][i], curroffset, reducedBeamFormedAudioVector[k - 1][i]);
     }
   }
 }

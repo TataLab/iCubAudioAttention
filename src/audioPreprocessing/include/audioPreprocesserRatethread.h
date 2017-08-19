@@ -78,7 +78,6 @@ private:
     yarp::sig::Matrix* outReducedBeamFormedAudioMap;
 
     std::vector < std::vector < std::vector < float > > > beamFormedAudioVector;
-    //std::vector < std::vector < float* > > beamFormedAudioVector;
     std::vector < std::vector < double > > highResolutionAudioMap;
     std::vector < std::vector < double > > reducedBeamFormedAudioVector;
 
@@ -263,13 +262,13 @@ public:
      *
      *  @param  x : the position on the curve being looked for
      *  @param x1 : x coordinate for point 1
-     *  @param x2 : x coordinate for point 2
      *  @param y1 : y coordinate for point 1
+     *  @param x2 : x coordinate for point 2
      *  @param y2 : y coordinate for point 2
      *
      *  @return the corresponding y value of the asked x
      */
-    inline double linerApproximation(int x, int x1, int x2, double y1, double y2);
+    inline double linerApproximation(int x, int x1, double y1, int x2, double y2);
 
 
     /**
