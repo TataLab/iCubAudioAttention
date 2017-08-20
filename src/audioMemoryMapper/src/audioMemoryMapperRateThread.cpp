@@ -109,6 +109,7 @@ void audioMemoryMapperRateThread::run() {
   
   if(rawAudioPortActive){
     memoryMapRawAudio();
+    
   }
   if(gammaToneAudioPortActive){
     memoryMapGammaToneAudio();
@@ -117,9 +118,9 @@ void audioMemoryMapperRateThread::run() {
     memoryMapBeamFormedAudio();
   }
   if(audioMapEgoPortActive){
-    std::cout << "Here \n";
+    
     memoryMapAudioMapEgo();
-    std::cout << "Here \n";
+    
   }
   if(audioMapAloPortActive){
     memoryMapAudioMapAlo();
@@ -162,24 +163,24 @@ void audioMemoryMapperRateThread::createMemoryMappingSection(){
     int gammaToneAudioSize = (nBands * nMics * frameSamples);
     initializationGammaToneAudioArray = new double(gammaToneAudioSize);
     gammaToneAudioFid = fopen("/tmp/gammaToneAudio.tmp", "w");
-    fwrite(initializationGammaToneAudioArray, sizeof(double), sizeof(initializationGammaToneAudioArray), gammaToneAudioFid);
+    fwrite(initializationGammaToneAudioArray, sizeof(double), gammaToneAudioSize, gammaToneAudioFid);
     fclose(gammaToneAudioFid);
     gammaToneAudioFileID = open("/tmp/gammaToneAudio.tmp", O_RDWR);
-    gammaToneAudioData = (double *)mmap(0, (sizeof(initializationGammaToneAudioArray)), PROT_WRITE, MAP_SHARED , gammaToneAudioFileID, 0);
+    gammaToneAudioData = (double *)mmap(0, (sizeof(initializationGammaToneAudioArray)*gammaToneAudioSize), PROT_WRITE, MAP_SHARED , gammaToneAudioFileID, 0);
   }
   if(beamFormedAudioPortActive){
     int beamFormedAudioSize = (nBands * frameSamples * totalBeams);
     initializationBeamFormedAudioArray = new double(beamFormedAudioSize);
     beamFormedAudioFid = fopen("/tmp/beamFormedAudio.tmp", "w");
-    fwrite(initializationBeamFormedAudioArray, sizeof(double), sizeof(initializationBeamFormedAudioArray), beamFormedAudioFid);
+    fwrite(initializationBeamFormedAudioArray, sizeof(double), beamFormedAudioSize, beamFormedAudioFid);
     fclose(beamFormedAudioFid);
     beamFormedAudioFileID = open("/tmp/beamFormedAudio.tmp", O_RDWR);
-    beamFormedAudioData = (double *)mmap(0, (sizeof(initializationBeamFormedAudioArray)), PROT_WRITE, MAP_SHARED , beamFormedAudioFileID, 0);
+    beamFormedAudioData = (double *)mmap(0, (sizeof(initializationBeamFormedAudioArray)*beamFormedAudioSize), PROT_WRITE, MAP_SHARED , beamFormedAudioFileID, 0);
   }
   if(audioMapEgoPortActive){
     audioMapEgoMatrix = new yarp::sig::Matrix();
     int audioMapEgoSize = (nBands * interpolateNSamples * 2);
-    initializationAudioMapEgoArray  = new double(audioMapEgoSize);
+    initializationAudioMapEgoArray  = new double[audioMapEgoSize];
     audioMapEgoFid = fopen("/tmp/audioMapEgo.tmp", "w");
     fwrite(initializationAudioMapEgoArray, sizeof(double), audioMapEgoSize, audioMapEgoFid);
     fclose(audioMapEgoFid);
@@ -190,28 +191,28 @@ void audioMemoryMapperRateThread::createMemoryMappingSection(){
     int audioMapAloSize = (nBands * interpolateNSamples * 2);
     initializationAudioMapAloArray = new double(audioMapAloSize);
     audioMapAloFid = fopen("/tmp/audioMapAlo.tmp", "w");
-    fwrite(initializationAudioMapAloArray, sizeof(double), sizeof(initializationAudioMapAloArray), audioMapAloFid);
+    fwrite(initializationAudioMapAloArray, sizeof(double), audioMapAloSize, audioMapAloFid);
     fclose(audioMapAloFid);
     audioMapAloFileID = open("/tmp/audioMapAlo.tmp", O_RDWR);
-    audioMapAloData = (double *)mmap(0, (sizeof(initializationAudioMapAloArray)), PROT_WRITE, MAP_SHARED , audioMapAloFileID, 0);
+    audioMapAloData = (double *)mmap(0, (sizeof(initializationAudioMapAloArray)*audioMapAloSize), PROT_WRITE, MAP_SHARED , audioMapAloFileID, 0);
   }
   if(longTermBayesianMapPortActive){
     int longTermBayesianMapSize = (nBands * interpolateNSamples * 2);
     initializationLongTermBayesianMapArray = new double(longTermBayesianMapSize);
     longTermBayesianMapFid = fopen("/tmp/longTermBayesianMap.tmp", "w");
-    fwrite(initializationLongTermBayesianMapArray, sizeof(double), sizeof(initializationLongTermBayesianMapArray), longTermBayesianMapFid);
+    fwrite(initializationLongTermBayesianMapArray, sizeof(double), longTermBayesianMapSize, longTermBayesianMapFid);
     fclose(longTermBayesianMapFid);
     longTermBayesianMapFileID = open("/tmp/longTermBayesianMap.tmp", O_RDWR);
-    longTermBayesianMapData = (double *)mmap(0, (sizeof(initializationLongTermBayesianMapArray)), PROT_WRITE, MAP_SHARED , longTermBayesianMapFileID, 0);
+    longTermBayesianMapData = (double *)mmap(0, (sizeof(initializationLongTermBayesianMapArray)*longTermBayesianMapSize), PROT_WRITE, MAP_SHARED , longTermBayesianMapFileID, 0);
   }
   if(collapesedBayesianMapPortActive){
     int collapesedBayesianMapSize = (interpolateNSamples * 2);
     initializationCollapesedBayesianMapArray = new double(collapesedBayesianMapSize);
     collapesedBayesianMapFid = fopen("/tmp/collapesedBayesianMap.tmp", "w");
-    fwrite(initializationCollapesedBayesianMapArray, sizeof(double), sizeof(initializationCollapesedBayesianMapArray), collapesedBayesianMapFid);
+    fwrite(initializationCollapesedBayesianMapArray, sizeof(double), collapesedBayesianMapSize, collapesedBayesianMapFid);
     fclose(collapesedBayesianMapFid);
     collapesedBayesianMapFileID = open("/tmp/collapesedBayesianMap.tmp", O_RDWR);
-    collapesedBayesianMapData = (double *)mmap(0, (sizeof(initializationCollapesedBayesianMapArray)), PROT_WRITE, MAP_SHARED , collapesedBayesianMapFileID, 0);
+    collapesedBayesianMapData = (double *)mmap(0, (sizeof(initializationCollapesedBayesianMapArray)*collapesedBayesianMapSize), PROT_WRITE, MAP_SHARED , collapesedBayesianMapFileID, 0);
   }
   yInfo("Done Creating Memory Mapped Regions");
 }
@@ -247,7 +248,6 @@ void audioMemoryMapperRateThread::loadFile(yarp::os::ResourceFinder &rf)
                            Value("false"),
                            "Check if collapesedBayesianMapPort should be Active (str)").asString() == "true";
 
-
     yInfo("rawAudioPortActive = %d",rawAudioPortActive);
     yInfo("gammaToneAudioPortActive = %d",gammaToneAudioPortActive);
     yInfo("beamFormedAudioPortActive = %d",beamFormedAudioPortActive);
@@ -256,7 +256,42 @@ void audioMemoryMapperRateThread::loadFile(yarp::os::ResourceFinder &rf)
     yInfo("longTermBayesianMapPortActive = %d",longTermBayesianMapPortActive);
     yInfo("collapesedBayesianMapPortActive = %d",collapesedBayesianMapPortActive);
 
-    //TODO Check this Out Man
+  rawAudioPortName = rf.check("rawAudioPortName",
+                           Value("/iCubAudioAttention/RawAudio:i"),
+                           "Check if rawPort should be Active (str)").asString();
+
+  gammaToneAudioPortName = rf.check("gammatoneAudioPortName",
+                           Value("/iCubAudioAttention/GammaToneFilteredAudio:i"),
+                           "Check if gammaToneAudioPort should be Active (str)").asString();
+
+  beamFormedAudioPortName = rf.check("beamFormedAudioPortName",
+                           Value("/iCubAudioAttention/BeamFormedAudio:i"),
+                           "Check if beamFormedAudioPort should be Active (str)").asString();
+
+  audioMapEgoPortName = rf.check("audioMapEgoPortName",
+                           Value("/iCubAudioAttention/AudioMapEgo:i"),
+                           "Check if audioMapEgoPort should be Active (str)").asString();
+
+  audioMapAloPortName = rf.check("audioMapAloPortName",
+                           Value("/iCubAudioAttention/AudioMapAlo:i"),
+                           "Check if audioMapAloPort should be Active (str)").asString();
+
+  longTermBayesianMapPortName = rf.check("longTermBayesianMapPortName",
+                           Value("/iCubAudioAttention/LongTermBayesianMap:i"),
+                           "Check if longTermBayesianMapPort should be Active (str)").asString();
+
+  collapesedBayesianMapPortName = rf.check("collapesedBayesianMapPortName",
+                           Value("/iCubAudioAttention/CollapesedBayesianMap:i"),
+                           "Check if collapesedBayesianMapPort should be Active (str)").asString();
+
+    yInfo("rawAudioPortName = %s",rawAudioPortName.c_str());
+    yInfo("gammatoneAudioPortName = %s",gammaToneAudioPortName.c_str());
+    yInfo("beamFormedAudioPortName = %s",beamFormedAudioPortName.c_str());
+    yInfo("audioMapEgoPortName = %s",audioMapEgoPortName.c_str());
+    yInfo("audioMapAloPortName = %s",audioMapAloPortName.c_str());
+    yInfo("longTermBayesianMapPortName = %s",longTermBayesianMapPortName.c_str());
+    yInfo("collapesedBayesianMapPortName = %s",collapesedBayesianMapPortName.c_str());
+
     yarp::os::ResourceFinder rff;
     int argc;
     char ** argv;
@@ -305,35 +340,12 @@ void audioMemoryMapperRateThread::memoryMapRawAudio(){
   rawAudioPort.getEnvelope(ts);
   int currentCounter = ts.getCount();
   double currentTime = ts.getTime();
-  // int row = 0;
-  // int j = 0;
-  //   for (int col = 0 ; col < frameSamples; col+=1) {
-  //
-  //   mappedRawAduioData[j] =   (double)rawAudio[row];
-  //   mappedRawAduioData[j+1] =   (double)rawAudio[row+1];
-  //   mappedRawAduioData[j+2] =   (double)(currentCounter * frameSamples) + col;
-  //     mappedRawAduioData[j+3] =   (double)(currentTime + col * (1.0 / samplingRate));
-  //     row += 2;
-  //     j +=4;
-  //   }
+
 }
 void audioMemoryMapperRateThread::memoryMapGammaToneAudio(){
   gammaToneAudioMatrix = gammaToneAudioPort.read(true);
-  // for (int i = 0; i < nBands; i++)
-  // {
-  //   for (int j = 0; j < frameSamples; j++)
-  //   {
-  //     mappedGammaToneFilteredAduioData[(i*frameSamples)+j] = (double)gammatoneAudio[i][j];
-  //   }
-  // }
-  // int visted = (nBands*frameSamples);
-  // for (int i = 0; i < nBands; i++)
-  // {
-  //   for (int j = 0; j < frameSamples; j++)
-  //   {
-  //     mappedGammaToneFilteredAduioData[(i*frameSamples)+j+visted] = (double)gammatoneAudio[i + nBands][j];
-  //   }
-  // }
+
+
 }
 void audioMemoryMapperRateThread::memoryMapBeamFormedAudio(){
   beamFormedAudioMatrix = beamFormedAudioPort.read(true);
@@ -342,44 +354,49 @@ void audioMemoryMapperRateThread::memoryMapBeamFormedAudio(){
 void audioMemoryMapperRateThread::memoryMapAudioMapEgo(){
   audioMapEgoMatrix = audioMapEgoPort.read(true);
   int count = 0;
-  // //printf("inpterellateNSamples = %d",interpolateNSamples);
+  
   for (int i = 0; i < interpolateNSamples * 2; i++)
   {
     for (int j = 0; j < nBands; j++)
     {
-      audioMapEgoData[(count++)] = *audioMapEgoMatrix[i][j];
+     audioMapEgoData[count] = *(audioMapEgoMatrix->data()+(count)) ;
+      count++;
     }
   }
 }
 void audioMemoryMapperRateThread::memoryMapAudioMapAlo(){
   audioMapAloMatrix = audioMapAloPort.read(true);
-// mappedAudioData[0] = ts.getCount();
-//   mappedAudioData[1] = ts.getTime();
-//   int count = 0;
-//   //printf("inpterellateNSamples = %d",interpolateNSamples);
-//   for (int i = 0; i < interpolateNSamples * 2; i++)
-//   {
-//     for (int j = 0; j < nBands; j++)
-//     {
-//       mappedAudioData[(count++) + 2] = highResolutionAudioMap[i][j];
-//     }
-//   }
+  int count = 0;
+
+  for (int i = 0; i < interpolateNSamples * 2; i++)
+  {
+    for (int j = 0; j < nBands; j++)
+    {
+     audioMapAloData[count] = *(audioMapAloMatrix->data()+(count));
+      count++;
+    }
+  }
 }
 void audioMemoryMapperRateThread::memoryMapLongTermBayesianMap(){
   longTermBayesianMatrix = collapesedBayesianMapPort.read(true);
-   // //Loops though the input(probabilityMap) and does a deep copy of all the elements into a memory mapped location identified by the probabilityMappingFileID
-   //  int count = 0;
-   //  for (int i = 0; i <  nBands; i++)
-   //  {
-   //      for (int j = 0; j <interpolateNSamples * 2; j++)
-   //      {
-   //        //printf("count = %d\n",count);
+  int count = 0;
 
-   //          probabilityMappingFileID[(count++)] = probabilityMap[i][j];
-   //      }
-   //  }
-   //  //probabilityMappingFileID[(count++)] = offset;
+  for (int i = 0; i < interpolateNSamples * 2; i++)
+  {
+    for (int j = 0; j < nBands; j++)
+    {
+      longTermBayesianMapData[count] = *(longTermBayesianMatrix->data()+(count));
+      count++;
+    }
+  }
 }
 void audioMemoryMapperRateThread::memoryMapCollapesedBayesianMap(){
   collapesedBayesianMatrix = collapesedBayesianMapPort.read(true);
+  int count = 0;
+
+  for (int i = 0; i < interpolateNSamples * 2; i++)
+  {
+    collapesedBayesianMapData[count] = *(collapesedBayesianMatrix->data()+(count));
+    count++;
+  }
 }

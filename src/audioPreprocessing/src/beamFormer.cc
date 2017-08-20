@@ -74,37 +74,37 @@ std::vector<std::vector<std::vector<float> > > BeamFormer::getBeamAudio() {
 	while (i < totalBeams) {
 		for ( ; i < totalBeams; i++) {
 
-			if (i-j > limit) break;
-
+			if (i-j+1 > limit) break;
 			myThread[i-j] = std::thread(&BeamFormer::audioMultiThreadingLoop, this, i);
 		}
-		
+
 		for (int k = 0; j < i; j++, k++) 
+		{
 			myThread[k].join();
+		}
 	}
-	
+
 	return beamFormedAudioVector;
 }
 
 
 std::vector<std::vector<double> > BeamFormer::getReducedBeamAudio() {
 
-
-	int i = 0, j = 0, limit = std::thread::hardware_concurrency() * 4;
+int i = 0, j = 0, limit = std::thread::hardware_concurrency() * 4;
 
 	std::vector<std::thread> myThread(limit);
 	
 	while (i < totalBeams) {
 		for ( ; i < totalBeams; i++) {
-
-			if (i-j > limit) break;
-
+			
+			if (i-j+1 > limit) break;
 			myThread[i-j] = std::thread(&BeamFormer::reducedAudioMultiThreadingLoop, this, i);
 		}
-
 		
 		for (int k = 0; j < i; j++, k++) 
+		{
 			myThread[k].join();
+		}	
 	}
 
 	return reducedBeamFormedAudioVector;

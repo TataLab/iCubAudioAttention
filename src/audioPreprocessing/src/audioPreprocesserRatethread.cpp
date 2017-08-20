@@ -17,7 +17,7 @@
   * Public License for more details
 */
 #include "audioPreprocesserRatethread.h"
-
+#include <iostream>
 using namespace yarp::dev;
 using namespace yarp::os;
 using namespace yarp::sig;
@@ -27,6 +27,8 @@ using namespace std;
 
 AudioPreprocesserRatethread::AudioPreprocesserRatethread():RateThread(THRATE) {
     robot = "icub";
+
+    std::cout << "here";
 }
 
 
@@ -170,7 +172,7 @@ void AudioPreprocesserRatethread::run() {
       }
     }
 
-    // run the Filter Bank on the raw Audio
+ //   run the Filter Bank on the raw Audio
     gammatoneAudioFilter->gammatoneFilterBank(rawAudio);
     
     if (outGammaToneAudioPort->getOutputCount()) {
@@ -192,7 +194,7 @@ void AudioPreprocesserRatethread::run() {
     }
 
     // run the beamformer on the set audio
-    beamFormedAudioVector = beamForm->getBeamAudio();
+    // beamFormedAudioVector = beamForm->getBeamAudio();
 
     if (outReducedBeamFormedAudioPort->getOutputCount()) {
     //sendReducedBeamFormedAudio(beamForm->getReducedBeamAudio());
@@ -200,8 +202,8 @@ void AudioPreprocesserRatethread::run() {
     //outReducedBeamFormedAudioPort->write(*outReducedBeamFormedAudioMap);
     }
 
-   // do an interpolate on the reducedBeamFormedAudioVector
-   // to produce a highResolutionAudioMap
+   //do an interpolate on the reducedBeamFormedAudioVector
+   //to produce a highResolutionAudioMap
    linerInterpolate();
 
    if (outAudioMapEgoPort->getOutputCount()) {
