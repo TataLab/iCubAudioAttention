@@ -49,7 +49,6 @@ bool audioMemoryMapperRateThread::threadInit() {
 
 
     if(rawAudioPortActive){
-      std::cout << rawAudioPortName.c_str()  << "::"<< std::endl;
       if(!rawAudioPort.open(rawAudioPortName.c_str())) {
         yError("unable to open port to receive input");
           return false;  // unable to open; let RFModule know so that it won't run
@@ -132,7 +131,7 @@ void audioMemoryMapperRateThread::run() {
     memoryMapCollapesedBayesianMap();
   }
 
-
+  yInfo("Done Memory Mapping");
 }
 
 bool audioMemoryMapperRateThread::processing(){

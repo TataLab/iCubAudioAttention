@@ -17,19 +17,23 @@
   * Public License for more details
 */
 
+/**
+ * @file  beamFormer.h
+ * @brief Header file of the beamformer class.
+ * 		  The Beamformer is used to try and extract 
+ *		  sound sources in a scene.
+ */
+
 #ifndef _BEAM_FORMER_H_
 #define _BEAM_FORMER_H_
 
-#include "gammatoneFilter.h"
-
-
-#include <iostream>
-#include <vector>
+#include <math.h>
 #include <thread>
+#include <vector>
 
 class BeamFormer {
 
-public:
+ public:
 	/**
 	 *	constructor
 	 *	
@@ -71,8 +75,8 @@ public:
 	 *	@return Beamformed data that is stored in vector of size(totalBeams) containing a vector of 
 	 * 			size(number of Bands) that contains a array of float with a size(samples in frame).
 	 */
-	//std::vector<std::vector<float*> > getBeamAudio();
 	 std::vector<std::vector<std::vector<float> > > getBeamAudio();
+
 
 	/**
 	 *	getReducedBeamAudio
@@ -86,8 +90,8 @@ public:
 	 */
 	std::vector<std::vector<double> > getReducedBeamAudio();
 
-private:
 
+ private:
 	/**
 	 *	reducedAudioMultiThreadingLoop
 	 *
@@ -120,4 +124,6 @@ private:
 	std::vector < std::vector < double > > reducedBeamFormedAudioVector;		 // The compressed beamformed data if getReducedBeamAudio() was called
 };
 
-#endif
+#endif  //_BEAM_FORMER_H_
+
+//----- end-of-file --- ( next line intentionally left blank ) ------------------

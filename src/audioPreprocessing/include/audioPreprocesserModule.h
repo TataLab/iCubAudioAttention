@@ -17,6 +17,11 @@
   * Public License for more details
 */
 
+/**
+ * @file  audioPreprocesserModule.h
+ * @brief Header file of the processing module
+ */
+
 #ifndef _AUDIO_PREPROCESSER_MODULE_H_
 #define _AUDIO_PREPROCESSER_MODULE_H_
 
@@ -30,17 +35,17 @@
 #include <yarp/sig/Sound.h>
 #include <yarp/sig/Vector.h>
 
-//Memory mapping requirements
-#include <fcntl.h>
-#include <string>
-#include <sys/mman.h>
+// Memory mapping requirements
+//#include <fcntl.h>
+//#include <string>
+//#include <sys/mman.h>
 
 #include "audioPreprocesserRatethread.h"
 
-class AudioPreprocesserModule: public yarp::os::RFModule
-{
+class AudioPreprocesserModule: public yarp::os::RFModule {
+
  private:
-  	std::string moduleName;                  // name of the module
+	std::string moduleName;                  // name of the module
   	std::string robotPortName;               // name of robot port
   	std::string inputPortName;               // name of the input port for events
   	std::string handlerPortName;             // name of handler port
@@ -50,6 +55,7 @@ class AudioPreprocesserModule: public yarp::os::RFModule
 
   	AudioPreprocesserRatethread* apr;        // ratethread handling the processing in the module
 
+
  public:
 	bool configure(yarp::os::ResourceFinder &rf);
 	bool interruptModule();
@@ -58,4 +64,6 @@ class AudioPreprocesserModule: public yarp::os::RFModule
 	bool updateModule();
 };
 
-#endif
+#endif //_AUDIO_PREPROCESSER_MODULE_H_
+
+//----- end-of-file --- ( next line intentionally left blank ) ------------------

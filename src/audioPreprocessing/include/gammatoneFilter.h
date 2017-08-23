@@ -18,8 +18,11 @@
 */
 
 /**
-*	This function will filter given audio input using a gammatone filter bank into any number of frequency bands.
-*/
+ * @file  gammatoneFilter.h
+ * @brief Header file of the gammatone filter class.
+ * 		  This function will filter given audio input using a 
+ * 		  gammatone filter bank into any number of frequency bands.
+ */
 
 #ifndef _GAMMATONE_FILTER_H_
 #define _GAMMATONE_FILTER_H_
@@ -30,13 +33,12 @@
 #define M_PI               3.14159265358979323846
 #endif
 
-#include <vector>
 #include <math.h>
-#include <fstream>
+#include <vector>
 
 class GammatoneFilter {
 
-public:
+ public:
 	/**
 	 *	constructor
 	 *
@@ -111,7 +113,7 @@ public:
 	float* reverseFilterBank(std::vector< float* >& inAudio, std::vector< double > maskWeights);
 
 
-private:
+ private:
 	/**
 	 *	makeErbCFs
 	 *
@@ -207,4 +209,6 @@ private:
 	double tpt;
 };
 
-#endif
+#endif  //_GAMMATONE_FILTER_H_
+
+//----- end-of-file --- ( next line intentionally left blank ) ------------------

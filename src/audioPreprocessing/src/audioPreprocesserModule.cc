@@ -16,8 +16,9 @@
   * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
   * Public License for more details
 */
+
 /**
- * @file AudioPreprocesserModule.cpp
+ * @file  audioPreprocesserModule.cpp
  * @brief Implementation of the processing module
  */
 
@@ -26,19 +27,21 @@
 using namespace yarp::os;
 
 bool AudioPreprocesserModule::configure(yarp::os::ResourceFinder &rf) {
+
     yInfo("Configuring the module");
 
     // get the module name which will form the stem of all module port names 
     moduleName            = rf.check("name", 
                             Value("/AudioPreprocesser"), 
                             "module name (string)").asString();
-    
-    
+      
+      
+
     // before continuing, set the module name before getting any other parameters, 
     // specifically the port names which are dependent on the module name
     setName(moduleName.c_str());
 
-    
+      
     // get the robot name which will form the stem of the robot ports names
     // and append the specific part and device required
     robotName             = rf.check("robot", 
@@ -48,9 +51,9 @@ bool AudioPreprocesserModule::configure(yarp::os::ResourceFinder &rf) {
     robotPortName         = "/" + robotName + "/head";
 
     inputPortName         = rf.check("inputPortName",
-			                      Value(":i"),
+                            Value(":i"),
                             "Input port name (string)").asString();
-    
+        
 
     // attach a port of the same name as the module (prefixed with a /) to the module
     // so that messages received from the port are redirected to the respond method
@@ -87,11 +90,13 @@ bool AudioPreprocesserModule::configure(yarp::os::ResourceFinder &rf) {
     return ret;         
 }
 
+
 bool AudioPreprocesserModule::interruptModule() {
 	yInfo("Interrupting\n");
 	handlerPort.interrupt();
 	return true;
 }
+
 
 bool AudioPreprocesserModule::close() {
 	yInfo("Calling close\n");
@@ -101,10 +106,11 @@ bool AudioPreprocesserModule::close() {
 	return true;
 }
 
+
 double AudioPreprocesserModule::getPeriod() {
-	// TODO Should this all ways stay this low
 	return 0.05; 
 }
+
 
 bool AudioPreprocesserModule::updateModule() {
 	return true;

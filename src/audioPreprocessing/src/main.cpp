@@ -1,8 +1,9 @@
-#include "audioPreprocesserModule.h"
-
 #include <yarp/os/all.h>
 #include <yarp/dev/all.h>
+
 #include <iostream>
+
+#include "audioPreprocesserModule.h"
 
 
 int main(int argc, char * argv[]) {

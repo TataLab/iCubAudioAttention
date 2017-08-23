@@ -17,18 +17,25 @@
   * Public License for more details
 */
 
+/**
+ * @file  beamFormer.cc
+ * @brief Implementation of the beamformer.
+ */
+
 #include "beamFormer.h"
+
 
 inline int myMod(int a, int b) {
 	return  a >= 0 ? a % b : (a % b) + b;
 }
 
-BeamFormer::BeamFormer(int numBands, int nSamples, int numMics, int numBeamsHemifield):
+
+BeamFormer::BeamFormer(int numBands, int nSamples, int numMics, int numBeamsHemifield) :
 nMics(numMics), frameSamples(nSamples), nBands(numBands), getNBeamsPerHemifield(numBeamsHemifield) {
 	
 	totalBeams = (getNBeamsPerHemifield*2) + 1;
 	
-	//Allocating the required vectors to create the beamFormed audio 
+	// Allocating the required vectors to create the beamFormed audio 
 	for (int i = 0; i < totalBeams; i++) {
 
 		std::vector<std::vector<float> > tempvector;
@@ -41,7 +48,7 @@ nMics(numMics), frameSamples(nSamples), nBands(numBands), getNBeamsPerHemifield(
 		beamFormedAudioVector.push_back(tempvector);
 	}
 
-	//Allocating the required vectors to create the reduced beamFormed audio 
+	// Allocating the required vectors to create the reduced beamFormed audio 
 	for (int i = 0; i < totalBeams; i++) {
 
 		std::vector<double> tempvector(nBands, 0);
@@ -52,36 +59,40 @@ nMics(numMics), frameSamples(nSamples), nBands(numBands), getNBeamsPerHemifield(
 
 
 BeamFormer::~BeamFormer() {
-
-	for(int i = 0; i < inputSignal.size();i++) {
+	for(int i = 0; i < inputSignal.size();i++)
 		delete[] inputSignal[i];
-	}
 }
 
 
 void BeamFormer::inputAudio(std::vector< float* > inAudio) {
-	//Sets the input audio passed into this function as inAudio.
+	// Sets the input audio passed into this function as inAudio.
 	inputSignal = inAudio;
 }
 
 
 std::vector<std::vector<std::vector<float> > > BeamFormer::getBeamAudio() {
 
+	// init
 	int i = 0, j = 0, limit = std::thread::hardware_concurrency() * 4;
 
+	// construct the threads once
 	std::vector<std::thread> myThread(limit);
 	
+	// run beamforming on all indices
 	while (i < totalBeams) {
 		for ( ; i < totalBeams; i++) {
 
+			// break if at thread limit
 			if (i-j+1 > limit) break;
+
+			// begin thread
 			myThread[i-j] = std::thread(&BeamFormer::audioMultiThreadingLoop, this, i);
 		}
 
-		for (int k = 0; j < i; j++, k++) 
-		{
+		// join the finished threads so 
+		// that they may be reassigned
+		for (int k = 0; j < i; j++, k++)
 			myThread[k].join();
-		}
 	}
 
 	return beamFormedAudioVector;
@@ -90,21 +101,27 @@ std::vector<std::vector<std::vector<float> > > BeamFormer::getBeamAudio() {
 
 std::vector<std::vector<double> > BeamFormer::getReducedBeamAudio() {
 
-int i = 0, j = 0, limit = std::thread::hardware_concurrency() * 4;
+	// init
+	int i = 0, j = 0, limit = std::thread::hardware_concurrency() * 4;
 
+	// construct the threads once
 	std::vector<std::thread> myThread(limit);
 	
+	// run beamforming on all indices
 	while (i < totalBeams) {
 		for ( ; i < totalBeams; i++) {
-			
+
+			// break if at thread limit
 			if (i-j+1 > limit) break;
+
+			// begin thread
 			myThread[i-j] = std::thread(&BeamFormer::reducedAudioMultiThreadingLoop, this, i);
 		}
 		
-		for (int k = 0; j < i; j++, k++) 
-		{
+		// join the finished threads so 
+		// that they may be reassigned
+		for (int k = 0; j < i; j++, k++)
 			myThread[k].join();
-		}	
 	}
 
 	return reducedBeamFormedAudioVector;
@@ -112,7 +129,6 @@ int i = 0, j = 0, limit = std::thread::hardware_concurrency() * 4;
 
 
 void BeamFormer::audioMultiThreadingLoop(int i) {
-
 
 	for (int j = 0; j < nBands; j++) {
 		for (int k = 0; k < frameSamples; k++) {

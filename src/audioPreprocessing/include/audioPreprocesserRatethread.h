@@ -17,6 +17,11 @@
   * Public License for more details
 */
 
+/**
+ * @file  audioPreprocesserRatethread.h
+ * @brief Header file of the processing ratethread.
+ *        This is where the processing happens.
+ */
 
 #ifndef _AUDIO_PREPROCESSER_RATETHREAD_H_
 #define _AUDIO_PREPROCESSER_RATETHREAD_H_
@@ -31,65 +36,61 @@
 
 #include <yarp/sig/all.h>
 
-#include <cstring>
-#include <fstream>
-#include <iostream>
-#include <time.h>
-
 #include "gammatoneFilter.h"
 #include "beamFormer.h"
 
-const float normDivid = pow(2,23);  // Number that is used to conver the integer number resived
+const float normDivid = pow(2,23);  // Number that is used to convert the integer number received
                                     // as the audio signal and convert it to a double audio signal
 
 struct knotValues {
-   double k0, k1, k2;
+    double k0, k1, k2;
 };
 
 class AudioPreprocesserRatethread : public yarp::os::RateThread {
 
-private:
-
-    bool result;                    //result of the processing
-
-    std::string configFile;         // name of the configFile where the parameter of the camera are set
-    std::string inputPortName;      // name of input port for incoming events, typically from aexGrabber
-    std::string name;               // rootname of all the ports opened by this thread
-    std::string robot;              // name of the robot
-
-    //
-    // Incoming Audio Data from the iCub and remoteInterface
-    //
-    yarp::os::BufferedPort<yarp::sig::Sound> *inPort;
-    yarp::os::Port *outGammaToneAudioPort;
-    yarp::os::Port *outReducedBeamFormedAudioPort;
-    yarp::os::Port *outBeamFormedAudioPort;
-    yarp::os::Port *outAudioMapEgoPort;
-
-    yarp::os::Stamp ts;
-    yarp::sig::Sound* s;
+ private:
+	//
+	// name strings
+	//
+	std::string configFile;         // name of the configFile where the parameter of the camera are set
+	std::string inputPortName;      // name of input port for incoming events, typically from aexGrabber
+	std::string name;               // rootname of all the ports opened by this thread
+	std::string robot;              // name of the robot
 
 
-    //
-    // containers for processed data
-    //
-    yarp::sig::Matrix* outAudioMap;
-    yarp::sig::Matrix* outGammaToneFilteredAudioMap;
-    yarp::sig::Matrix* outBeamFormedAudioMap;
-    yarp::sig::Matrix* outReducedBeamFormedAudioMap;
+	//
+	// Incoming Audio Data from the iCub and remoteInterface
+	//
+	yarp::os::BufferedPort<yarp::sig::Sound> *inPort;
+	yarp::os::Port *outGammaToneAudioPort;
+	yarp::os::Port *outReducedBeamFormedAudioPort;
+	yarp::os::Port *outBeamFormedAudioPort;
+	yarp::os::Port *outAudioMapEgoPort;
 
-    std::vector < std::vector < std::vector < float > > > beamFormedAudioVector;
-    std::vector < std::vector < double > > highResolutionAudioMap;
-    std::vector < std::vector < double > > reducedBeamFormedAudioVector;
-
-    float *rawAudio;
+	yarp::os::Stamp ts;
+	yarp::sig::Sound* s;
 
 
-    //
-    // processing objects
-    //
-    GammatoneFilter *gammatoneAudioFilter;
-    BeamFormer *beamForm;
+	//
+	// containers for processed data
+	//
+	yarp::sig::Matrix* outAudioMap;
+	yarp::sig::Matrix* outGammaToneFilteredAudioMap;
+	yarp::sig::Matrix* outBeamFormedAudioMap;
+	yarp::sig::Matrix* outReducedBeamFormedAudioMap;
+
+	std::vector < std::vector < std::vector < float > > > beamFormedAudioVector;
+	std::vector < std::vector < double > > highResolutionAudioMap;
+	std::vector < std::vector < double > > reducedBeamFormedAudioVector;
+
+	float *rawAudio;
+
+
+	//
+	// processing objects
+	//
+	GammatoneFilter *gammatoneAudioFilter;
+	BeamFormer *beamForm;
 
 
     //
@@ -119,9 +120,9 @@ private:
     double micDistance;
 
 
-public:
+ public:
     /**
-     *  constructor default
+     *  constructor
      */
     AudioPreprocesserRatethread();
 
@@ -249,12 +250,14 @@ public:
      */
     void sendBeamFormedAudio(const std::vector<std::vector<float*> > &beamFormedAudio);
 
+
     /**
      *  sendReducedBeamFormedAudio
      *
      *  Function used to send beam formed audio that is held in outBeamFormedAudio though port beamFormedAudioPort.
      */
     void sendReducedBeamFormedAudio(const std::vector<std::vector<double> > &reducedBeamFormedAudio);
+
 
     /**
      *  linerApproximation
@@ -325,7 +328,6 @@ public:
      *  The data of this function will be saved in highResolutionAudioMap.
      */
     void splineInterpolate();
-
 };
 
 #endif  //_AUDIO_PREPROCESSER_THREAD_H_

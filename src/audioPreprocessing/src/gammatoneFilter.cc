@@ -16,19 +16,26 @@
   * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
   * Public License for more details
 */
+
+/**
+ * @file  gammatoneFilter.cc
+ * @brief Implementation of the gammatone filter bank.
+ */
+
 #include "gammatoneFilter.h"
 
 #define erb(x)         ( 24.7 * ( 4.37e-3 * ( x ) + 1.0 ) )
 
-GammatoneFilter::GammatoneFilter(int SampleRate, int lowCF, int highCF, int numBands, int nSamples, int numMics, bool hr) 
-: samplingRate(SampleRate), lowerCF(lowCF), higherCF(highCF), nBands(numBands), frameSamples(nSamples), nMics(numMics),  hrect(hr) {
+
+GammatoneFilter::GammatoneFilter(int SampleRate, int lowCF, int highCF, int numBands, int nSamples, int numMics, bool hr) : 
+samplingRate(SampleRate), lowerCF(lowCF), higherCF(highCF), nBands(numBands), frameSamples(nSamples), nMics(numMics),  hrect(hr) {
 	
 	// Calls a function that will be used to create the ERB center 
 	// frequencies between the lowest and highest frequency and the number
 	// of bands all specified in the configuration file.
 	makeErbCFs();
 
-	//Uncomment this if you would like Liner Center Frequencies
+	// Uncomment this if you would like Liner Center Frequencies
 	//makeLinerCFs();
 
 	tempFilteredAudio = new float[frameSamples]; 
@@ -58,7 +65,7 @@ GammatoneFilter::~GammatoneFilter() {
 	for (int i = 0; i < inputSplitAudio.size(); i++)
 		delete[] inputSplitAudio[i];
 
-	delete tempFilteredAudio; 
+	delete[] tempFilteredAudio; 
 }
 
 
@@ -87,14 +94,14 @@ float* GammatoneFilter::reverseFilterBank(std::vector< float* >& inAudio) {
 
 			float reverse[frameSamples*nMics];
 
-			//reverse
+			// reverse
 			for (int j = 0; j < frameSamples; j++)
 				reverse[frameSamples-j-1] = inAudio[ch + (i * nBands)][j];
 
-			//run through filter again
+			// run through filter again
 			float* rereverse = singleFilter(reverse, cfs[ch]);
 
-			//reverse again back to normal order
+			// reverse again back to normal order
 			for (int j = 0; j < frameSamples; j++)
 				result[(frameSamples-j-1)*nMics+i] += rereverse[j];
 
@@ -118,14 +125,14 @@ float* GammatoneFilter::reverseFilterBank(std::vector< float* >& inAudio,  std::
 
 			float reverse[frameSamples*nMics];
 
-			//reverse
+			// reverse
 			for (int j = 0; j < frameSamples; j++)
 				reverse[frameSamples-j-1] = inAudio[ch + (i * nBands)][j];
 
-			//run through filter again
+			// run through filter again
 			float* rereverse = singleFilter(reverse, cfs[ch]);
 
-			//reverse again back to normal order
+			// reverse again back to normal order
 			for (int j = 0; j < frameSamples; j++)
 				result[(frameSamples-j-1)*nMics+i] += rereverse[j] * maskWeights[ch];
 
@@ -139,13 +146,13 @@ float* GammatoneFilter::reverseFilterBank(std::vector< float* >& inAudio,  std::
 
 void GammatoneFilter::makeErbCFs() {
 
-	//Calculates the lower bound in ERB space
+	// Calculates the lower bound in ERB space
 	double minERB = HzToErbRate(lowerCF);
 
-	//Calculates the upper bound in ERB space
+	// Calculates the upper bound in ERB space
 	double highERB = HzToErbRate(higherCF);
 
-	//Calculates the incrementing amount
+	// Calculates the incrementing amount
 	double incAmount = (highERB - minERB) / (nBands - 1);
 
 	for (int i = 0; i < nBands; i++) 
