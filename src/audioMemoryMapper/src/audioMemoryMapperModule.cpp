@@ -16,6 +16,7 @@
   * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
   * Public License for more details
 */
+  
 /**
  * @file audioMemoryMapperModule.cpp
  * @brief Implementation of the processing module
@@ -23,35 +24,33 @@
 
 #include "audioMemoryMapperModule.h"
 
-bool audioMemoryMapperModule::configure(yarp::os::ResourceFinder &rf)
-{
-  std::string robotName = "icub";
-  rateThread = new audioMemoryMapperRateThread(robotName,rf);
-  rateThread->setName("moduleName");
-  bool ret = rateThread->start();
-  return ret;
+
+bool audioMemoryMapperModule::configure(yarp::os::ResourceFinder &rf) {
+	std::string robotName = "icub";
+	rateThread = new audioMemoryMapperRateThread(robotName, rf);
+	rateThread->setName("moduleName");
+	bool ret = rateThread->start();
+	return ret;
 }
 
-double audioMemoryMapperModule::getPeriod()
-{
-	// TODO Should this all ways stay this low
+
+double audioMemoryMapperModule::getPeriod() {
 	return 0.05;
 }
 
-bool audioMemoryMapperModule::updateModule()
-{
 
+bool audioMemoryMapperModule::updateModule() {
 	return true;
 }
 
-bool audioMemoryMapperModule::interruptModule()
-{
+
+bool audioMemoryMapperModule::interruptModule() {
 	fprintf(stderr, "[WARN] Interrupting\n");
 	return true;
 }
 
-bool audioMemoryMapperModule::close()
-{
+
+bool audioMemoryMapperModule::close() {
 	fprintf(stderr, "[INFO] Calling close\n");
 	return true;
 }

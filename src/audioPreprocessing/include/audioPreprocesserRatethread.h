@@ -150,6 +150,8 @@ class AudioPreprocesserRatethread : public yarp::os::RateThread {
      *  threadInit
      *
      *  initialises the thread
+     *
+     *  @return whether or not initialization executed correctly
      */
     bool threadInit();
 

@@ -17,21 +17,22 @@
   * Public License for more details
 */
 
-
-
+/**
+ * @file  audioMemoryMapperModule.h
+ * @brief Header file of the memory mapper module
+ */
 
 #ifndef _AUDIO_MEMORY_MAPPER_MODULE_H_
 #define _AUDIO_MEMORY_MAPPER_MODULE_H_
 
-
-#include <yarp/os/RFModule.h>
-#include <yarp/os/Network.h>
 #include <yarp/os/BufferedPort.h>
-#include <yarp/os/Stamp.h>
 #include <yarp/os/NetInt32.h>
-#include <yarp/sig/Sound.h>
-//#include <iCub/audio/Sound.h>
+#include <yarp/os/Network.h>
+#include <yarp/os/RFModule.h>
+#include <yarp/os/Stamp.h>
+
 #include <yarp/sig/Matrix.h>
+#include <yarp/sig/Sound.h>
 #include <yarp/sig/Vector.h>
 
 //Memory mapping requirements
@@ -41,30 +42,26 @@
 
 #include <audioMemoryMapperRateThread.h>
 
-class audioMemoryMapperModule: public yarp::os::RFModule
-{
- private:
-  std::string moduleName;                  // name of the module
-  std::string robotPortName;               // name of robot port
-  std::string inputPortName;               // name of the input port for events
-  std::string robotName;                   // name of the robot
-  std::string configFile;                  // name of the configFile that the resource Finder will seek
+class audioMemoryMapperModule: public yarp::os::RFModule {
 
-  audioMemoryMapperRateThread *rateThread;
+ private:
+	std::string moduleName;                  // name of the module
+	std::string robotPortName;               // name of robot port
+	std::string inputPortName;               // name of the input port for events
+	std::string robotName;                   // name of the robot
+	std::string configFile;                  // name of the configFile that the resource Finder will seek
+
+	audioMemoryMapperRateThread *rateThread; // ratethread handling the processing in the module
+
 
  public:
-
 	bool configure(yarp::os::ResourceFinder &rf);
 	double getPeriod();
 	bool updateModule();
 	bool interruptModule();
 	bool close();
-
-
-private:
-
-
-
 };
 
-#endif
+#endif  //_AUDIO_MEMORY_MAPPER_MODULE_H_
+
+//----- end-of-file --- ( next line intentionally left blank ) ------------------

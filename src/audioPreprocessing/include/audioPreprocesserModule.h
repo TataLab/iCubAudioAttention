@@ -35,25 +35,20 @@
 #include <yarp/sig/Sound.h>
 #include <yarp/sig/Vector.h>
 
-// Memory mapping requirements
-//#include <fcntl.h>
-//#include <string>
-//#include <sys/mman.h>
-
-#include "audioPreprocesserRatethread.h"
+#include <audioPreprocesserRatethread.h>
 
 class AudioPreprocesserModule: public yarp::os::RFModule {
 
  private:
 	std::string moduleName;                  // name of the module
-  	std::string robotPortName;               // name of robot port
-  	std::string inputPortName;               // name of the input port for events
-  	std::string handlerPortName;             // name of handler port
-  	std::string robotName;                   // name of the robot
-  	std::string configFile;                  // name of the configFile that the resource Finder will seek
-  	yarp::os::Port handlerPort;              // a port to handle messages 
+	std::string robotPortName;               // name of robot port
+	std::string inputPortName;               // name of the input port for events
+	std::string handlerPortName;             // name of handler port
+	std::string robotName;                   // name of the robot
+	std::string configFile;                  // name of the configFile that the resource Finder will seek
+	yarp::os::Port handlerPort;              // a port to handle messages 
 
-  	AudioPreprocesserRatethread* apr;        // ratethread handling the processing in the module
+	AudioPreprocesserRatethread* apr;        // ratethread handling the processing in the module
 
 
  public:
