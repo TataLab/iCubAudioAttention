@@ -35,11 +35,6 @@
 #include <yarp/sig/Sound.h>
 #include <yarp/sig/Vector.h>
 
-//Memory mapping requirements
-#include <sys/mman.h>
-#include <fcntl.h>
-#include <string>
-
 #include <audioMemoryMapperRateThread.h>
 
 class audioMemoryMapperModule: public yarp::os::RFModule {

@@ -41,8 +41,6 @@
 #include <fcntl.h>
 #include <string>
 
-
-
 class audioMemoryMapperRateThread : public yarp::os::RateThread {
 
  private:

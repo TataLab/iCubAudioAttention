@@ -43,9 +43,16 @@ AudioPreprocesserRatethread::AudioPreprocesserRatethread(std::string _robot, std
 
 
 AudioPreprocesserRatethread::~AudioPreprocesserRatethread() {
+	delete inPort;
+	delete outGammaToneAudioPort;
+	delete outBeamFormedAudioPort;
+	delete outReducedBeamFormedAudioPort;
+	delete outAudioMapEgoPort;
+	delete outAudioMap;
+	delete outGammaToneFilteredAudioMap;
 	delete gammatoneAudioFilter;
 	delete beamForm;
-	delete rawAudio;
+	delete[] rawAudio;
 }
 
 
@@ -187,14 +194,16 @@ void AudioPreprocesserRatethread::run() {
 	// run the reduced-beamformer on the set audio
 	reducedBeamFormedAudioVector = beamForm->getReducedBeamAudio();
 
+	// run the beamformer on the set audio
+	// beamFormedAudioVector = beamForm->getBeamAudio();
+
 	if (outBeamFormedAudioPort->getOutputCount()) {
 		//sendBeamFormedAudio(beamForm->getBeamAudio());
 		//outBeamFormedAudioPort->setEnvelope(ts);
 		//outBeamFormedAudioPort->write(*outBeamFormedAudioMap);
 	}
 
-	// run the beamformer on the set audio
-	// beamFormedAudioVector = beamForm->getBeamAudio();
+	
 
 	if (outReducedBeamFormedAudioPort->getOutputCount()) {
 		//sendReducedBeamFormedAudio(beamForm->getReducedBeamAudio());
@@ -211,11 +220,7 @@ void AudioPreprocesserRatethread::run() {
 		// a sendable format
 		sendAudioMap();
 
-		// set the envelope for the Audio Map port
-		outAudioMapEgoPort->setEnvelope(ts);
-
-		// publish the map onto the network
-		outAudioMapEgoPort->write(*outAudioMap);
+		
 	}
 
 	// timing how long the module took
@@ -361,6 +366,12 @@ void AudioPreprocesserRatethread::sendAudioMap() {
 		}
 		outAudioMap->setRow(i, tempV);
 	}
+
+	// set the envelope for the Audio Map port
+	outAudioMapEgoPort->setEnvelope(ts);
+
+	// publish the map onto the network
+	outAudioMapEgoPort->write(*outAudioMap);
 }
 
 
