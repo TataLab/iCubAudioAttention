@@ -30,7 +30,7 @@ using namespace yarp::os;
 #define THRATE 80 //ms
 
 
-AudioPreprocesserRatethread::AudioPreprocesserRatethread():RateThread(THRATE) {
+AudioPreprocesserRatethread::AudioPreprocesserRatethread() : RateThread(THRATE) {
 	robot = "icub";
 }
 
@@ -183,32 +183,33 @@ void AudioPreprocesserRatethread::run() {
 	gammatoneAudioFilter->gammatoneFilterBank(rawAudio);
 
 	if (outGammaToneAudioPort->getOutputCount()) {
+		// format the gammatone filtered audio into
+		// a sendable format, set the envelope,
+		// then publish to the network
 		sendGammatoneFilteredAudio(gammatoneAudioFilter->getFilteredAudio());
-		outGammaToneAudioPort->setEnvelope(ts);
-		outGammaToneAudioPort->write(*outGammaToneFilteredAudioMap);
 	}
 
 	// set the beamformers audio to be the filtered audio
 	beamForm->inputAudio(gammatoneAudioFilter->getFilteredAudio());
 
-	// run the reduced-beamformer on the set audio
-	reducedBeamFormedAudioVector = beamForm->getReducedBeamAudio();
-
 	// run the beamformer on the set audio
 	// beamFormedAudioVector = beamForm->getBeamAudio();
 
 	if (outBeamFormedAudioPort->getOutputCount()) {
-		//sendBeamFormedAudio(beamForm->getBeamAudio());
-		//outBeamFormedAudioPort->setEnvelope(ts);
-		//outBeamFormedAudioPort->write(*outBeamFormedAudioMap);
+		// format the beam formed audio into
+		// a sendable format, set the envelope,
+		// then publish to the network
+		// sendBeamFormedAudio(beamFormedAudioVector);
 	}
 
-	
+	// run the reduced-beamformer on the set audio
+	reducedBeamFormedAudioVector = beamForm->getReducedBeamAudio();
 
 	if (outReducedBeamFormedAudioPort->getOutputCount()) {
-		//sendReducedBeamFormedAudio(beamForm->getReducedBeamAudio());
-		//outReducedBeamFormedAudioPort->setEnvelope(ts);
-		//outReducedBeamFormedAudioPort->write(*outReducedBeamFormedAudioMap);
+		// format the reduced beam formed audio into
+		// a sendable format, set the envelope,
+		// then publish to the network
+		sendReducedBeamFormedAudio(reducedBeamFormedAudioVector);
 	}
 
 	// do an interpolate on the reducedBeamFormedAudioVector
@@ -217,10 +218,9 @@ void AudioPreprocesserRatethread::run() {
 
 	if (outAudioMapEgoPort->getOutputCount()) {
 		// format the highResolutionAudioMap into
-		// a sendable format
-		sendAudioMap();
-
-		
+		// a sendable format, set the envelope,
+		// then publish to the network
+		sendAudioMap();		
 	}
 
 	// timing how long the module took
@@ -327,6 +327,12 @@ void AudioPreprocesserRatethread::sendGammatoneFilteredAudio(const std::vector<f
 		}
 		outGammaToneFilteredAudioMap->setRow(i, tempV);
 	}
+
+	// set the envelope for the Gammatone Filtered Audio port
+	outGammaToneAudioPort->setEnvelope(ts);
+
+	// publish the map onto the network
+	outGammaToneAudioPort->write(*outGammaToneFilteredAudioMap);
 }
 
 
@@ -340,6 +346,12 @@ void AudioPreprocesserRatethread::sendBeamFormedAudio(const std::vector<std::vec
 		}
 		outBeamFormedAudioMap->setRow(i, tempV);
 	}
+
+	// set the envelope for the Beam Formed Audio port
+	outBeamFormedAudioPort->setEnvelope(ts);
+	
+	// publish the map onto the network
+	outBeamFormedAudioPort->write(*outBeamFormedAudioMap);
 }
 
 
@@ -353,6 +365,12 @@ void AudioPreprocesserRatethread::sendReducedBeamFormedAudio(const std::vector<s
 		}
 		outReducedBeamFormedAudioMap->setRow(i, tempV);
 	}
+
+	// set the envelope for the Reduced Beam Formed Audio port
+	outReducedBeamFormedAudioPort->setEnvelope(ts);
+
+	// publish the map onto the network
+	outReducedBeamFormedAudioPort->write(*outReducedBeamFormedAudioMap);
 }
 
 

@@ -82,7 +82,8 @@ bool AudioPreprocesserModule::configure(yarp::os::ResourceFinder &rf) {
 	apr->setName(moduleName);
 
 	// now start the thread to do the work 
-	bool ret = apr->start(); // this calls threadInit() and it if returns true, it then calls run()
+	// this calls threadInit() and it if returns true, it then calls run()
+	bool ret = apr->start(); 
 
 	// let the RFModule know everything went well
 	// so that it will then run the module
