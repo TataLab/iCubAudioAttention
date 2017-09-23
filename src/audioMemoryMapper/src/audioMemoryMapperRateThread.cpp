@@ -401,7 +401,7 @@ void audioMemoryMapperRateThread::memoryMapAudioMapEgo() {
 	for (int i = 0; i < interpolateNSamples * 2; i++) {
 		for (int j = 0; j < nBands; j++) {
 	 		audioMapEgoData[count] = *(audioMapEgoMatrix->data() + (count)) ;
-      if(audioMapEgoData[count]== *(audioMapEgoMatrix->data() + (count)))std::cout << "Here" << std::endl;
+      if(audioMapEgoData[count]!= *(audioMapEgoMatrix->data() + (count)))std::cout << "Here" << std::endl;
 	  		count++;
 		}
 	}
