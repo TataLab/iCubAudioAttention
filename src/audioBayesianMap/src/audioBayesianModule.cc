@@ -311,7 +311,8 @@ void BayesianModule::setAcousticMap()
         }
     }
     //Calls a function that normalizations the columns of the currentAudioMap
-    normalizePropabilityMap(currentAudioMap);   
+    normalizePropabilityMap(currentAudioMap);  
+     
     //Calls a function to calculated the offset of the current audio map based on the position of the iCub head
     calcOffset();
 

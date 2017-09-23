@@ -115,6 +115,7 @@ std::string audioMemoryMapperRateThread::getName(const char* p) {
 
 
 void audioMemoryMapperRateThread::run() {
+	yInfo("Top of the run");
 
 	if (rawAudioPortActive) {
 		memoryMapRawAudio();
@@ -396,7 +397,7 @@ void audioMemoryMapperRateThread::memoryMapAudioMapEgo() {
 
 	audioMapEgoMatrix = audioMapEgoPort.read(true);
 	int count = 0;
-
+	
 	for (int i = 0; i < interpolateNSamples * 2; i++) {
 		for (int j = 0; j < nBands; j++) {
 	 		audioMapEgoData[count] = *(audioMapEgoMatrix->data() + (count)) ;
