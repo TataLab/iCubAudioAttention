@@ -7,24 +7,23 @@ using namespace yarp::os;
 using namespace yarp::dev;
 
 
-int main(int argc, char * argv[])
-{
-    /* initialize yarp network */
-    Network yarp;
+int main(int argc, char * argv[]) {
 
-    ResourceFinder rf;
-    rf.setVerbose(true);
-    rf.setDefaultConfigFile("audioConfig.ini");    //overridden by --from parameter
-    rf.setDefaultContext("icubAudioAttention/conf");    //overridden by --context parameter
-    rf.configure(argc, argv);
-    std::cout << "[INFO] Configuring and starting module. \n";
+	/* initialize yarp network */
+	yarp::os::Network yarp;
 
-    if (!yarp.checkNetwork(1))
-    {
-        printf("[ERROR] YARP server not available!\n");
-        return -1;
-    }
+	yarp::os::ResourceFinder rf;
+	rf.setVerbose(true);
+	rf.setDefaultConfigFile("audioConfig.ini");       //overridden by --from parameter
+	rf.setDefaultContext("icubAudioAttention/conf");  //overridden by --context parameter
+	rf.configure(argc, argv);
+	std::cout << "[INFO] Configuring and starting module. \n";
 
-    BayesianModule module;
-    return module.runModule(rf);
+	if (!yarp.checkNetwork(1)) {
+		printf("[ERROR] YARP server not available!\n");
+		return -1;
+	}
+
+	AudioBayesianModule module;
+	return module.runModule(rf);
 }
