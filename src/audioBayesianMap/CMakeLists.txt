@@ -53,6 +53,7 @@ FILE(GLOB folder_source src/*.cpp src/*.cc src/*.c)
 FILE(GLOB folder_header include/iCub/*.h include/*.h include/*.hpp)
 SOURCE_GROUP("Source Files" FILES ${folder_source} )
 SOURCE_GROUP("Header Files" FILES ${folder_header} )
+
 # Set up the main executable.
 IF (folder_source)
     ADD_EXECUTABLE(${KEYWORD}
