@@ -26,34 +26,21 @@
 #ifndef _BAYESIAN_RATETHREAD_H_
 #define _BAYESIAN_RATETHREAD_H_
 
-#include <yarp/sig/all.h>
-#include <yarp/os/all.h>
 #include <yarp/dev/all.h>
-#include <yarp/os/RateThread.h>
-#include <yarp/os/Log.h>
-#include <iostream>
-#include <fstream>
-#include <time.h>
-
 #include <yarp/dev/PolyDriver.h>
 #include <yarp/dev/IEncoders.h>
 #include <yarp/dev/IPositionControl.h>
 
-#include <yarp/os/BufferedPort.h>
-#include <yarp/os/NetInt32.h>
-#include <yarp/os/Network.h>
-#include <yarp/os/Property.h>
-#include <yarp/os/RFModule.h>
-#include <yarp/os/Stamp.h>
-#include <yarp/os/Time.h>
+#include <yarp/os/all.h>
+#include <yarp/os/Log.h>
+#include <yarp/os/RateThread.h>
 
+#include <yarp/sig/all.h>
 #include <yarp/sig/Matrix.h>
 #include <yarp/sig/Vector.h>
 
-#include <cstring> //for hardcoded path to noiseMap
 #include <queue>
 #include <vector>
-
 
 class AudioBayesianRatethread : public yarp::os::RateThread {
 
@@ -225,6 +212,20 @@ class AudioBayesianRatethread : public yarp::os::RateThread {
 	 */
 	void setInputPortName(std::string inpPrtName);
 
+
+	/**
+	 *  processing
+	 *
+	 *  method for the processing in the ratethread
+	 *
+	 *  @return whether processing was successful
+	 */
+	bool processing();
+
+
+    //
+    // why are these two functions . . . 
+    //
 
 	/**
 	 *  processing
