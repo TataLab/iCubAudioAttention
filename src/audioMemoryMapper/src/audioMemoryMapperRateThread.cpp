@@ -378,10 +378,10 @@ void audioMemoryMapperRateThread::memoryMapRawAudio() {
 	rawAudioPort.getEnvelope(ts);
 	int currentCounter = ts.getCount();
 	double currentTime = ts.getTime();
+
   for (int col = 0 ; col < frameSamples; col++)
 		for (int micLoop = 0; micLoop < nMics; micLoop++)
 	  		rawAudioData[col*nMics + micLoop] = rawAudioSoundObj->get(col, micLoop) / normDivid;
-
 
 }
 
