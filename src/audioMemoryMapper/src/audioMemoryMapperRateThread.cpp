@@ -380,8 +380,10 @@ void audioMemoryMapperRateThread::memoryMapRawAudio() {
 	double currentTime = ts.getTime();
 
   for (int col = 0 ; col < frameSamples; col++)
-		for (int micLoop = 0; micLoop < nMics; micLoop++)
-	  		rawAudioData[col*nMics + micLoop] = rawAudioSoundObj->get(col, micLoop) / normDivid;
+		for (int micLoop = 0; micLoop < nMics; micLoop++){
+	  		rawAudioData[col*nMics + micLoop] = (double)(rawAudioSoundObj->get(col, micLoop)/normDivid);
+        if(col == 4) std::cout << (rawAudioSoundObj->get(col, micLoop)/normDivid) << std::endl;
+      }
 
 }
 
