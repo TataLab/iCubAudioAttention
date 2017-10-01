@@ -41,6 +41,10 @@
 #include <fcntl.h>
 #include <string>
 
+const float normDivid = pow(2,23);  // Number that is used to convert the integer number received
+                                    // as the audio signal and convert it to a double audio signal
+
+
 class audioMemoryMapperRateThread : public yarp::os::RateThread {
 
  private:
@@ -129,7 +133,7 @@ class audioMemoryMapperRateThread : public yarp::os::RateThread {
 	int nBeamsPerHemi;
 	int totalBeams;
 
-	
+
 	void createMemoryMappingSection();
 
 	/**

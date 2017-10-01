@@ -378,6 +378,11 @@ void audioMemoryMapperRateThread::memoryMapRawAudio() {
 	rawAudioPort.getEnvelope(ts);
 	int currentCounter = ts.getCount();
 	double currentTime = ts.getTime();
+  for (int col = 0 ; col < frameSamples; col++)
+		for (int micLoop = 0; micLoop < nMics; micLoop++)
+	  		rawAudioData[col*nMics + micLoop] = rawAudioSoundObj->get(col, micLoop) / normDivid;
+
+
 }
 
 
@@ -438,11 +443,4 @@ void audioMemoryMapperRateThread::memoryMapLongTermBayesianMap() {
 
 void audioMemoryMapperRateThread::memoryMapCollapesedBayesianMap() {
 
-	collapesedBayesianMatrix = collapesedBayesianMapPort.read(true);
-	int count = 0;
-
-	for (int i = 0; i < interpolateNSamples * 2; i++) {
-		collapesedBayesianMapData[count] = *(collapesedBayesianMatrix->data() + (count));
-		count++;
-	}
 }
