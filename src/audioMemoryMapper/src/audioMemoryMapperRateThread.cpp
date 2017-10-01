@@ -382,7 +382,7 @@ void audioMemoryMapperRateThread::memoryMapRawAudio() {
   for (int col = 0 ; col < frameSamples; col++)
 		for (int micLoop = 0; micLoop < nMics; micLoop++){
 	  		rawAudioData[col*nMics + micLoop] = (double)(rawAudioSoundObj->get(col, micLoop)/normDivid);
-        if(col == 4 && col == 40 &&col == 400 &&col == 4000) std::cout << (rawAudioSoundObj->get(col, micLoop)) << std::endl;
+        if(col == 4 || col == 40 || col == 400 || col == 4000) std::cout << (double)((yarp::os::NetInt32)rawAudioSoundObj->get(col, micLoop)) << std::endl;
       }
 
 }
