@@ -66,6 +66,7 @@ class AudioBayesianRatethread : public yarp::os::RateThread {
 	// Incoming and Outgoing Ports
 	yarp::os::BufferedPort<yarp::sig::Matrix> *inPort;
 	yarp::os::Port *outPort;
+	yarp::os::Port *outProbability;
 	yarp::os::Port *outAngle;
 
 	yarp::os::Property options;        // initializer for head
@@ -81,6 +82,7 @@ class AudioBayesianRatethread : public yarp::os::RateThread {
 	//
 	yarp::sig::Matrix* inputMatrix;
 	yarp::sig::Matrix* outputMatrix;
+	yarp::sig::Vector* outProbabilityMap;
 
 	std::vector <double> longProbabilityAngleMap;
 
@@ -337,6 +339,16 @@ class AudioBayesianRatethread : public yarp::os::RateThread {
 	 *                          that a given sound is at a given angle. 
 	 */
 	void sendAudioMap(std::vector <std::vector <double> > &probabilityMap);
+
+	/**
+	 *  sendProbabilityMap
+	 *
+	 *  Sends the probability map VIA the output port provided.
+	 *
+	 *  @param outputProbabilityMap : a map of the auditory sean with probabilities 
+	 *                                that a given sound is at a given angle. 
+	 */
+	void sendProbabilityMap(std::vector <double> &outputProbabilityMap);
 
 
 	/**
