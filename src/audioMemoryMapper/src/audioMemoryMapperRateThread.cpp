@@ -43,73 +43,116 @@ audioMemoryMapperRateThread::~audioMemoryMapperRateThread() {
 
 bool audioMemoryMapperRateThread::threadInit(yarp::os::ResourceFinder &rf) {
   rawAudioPortActive = rf.check("rawAudioPortActive", 
-                           Value("false"), 
-                           "Check if rawPort should be Active (str)").asString() == "true";
+   Value("false"), 
+   "Check if rawPort should be Active (str)").asString() == "true";
 
   gammaToneAudioPortActive = rf.check("gammaToneAudioPortActive", 
-                           Value("false"), 
-                           "Check if gammaToneAudioPort should be Active (str)").asString() == "true";
+   Value("false"), 
+   "Check if gammaToneAudioPort should be Active (str)").asString() == "true";
 
   beamFormedAudioPortActive = rf.check("beamFormedAudioPortActive", 
-                           Value("false"), 
-                           "Check if beamFormedAudioPort should be Active (str)").asString() == "true";
+   Value("false"), 
+   "Check if beamFormedAudioPort should be Active (str)").asString() == "true";
 
   audioMapEgoPortActive = rf.check("audioMapEgoPortActive", 
-                           Value("false"), 
-                           "Check if audioMapEgoPort should be Active (str)").asString() == "true";
+    Value("false"), 
+   "Check if audioMapEgoPort should be Active (str)").asString() == "true";
 
   audioMapAloPortActive = rf.check("audioMapAloPortActive", 
-                           Value("false"), 
-                           "Check if audioMapAloPort should be Active (str)").asString() == "true";
+   Value("false"), 
+   "Check if audioMapAloPort should be Active (str)").asString() == "true";
 
   longTermBayesianMapPortActive = rf.check("longTermBayesianMapPortActive", 
-                           Value("false"), 
-                           "Check if longTermBayesianMapPort should be Active (str)").asString() == "true";
+   Value("false"), 
+   "Check if longTermBayesianMapPort should be Active (str)").asString() == "true";
 
   collapesedBayesianMapPortActive = rf.check("collapesedBayesianMapPortActive", 
-                           Value("false"), 
-                           "Check if collapesedBayesianMapPort should be Active (str)").asString() == "true";
+   Value("false"), 
+   "Check if collapesedBayesianMapPort should be Active (str)").asString() == "true";
 
+  yInfo("rawAudioPortActive %d.\n",rawAudioPortActive);
+  yInfo("gammaToneAudioPortActive %d.\n",gammaToneAudioPortActive);
+  yInfo("beamFormedAudioPortActive %d.\n",beamFormedAudioPortActive);
+  yInfo("audioMapEgoPortActive %d.\n",audioMapEgoPortActive);
+  yInfo("audioMapAloPortActive %d.\n",audioMapAloPortActive);
+  yInfo("longTermBayesianMapPortActive %d.\n",longTermBayesianMapPortActive);
+  yInfo("collapesedBayesianMapPortActive %d.\n",collapesedBayesianMapPortActive);
+
+  rawAudioPortName = rf.check("rawAudioPortName", 
+   Value("false"), 
+   "Check the name of rawPort (str)").asString();
+
+  gammaToneAudioPortName = rf.check("gammaToneAudioPortName", 
+   Value("false"), 
+   "Check if gammaToneAudioPort should be Name (str)").asString();
+
+  beamFormedAudioPortName = rf.check("beamFormedAudioPortName", 
+   Value("false"), 
+   "Check if beamFormedAudioPort should be Name (str)").asString();
+
+  audioMapEgoPortName = rf.check("audioMapEgoPortName", 
+    Value("false"), 
+    "Check if audioMapEgoPort should be Name (str)").asString();
+
+  audioMapAloPortName = rf.check("audioMapAloPortName", 
+   Value("false"), 
+   "Check if audioMapAloPort should be Name (str)").asString();
+
+  longTermBayesianMapPortName = rf.check("longTermBayesianMapPortName", 
+   Value("false"), 
+   "Check if longTermBayesianMapPort should be Name (str)").asString();
+
+  collapesedBayesianMapPortName = rf.check("collapesedBayesianMapPortName", 
+   Value("false"), 
+   "Check if collapesedBayesianMapPort should be Name (str)").asString();
+
+  yInfo("rawAudioPortName %s.",rawAudioPortName.c_str());
+  yInfo("gammaToneAudioPortName %s.",gammaToneAudioPortName.c_str());
+  yInfo("beamFormedAudioPortName %s.",beamFormedAudioPortName.c_str());
+  yInfo("audioMapEgoPortName %s.",audioMapEgoPortName.c_str());
+  yInfo("audioMapAloPortName %s.",audioMapAloPortName.c_str());
+  yInfo("longTermBayesianMapPortName %s.",longTermBayesianMapPortName.c_str());
+  yInfo("collapesedBayesianMapPortName %s.",collapesedBayesianMapPortName.c_str());
 
   if(rawAudioPortActive){
     if(!rawAudioPort.open(rawAudioPortName.c_str())) {
-      yError("unable to open port to receive input");
+      yError("unable to open raw audio port");
         return false;  // unable to open; let RFModule know so that it won't run
       }
     }
     if(gammaToneAudioPortActive){
       if (!gammaToneAudioPort.open(gammaToneAudioPortName.c_str())) {
-        yError("unable to open port to receive input");
+        yError("unable to open gammatone audio port name");
         return false;  // unable to open; let RFModule know so that it won't run
       }
     }
     if(beamFormedAudioPortActive){
       if (!beamFormedAudioPort.open(beamFormedAudioPortName.c_str())) {
-        yError("unable to open port to receive input");
+        yError("unable to open beamformed audio port name");
         return false;  // unable to open; let RFModule know so that it won't run
       }
     }
     if(audioMapEgoPortActive){
       if (!audioMapEgoPort.open(audioMapEgoPortName.c_str())) {
-        yError("unable to open port to receive input");
+        yError("unable to open audio map ego port name");
         return false;  // unable to open; let RFModule know so that it won't run
       }
     }
     if(audioMapAloPortActive){
       if (!audioMapAloPort.open(audioMapAloPortName.c_str())) {
-        yError("unable to open port to receive input");
+        yError("unable to open audio map alo port name");
         return false;  // unable to open; let RFModule know so that it won't run
       }
     }
     if(longTermBayesianMapPortActive){
       if (!longTermBayesianMapPort.open(longTermBayesianMapPortName.c_str())) {
-        yError("unable to open port to receive input");
+        yError("unable to open long term bayesian map port name");
         return false;  // unable to open; let RFModule know so that it won't run
       }
     }
     if(collapesedBayesianMapPortActive){
       if (!collapesedBayesianMapPort.open(collapesedBayesianMapPortName.c_str())) {
-        yError("unable to open port to receive input");
+        yError("unable to open collapesed bayesian map port name");
         return false;  // unable to open; let RFModule know so that it won't run
       }
     }
@@ -123,29 +166,29 @@ bool audioMemoryMapperRateThread::threadInit(yarp::os::ResourceFinder &rf) {
     rff.configure(argc, argv);
 
     frameSamples  = rff.check("frameSamples", 
-        Value("4096"), 
-        "frame samples (int)").asInt();
+      Value("4096"), 
+      "frame samples (int)").asInt();
     nBands  = rff.check("nBands", 
-        Value("128"), 
-        "numberBands (int)").asInt();
+      Value("128"), 
+      "numberBands (int)").asInt();
     nMics  = rff.check("nMics", 
-        Value("2"), 
-        "number mics (int)").asInt();
+      Value("2"), 
+      "number mics (int)").asInt();
     interpolateNSamples  = rff.check("interpolateNSamples", 
-         Value("180"), 
-         "interpellate N samples (int)").asInt();
+     Value("180"), 
+     "interpellate N samples (int)").asInt();
     micDistance = rff.check("micDistance", 
-         Value("0.145"), 
-         "micDistance (double)").asDouble();
+     Value("0.145"), 
+     "micDistance (double)").asDouble();
     C = rff.check("C", 
-         Value("338"), 
-         "C speed of sound (int)").asInt();
+     Value("338"), 
+     "C speed of sound (int)").asInt();
     samplingRate = rff.check("samplingRate", 
-         Value("48000"), 
-         "sampling rate of mics (int)").asInt();
+     Value("48000"), 
+     "sampling rate of mics (int)").asInt();
     longTimeFrame = rff.check("longBufferSize", 
-         Value("360"), 
-         "long Buffer Size (int)").asInt();
+     Value("360"), 
+     "long Buffer Size (int)").asInt();
 
     nBeamsPerHemi  = (int)((micDistance / C) * samplingRate) - 1;
     yInfo("_beamsPerHemi %d = %f / %d * %d", nBeamsPerHemi, micDistance, C, samplingRate);
@@ -169,7 +212,7 @@ std::string audioMemoryMapperRateThread::getName(const char* p) {
 }
 
 void audioMemoryMapperRateThread::run() {    
-    if(rawAudioPortActive){
+  if(rawAudioPortActive){
     
   }
   if(gammaToneAudioPortActive){
@@ -201,14 +244,41 @@ bool audioMemoryMapperRateThread::processing(){
 
 
 void audioMemoryMapperRateThread::threadRelease() {
-    // nothing
+  delete rawAudioFid;
+  delete rawAudioData;
+  delete initializationRawAudioArray;
+
+  delete gammaToneAudioFid;
+  delete gammaToneAudioData;
+  delete initializationGammaToneAudioArray;
+
+  delete beamFormedAudioFid;
+  delete beamFormedAudioData;
+  delete initializationBeamFormedAudioArray;
+
+  delete audioMapEgoFid;
+  delete audioMapEgoData;
+  delete initializationAudioMapEgoArray;
+
+  delete audioMapAloFid;
+  delete audioMapAloData;
+  delete initializationAudioMapAloArray;
+
+  delete longTermBayesianMapFid;
+  delete longTermBayesianMapData;
+  delete initializationLongTermBayesianMapArray;
+
+  delete collapesedBayesianMapFid;
+  delete collapesedBayesianMapData;
+  delete initializationCollapesedBayesianMapArray;
+
 
 }
 
 void audioMemoryMapperRateThread::createMemoryMappingSection(){
   if(rawAudioPortActive){
     int rawAudioSize = (nMics+2 * frameSamples);
-    double initializationRawAudioArray[rawAudioSize];
+    initializationRawAudioArray = new double[rawAudioSize];
     rawAudioFid = fopen("/tmp/rawAudio.tmp", "w");
     fwrite(initializationRawAudioArray, sizeof(double), sizeof(initializationRawAudioArray), rawAudioFid);
     fclose(rawAudioFid);
@@ -217,7 +287,7 @@ void audioMemoryMapperRateThread::createMemoryMappingSection(){
   }
   if(gammaToneAudioPortActive){
     int gammaToneAudioSize = (nBands * nMics * frameSamples);
-    double initializationGammaToneAudioArray[gammaToneAudioSize];
+    initializationGammaToneAudioArray = new double[gammaToneAudioSize];
     gammaToneAudioFid = fopen("/tmp/gammaToneAudio.tmp", "w");
     fwrite(initializationGammaToneAudioArray, sizeof(double), sizeof(initializationGammaToneAudioArray), gammaToneAudioFid);
     fclose(gammaToneAudioFid);
@@ -226,7 +296,7 @@ void audioMemoryMapperRateThread::createMemoryMappingSection(){
   }
   if(beamFormedAudioPortActive){
     int beamFormedAudioSize = (nBands * nMics * frameSamples);
-    double initializationBeamFormedAudioArray[beamFormedAudioSize];
+    initializationBeamFormedAudioArray = new double[beamFormedAudioSize];
     beamFormedAudioFid = fopen("/tmp/beamFormedAudio.tmp", "w");
     fwrite(initializationBeamFormedAudioArray, sizeof(double), sizeof(initializationBeamFormedAudioArray), beamFormedAudioFid);
     fclose(beamFormedAudioFid);
@@ -235,7 +305,7 @@ void audioMemoryMapperRateThread::createMemoryMappingSection(){
   }
   if(audioMapEgoPortActive){
     int audioMapEgoSize = (nBands * nMics * frameSamples);
-    double initializationAudioMapEgoArray[audioMapEgoSize];
+    initializationAudioMapEgoArray = new double[audioMapEgoSize];
     audioMapEgoFid = fopen("/tmp/audioMapEgo.tmp", "w");
     fwrite(initializationAudioMapEgoArray, sizeof(double), sizeof(initializationAudioMapEgoArray), audioMapEgoFid);
     fclose(audioMapEgoFid);
@@ -244,7 +314,7 @@ void audioMemoryMapperRateThread::createMemoryMappingSection(){
   }
   if(audioMapAloPortActive){
     int audioMapAloSize = (nBands * nMics * frameSamples);
-    double initializationAudioMapAloArray[audioMapAloSize];
+    initializationAudioMapAloArray = new double[audioMapAloSize];
     audioMapAloFid = fopen("/tmp/audioMapAlo.tmp", "w");
     fwrite(initializationAudioMapAloArray, sizeof(double), sizeof(initializationAudioMapAloArray), audioMapAloFid);
     fclose(audioMapAloFid);
@@ -253,7 +323,7 @@ void audioMemoryMapperRateThread::createMemoryMappingSection(){
   }
   if(longTermBayesianMapPortActive){
     int longTermBayesianMapSize = (nBands * nMics * frameSamples);
-    double initializationLongTermBayesianMapArray[longTermBayesianMapSize];
+    initializationLongTermBayesianMapArray = new double[longTermBayesianMapSize];
     longTermBayesianMapFid = fopen("/tmp/longTermBayesianMap.tmp", "w");
     fwrite(initializationLongTermBayesianMapArray, sizeof(double), sizeof(initializationLongTermBayesianMapArray), longTermBayesianMapFid);
     fclose(longTermBayesianMapFid);
@@ -262,7 +332,7 @@ void audioMemoryMapperRateThread::createMemoryMappingSection(){
   }
   if(collapesedBayesianMapPortActive){
     int collapesedBayesianMapSize = (nBands * nMics * frameSamples);
-    double initializationCollapesedBayesianMapArray[collapesedBayesianMapSize];
+    initializationCollapesedBayesianMapArray = new double[collapesedBayesianMapSize];
     collapesedBayesianMapFid = fopen("/tmp/collapesedBayesianMap.tmp", "w");
     fwrite(initializationCollapesedBayesianMapArray, sizeof(double), sizeof(initializationCollapesedBayesianMapArray), collapesedBayesianMapFid);
     fclose(collapesedBayesianMapFid);

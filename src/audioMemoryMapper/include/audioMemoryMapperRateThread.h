@@ -71,30 +71,37 @@ private:
     FILE *rawAudioFid;
     int rawAudioMappedFileID;
     double *rawAudioData;
+    double *initializationRawAudioArray;
 
     FILE *gammaToneAudioFid;
     int gammaToneAudioFileID;
     double *gammaToneAudioData;
+    double *initializationGammaToneAudioArray;
 
     FILE *beamFormedAudioFid;
     int beamFormedAudioFileID;
     double *beamFormedAudioData;
+    double *initializationBeamFormedAudioArray;
 
     FILE *audioMapEgoFid;
     int audioMapEgoFileID;
     double *audioMapEgoData;
+    double *initializationAudioMapEgoArray;
 
     FILE *audioMapAloFid;
     int audioMapAloFileID;
     double *audioMapAloData;
+    double *initializationAudioMapAloArray;
 
     FILE *longTermBayesianMapFid;
     int longTermBayesianMapFileID;
     double *longTermBayesianMapData;
+    double *initializationLongTermBayesianMapArray;
 
     FILE *collapesedBayesianMapFid;
     int collapesedBayesianMapFileID;
     double *collapesedBayesianMapData;
+    double *initializationCollapesedBayesianMapArray;
 
     int frameSamples;
     int nBands;
