@@ -89,6 +89,7 @@ bool AudioBayesianRatethread::threadInit() {
 	// that takes the input and output to this module
 	inputMatrix = new yarp::sig::Matrix(nBands, interpolateNSamples * 2);
 	outputMatrix = new yarp::sig::Matrix(nBands, interpolateNSamples * 2);
+	outProbabilityMap = new yarp::sig::Vector(interpolateNSamples * 2);
 
 	// Initializes the variable that keeps track of how 
 	// many frames have been gathered for the noise map
@@ -135,6 +136,15 @@ bool AudioBayesianRatethread::threadInit() {
 	if (!outPort->open("/iCubAudioAttention/BayesianMap:o")) {
 		yError("unable to open port to send bayesian map");
 	}
+
+
+
+	outProbability = new yarp::os::Port();
+	if (!outProbability->open("/iCubAudioAttention/ProbabilityMap:o")) {
+		yError("unable to open port to send probability map");
+	}
+
+
 
 
 
@@ -229,6 +239,11 @@ void AudioBayesianRatethread::run() {
 		// and sends the matrix along with the envelope via the output Port 
 		sendAudioMap(longMap);
 	}
+
+
+
+	sendProbabilityMap(longProbabilityAngleMap);
+
 
 
 	// Calls the Memory maper and memory maps it to 
@@ -345,6 +360,16 @@ void AudioBayesianRatethread::sendAudioMap(std::vector <std::vector <double>> &p
 
     outPort->setEnvelope(ts);
 	outPort->write(*outputMatrix);
+}
+
+void AudioBayesianRatethread::sendProbabilityMap(std::vector <double> &outputProbabilityMap) {
+
+	for (int i = 0; i < interpolateNSamples * 2; i++) {
+		outProbabilityMap[i] = outputProbabilityMap[i];
+	}
+	
+	outProbability->setEnvelope(ts);
+	outProbability->write(*outProbabilityMap);
 }
 
 
