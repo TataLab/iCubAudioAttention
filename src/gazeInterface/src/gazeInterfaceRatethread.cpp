@@ -28,7 +28,7 @@ using namespace yarp::os;
 using namespace yarp::sig;
 using namespace std;
 
-#define THRATE 100 //ms
+#define THRATE 10 //ms
 
 gazeInterfaceRatethread::gazeInterfaceRatethread():RateThread(THRATE) {
     robot = "icub";        
@@ -41,6 +41,7 @@ gazeInterfaceRatethread::gazeInterfaceRatethread(string _robot, string _configFi
 
 gazeInterfaceRatethread::~gazeInterfaceRatethread() {
     // do nothing
+    delete robotHead;
 }
 
 bool gazeInterfaceRatethread::threadInit() {
@@ -54,9 +55,56 @@ bool gazeInterfaceRatethread::threadInit() {
         yError(": unable to open port to send unmasked events ");
         return false;  // unable to open; let RFModule know so that it won't run
     }
+    
+    // set up polydriver with head
+    options.put("device", "remote_controlboard");
+    options.put("local", getName("local_controlboard"));
+    options.put("remote", "/icub/head"); //TODO: make this remote name generic by using robot variable.
+
+    robotHead = new PolyDriver(options);
+      
+    if (!robotHead->isValid()) {
+        yInfo("Cannot connect to robot head\n");
+        return 1;
+    }
+
+    robotHead->view(pos);
+    robotHead->view(vel);
+    robotHead->view(enc);
+
+
+    if (pos==NULL || vel==NULL || enc==NULL) {
+        yInfo("Cannot get interface to robot head\n");
+        robotHead->close();
+        return false;
+    }
+
+    // get total available axes
+    int jnts = 0;
+    pos->getAxes(&jnts);
+
+    // resize these to axes
+    setpoints.resize(jnts);
+    checkpoints.resize(jnts);
+
+    //currentpos = 0;
+    //counter = 100;
+
+    // init speed
+    speeds[0] = 60;
+    speeds[1] = 80;
+    pos->setRefSpeeds(speeds);
+
+    flagger[2];
+
+    // init points
+    setpoints[1] = 0;
+    setpoints[0] = 0;
+    
+    // init position
+    pos->positionMove(setpoints.data());
 
     yInfo("Initialization of the processing thread correctly ended");
-
     return true;
 }
 
@@ -76,22 +124,30 @@ void gazeInterfaceRatethread::setInputPortName(string InpPort) {
 }
 
 void gazeInterfaceRatethread::run() {    
-    //code here .....
     if (inputPort.getInputCount()) {
         inputReading = inputPort.read(true);   //blocking reading for synchr with the input
-        yInfo("reading from SIM: %s", inputReading->toString().c_str());
+        //yInfo("reading from SIM: %s", inputReading->toString().c_str());
+
+        
+        
+        // changing the pointer of the prepared area for the outputPort.write()
+        //double roll  = inputReading->get(1).asDouble();
+        //double pitch = inputReading->get(0).asDouble();
+        double yaw   = inputReading->get(2).asDouble();           
+
+        result = processing();
+            
+        setpoints[0] = yaw;
+
+        pos->positionMove(setpoints.data());  
+
         if (outputPort.getOutputCount()) {
 
-            result = processing();
-
             Bottle& outputCommand = outputPort.prepare();
-            outputCommand.clear();
-            // changing the pointer of the prepared area for the outputPort.write()
-            double roll  = inputReading->get(0).asDouble();
-            double pitch = inputReading->get(1).asDouble();
-            double yaw   = inputReading->get(2).asDouble();           
-            outputCommand.addDouble(roll);
-            outputCommand.addDouble(pitch);
+            outputCommand.clear();                     
+
+            //outputCommand.addDouble(roll);
+            //outputCommand.addDouble(pitch);
             outputCommand.addDouble(yaw);
             outputPort.write();
         }

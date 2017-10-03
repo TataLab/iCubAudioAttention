@@ -1,0 +1,55 @@
+<application>
+
+  <name>iCub Start Up</name>
+  
+  <module>
+	<name>iCub_SIM</name>
+	<parameters></parameters>
+	<node>icub</node>
+  </module>
+
+  <module>
+	<name>gazeInterface</name>
+	<parameters></parameters>
+	<node>icub</node>
+  </module>
+
+  <module>
+	<name>iKinGazeCtrl</name>
+	<parameters>--robot icubSim</parameters>
+	<node>icub</node>
+  </module>
+
+
+  <module>
+	<name>yarprobotinterface</name>
+	<parameters></parameters>
+	<node>pc104</node>
+  </module>
+
+
+
+  <connection>
+	<from>  </from>
+	<to> /icubSim/head/command:i </to>
+	<protocol> udp </protocol>
+  </connection>	
+
+  <connection>
+	<from> /icubSim/head/state:o </from>
+	<to> /gazeInterface/readings:i </to>
+	<protocol> udp </protocol>
+  </connection>	
+
+  <connection>
+	<from> /gazeInterface/command:o </from>
+	<to> /icub/head/command:i </to>
+	<protocol> udp </protocol>
+  </connection>	
+
+
+
+
+
+</application>
+

@@ -1,0 +1,32 @@
+<application>
+
+  <name>Frequency Visualisation</name>
+
+  <dependancy> /iCubAudioAttention/AudioMapEgo:o </dependancy>
+
+  <module>
+	<name>yarpview</name>
+	<parameters>--x 100 --y 100 --h 320 --w 240 --r 33 --name /freqView</parameters>
+	<node>icub</node>
+  </module>
+
+  <module>
+      <name>frequencyVisualisation</name>
+      <parameters></parameters>
+      <node>icub</node>
+  </module>
+
+  <connection>
+	<from> /frequencyVisualisation/img:o </from>
+	<to> /freqView </to>
+	<protocol> udp </protocol>
+  </connection>
+
+  <connection>
+	<from> /iCubAudioAttention/BayesianMap:o </from>
+	<to> /frequencyVisualisation/bayesian:i </to>
+	<protocol> udp </protocol>
+  </connection>
+
+</application>
+

@@ -1,23 +1,37 @@
 <application>
 
-  <name>bayesianMap for Audio</name>
-
-  <dependencies>
-      <port>/iCubGui/objects</port>
-  </dependencies>
+  <name>Audio Preprocessor</name>
 
   <module>
-      <name>handProfiler</name>
-      <parameters>--gazeTracking </parameters>
-      <node>localhost</node>
+	<name>remoteInterface</name>
+	<parameters></parameters>
+	<node>pc104</node>
   </module>
 
+  <module>
+      <name>audioPreprocessing</name>
+      <parameters></parameters>
+      <node>icub</node>
+  </module>
+
+  <module>
+      <name>audioBayesianMap</name>
+      <parameters></parameters>
+      <node>icub</node>
+  </module>
+
+
   <connection>
-    <from> /handProfile/command:o</from>
-    <to> /iCubGui/objects </to>
-    <protocol> udp </protocol>
+	<from> /sender </from>
+	<to> /iCubAudioAttention/AudioPreprocesser:i </to>
+	<protocol> udp </protocol>
   </connection>
 
+  <connection>
+	<from> /iCubAudioAttention/AudioMapEgo:o </from>
+	<to> /iCubAudioAttention/AudioMapEgo:i </to>
+	<protocol> udp </protocol>
+  </connection>
 
 </application>
 

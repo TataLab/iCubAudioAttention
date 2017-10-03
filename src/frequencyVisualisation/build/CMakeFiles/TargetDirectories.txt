@@ -1,7 +1,0 @@
-/home/austin/research/iCubAudioAttention/src/frequencyVisualisation/build/CMakeFiles/install.dir
-/home/austin/research/iCubAudioAttention/src/frequencyVisualisation/build/CMakeFiles/list_install_components.dir
-/home/austin/research/iCubAudioAttention/src/frequencyVisualisation/build/CMakeFiles/rebuild_cache.dir
-/home/austin/research/iCubAudioAttention/src/frequencyVisualisation/build/CMakeFiles/install/strip.dir
-/home/austin/research/iCubAudioAttention/src/frequencyVisualisation/build/CMakeFiles/install/local.dir
-/home/austin/research/iCubAudioAttention/src/frequencyVisualisation/build/CMakeFiles/frequencyVisualisation.dir
-/home/austin/research/iCubAudioAttention/src/frequencyVisualisation/build/CMakeFiles/edit_cache.dir

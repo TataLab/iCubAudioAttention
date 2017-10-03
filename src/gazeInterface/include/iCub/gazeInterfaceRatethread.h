@@ -51,6 +51,27 @@ private:
     yarp::os::BufferedPort<yarp::os::Bottle > inputPort;
     yarp::os::BufferedPort<yarp::os::Bottle > outputPort;     // output port to plot event
     std::string name;                                                                // rootname of all the ports opened by this thread
+
+
+    // polydriver
+    yarp::os::Property options;
+    yarp::dev::PolyDriver *robotHead;
+
+    yarp::dev::IPositionControl *pos;
+    yarp::dev::IVelocityControl *vel;
+    yarp::dev::IEncoders *enc;
+
+    yarp::sig::Vector setpoints;
+    yarp::sig::Vector checkpoints;
+
+    double currentpos;
+    double counter;
+    double speeds[2];
+
+    bool flagger[2];
+
+
+
     
 public:
     /**

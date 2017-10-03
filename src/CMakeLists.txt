@@ -9,7 +9,7 @@ if(ENABLE_COMPILEONPC104)
   
 else(ENABLE_COMPILEONPC104)
   #add_subdirectory    ( mosaicPanHead           )
-  #add_subdirectory    ( gazeInterface           )
+  add_subdirectory    ( gazeInterface           )
   #add_subdirectory    ( audioCaptureInterface    )
   add_subdirectory    ( egoNoiseCalibration      )
   add_subdirectory    ( mapAudio                 )
