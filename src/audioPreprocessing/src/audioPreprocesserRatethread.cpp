@@ -175,7 +175,7 @@ void AudioPreprocesserRatethread::run() {
 
 	// initialize rawAudio to be usable
 	for (int col = 0 ; col < frameSamples; col++)
-		for (int micLoop = 0; micLoop < nMics; micLoop++) 
+		for (int micLoop = 0; micLoop < nMics; micLoop++)
 	  		rawAudio[col*nMics + micLoop] = s->get(col, micLoop) / normDivid;
 
 
@@ -220,7 +220,7 @@ void AudioPreprocesserRatethread::run() {
 		// format the highResolutionAudioMap into
 		// a sendable format, set the envelope,
 		// then publish to the network
-		sendAudioMap();		
+		sendAudioMap();
 	}
 
 	// timing how long the module took
@@ -349,7 +349,7 @@ void AudioPreprocesserRatethread::sendBeamFormedAudio(const std::vector<std::vec
 
 	// set the envelope for the Beam Formed Audio port
 	outBeamFormedAudioPort->setEnvelope(ts);
-	
+
 	// publish the map onto the network
 	outBeamFormedAudioPort->write(*outBeamFormedAudioMap);
 }

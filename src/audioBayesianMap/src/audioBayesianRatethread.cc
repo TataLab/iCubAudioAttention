@@ -1,5 +1,5 @@
 // -*- mode:C++; tab-width:4; c-basic-offset:4; indent-tabs-mode:nil -*-
- 
+
 /*
   * Copyright (C)2017  Department of Neuroscience - University of Lethbridge
   * Author:Matt Tata, Marko Ilievski
@@ -19,15 +19,6 @@
 
 #include "audioBayesianRatethread.h"
 
-//TO DO:  get this into resource finder
-using namespace yarp::os;
-
-#define THRATE 80 //ms
-#define MEMORY_MAP_SIZE nBands * 360 
-
-
-inline int    myModed(int a, int b) { return  a >= 0 ? a % b : (a % b) + b; }
-inline double myABS  (double a)     { return  a >= 0 ? a : ((a) * -1);      }
 
 AudioBayesianRatethread::AudioBayesianRatethread() : RateThread(THRATE) {
 	robot = "icub";
@@ -51,25 +42,25 @@ AudioBayesianRatethread::~AudioBayesianRatethread() {
 	delete outPort;
 	delete outAngle;
 	delete probabilityMapping;
-	delete fid;
+
 }
 
 
 bool AudioBayesianRatethread::threadInit() {
 
-	// Allocating the required vectors for the modules to function properly  
+	// Allocating the required vectors for the modules to function properly
 	for (int i = 0; i < nBands; i++) {
 
 		std::vector<double> tempvector;
 		for (int j = 0; j < interpolateNSamples * 2; j++) {
 			tempvector.push_back(1.0);
 		}
-		
-		// Vector containing the most recent audio map 
+
+		// Vector containing the most recent audio map
 		// that was sent to this module though yarp
 		currentAudioMap.push_back(tempvector);
 
-		// The noise map that was created, representing 
+		// The noise map that was created, representing
 		// the current ego locked noise in the environment
 		noiseMap.push_back(tempvector);
 
@@ -91,7 +82,7 @@ bool AudioBayesianRatethread::threadInit() {
 	outputMatrix = new yarp::sig::Matrix(nBands, interpolateNSamples * 2);
 	outProbabilityMap = new yarp::sig::Vector(interpolateNSamples * 2);
 
-	// Initializes the variable that keeps track of how 
+	// Initializes the variable that keeps track of how
 	// many frames have been gathered for the noise map
 	noiseBufferMap = 0;
 	first = true;
@@ -116,10 +107,10 @@ bool AudioBayesianRatethread::threadInit() {
 	}
 
 
-	// Creates a buffered yarp port as input into this module 
+	// Creates a buffered yarp port as input into this module
 	// with the name /iCubAudioAttention/BayesianMap:i
-	// The expected input into this module is a yarp 
-	// matrix with the size of (beams * bands) 
+	// The expected input into this module is a yarp
+	// matrix with the size of (beams * bands)
 	// The matrix is created in the yarpPreprocessing module
 	inPort = new yarp::os::BufferedPort<yarp::sig::Matrix>();
 	if (!inPort->open("/iCubAudioAttention/BayesianMap:i")) {
@@ -128,7 +119,7 @@ bool AudioBayesianRatethread::threadInit() {
 	}
 
 
-	// Creates a yarp port as output from this module 
+	// Creates a yarp port as output from this module
 	// with the name /iCubAudioAttention/BayesianMap:o
 	// The output of this module is a yarp matrix with size of (beams * bands)
 	// The output corresponds to only the long term audio map
@@ -158,8 +149,8 @@ bool AudioBayesianRatethread::threadInit() {
 
 
 	// TODO I believe that this connection should not be established here
-	// Checks if the output of the YarpPreProcessing module exists if it 
-	// does it creates a connection between the two modules, if it does not 
+	// Checks if the output of the YarpPreProcessing module exists if it
+	// does it creates a connection between the two modules, if it does not
 	// this function will return an error
 	if (yarp::os::Network::exists("/iCubAudioAttention/AudioMapEgo:o")) {
 		if (yarp::os::Network::connect("/iCubAudioAttention/AudioMapEgo:o", "/iCubAudioAttention/BayesianMap:i") == false) {
@@ -176,7 +167,7 @@ bool AudioBayesianRatethread::threadInit() {
 
 	// get the noise map prior that was pre-recorded or bail out
 	// open the previously recorded noiseMap prior
-	FILE *fidNoise = fopen("./noiseMap.dat", "r"); 
+	FILE *fidNoise = fopen("./noiseMap.dat", "r");
 
 	// if(fidNoise==NULL){
 	// 	printf("\n\nYou need to pre-record a noise map prior\n\n");
@@ -219,24 +210,24 @@ std::string AudioBayesianRatethread::getName(const char* p) {
 void AudioBayesianRatethread::run() {
 
 	// Reads the a matrix from the input port
-	// This is a blocking call thus the module will 
+	// This is a blocking call thus the module will
 	// wait until it has acquired the required matrix
 	inputMatrix = inPort->read(true);
 
 
-	// Gathers the time/counter envelope that was 
+	// Gathers the time/counter envelope that was
 	// associated with the last message
 	inPort->getEnvelope(ts);
 
-	    
-	// Calls a function that will take the current 
+
+	// Calls a function that will take the current
 	// audio map and create the Bayesian maps
 	setAcousticMap();
 
 
 	if (outPort->getOutputCount()) {
-		// copies the data in the longMap vector into the outputMatrix 
-		// and sends the matrix along with the envelope via the output Port 
+		// copies the data in the longMap vector into the outputMatrix
+		// and sends the matrix along with the envelope via the output Port
 		sendAudioMap(longMap);
 	}
 
@@ -246,7 +237,7 @@ void AudioBayesianRatethread::run() {
 
 
 
-	// Calls the Memory maper and memory maps it to 
+	// Calls the Memory maper and memory maps it to
 	// the following file: /tmp/bayesianProbabilityLongMap.tmp
 
 	stopTime = yarp::os::Time::now();
@@ -277,22 +268,22 @@ void AudioBayesianRatethread::loadFile(yarp::os::ResourceFinder &rf) {
 	// import all relevant data fron the .ini file
 	yInfo("loading configuration file");
 	try {
-		nBands 				 =  rf.check("nBands", 
-										 Value("128"), 
+		nBands 				 =  rf.check("nBands",
+										 yarp::os::Value("128"),
 										 "numberBands (int)").asInt();
 
-		interpolateNSamples  =  rf.check("interpolateNSamples", 
-										 Value("180"), 
+		interpolateNSamples  =  rf.check("interpolateNSamples",
+										 yarp::os::Value("180"),
 										 "interpellate N samples (int)").asInt();
 
-		longTimeFrame 		 =  rf.check("longBufferSize", 
-										 Value("360"), 
+		longTimeFrame 		 =  rf.check("longBufferSize",
+										 yarp::os::Value("360"),
 										 "long Buffer Size (int)").asInt();
 
-		nMics  				 =  rf.check("nMics", 
-										 Value("2"), 
+		nMics  				 =  rf.check("nMics",
+										 yarp::os::Value("2"),
 										 "numberBands (int)").asInt();
-	
+
 		yInfo("nBands = %d", nBands);
 		yInfo("nMics = %d", nMics);
 		yInfo("interpolateNSamples = %d", interpolateNSamples );
@@ -309,7 +300,7 @@ void AudioBayesianRatethread::loadFile(yarp::os::ResourceFinder &rf) {
 void AudioBayesianRatethread::normalizePropabilityMap(std::vector <std::vector <double>> &probabilityMap) {
 
 	// Loops though the Map given as input and normalizes each column
-	// This normalization is done by summing up all the elements 
+	// This normalization is done by summing up all the elements
 	// together and then dividing each element in the column by the sum
 	for (int i = 0; i <  nBands; i++) {
 		double sum = 0;
@@ -326,19 +317,19 @@ void AudioBayesianRatethread::normalizePropabilityMap(std::vector <std::vector <
 
 void AudioBayesianRatethread::calcOffset() {
 
-	//to do:  redesign this to make use of the SpatialSound class which contains 
-	//information about altitude and azimuth so that yarpBayesianMap never needs 
+	//to do:  redesign this to make use of the SpatialSound class which contains
+	//information about altitude and azimuth so that yarpBayesianMap never needs
 	//to get the position of the head directly from the robot
 
     //TODO Figure out how to calculate this value for the red iCub
 
 
-    // Checks the current position of joint 0 of 
+    // Checks the current position of joint 0 of
     // the head and stores it in the offset variable
     enc->getEncoder(0, &offset);
     offset += 270;
-    
-    // Pushes the current offset into a buffer which 
+
+    // Pushes the current offset into a buffer which
     // is needed to remove "old" audio maps
     bufferedOffSet.push(offset);
     yInfo("offset = %f\n",offset);
@@ -348,7 +339,7 @@ void AudioBayesianRatethread::calcOffset() {
 void AudioBayesianRatethread::sendAudioMap(std::vector <std::vector <double>> &probabilityMap) {
 
     // Loops though the input(probabilityMap) and does
-    // a deep copy of all the elements into a the outPutMatrix 
+    // a deep copy of all the elements into a the outPutMatrix
     // which is used to send out the output of this module
     for (int i = 0; i < nBands; i++) {
         yarp::sig::Vector tempV(interpolateNSamples * 2);
@@ -367,7 +358,7 @@ void AudioBayesianRatethread::sendProbabilityMap(std::vector <double> &outputPro
 	for (int i = 0; i < interpolateNSamples * 2; i++) {
 		outProbabilityMap[i] = outputProbabilityMap[i];
 	}
-	
+
 	outProbability->setEnvelope(ts);
 	outProbability->write(*outProbabilityMap);
 }
@@ -393,33 +384,33 @@ void AudioBayesianRatethread::findPeaks(std::vector<double> &peakMap, const std:
 				i++;
 			}
 
-			// exiting the previous loop means we are either currently 
+			// exiting the previous loop means we are either currently
 			// on a peak, or went past a peak of length 1
 			peakMap[i-1] = 1;
 
 			// mark the existence of peaks until the start of a decent
 			while (myABS(probabilityMap[i] - probabilityMap[i-1]) <= thresh && i < mapSize) {
-				peakMap[i] = 1; 
+				peakMap[i] = 1;
 				i++;
 			}
 
-			// then loop back and look for 
+			// then loop back and look for
 			// the next beginning of a peak
 		}
 	}
 
-	// after itterating through, the probability map, 
+	// after itterating through, the probability map,
 	// check the boundary edge case
 	if (probabilityMap[mapSize] - probabilityMap[mapSize-1] > thresh &&
 		probabilityMap[0] - probabilityMap[1] > thresh) {
 			peakMap[mapSize] = peakMap[0] = 1;
-	}  
+	}
 }
 
 
 void AudioBayesianRatethread::setAcousticMap() {
 
-	// This takes the input matrix and copies 
+	// This takes the input matrix and copies
 	// each element into the currentAudioMap
 	int count = 0;
 	for (int i = 0; i < nBands; i++) {
@@ -428,11 +419,11 @@ void AudioBayesianRatethread::setAcousticMap() {
 		}
 	}
 
-	// Calls a function that normalizations 
+	// Calls a function that normalizations
 	// the columns of the currentAudioMap
-	normalizePropabilityMap(currentAudioMap);  
+	normalizePropabilityMap(currentAudioMap);
 
-	// Calls a function to calculated the offset of the 
+	// Calls a function to calculated the offset of the
 	// current audio map based on the position of the iCub head
 	calcOffset();
 
@@ -453,7 +444,7 @@ void AudioBayesianRatethread::setAcousticMap() {
 		//The current audio map is then pushed into a buffer which contains all the audioMaps needed to create the a Bayesian Map
 		bufferedMap.push(currentAudioMap);
 
-		//A function is called to create the Bayesian Map. 
+		//A function is called to create the Bayesian Map.
 		createBaysianMaps();
 	}
 	*/
@@ -466,7 +457,7 @@ void AudioBayesianRatethread::setAcousticMap() {
 
 	//The current audio map is then pushed into a buffer which contains all the audioMaps needed to create the a Bayesian Map
 	bufferedMap.push(currentAudioMap);
-	//A function is called to create the Bayesian Map. 
+	//A function is called to create the Bayesian Map.
 	createBaysianMaps();
 
 
@@ -477,29 +468,29 @@ void AudioBayesianRatethread::setAcousticMap() {
 
 void AudioBayesianRatethread::addMap(std::vector <std::vector <double> > &probabilityMap, std::vector <std::vector <double> > &inputCurrentAudioMap) {
 
-	// Loops though the input(probabilityMap) which corresponds 
+	// Loops though the input(probabilityMap) which corresponds
 	// to either the long, medium or short term Bayesian maps
-	// And multiplies each element in that map by the same element 
-	// in the provided inputCurrentAudioMap to construct and up to 
-	// date Bayesian map. 
+	// And multiplies each element in that map by the same element
+	// in the provided inputCurrentAudioMap to construct and up to
+	// date Bayesian map.
 
-	// In brief this adds the map inputCurrentAudioMap to the 
+	// In brief this adds the map inputCurrentAudioMap to the
 	// Bayesian map corresponding to the input probabilityMap
 	for (int i = 0; i <  nBands; i++) {
 		for (int j = 0; j < interpolateNSamples * 2; j++) {
 			int o =  myModed((j + (int)offset), interpolateNSamples * 2);
-			probabilityMap[i][j] *= inputCurrentAudioMap[i][o];   
+			probabilityMap[i][j] *= inputCurrentAudioMap[i][o];
 		}
 	}
 }
 
 
-void AudioBayesianRatethread::removeMap(std::vector <std::vector <double> > &probabilityMap, std::vector <std::vector <double> > &inputCurrentAudioMap) {   
-    
-	// Loops though the input(probabilityMap) which corresponds 
+void AudioBayesianRatethread::removeMap(std::vector <std::vector <double> > &probabilityMap, std::vector <std::vector <double> > &inputCurrentAudioMap) {
+
+	// Loops though the input(probabilityMap) which corresponds
 	// to either the long, medium or short term Bayesian maps
-	// And divides each element in that map by the same element 
-	// in the provided inputCurrentAudioMap to construct and up 
+	// And divides each element in that map by the same element
+	// in the provided inputCurrentAudioMap to construct and up
 	// to date Bayesian map.
 
 	// In brief this removes the map inputCurrentAudioMap from
@@ -513,9 +504,9 @@ void AudioBayesianRatethread::removeMap(std::vector <std::vector <double> > &pro
 }
 
 
-void AudioBayesianRatethread::removeNoise(std::vector <std::vector <double>> &probabilityMap) {   
+void AudioBayesianRatethread::removeNoise(std::vector <std::vector <double>> &probabilityMap) {
 
-	// In brief this removes the noise map from the Bayesian map 
+	// In brief this removes the noise map from the Bayesian map
 	// corresponding to the input probabilityMap
 	for (int i = 0; i <  nBands; i++) {
 		for (int j = 0; j < interpolateNSamples * 2; j++) {
@@ -526,15 +517,15 @@ void AudioBayesianRatethread::removeNoise(std::vector <std::vector <double>> &pr
 }
 
 
-void AudioBayesianRatethread::createNoiseMaps() {   
+void AudioBayesianRatethread::createNoiseMaps() {
 
-	// This function loops though the currentAudioMap 
+	// This function loops though the currentAudioMap
 	// and adds this map to the noise map
 
-	// If this is the last iteration of the creation 
-	// of the noise map it also divides it by the 
-	// numberOfNoiseMaps. 
-	// (this is done to take the average of the numberOfNoiseMaps 
+	// If this is the last iteration of the creation
+	// of the noise map it also divides it by the
+	// numberOfNoiseMaps.
+	// (this is done to take the average of the numberOfNoiseMaps
 	// specified in that variable to currentAudioMaps to create a noise map)
 
 	for (int i = 0; i <  nBands; i++) {
@@ -551,28 +542,28 @@ void AudioBayesianRatethread::createNoiseMaps() {
 
 void AudioBayesianRatethread::createBaysianMaps() {
 
-	// This checks if the buffer size is larger 
+	// This checks if the buffer size is larger
 	// then the desired long buffer length.
 
-	// If true this means that the "oldest" audio 
+	// If true this means that the "oldest" audio
 	// map needs to be removed from the Bayesian Map.
 	if(bufferedMap.size() >= longTimeFrame) {
-		
-		// Calls a map that will remove the "oldest" 
+
+		// Calls a map that will remove the "oldest"
 		// audio map from the long term Bayesian Map
 		removeMap(longMap,bufferedMap.front());
 
-		// Pops both the "oldest" audio map and the 
+		// Pops both the "oldest" audio map and the
 		// offset that was associated with that map.
 		bufferedMap.pop();
 		bufferedOffSet.pop();
 	}
 
-	// Calls a function that adds the current 
+	// Calls a function that adds the current
 	// audio map to the long term Bayesian map
 	addMap(longMap,bufferedMap.back());
 
-	// Calls a function that normalizations 
+	// Calls a function that normalizations
 	// the columns of the long Bayesian Map
 	normalizePropabilityMap(longMap);
 }

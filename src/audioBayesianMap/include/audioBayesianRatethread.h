@@ -2,7 +2,7 @@
 
 /*
   * Copyright (C)2017  Department of Neuroscience - University of Lethbridge
-  * Author:Matt Tata, Marko Ilievski
+  * Author:Matt Tata, Marko Ilievski, Austin Kothig
   * email: m.ilievski@uleth.ca, matthew.tata@uleth.ca, francesco.rea@iit.it
   * Permission is granted to copy, distribute, and/or modify this program
   * under the terms of the GNU General Public License, version 2 or any
@@ -22,7 +22,7 @@
  * @brief Implementation of the bayesian ratethread.
  *        This is where the bayesian probability is processed.
  */
- 
+
 #ifndef _BAYESIAN_RATETHREAD_H_
 #define _BAYESIAN_RATETHREAD_H_
 
@@ -42,6 +42,11 @@
 #include <queue>
 #include <vector>
 
+#define THRATE 80 //ms
+
+inline int    myModed(int a, int b) { return  a >= 0 ? a % b : (a % b) + b; }
+inline double myABS  (double a)     { return  a >= 0 ? a : ((a) * -1);      }
+
 class AudioBayesianRatethread : public yarp::os::RateThread {
 
  private:
@@ -55,7 +60,7 @@ class AudioBayesianRatethread : public yarp::os::RateThread {
 	const std::string noiseMapPath = "./noiseMap.dat";
 
 	//
-	// Motor & Enconder 
+	// Motor & Enconder
 	//
 	yarp::dev::PolyDriver *robotHead;
 	yarp::dev::IEncoders *enc;
@@ -74,7 +79,7 @@ class AudioBayesianRatethread : public yarp::os::RateThread {
 
 
 
-	
+
 
 
 	//
@@ -92,7 +97,7 @@ class AudioBayesianRatethread : public yarp::os::RateThread {
 	std::vector < std::vector <double> > noiseMap;
 	std::vector < std::vector <double> > probabilityMap;
 	std::vector < std::vector <double> > shortMap;
-	
+
 
 	std::queue <double> bufferedOffSet;
 	std::queue < std::vector < std::vector <double> > > bufferedMap;
@@ -102,7 +107,6 @@ class AudioBayesianRatethread : public yarp::os::RateThread {
 	//
 	// Memory mapping variables
 	//
-	FILE *fid;
 	int interpolateNSamples;
 	int nBands;
 	int nMics;
@@ -111,7 +115,7 @@ class AudioBayesianRatethread : public yarp::os::RateThread {
 	int mappingFileID;
 	int micDistance;
 	int totalBeams;
-	
+
 	int longTimeFrame;
 	int mediumTimeFrame;
 	int shortTimeFrame;
@@ -139,7 +143,7 @@ class AudioBayesianRatethread : public yarp::os::RateThread {
 
 
 	/**
-	 *  constructor 
+	 *  constructor
 	 *
 	 *  set robotname and configFile, then calls loadFile
 	 *	on the passed in resource finder
@@ -226,7 +230,7 @@ class AudioBayesianRatethread : public yarp::os::RateThread {
 
 
     //
-    // why are these two functions . . . 
+    // why are these two functions . . .
     //
 
 	/**
@@ -251,9 +255,9 @@ class AudioBayesianRatethread : public yarp::os::RateThread {
 
 	/**
 	 *  getLongProbabilityMap
-	 *  
+	 *
 	 *  method for getting the long probability map
-	 * 
+	 *
 	 *  @return the long probability map
 	 */
 	std::vector < std::vector <double> > getLongProbabilityMap();
@@ -261,9 +265,9 @@ class AudioBayesianRatethread : public yarp::os::RateThread {
 
 	/**
 	 *  getMediumProbabilityMap
-	 *  
+	 *
 	 *  method for getting the medium probability map
-	 * 
+	 *
 	 *	@return the medium probability map
 	 */
 	std::vector < std::vector <double> > getMediumProbabilityMap();
@@ -274,7 +278,7 @@ class AudioBayesianRatethread : public yarp::os::RateThread {
 	 *
 	 *	method for getting the short probability map
 	 *
-	 *	@return the short probability map  
+	 *	@return the short probability map
 	 */
 	std::vector < std::vector <double> > getShortProbabilityMap();
 
@@ -283,21 +287,21 @@ class AudioBayesianRatethread : public yarp::os::RateThread {
 	/**
 	 *  findPeaks
 	 *
-	 *  This function will look at the vector probabilityMap which is 
+	 *  This function will look at the vector probabilityMap which is
 	 *  passed in as input and find the peaks saving them to peakMap.
 	 *
-	 *	@param        peakMap : will contain ones to mark the peaks 
-	 *                          found and zeros everywhere else.   
-	 *  @param probabilityMap : a map of the auditory sean with probabilities 
-	 *                          that a given sound is at a given angle. 
+	 *	@param        peakMap : will contain ones to mark the peaks
+	 *                          found and zeros everywhere else.
+	 *  @param probabilityMap : a map of the auditory sean with probabilities
+	 *                          that a given sound is at a given angle.
 	 */
 	void findPeaks(std::vector<double> &peakMap, const std::vector<double> &probabilityMap);
 
 
 	/**
 	 *  setAcousticMap
-	 * 
-	 *  sets the acoustic map 
+	 *
+	 *  sets the acoustic map
 	 */
 	void setAcousticMap();
 
@@ -305,8 +309,8 @@ class AudioBayesianRatethread : public yarp::os::RateThread {
 	/**
 	 *  normalizePropabilityMap
 	 *
-	 *  @param probabilityMap : a map of the auditory sean with probabilities 
-	 *                          that a given sound is at a given angle. 
+	 *  @param probabilityMap : a map of the auditory sean with probabilities
+	 *                          that a given sound is at a given angle.
 	 */
 	void normalizePropabilityMap(std::vector <std::vector <double> > &probabilityMap);
 
@@ -335,8 +339,8 @@ class AudioBayesianRatethread : public yarp::os::RateThread {
 	 *
 	 *  Sends the audio map VIA the output port provided.
 	 *
-	 *  @param probabilityMap : a map of the auditory sean with probabilities 
-	 *                          that a given sound is at a given angle. 
+	 *  @param probabilityMap : a map of the auditory sean with probabilities
+	 *                          that a given sound is at a given angle.
 	 */
 	void sendAudioMap(std::vector <std::vector <double> > &probabilityMap);
 
@@ -345,15 +349,15 @@ class AudioBayesianRatethread : public yarp::os::RateThread {
 	 *
 	 *  Sends the probability map VIA the output port provided.
 	 *
-	 *  @param outputProbabilityMap : a map of the auditory sean with probabilities 
-	 *                                that a given sound is at a given angle. 
+	 *  @param outputProbabilityMap : a map of the auditory sean with probabilities
+	 *                                that a given sound is at a given angle.
 	 */
 	void sendProbabilityMap(std::vector <double> &outputProbabilityMap);
 
 
 	/**
 	 *  createBaysianMaps
-	 *  
+	 *
 	 *	create the probability map with baysian probability
 	 */
 	void createBaysianMaps();
@@ -361,7 +365,7 @@ class AudioBayesianRatethread : public yarp::os::RateThread {
 
 	/**
 	 *  createBaysianMaps
-	 *	
+	 *
 	 *	create a noise map
 	 */
 	void createNoiseMaps();
