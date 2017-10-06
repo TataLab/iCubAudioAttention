@@ -1,0 +1,31 @@
+<application>
+
+  <name>Audio Data Dumper</name>
+
+  <module>
+	<name>yarpdatadumper</name>
+	<parameters>--name /audioDump:i </parameters>
+	<node>icub</node>
+  </module>
+
+  <module>
+      <name>yarpdatadumper</name>
+      <parameters>--name /motorDump:i </parameters>
+      <node>icub</node>
+  </module>
+
+  
+  <connection>
+	<from> /sender </from>
+	<to> /audioDump:i </to>
+	<protocol> udp </protocol>
+  </connection>
+
+  <connection>
+	<from> /icub/head/state:o </from>
+	<to> /motorDump:i </to>
+	<protocol> udp </protocol>
+  </connection>
+
+</application>
+
