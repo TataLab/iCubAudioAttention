@@ -36,8 +36,6 @@ AudioBayesianRatethread::~AudioBayesianRatethread() {
 	delete inputMatrix;
 	delete outputMatrix;
 	delete robotHead;
-	delete enc;
-	delete pos;
 	delete inPort;
 	delete outPort;
 	delete outAngle;
@@ -87,25 +85,7 @@ bool AudioBayesianRatethread::threadInit() {
 	noiseBufferMap = 0;
 	first = true;
 
-	// initialize the options with the icub
-	std::string headPort = "/" + robot + "/head";
-	options.put("device", "remote_controlboard");
-	options.put("local", "/AudioFocusAttention");
-	options.put("remote", headPort.c_str());
-	//options.put("remote", "/icub/head");
-
-	// loads the robot head module with the options configured above
-	robotHead = new yarp::dev::PolyDriver(options);
-	robotHead->view(enc);
-	robotHead->view(pos);
-
-	// Checks that the robot head was properly initialized and assigned to both eco(encoder data) and pos(position data)
-	if (enc == NULL || pos == NULL) {
-		yInfo("Cannot get interface to robot head\n");
-		robotHead->close();
-		return false;
-	}
-
+  //TODO MARKO: Add port for head state  /icub/head/state:o
 
 	// Creates a buffered yarp port as input into this module
 	// with the name /iCubAudioAttention/BayesianMap:i
@@ -118,6 +98,10 @@ bool AudioBayesianRatethread::threadInit() {
 		return false;
 	}
 
+	if (!inputPort.open(getName("/BayesianHeadAngle:i").c_str())) {
+        yError("unable to open port to receive input");
+        return false;  // unable to open; let RFModule know so that it won't run
+	}
 
 	// Creates a yarp port as output from this module
 	// with the name /iCubAudioAttention/BayesianMap:o
@@ -126,6 +110,7 @@ bool AudioBayesianRatethread::threadInit() {
 	outPort = new yarp::os::Port();
 	if (!outPort->open("/iCubAudioAttention/BayesianMap:o")) {
 		yError("unable to open port to send bayesian map");
+    return false;
 	}
 
 
@@ -133,6 +118,7 @@ bool AudioBayesianRatethread::threadInit() {
 	outProbability = new yarp::os::Port();
 	if (!outProbability->open("/iCubAudioAttention/ProbabilityMap:o")) {
 		yError("unable to open port to send probability map");
+    return false;
 	}
 
 
@@ -321,18 +307,20 @@ void AudioBayesianRatethread::calcOffset() {
 	//information about altitude and azimuth so that yarpBayesianMap never needs
 	//to get the position of the head directly from the robot
 
-    //TODO Figure out how to calculate this value for the red iCub
 
 
-    // Checks the current position of joint 0 of
-    // the head and stores it in the offset variable
-    enc->getEncoder(0, &offset);
+		if (inputPort.getInputCount()) {
+			inputReading = inputPort.read(true);   //blocking reading for synchr with the input
+
+		offset = inputReading->get(2).asDouble();
+
     offset += 270;
-
+	}
     // Pushes the current offset into a buffer which
     // is needed to remove "old" audio maps
     bufferedOffSet.push(offset);
     yInfo("offset = %f\n",offset);
+
 }
 
 

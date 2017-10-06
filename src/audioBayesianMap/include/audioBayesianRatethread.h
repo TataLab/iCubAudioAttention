@@ -102,8 +102,9 @@ class AudioBayesianRatethread : public yarp::os::RateThread {
 	std::queue <double> bufferedOffSet;
 	std::queue < std::vector < std::vector <double> > > bufferedMap;
 
+  yarp::os::BufferedPort<yarp::os::Bottle > inputPort;
 
-
+  yarp::os::Bottle* inputReading; 
 	//
 	// Memory mapping variables
 	//
