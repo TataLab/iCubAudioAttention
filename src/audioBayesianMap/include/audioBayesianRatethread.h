@@ -43,7 +43,6 @@
 #include <vector>
 
 #define THRATE 80 //ms
-
 inline int    myModed(int a, int b) { return  a >= 0 ? a % b : (a % b) + b; }
 inline double myABS  (double a)     { return  a >= 0 ? a : ((a) * -1);      }
 
