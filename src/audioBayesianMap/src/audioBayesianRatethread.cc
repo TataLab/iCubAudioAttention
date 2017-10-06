@@ -36,7 +36,7 @@ AudioBayesianRatethread::~AudioBayesianRatethread() {
 	delete inputMatrix;
 	delete outputMatrix;
 	delete inPort;
-	delete inputPort;
+	delete headAngleInPort;
 	delete outPort;
 
 }
@@ -95,8 +95,8 @@ bool AudioBayesianRatethread::threadInit() {
 		return false;
 	}
 
-	inputPort = new yarp::os::BufferedPort<yarp::os::Bottle>();
-	if (!inputPort->open(getName("/BayesianHeadAngle:i").c_str())) {
+	headAngleInPort = new yarp::os::BufferedPort<yarp::os::Bottle>();
+	if (!headAngleInPort->open(getName("/BayesianHeadAngle:i").c_str())) {
         yError("unable to open port to receive input");
         return false;  // unable to open; let RFModule know so that it won't run
 	}
@@ -205,12 +205,12 @@ void AudioBayesianRatethread::threadRelease() {
 	// stop all ports
 	inPort->interrupt();
 	outPort->interrupt();
-	inputPort->interrupt();
+	headAngleInPort->interrupt();
 
 	// release all ports
 	inPort->close();
 	outPort->close();
-	inputPort->close();
+	headAngleInPort->close();
 }
 
 
@@ -274,10 +274,10 @@ void AudioBayesianRatethread::calcOffset() {
 
 
 
-		if (inputPort->getInputCount()) {
-			inputReading = inputPort->read(true);   //blocking reading for synchr with the input
+		if (headAngleInPort->getInputCount()) {
+			headAngleBottle = headAngleInPort->read(true);   //blocking reading for synchr with the input
 
-		offset = inputReading->get(2).asDouble();
+		offset = headAngleBottle->get(2).asDouble();
 
     offset += 270;
 	}
