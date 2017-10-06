@@ -2,7 +2,7 @@
 
 /*
   * Copyright (C)2017  Department of Neuroscience - University of Lethbridge
-  * Author:Matt Tata, Marko Ilievski
+  * Author:Matt Tata, Marko Ilievski, Austin Kothig
   * email: m.ilievski@uleth.ca, matthew.tata@uleth.ca, francesco.rea@iit.it
   * Permission is granted to copy, distribute, and/or modify this program
   * under the terms of the GNU General Public License, version 2 or any
@@ -35,11 +35,9 @@ AudioBayesianRatethread::AudioBayesianRatethread(std::string _robot, std::string
 AudioBayesianRatethread::~AudioBayesianRatethread() {
 	delete inputMatrix;
 	delete outputMatrix;
-	delete robotHead;
 	delete inPort;
+	delete inputPort;
 	delete outPort;
-	delete outAngle;
-	delete probabilityMapping;
 
 }
 
@@ -85,7 +83,6 @@ bool AudioBayesianRatethread::threadInit() {
 	noiseBufferMap = 0;
 	first = true;
 
-  //TODO MARKO: Add port for head state  /icub/head/state:o
 
 	// Creates a buffered yarp port as input into this module
 	// with the name /iCubAudioAttention/BayesianMap:i
@@ -98,7 +95,8 @@ bool AudioBayesianRatethread::threadInit() {
 		return false;
 	}
 
-	if (!inputPort.open(getName("/BayesianHeadAngle:i").c_str())) {
+	inputPort = new yarp::os::BufferedPort<yarp::os::Bottle>();
+	if (!inputPort->open(getName("/BayesianHeadAngle:i").c_str())) {
         yError("unable to open port to receive input");
         return false;  // unable to open; let RFModule know so that it won't run
 	}
@@ -113,8 +111,6 @@ bool AudioBayesianRatethread::threadInit() {
     return false;
 	}
 
-
-
 	outProbability = new yarp::os::Port();
 	if (!outProbability->open("/iCubAudioAttention/ProbabilityMap:o")) {
 		yError("unable to open port to send probability map");
@@ -122,33 +118,7 @@ bool AudioBayesianRatethread::threadInit() {
 	}
 
 
-
-
-
-
 	//TODO add output port for the medium and short term maps
-
-
-
-
-
-
-
-	// TODO I believe that this connection should not be established here
-	// Checks if the output of the YarpPreProcessing module exists if it
-	// does it creates a connection between the two modules, if it does not
-	// this function will return an error
-	if (yarp::os::Network::exists("/iCubAudioAttention/AudioMapEgo:o")) {
-		if (yarp::os::Network::connect("/iCubAudioAttention/AudioMapEgo:o", "/iCubAudioAttention/BayesianMap:i") == false) {
-			yError("Could not make connection to /sender. Exiting.\n");
-			return false;
-		}
-	}
-
-	// inPort failed to connect to AudioMapEgo. quit.
-	else {
-		return false;
-	}
 
 
 	// get the noise map prior that was pre-recorded or bail out
@@ -172,9 +142,6 @@ bool AudioBayesianRatethread::threadInit() {
 	// 		}
 	// 		noiseMap.push_back(tempvector);
 	// }
-
-
-
 	//numberOfNoiseMaps = 100;
 
 	return true;
@@ -217,11 +184,7 @@ void AudioBayesianRatethread::run() {
 		sendAudioMap(longMap);
 	}
 
-
-
 	sendProbabilityMap(longProbabilityAngleMap);
-
-
 
 	// Calls the Memory maper and memory maps it to
 	// the following file: /tmp/bayesianProbabilityLongMap.tmp
@@ -242,10 +205,12 @@ void AudioBayesianRatethread::threadRelease() {
 	// stop all ports
 	inPort->interrupt();
 	outPort->interrupt();
+	inputPort->interrupt();
 
 	// release all ports
 	inPort->close();
 	outPort->close();
+	inputPort->close();
 }
 
 
@@ -309,8 +274,8 @@ void AudioBayesianRatethread::calcOffset() {
 
 
 
-		if (inputPort.getInputCount()) {
-			inputReading = inputPort.read(true);   //blocking reading for synchr with the input
+		if (inputPort->getInputCount()) {
+			inputReading = inputPort->read(true);   //blocking reading for synchr with the input
 
 		offset = inputReading->get(2).asDouble();
 

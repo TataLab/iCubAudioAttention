@@ -60,26 +60,13 @@ class AudioBayesianRatethread : public yarp::os::RateThread {
 	const std::string noiseMapPath = "./noiseMap.dat";
 
 	//
-	// Motor & Enconder
-	//
-	yarp::dev::PolyDriver *robotHead;
-	yarp::dev::IEncoders *enc;
-	yarp::dev::IPositionControl *pos;
-
-
-	//
 	// Incoming and Outgoing Ports
+  yarp::os::BufferedPort<yarp::os::Bottle > *inputPort;
 	yarp::os::BufferedPort<yarp::sig::Matrix> *inPort;
 	yarp::os::Port *outPort;
 	yarp::os::Port *outProbability;
-	yarp::os::Port *outAngle;
 
-	yarp::os::Property options;        // initializer for head
 	yarp::os::Stamp ts;                // time stamper
-
-
-
-
 
 
 	//
@@ -102,9 +89,9 @@ class AudioBayesianRatethread : public yarp::os::RateThread {
 	std::queue <double> bufferedOffSet;
 	std::queue < std::vector < std::vector <double> > > bufferedMap;
 
-  yarp::os::BufferedPort<yarp::os::Bottle > inputPort;
 
-  yarp::os::Bottle* inputReading; 
+
+  yarp::os::Bottle* inputReading;
 	//
 	// Memory mapping variables
 	//
@@ -113,8 +100,8 @@ class AudioBayesianRatethread : public yarp::os::RateThread {
 	int nMics;
 	int noiseBufferMap;
 	int numberOfNoiseMaps;
-	int mappingFileID;
-	int micDistance;
+
+
 	int totalBeams;
 
 	int longTimeFrame;
@@ -123,7 +110,6 @@ class AudioBayesianRatethread : public yarp::os::RateThread {
 
 	double nBeamsPerHemi;
 	double offset;
-	double *probabilityMapping;
 
 	bool first;
 
