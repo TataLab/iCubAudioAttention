@@ -76,8 +76,14 @@ void GammatoneFilter::gammatoneFilterBank(float *inAudio) {
 			inputSplitAudio[i][j] = inAudio[j*nMics + i];
 
 	for (int i = 0; i < nMics; i++)
-		for (int ch = 0; ch < nBands; ch++)
-			filteredAudio[ch + (i * nBands)] = singleFilter(inputSplitAudio[i], cfs[ch]);
+		for (int ch = 0; ch < nBands; ch++) {
+            
+            float *p = singleFilter(inputSplitAudio[i], cfs[ch]);
+            
+            for (int frame = 0; frame < frameSamples; frame++) {
+    			filteredAudio[ch + (i * nBands)][frame] = p[frame];
+            }
+        }
 }
 
 

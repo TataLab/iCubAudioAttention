@@ -12,9 +12,12 @@
 
 #include <yarp/os/Network.h>
 #include <yarp/os/Port.h>
+#include <yarp/os/Log.h>
 #include <yarp/os/Time.h>
 #include <yarp/os/Stamp.h>
 #include <yarp/os/BufferedPort.h>
+
+//#define DEBUG
 
 using namespace yarp::os;
 using namespace yarp::sig;
@@ -40,6 +43,10 @@ int main(int argc, char *argv[]) {
     // conf.put("samples", rate * rec_seconds);
     conf.put("samples", fixedNSample);
     conf.put("rate", rate);
+    yInfo("number of samples: %d", fixedNSample);
+    yInfo("rate:%d", rate);
+
+    // opening the polydriver and relative IAudioGrabberSound			
     PolyDriver poly(conf);
     IAudioGrabberSound *get;
 
@@ -55,15 +62,14 @@ int main(int argc, char *argv[]) {
 
     //Grab and send
     Sound s;
-    //Bottle b;
-    //b.addString("hello");
 
     //unsigned char* dataSound;
     //short* dataAnalysis;
-    //int v1, v2;
-    //int i = 0, j = 0;
-    //NetInt16 v;
-    // i = sample amd j = channels;
+#ifdef DEBUG
+    int v1, v2;
+    int i = 0, j = 0;
+    NetInt16 v;
+#endif
 
     get->startRecording(); //this is optional, the first get->getsound() will do this anyway.
     Stamp ts;
@@ -74,17 +80,23 @@ int main(int argc, char *argv[]) {
       //s = p.prepare();           
       
       get->getSound(s);        
-      
-      //v1 = s.get(i,j);
-      //v = (NetInt16) v1;
-      //v2 = s.get(i+1,j+1); 
-      //dataAnalysis = (short*) dataSound;        
+
+#ifdef DEBUG         
+     
+		//v1 = s.get(i,j);
+      		//v = (NetInt16) v1;
+      		printf("%d \n",s.get(0,0));
+		printf("%d \n",s.get(0,1));
+      		//v2 = s.get(i+1,j+1); 
+      		//dataAnalysis = (short*) dataSound;
+
+#endif        
       
       p.setEnvelope(ts);
       p.write(s);
 
       double t2=yarp::os::Time::now();
-      printf("acquired %f seconds \n", t2-t1);
+      //printf("acquired %f seconds \n", t2-t1);
     }
     get->stopRecording();  //stops recording.
 

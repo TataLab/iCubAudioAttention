@@ -39,7 +39,9 @@
 #include "gammatoneFilter.h"
 #include "beamFormer.h"
 
-const float normDivid = pow(2,23);  // Number that is used to convert the integer number received
+const float normDivid = pow(2,15); 
+
+//const float normDivid = pow(2,23);  // Number that is used to convert the integer number received
                                     // as the audio signal and convert it to a double audio signal
 
 struct knotValues {
@@ -250,7 +252,7 @@ class AudioPreprocesserRatethread : public yarp::os::RateThread {
      *
      *  Function used to send beam formed audio that is held in outBeamFormedAudio though port beamFormedAudioPort.
      */
-    void sendBeamFormedAudio(const std::vector<std::vector<float*> > &beamFormedAudio);
+    void sendBeamFormedAudio(const std::vector<std::vector<std::vector<float> > > &beamFormedAudio);
 
 
     /**
