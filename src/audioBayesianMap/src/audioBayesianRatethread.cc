@@ -175,20 +175,20 @@ void AudioBayesianRatethread::run() {
 
 	// Calls a function that will take the current
 	// audio map and create the Bayesian maps
-	setAcousticMap();
+    // reads the angles passed via input port	
+    setAcousticMap(); 
 
 
-	if (outPort->getOutputCount()) {
-		// copies the data in the longMap vector into the outputMatrix
+	if (outPort->getOutputCount()) {	    		
+        // copies the data in the longMap vector into the outputMatrix
 		// and sends the matrix along with the envelope via the output Port
 		sendAudioMap(longMap);
 	}
 
-	sendProbabilityMap(longProbabilityAngleMap);
+	//sendProbabilityMap(longProbabilityAngleMap);
 
 	// Calls the Memory maper and memory maps it to
 	// the following file: /tmp/bayesianProbabilityLongMap.tmp
-
 	stopTime = yarp::os::Time::now();
 	yInfo("Count:%d Time:%f. \n", ts.getCount(),  stopTime-startTime);
 	startTime = stopTime;
