@@ -38,7 +38,7 @@ AudioBayesianRatethread::~AudioBayesianRatethread() {
 	delete inPort;
 	delete headAngleInPort;
 	delete outPort;
-
+    delete outProbabilityPort;
 }
 
 
@@ -69,8 +69,15 @@ bool AudioBayesianRatethread::threadInit() {
 		// A long term Bayesian map term map
 		longMap.push_back(tempvector);
 	}
+    
+    // initialize probability angle map.
+    for (int i = 0; i < interpolateNSamples * 2; i++) {
+    	longProbabilityAngleMap.push_back(0.0);
+    }
 
-	longProbabilityAngleMap.assign(interpolateNSamples * 2,0);
+    //longProbabilityAngleMap.assign(interpolateNSamples * 2,0);
+
+
 
 	// Allocates the required memory for the yarp matrix
 	// that takes the input and output to this module
@@ -108,13 +115,13 @@ bool AudioBayesianRatethread::threadInit() {
 	outPort = new yarp::os::Port();
 	if (!outPort->open("/iCubAudioAttention/BayesianMap:o")) {
 		yError("unable to open port to send bayesian map");
-    return false;
+        return false;
 	}
 
-	outProbability = new yarp::os::Port();
-	if (!outProbability->open("/iCubAudioAttention/ProbabilityMap:o")) {
+	outProbabilityPort = new yarp::os::BufferedPort<yarp::sig::Matrix>();
+	if (!outProbabilityPort->open("/iCubAudioAttention/ProbabilityMap:o")) {
 		yError("unable to open port to send probability map");
-    return false;
+        return false;
 	}
 
 
@@ -184,8 +191,14 @@ void AudioBayesianRatethread::run() {
 		// and sends the matrix along with the envelope via the output Port
 		sendAudioMap(longMap);
 	}
+    
 
-	//sendProbabilityMap(longProbabilityAngleMap);
+   // if (outProbabilityPort->getOutputCount()) {
+        // copoes the data in the longProbabilityAngleMap vector into the 
+        // outProbabilityMap and sends it along with the envelope via the 
+        // outProbability port.
+    	sendProbabilityMap(longProbabilityAngleMap);
+   // }   
 
 	// Calls the Memory maper and memory maps it to
 	// the following file: /tmp/bayesianProbabilityLongMap.tmp
@@ -271,21 +284,15 @@ void AudioBayesianRatethread::calcOffset() {
 	//to do:  redesign this to make use of the SpatialSound class which contains
 	//information about altitude and azimuth so that yarpBayesianMap never needs
 	//to get the position of the head directly from the robot
-
-
-
-		if (headAngleInPort->getInputCount()) {
-			headAngleBottle = headAngleInPort->read(true);   //blocking reading for synchr with the input
-
-		offset = headAngleBottle->get(2).asDouble();
-
-    offset += 270;
+	if (headAngleInPort->getInputCount()) { 
+		headAngleBottle = headAngleInPort->read(true);   //blocking reading for synchr with the input
+		offset = headAngleBottle->get(0).asDouble();
+        offset += 270;
 	}
     // Pushes the current offset into a buffer which
     // is needed to remove "old" audio maps
     bufferedOffSet.push(offset);
     yInfo("offset = %f\n",offset);
-
 }
 
 
@@ -307,13 +314,20 @@ void AudioBayesianRatethread::sendAudioMap(std::vector <std::vector <double>> &p
 }
 
 void AudioBayesianRatethread::sendProbabilityMap(std::vector <double> &outputProbabilityMap) {
+    
+    yarp::sig::Matrix& m = outProbabilityPort->prepare();
+    m.resize(1, interpolateNSamples*2);  
+     
+    yarp::sig::Vector tempV(interpolateNSamples * 2);
 
 	for (int i = 0; i < interpolateNSamples * 2; i++) {
-		outProbabilityMap[i] = outputProbabilityMap[i];
+        tempV[i] = outputProbabilityMap[i];
 	}
 
-	outProbability->setEnvelope(ts);
-	outProbability->write(*outProbabilityMap);
+    m.setRow(0, tempV);
+
+	outProbabilityPort->setEnvelope(ts);
+    outProbabilityPort->write();
 }
 
 

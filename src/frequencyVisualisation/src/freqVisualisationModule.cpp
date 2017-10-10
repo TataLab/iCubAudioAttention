@@ -59,10 +59,13 @@ bool freqVisualisationModule::configure(yarp::os::ResourceFinder &rf) {
                            "Robot name (string)").asString();
     robotPortName         = "/" + robotName + "/head";
 
-    inputPortName           = rf.check("inputPortName",
+    inputPortName         = rf.check("inputPortName",
 			                Value(":i"),
                             "Input port name (string)").asString();
-    
+
+    int gain              = rf.check("gain",
+                            Value("1"),
+                            "Gain for visualization (int)").asInt();
     
     /*
     * attach a port of the same name as the module (prefixed with a /) to the module
@@ -91,6 +94,7 @@ bool freqVisualisationModule::configure(yarp::os::ResourceFinder &rf) {
     /* create the thread and pass pointers to the module parameters */
     rThread = new freqVisualisationRatethread(robotName, configFile);
     rThread->setName(getName().c_str());
+    rThread->setGain(gain);
     //rThread->setInputPortName(inputPortName.c_str());
     
     /* now start the thread to do the work */

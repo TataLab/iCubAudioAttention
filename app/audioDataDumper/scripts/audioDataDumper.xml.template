@@ -4,26 +4,26 @@
 
   <module>
 	<name>yarpdatadumper</name>
-	<parameters>--name /audioDump:i </parameters>
+	<parameters>--name /icubData/audioDump:i </parameters>
 	<node>icub</node>
   </module>
 
   <module>
       <name>yarpdatadumper</name>
-      <parameters>--name /motorDump:i </parameters>
+      <parameters>--name /icubData/motorDump:i </parameters>
       <node>icub</node>
   </module>
 
   
   <connection>
 	<from> /sender </from>
-	<to> /audioDump:i </to>
+	<to> /icubData/audioDump:i </to>
 	<protocol> udp </protocol>
   </connection>
 
   <connection>
 	<from> /icub/head/state:o </from>
-	<to> /motorDump:i </to>
+	<to> /icubData/motorDump:i </to>
 	<protocol> udp </protocol>
   </connection>
 

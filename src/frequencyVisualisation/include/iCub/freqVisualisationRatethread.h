@@ -42,6 +42,7 @@ private:
 
     int imageOutHeight;
     int imageOutWidth;
+    int visGain;
 
     std::string robot;              // name of the robot
     std::string configFile;         // name of the configFile where the parameter of the camera are set
@@ -104,6 +105,11 @@ public:
     * function that sets the inputPort name
     */
     void setInputPortName(std::string inpPrtName);
+    
+    /**
+    * function that sets the gain for the image
+    */
+    void setGain(int inGain);
 
      /**
      * method for the processing in the ratethread

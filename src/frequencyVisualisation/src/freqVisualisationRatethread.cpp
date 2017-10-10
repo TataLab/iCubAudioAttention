@@ -119,6 +119,10 @@ void freqVisualisationRatethread::setInputPortName(string InpPort) {
     
 }
 
+void freqVisualisationRatethread::setGain(int inGain) {
+    this->visGain = inGain;
+}
+
 void freqVisualisationRatethread::run() {    
     //code here .....
     if (inputPort.getInputCount()) {
@@ -159,7 +163,7 @@ bool freqVisualisationRatethread::processing(Matrix* mat){
     for (int r = 0; r < nRows; r++) {
         for (int c = 0; c < nCols; c++) {
             value = *pMat;
-            COLOUR col = GetColour(value, 0.0, 1.0);
+            COLOUR col = GetColour(value * visGain, 0.0, 1.0);
             //*pImage = 0;
             *pImage = col.r * 255;
             pImage++;

@@ -60,10 +60,10 @@ class AudioBayesianRatethread : public yarp::os::RateThread {
 
 	//
 	// Incoming and Outgoing Ports
-  yarp::os::BufferedPort<yarp::os::Bottle > *headAngleInPort;
+    yarp::os::BufferedPort<yarp::os::Bottle > *headAngleInPort;
 	yarp::os::BufferedPort<yarp::sig::Matrix> *inPort;
 	yarp::os::Port *outPort;
-	yarp::os::Port *outProbability;
+	yarp::os::BufferedPort<yarp::sig::Matrix> *outProbabilityPort;
 
 	yarp::os::Stamp ts;                // time stamper
 
@@ -74,7 +74,7 @@ class AudioBayesianRatethread : public yarp::os::RateThread {
 	yarp::sig::Matrix* inputMatrix;
 	yarp::sig::Matrix* outputMatrix;
 	yarp::sig::Vector* outProbabilityMap;
-  yarp::os::Bottle* headAngleBottle;
+    yarp::os::Bottle* headAngleBottle;
 
 	std::vector <double> longProbabilityAngleMap;
 
