@@ -36,8 +36,8 @@ int main(int argc, char * argv[])
 
     ResourceFinder rf;
     rf.setVerbose(true);
-    rf.setDefaultConfigFile("cameraTest.ini");    //overridden by --from parameter
-    rf.setDefaultContext("morphoGenApp");    //overridden by --context parameter
+    rf.setDefaultConfigFile("freqVisualisation.ini");    //overridden by --from parameter
+    rf.setDefaultContext("icubAudioAttention");    //overridden by --context parameter
     rf.configure(argc, argv);  
  
     module.runModule(rf);

@@ -9,6 +9,7 @@
 #include <yarp/dev/AudioGrabberInterfaces.h>
 #include <yarp/os/Property.h>
 #include <yarp/os/NetInt16.h>
+#include <yarp/os/ResourceFinder.h>
 
 #include <yarp/os/Network.h>
 #include <yarp/os/Port.h>
@@ -24,14 +25,30 @@ using namespace yarp::sig;
 using namespace yarp::dev;
 
 const double rec_seconds = 0.1;
-const int rate = 48000;
-const int fixedNSample = 4096;
+//const int rate = 48000;           //@Rea : removed in favour to RF
+//const int fixedNSample = 4096;    //@Rea : removed in favour to RF
 
 int main(int argc, char *argv[]) {
-    // initialization
-
     // Open the network
     Network yarp;
+
+    // initialization
+    ResourceFinder rf;
+    rf.setVerbose(true);
+    rf.setDefaultConfigFile("audioConfig.ini");    //overridden by --from parameter
+    rf.setDefaultContext("icubAudioAttention");    //overridden by --context parameter
+    rf.configure(argc, argv);  
+
+
+    int fixedNSample        =  rf.check("frameSamples",
+                    Value(4096),
+                    "frame samples (int)").asInt();
+
+    int rate        =  rf.check("samplingRate",
+                    Value(48000),
+                    "sampling rate of mics (int)").asInt();
+
+
     //BufferedPort<Sound> p;
     Port p;
     p.open("/sender");
@@ -81,22 +98,20 @@ int main(int argc, char *argv[]) {
       
       get->getSound(s);        
 
-#ifdef DEBUG         
-     
-		//v1 = s.get(i,j);
-      		//v = (NetInt16) v1;
-      		printf("%d \n",s.get(0,0));
-		printf("%d \n",s.get(0,1));
-      		//v2 = s.get(i+1,j+1); 
-      		//dataAnalysis = (short*) dataSound;
-
+#ifdef DEBUG          
+		  //v1 = s.get(i,j);
+  		//v = (NetInt16) v1;
+  		printf("%d \n",s.get(0,0));
+		  printf("%d \n",s.get(0,1));
+  		//v2 = s.get(i+1,j+1); 
+  		//dataAnalysis = (short*) dataSound;
 #endif        
       
       p.setEnvelope(ts);
       p.write(s);
 
       double t2=yarp::os::Time::now();
-      //printf("acquired %f seconds \n", t2-t1);
+      printf("acquired %f seconds \n", t2-t1);
     }
     get->stopRecording();  //stops recording.
 
