@@ -233,19 +233,19 @@ void AudioBayesianRatethread::loadFile(yarp::os::ResourceFinder &rf) {
 	yInfo("loading configuration file");
 	try {
 		nBands 				 =  rf.check("nBands",
-										 yarp::os::Value("128"),
+										 yarp::os::Value(128),
 										 "numberBands (int)").asInt();
 
 		interpolateNSamples  =  rf.check("interpolateNSamples",
-										 yarp::os::Value("180"),
+										 yarp::os::Value(180),
 										 "interpellate N samples (int)").asInt();
 
 		longTimeFrame 		 =  rf.check("longBufferSize",
-										 yarp::os::Value("360"),
+										 yarp::os::Value(360),
 										 "long Buffer Size (int)").asInt();
 
 		nMics  				 =  rf.check("nMics",
-										 yarp::os::Value("2"),
+										 yarp::os::Value(2),
 										 "numberBands (int)").asInt();
 
 		yInfo("nBands = %d", nBands);

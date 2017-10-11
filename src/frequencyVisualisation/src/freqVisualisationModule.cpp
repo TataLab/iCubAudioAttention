@@ -64,9 +64,9 @@ bool freqVisualisationModule::configure(yarp::os::ResourceFinder &rf) {
                             "Input port name (string)").asString();
 
     int gain              = rf.check("gain",
-                            Value("1"),
+                            Value(1),
                             "Gain for visualization (int)").asInt();
-    
+    std::cerr << "init gain is " << gain << std::endl;
     /*
     * attach a port of the same name as the module (prefixed with a /) to the module
     * so that messages received from the port are redirected to the respond method

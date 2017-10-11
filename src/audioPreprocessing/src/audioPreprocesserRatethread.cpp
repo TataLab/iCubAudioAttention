@@ -264,39 +264,39 @@ void AudioPreprocesserRatethread::loadFile(yarp::os::ResourceFinder &rf) {
 	yInfo("loading configuration file");
 	try {
 		frameSamples        =  rf.check("frameSamples",
-										Value("4096"),
+										Value(4096),
 										"frame samples (int)").asInt();
 
 		nBands              =  rf.check("nBands",
-										Value("128"),
+										Value(128),
 										"numberBands (int)").asInt();
 
 		nMics               =  rf.check("nMics",
-										Value("2"),
+										Value(2),
 										"number mics (int)").asInt();
 
 		interpolateNSamples =  rf.check("interpolateNSamples",
-										Value("180"),
+										Value(180),
 										"interpellate N samples (int)").asInt();
 
 		micDistance         =  rf.check("micDistance",
-										Value("0.145"),
+										Value(0.145),
 										"micDistance (double)").asDouble();
 
 		C                   =  rf.check("C",
-										Value("338"),
+										Value(338),
 										"C speed of sound (int)").asInt();
 
 		samplingRate        =  rf.check("samplingRate",
-										Value("48000"),
+										Value(48000),
 										"sampling rate of mics (int)").asInt();
 
 		lowCf               =  rf.check("lowCf",
-										Value("1000"),
+										Value(1000),
 										"lowest center frequency(int)").asInt();
 
 		highCf              =  rf.check("highCf",
-										Value("3000"),
+										Value(3000),
 										"highest center frequency(int)").asInt();
 
 		// print information from rf to the console

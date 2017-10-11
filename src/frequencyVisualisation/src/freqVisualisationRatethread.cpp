@@ -120,6 +120,7 @@ void freqVisualisationRatethread::setInputPortName(string InpPort) {
 }
 
 void freqVisualisationRatethread::setGain(int inGain) {
+    std::cerr << "gain is " << inGain << std::endl;    
     this->visGain = inGain;
 }
 
