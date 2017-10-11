@@ -213,7 +213,6 @@ Windows, Linux
 #define STATE_RELEASE           3
 #define STATE_WAIT              4
 
-YARP_DECLARE_DEVICES(icubmod)
 
 using namespace std;
 using namespace yarp::os;

@@ -154,6 +154,22 @@ bool AudioBayesianRatethread::threadInit() {
 	return true;
 }
 
+void AudioBayesianRatethread::threadRelease() {
+
+	// stop all ports
+	inPort->interrupt();
+	headAngleInPort->interrupt();
+	outPort->interrupt();
+	outProbabilityPort->interrupt();
+
+	// release all ports
+	inPort->close();
+	headAngleInPort->close();
+	outPort->close();
+	outProbabilityPort->close();
+}
+
+
 
 void AudioBayesianRatethread::setName(std::string str) {
 	this->name=str;
@@ -211,19 +227,6 @@ void AudioBayesianRatethread::run() {
 bool AudioBayesianRatethread::processing() {
 	// here goes the processing...
 	return true;
-}
-
-
-void AudioBayesianRatethread::threadRelease() {
-	// stop all ports
-	inPort->interrupt();
-	outPort->interrupt();
-	headAngleInPort->interrupt();
-
-	// release all ports
-	inPort->close();
-	outPort->close();
-	headAngleInPort->close();
 }
 
 

@@ -26,7 +26,6 @@ using namespace yarp::dev;
 using namespace yarp::sig;
 using namespace yarp::os;
 
-YARP_DECLARE_DEVICES(icubmod)
 
 void moveJoints(IPositionControl *_pos, Vector& _command)
 {
@@ -37,7 +36,7 @@ void moveJoints(IPositionControl *_pos, Vector& _command)
 int main(int argc, char *argv[]) 
 {
     Network yarp;
-    YARP_REGISTER_DEVICES(icubmod)
+    
 
     //-----------------------------------------------------------------------
 

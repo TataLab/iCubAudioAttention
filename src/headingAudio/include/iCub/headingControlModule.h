@@ -188,7 +188,7 @@ Windows, Linux
 #include <yarp/dev/PolyDriver.h>
 #include <yarp/dev/GazeControl.h>
 #include <iCub/managerThread.h>
-#include <iCub/azimuthThread.h>
+//#include <iCub/azimuthThread.h>
 
 #include <string>
 
@@ -239,7 +239,7 @@ class managerModule: public RFModule
 {
 protected:
     managerThread *thr;
-    azimuthThread *athr;
+    //azimuthThread *athr;
     Port           rpcPort;
     Semaphore      mutex;
     string robot;
@@ -247,7 +247,7 @@ protected:
     
 public:
     managerModule() {
-        athr = 0;
+        //athr = 0;
         thr  = 0;
     }
 
@@ -263,13 +263,14 @@ public:
 
         if(usePanOnly) {
             yInfo("usePanOnly activate");
-            athr = new azimuthThread(getName().c_str(),rf);
-            if (!athr->start())
+            //athr = new azimuthThread(getName().c_str(),rf);
+            /*if (!athr->start())
                 {
                     yError("azimuthThread not started");
                     delete athr;
                     return false;
                 }
+            */
         }
         else {
             yInfo("wholebody controlled");
@@ -293,12 +294,12 @@ public:
         rpcPort.interrupt();
         rpcPort.close();
         
-        if(athr) {
+        /*if(athr) {
             yInfo("stopping the thread");
             athr->stop();
             yInfo("deleting the thread");
             delete athr;
-        }
+            }*/
         if(thr) {
             thr->stop();
             delete thr;
