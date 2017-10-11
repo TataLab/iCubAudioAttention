@@ -25,7 +25,7 @@ using namespace yarp::dev;
 
 const double rec_seconds = 0.1;
 const int rate = 48000;
-const int fixedNSample =4800;
+const int fixedNSample = 4096;
 
 int main(int argc, char *argv[]) {
     // initialization
