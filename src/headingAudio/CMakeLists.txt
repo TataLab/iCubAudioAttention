@@ -17,7 +17,7 @@ INCLUDE_DIRECTORIES(
 )
 
 # Search for source code.
-FILE(GLOB folder_source headingControl.cpp )
+FILE(GLOB folder_source headingControl.cpp src/headingAudioModule.cpp)
 FILE(GLOB folder_header include/iCub/*.h)
 SOURCE_GROUP("Source Files" FILES ${folder_source})
 SOURCE_GROUP("Header Files" FILES ${folder_header})
