@@ -35,6 +35,11 @@
 #include <yarp/os/Thread.h>
 #include <yarp/os/Log.h>
 
+#define COMMAND_VOCAB_SUSPEND            VOCAB3('s','u','s')
+#define COMMAND_VOCAB_RESUME             VOCAB3('r','e','s')
+
+
+
 #include <iCub/audioAttentionManagerRatethread.h>
 
 class audioAttentionManagerModule : public yarp::os::RFModule {

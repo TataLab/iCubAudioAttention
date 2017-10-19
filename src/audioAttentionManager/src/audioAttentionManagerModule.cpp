@@ -111,8 +111,8 @@ bool audioAttentionManagerModule::close() {
     return true;
 }
 
-bool audioAttentionManagerModule::respond(const Bottle& command, Bottle& reply) 
-{
+bool audioAttentionManagerModule::respond(const Bottle& command, Bottle& reply) {
+    
     string helpMessage =  string(getName().c_str()) + 
                 " commands are: \n" +  
                 "help \n" +
@@ -127,7 +127,23 @@ bool audioAttentionManagerModule::respond(const Bottle& command, Bottle& reply)
         cout << helpMessage;
         reply.addString("ok");
     }
-    
+    else if ((command.get(0).asString()=="sus") || (command.get(0).asString()=="\"sus\"")) {
+        //prioritiser->waitMotionDone();
+        rThread->suspend();
+        reply.addString("ok");
+    }
+    else if (command.get(0).asString()=="res" || command.get(0).asString()=="\"res\"" ) {
+        rThread->resume();
+        reply.addString("ok");
+    }
+
+
+
+
+
+
+
+
     return true;
 }
 

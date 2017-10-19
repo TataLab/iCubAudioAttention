@@ -34,6 +34,9 @@
 #include <fstream>
 #include <time.h>
 
+#define COMMAND_VOCAB_SUSPEND            VOCAB3('s','u','s')
+#define COMMAND_VOCAB_RESUME             VOCAB3('r','e','s')
+
 class audioAttentionManagerRatethread : public yarp::os::RateThread {
  
  private:
@@ -48,12 +51,13 @@ class audioAttentionManagerRatethread : public yarp::os::RateThread {
 
     yarp::os::BufferedPort<yarp::os::Bottle> inputPort;		  // input from rpc
     yarp::os::BufferedPort<yarp::os::Bottle> inputSpeechPort; // input from speech recon
-    yarp::os::BufferedPort<yarp::os::Bottle> outputPort;  	  // publish to headinAudio
+    yarp::os::RpcClient outputPort;						  	  // publish to headinAudio
     std::string name;                                      	  // rootname of all the ports opened by this thread
 
     yarp::os::Bottle* inputCommand;
     yarp::os::Bottle* inputSpeech;
     yarp::os::Bottle* output;
+    yarp::os::Bottle  current;
 
     std::string command;
     std::string speech;
@@ -113,6 +117,11 @@ class audioAttentionManagerRatethread : public yarp::os::RateThread {
      * method for the processing in the ratethread
      **/
     bool processing();
+
+    /**
+     * method for the managing various states to be sent
+     **/
+    void stateTransition();
 };
 
 #endif  //_AUDIO_ATTENTION_MANAGER_RATETHREAD_H_

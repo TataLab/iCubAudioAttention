@@ -64,6 +64,12 @@ bool audioAttentionManagerRatethread::threadInit() {
     inputSpeech = new yarp::os::Bottle;
     output = new yarp::os::Bottle;
 
+    // make sure the current bottle is empty
+    current.clear();
+
+    // set our states to empty strings
+    speech = "";
+
     yInfo("Initialization of the processing thread correctly ended");
 
     return true;
@@ -99,18 +105,27 @@ void audioAttentionManagerRatethread::run() {
     	}
     }
 
+
+    // 
+    // add different messages to the output
+    // based on our recienved information
+    //
     stateTransition();
+
 
     //
     // prepare to send output 
     // 
     if (outputPort.getOutputCount()) {
-    	
-    	if (output.size() != 0) {
-    	    
-    	    *output = outputPort.prepare();
 
-        	outputPort.write();
+    	// make sure there is something to send
+    	if (current.size() != 0) {
+
+    	    // write output onto the network
+        	outputPort.write(current);
+
+        	// clear out the contents of current
+        	current.clear();
     	}
     }
 
@@ -140,11 +155,13 @@ void audioAttentionManagerRatethread::threadRelease() {
 
 void audioAttentionManagerRatethread::stateTransition() {
 
-
-
-
-
-
+	// check if we have work to do
+	if (speech == "sus") {			
+		current.addVocab(COMMAND_VOCAB_SUSPEND);	
+	} 
+	else if (speech == "res") {
+		current.addVocab(COMMAND_VOCAB_RESUME);
+	}
 
 	// set speech to null
 	speech = "";
