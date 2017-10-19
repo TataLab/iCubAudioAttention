@@ -42,20 +42,27 @@ audioAttentionManagerRatethread::audioAttentionManagerRatethread(string _robot, 
 }
 
 audioAttentionManagerRatethread::~audioAttentionManagerRatethread() {
-    // do nothing
+    delete inputCommand;
+    delete inputSpeech;
+    delete output;
 }
 
 bool audioAttentionManagerRatethread::threadInit() {
-    // opening the port for direct input
-    if (!inputPort.open(getName("/image:i").c_str())) {
-        yError("unable to open port to receive input");
+
+    // opening the port for speech input
+    if (!inputSpeechPort.open(getName("/speech:i").c_str())) {
+        yError("unable to open port to receive input from speech recogn");
         return false;  // unable to open; let RFModule know so that it won't run
     }
 
-    if (!outputPort.open(getName("/img:o").c_str())) {
+    if (!outputPort.open(getName("/heading:o").c_str())) {
         yError(": unable to open port to send unmasked events ");
         return false;  // unable to open; let RFModule know so that it won't run
     }
+
+    // prepare the input/output containers
+    inputSpeech = new yarp::os::Bottle;
+    output = new yarp::os::Bottle;
 
     yInfo("Initialization of the processing thread correctly ended");
 
@@ -78,23 +85,41 @@ void audioAttentionManagerRatethread::setInputPortName(string InpPort) {
 }
 
 void audioAttentionManagerRatethread::run() {    
-    //code here .....
-    if (inputPort.getInputCount()) {
-        inputImage = inputPort.read(true);   //blocking reading for synchr with the input
-        result = processing();
+    
+    //
+    // read in from the speech recogn module
+    // 
+    if (inputSpeechPort.getInputCount()) {
+    	// get the bottle
+    	inputSpeech = inputSpeechPort.read(false);
+
+    	if (inputSpeech != NULL) {
+    		// read in the information from the bottle
+    		speech = inputSpeech->toString();
+    	}
     }
 
+    stateTransition();
+
+    //
+    // prepare to send output 
+    // 
     if (outputPort.getOutputCount()) {
-        *outputImage = outputPort.prepare();
-        outputImage->resize(inputImage->width(), inputImage->height());
-        // changing the pointer of the prepared area for the outputPort.write()
-        // copy(inputImage, outImage);
-        // outputPort.prepare() = *inputImage; //deprecated
+    	
+    	if (output.size() != 0) {
+    	    
+    	    *output = outputPort.prepare();
 
-        outputPort.write();
+        	outputPort.write();
+    	}
     }
 
+    // timing how long the module took
+	stopTime = yarp::os::Time::now();
+	yInfo("elapsed time = %f\n",stopTime - startTime);
+	startTime = stopTime;
 }
+
 
 bool audioAttentionManagerRatethread::processing(){
     // here goes the processing...
@@ -103,11 +128,24 @@ bool audioAttentionManagerRatethread::processing(){
 
 
 void audioAttentionManagerRatethread::threadRelease() {
-    // nothing
-    inputPort.interrupt();
+    // stop all threads
+    inputSpeechPort.interrupt();
     outputPort.interrupt();
-    inputPort.close();
+    
+    // release the ports
+    inputSpeechPort.close();
     outputPort.close();
 }
 
 
+void audioAttentionManagerRatethread::stateTransition() {
+
+
+
+
+
+
+
+	// set speech to null
+	speech = "";
+}
