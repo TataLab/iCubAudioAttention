@@ -69,6 +69,8 @@ bool audioAttentionManagerRatethread::threadInit() {
 
     // set our states to empty strings
     speech = "";
+    ciaoAwake = false;
+    ciaoTime = yarp::os::Time::now();
 
     yInfo("Initialization of the processing thread correctly ended");
 
@@ -156,11 +158,18 @@ void audioAttentionManagerRatethread::threadRelease() {
 void audioAttentionManagerRatethread::stateTransition() {
 
 	// check if we have work to do
-	if (speech == "sus") {			
-		current.addVocab(COMMAND_VOCAB_SUSPEND);	
+	if (speech == "ciao icub") {			
+		current.addVocab(COMMAND_VOCAB_RESUME);	
+		ciaoTime = yarp::os::Time::now();
+		ciaoAwake = true;
 	} 
-	else if (speech == "res") {
-		current.addVocab(COMMAND_VOCAB_RESUME);
+
+	// check if we are past our search time suspend
+	if (ciaoAwake) {
+	    if (yarp::os::Time::now()-ciaoTime > DELAY) {
+			current.addVocab(COMMAND_VOCAB_SUSPEND);
+			ciaoAwake = false;
+		}
 	}
 
 	// set speech to null

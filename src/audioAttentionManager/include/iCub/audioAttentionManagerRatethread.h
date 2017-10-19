@@ -34,6 +34,14 @@
 #include <fstream>
 #include <time.h>
 
+// 
+// delay for time awake
+//
+#define DELAY 10.0
+
+//
+// vocab terms
+//
 #define COMMAND_VOCAB_SUSPEND            VOCAB3('s','u','s')
 #define COMMAND_VOCAB_RESUME             VOCAB3('r','e','s')
 
@@ -48,6 +56,9 @@ class audioAttentionManagerRatethread : public yarp::os::RateThread {
 
     double startTime;
     double stopTime;
+    double ciaoTime;
+
+    bool ciaoAwake;
 
     yarp::os::BufferedPort<yarp::os::Bottle> inputPort;		  // input from rpc
     yarp::os::BufferedPort<yarp::os::Bottle> inputSpeechPort; // input from speech recon
