@@ -37,7 +37,7 @@
 // 
 // delay for time awake
 //
-#define DELAY 10.0
+#define LISTEN 10.0
 
 //
 // vocab terms
@@ -59,6 +59,7 @@ class audioAttentionManagerRatethread : public yarp::os::RateThread {
     double ciaoTime;
 
     bool ciaoAwake;
+    bool ciaoMove;
 
     yarp::os::BufferedPort<yarp::os::Bottle> inputPort;		  // input from rpc
     yarp::os::BufferedPort<yarp::os::Bottle> inputSpeechPort; // input from speech recon
