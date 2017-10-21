@@ -215,6 +215,7 @@ Windows, Linux
 #define COMMAND_VOCAB_FBLU   VOCAB4('f','b','l','u')       // request of fovea blob color (red)
 #define COMMAND_VOCAB_FGRE   VOCAB4('f','g','r','e')       // request of fovea blob color (red)
 #define COMMAND_VOCAB_FRGB   VOCAB4('f','r','g','b')       // request of fovea blob color (rgb)
+#define COMMAND_VOCAB_FRGB   VOCAB4('f','r','g','b')       // request of fovea blob color (rgb)
 
 
 #define COMMAND_VOCAB_RED    VOCAB3('R','E','D')           // maximum dimension of the blob drawn

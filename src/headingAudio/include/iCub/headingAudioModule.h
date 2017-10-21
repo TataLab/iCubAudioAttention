@@ -144,6 +144,7 @@
 #include <yarp/dev/GazeControl.h>
 
 #include <yarp/sig/Vector.h>
+#include <yarp/sig/Matrix.h>
 
 //#include <yarp/sig/all.h>
 #include <yarp/os/all.h>
@@ -158,20 +159,38 @@
 //#include <iCub/headingAudioRatethread.h> // TODO: introduce the ratethread for more efficient processing
 
 #define COMMAND_VOCAB_ON    VOCAB2('o','n')
+#define COMMAND_VOCAB_OK    VOCAB2('o','k')
+
+
 #define COMMAND_VOCAB_OFF   VOCAB3('o','f','f')
+#define COMMAND_VOCAB_SUS   VOCAB3('s','u','s')
+#define COMMAND_VOCAB_RES   VOCAB3('r','e','s')
+#define COMMAND_VOCAB_FIX   VOCAB3('f','i','x')
+
+
 #define COMMAND_VOCAB_DUMP  VOCAB4('d','u','m','p')
 #define COMMAND_VOCAB_SYNC  VOCAB4('s','y','n','c')
+#define COMMAND_VOCAB_HELP  VOCAB4('h','e','l','p')
+#define COMMAND_VOCAB_STOP  VOCAB4('s','t','o','p')
+#define COMMAND_VOCAB_SEEK  VOCAB4('s','e','e','k')
+#define COMMAND_VOCAB_CENT  VOCAB4('c','e','n','t')
+#define COMMAND_VOCAB_FAIL  VOCAB4('f','a','i','l')
+
 
 #define DELTAENC 0.0000001
 #define deg2rad  3.1415/180
 
 class headingAudioModule:public yarp::os::RFModule {
+    bool idle;
+
     double r;
     double value;
     double endPos2; 
     double startPos2;
     double startPos3;
     double startPos4;
+
+    yarp::os::Semaphore mutex;
 
     yarp::dev::IGazeControl* igaze;
     yarp::dev::IPositionControl *pos;
@@ -191,6 +210,7 @@ class headingAudioModule:public yarp::os::RFModule {
     std::string configFile;                  // name of the configFile that the resource Finder will seek
     
     yarp::os::BufferedPort<yarp::os::Bottle>* _pInPort; //= new BufferedPort<Bottle>;
+    yarp::os::BufferedPort<yarp::sig::Matrix>* _pAbsolutePort;
     yarp::os::Port* _pOutPort; //= new Port;
     yarp::os::Port handlerPort;              // a port to handle messages 
     /* // TODO: introduce the ratethread for more efficient processing */
