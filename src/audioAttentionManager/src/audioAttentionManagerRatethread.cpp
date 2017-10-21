@@ -105,6 +105,7 @@ void audioAttentionManagerRatethread::run() {
     	if (inputSpeech != NULL) {
     		// read in the information from the bottle
     		speech = inputSpeech->toString();
+    		yInfo("Message Recieved: %s", speech.c_str());
     	}
     }
 
