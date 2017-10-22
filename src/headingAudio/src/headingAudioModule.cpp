@@ -301,7 +301,7 @@ bool headingAudioModule::configure(yarp::os::ResourceFinder &rf) {
 
     }
     */
-    idle = false;
+    idle = true;
     value = 0;   
     r = 0.5;  //meters
     Vector _angles(3);
@@ -523,7 +523,7 @@ bool headingAudioModule::updateModule()
             int pos = 0;
             if(m!=NULL) {
                 for(int i = 0; i < 360; i++) {
-                    value[i] = m->operator()(1,1); 
+                    value[i] = m->operator()(1,i); 
                     if(value[i] > max) {
                         max = value[i];
                         pos = i;
@@ -532,7 +532,7 @@ bool headingAudioModule::updateModule()
             }
             double targetAzimuthAngle = (double) pos;
             Vector target(3);
-            target[0] = 0.0;
+            target[0] = 10.0;
             target[1] = 0.0;
             target[2] = 5.0;
             igaze->lookAtAbsAngles(target);
