@@ -477,7 +477,7 @@ bool headingAudioModule::respond(const Bottle& command, Bottle& reply)
 bool headingAudioModule::updateModule()
 {
     if(!idle){
-        yInfo("module updating...");
+        yInfo("module updating...idle = false");
         if (_pInPort->getInputCount()) {
             Bottle* b = _pInPort->read(false);
             if(b!=NULL) {
@@ -532,7 +532,7 @@ bool headingAudioModule::updateModule()
             }
             double targetAzimuthAngle = (double) pos;
             Vector target(3);
-            target[0] = 10.0;
+            target[0] = 40.0;
             target[1] = 0.0;
             target[2] = 5.0;
             igaze->lookAtAbsAngles(target);
