@@ -1,0 +1,7 @@
+/home/jonas/CLionProjects/ObjectRecogntionTrain/test/build/CMakeFiles/install.dir
+/home/jonas/CLionProjects/ObjectRecogntionTrain/test/build/CMakeFiles/list_install_components.dir
+/home/jonas/CLionProjects/ObjectRecogntionTrain/test/build/CMakeFiles/rebuild_cache.dir
+/home/jonas/CLionProjects/ObjectRecogntionTrain/test/build/CMakeFiles/CameraStream.dir
+/home/jonas/CLionProjects/ObjectRecogntionTrain/test/build/CMakeFiles/install/strip.dir
+/home/jonas/CLionProjects/ObjectRecogntionTrain/test/build/CMakeFiles/install/local.dir
+/home/jonas/CLionProjects/ObjectRecogntionTrain/test/build/CMakeFiles/edit_cache.dir
