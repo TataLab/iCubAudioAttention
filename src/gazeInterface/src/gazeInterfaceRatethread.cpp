@@ -128,11 +128,9 @@ void gazeInterfaceRatethread::run() {
         inputReading = inputPort.read(true);   //blocking reading for synchr with the input
         //yInfo("reading from SIM: %s", inputReading->toString().c_str());
 
-        
-        
         // changing the pointer of the prepared area for the outputPort.write()
-        //double roll  = inputReading->get(1).asDouble();
         //double pitch = inputReading->get(0).asDouble();
+        //double roll  = inputReading->get(1).asDouble();
         double yaw   = inputReading->get(2).asDouble();           
 
         result = processing();

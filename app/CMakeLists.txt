@@ -4,11 +4,12 @@
 
 #cmake_minimum_required(VERSION 2.6)
 
-#add_subdirectory ( audioVisualAttention )
-add_subdirectory ( icubAudioAttention		)
-add_subdirectory ( memoryMapper			)
-add_subdirectory ( frequencyVisualisation	)
-add_subdirectory ( robotStartUp			)
+#add_subdirectory ( audioVisualAttention  )
+add_subdirectory ( icubAudioAttention	  )
+add_subdirectory ( memoryMapper			  )
+add_subdirectory ( frequencyVisualisation )
+add_subdirectory ( robotStartUp			  )
+add_subdirectory ( audioMotorControl      )
 
 ## make all applications show up as single target
 #icub_app_all()

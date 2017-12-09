@@ -1,0 +1,43 @@
+<application>
+
+	<name> Audio Motor Control </name>
+
+	<module>
+		<name> headingAudio </name>
+		<parameters></parameters>
+		<node> icub </node>
+	</module>
+
+	<module>
+		<name> gazeInterface </name>
+		<parameters></parameters>
+		<node> icub </node>
+	</module>
+
+	<module>
+		<name> audioAttentionManager </name>
+		<parameters></parameters>
+		<node> icub </node>
+	</module>	
+
+
+	<connection>
+		<from> /gazeInterface/command:o </from>
+		<to>   /icub/head/command:i     </to>
+		<protocol> udp </protocol>
+	</connection>
+
+	<connection>
+		<from> /icubSim/head/state:o     </from>
+		<to>   /gazeInterface/readings:i </to>
+		<protocol> udp </protocol>
+	</connection>
+
+	<connection>
+		<from> /audioAttentionManager/heading:o </from>
+		<to>   /headingAudio:i                  </to>
+		<protocol> udp </protocol>
+	</connection>
+
+</application>
+

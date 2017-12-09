@@ -1,36 +1,42 @@
 <application>
 
-  <name>Audio Preprocessor</name>
+  <name> Audio Preprocessor </name>
 
   <module>
-	<name>remoteInterface</name>
-	<parameters></parameters>
-	<node>pc104</node>
+    	<name> remoteInterface </name>
+    	<parameters></parameters>
+    	<node> pc104 </node>
   </module>
 
   <module>
-      <name>audioPreprocessing</name>
+      <name> audioPreprocessing </name>
       <parameters></parameters>
-      <node>icub</node>
+      <node> icub </node>
   </module>
 
   <module>
-      <name>audioBayesianMap</name>
+      <name> audioBayesianMap </name>
       <parameters></parameters>
-      <node>icub</node>
+      <node> icub </node>
   </module>
 
 
   <connection>
-	<from> /sender </from>
-	<to> /iCubAudioAttention/AudioPreprocesser:i </to>
-	<protocol> udp </protocol>
+    	<from> /sender                                 </from>
+    	<to>   /iCubAudioAttention/AudioPreprocesser:i </to>
+    	<protocol> tcp </protocol>
   </connection>
 
   <connection>
-	<from> /iCubAudioAttention/AudioMapEgo:o </from>
-	<to> /iCubAudioAttention/AudioMapEgo:i </to>
-	<protocol> udp </protocol>
+    	<from> /iCubAudioAttention/AudioMapEgo:o </from>
+    	<to>   /iCubAudioAttention/BayesianMap:i </to>
+    	<protocol> tcp </protocol>
+  </connection>
+
+  <connection>
+      <from> /icub/head/state:o                 </from>
+      <to>   /AudioBayesian/BayesianHeadAngle:i </to>
+      <protocol> tcp </protocol>
   </connection>
 
 </application>
