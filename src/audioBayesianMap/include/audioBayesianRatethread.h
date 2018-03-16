@@ -39,6 +39,7 @@
 #include <yarp/sig/Matrix.h>
 #include <yarp/sig/Vector.h>
 
+#include <iostream>
 #include <queue>
 #include <vector>
 

@@ -36,7 +36,7 @@ int main(int argc, char *argv[]) {
     ResourceFinder rf;
     rf.setVerbose(true);
     rf.setDefaultConfigFile("audioConfig.ini");    //overridden by --from parameter
-    rf.setDefaultContext("icubAudioAttention");    //overridden by --context parameter
+    rf.setDefaultContext("Audio_Preprocessor");    //overridden by --context parameter
     rf.configure(argc, argv);  
 
 

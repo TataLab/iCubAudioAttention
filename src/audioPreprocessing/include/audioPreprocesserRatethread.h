@@ -26,6 +26,8 @@
 #ifndef _AUDIO_PREPROCESSER_RATETHREAD_H_
 #define _AUDIO_PREPROCESSER_RATETHREAD_H_
 
+#include <iostream>
+
 #include <yarp/dev/all.h>
 
 #include <yarp/math/Math.h>
