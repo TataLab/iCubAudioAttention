@@ -75,7 +75,7 @@ COLOUR GetColour(double v,double vmin,double vmax)
 #define THRATE 100 //ms
 
 freqVisualisationRatethread::freqVisualisationRatethread():RateThread(THRATE) {
-    robot = "icub";        
+    robot = "icub";
 }
 
 freqVisualisationRatethread::freqVisualisationRatethread(string _robot, string _configFile):RateThread(THRATE){
@@ -116,15 +116,15 @@ std::string freqVisualisationRatethread::getName(const char* p) {
 }
 
 void freqVisualisationRatethread::setInputPortName(string InpPort) {
-    
+
 }
 
 void freqVisualisationRatethread::setGain(int inGain) {
-    std::cerr << "gain is " << inGain << std::endl;    
+    std::cerr << "gain is " << inGain << std::endl;
     this->visGain = inGain;
 }
 
-void freqVisualisationRatethread::run() {    
+void freqVisualisationRatethread::run() {
     //code here .....
     if (inputPort.getInputCount()) {
         Matrix* mat = inputPort.read(false);   //blocking reading for synchr with the input
@@ -200,5 +200,3 @@ void freqVisualisationRatethread::threadRelease() {
     inputPort.close();
     outputPort.close();
 }
-
-

@@ -27,10 +27,10 @@
 #define erb(x)         ( 24.7 * ( 4.37e-3 * ( x ) + 1.0 ) )
 
 
-GammatoneFilter::GammatoneFilter(int SampleRate, int lowCF, int highCF, int numBands, int nSamples, int numMics, bool hr) : 
+GammatoneFilter::GammatoneFilter(int SampleRate, int lowCF, int highCF, int numBands, int nSamples, int numMics, bool hr) :
 samplingRate(SampleRate), lowerCF(lowCF), higherCF(highCF), nBands(numBands), frameSamples(nSamples), nMics(numMics),  hrect(hr) {
-	
-	// Calls a function that will be used to create the ERB center 
+
+	// Calls a function that will be used to create the ERB center
 	// frequencies between the lowest and highest frequency and the number
 	// of bands all specified in the configuration file.
 	makeErbCFs();
@@ -38,20 +38,20 @@ samplingRate(SampleRate), lowerCF(lowCF), higherCF(highCF), nBands(numBands), fr
 	// Uncomment this if you would like Liner Center Frequencies
 	//makeLinerCFs();
 
-	tempFilteredAudio = new float[frameSamples]; 
+	tempFilteredAudio = new float[frameSamples];
 
 	for (int i = 0; i < nMics; i++) {
 
 		float* currentMicArray = new float[frameSamples];
-		
+
 		for (int j = 0; j < frameSamples; j++)
 			currentMicArray[j] = 0;
-		
+
 		inputSplitAudio.push_back(currentMicArray);
 	}
 
 	for (int i = 0; i < nBands * nMics; i++) {
-		
+
 		float *temp = new float[frameSamples];
 		filteredAudio.push_back(temp);
 	}
@@ -61,27 +61,27 @@ samplingRate(SampleRate), lowerCF(lowCF), higherCF(highCF), nBands(numBands), fr
 
 
 GammatoneFilter::~GammatoneFilter() {
-	
+
 	for (int i = 0; i < inputSplitAudio.size(); i++)
 		delete[] inputSplitAudio[i];
 
-	delete[] tempFilteredAudio; 
+	delete[] tempFilteredAudio;
 }
 
 
 void GammatoneFilter::gammatoneFilterBank(float *inAudio) {
-	
+
 	for (int i = 0; i < nMics; i++)
 		for (int j = 0; j < frameSamples; j++)
 			inputSplitAudio[i][j] = inAudio[j*nMics + i];
 
 	for (int i = 0; i < nMics; i++)
 		for (int ch = 0; ch < nBands; ch++) {
-            
+
             float *p = singleFilter(inputSplitAudio[i], cfs[ch]);
-            
+
             for (int frame = 0; frame < frameSamples; frame++) {
-    			filteredAudio[ch + (i * nBands)][frame] = p[frame];
+    					filteredAudio[ch + (i * nBands)][frame] = p[frame];
             }
         }
 }
@@ -161,7 +161,7 @@ void GammatoneFilter::makeErbCFs() {
 	// Calculates the incrementing amount
 	double incAmount = (highERB - minERB) / (nBands - 1);
 
-	for (int i = 0; i < nBands; i++) 
+	for (int i = 0; i < nBands; i++)
 		cfs.push_back(ErbRateToHz(incAmount * i + minERB));
 }
 
@@ -170,7 +170,7 @@ void GammatoneFilter::makeLinerCFs() {
 
 	double incAmount = (higherCF - lowerCF) / (nBands - 1);
 
-	for (int i = 0; i < nBands; i++) 
+	for (int i = 0; i < nBands; i++)
 		cfs.push_back(incAmount * i + lowerCF);
 }
 
@@ -207,7 +207,7 @@ float* GammatoneFilter::singleFilter(float* input, double centerFreqency) {
 	double coscf = cos(tpt * centerFreqency);
 	double sincf = sin(tpt * centerFreqency);
 	double qcos = 1;
-	double qsin = 0;	
+	double qsin = 0;
 
 	for (int t = 0; t < (frameSamples); t++) {
 
@@ -228,13 +228,13 @@ float* GammatoneFilter::singleFilter(float* input, double centerFreqency) {
 		p4i = p3i; p3i = p2i; p2i = p1i; p1i = p0i;
 
 		tempFilteredAudio[t] = (u0r * qcos + u0i * qsin) * gain;
-		
+
 		if (hrect && tempFilteredAudio[t] < 0)
 			tempFilteredAudio[t] = 0;
 
 		qcos = coscf * (oldcs = qcos) + sincf * qsin;
 		qsin = coscf * qsin - sincf * oldcs;
 	}
-	
+
 	return tempFilteredAudio;
 }

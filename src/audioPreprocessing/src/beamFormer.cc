@@ -32,10 +32,10 @@ inline int myMod(int a, int b) {
 
 BeamFormer::BeamFormer(int numBands, int nSamples, int numMics, int numBeamsHemifield) :
 nMics(numMics), frameSamples(nSamples), nBands(numBands), getNBeamsPerHemifield(numBeamsHemifield) {
-	
+
 	totalBeams = (getNBeamsPerHemifield*2) + 1;
-	
-	// Allocating the required vectors to create the beamFormed audio 
+
+	// Allocating the required vectors to create the beamFormed audio
 	for (int i = 0; i < totalBeams; i++) {
 
 		std::vector<std::vector<float> > tempvector;
@@ -48,11 +48,11 @@ nMics(numMics), frameSamples(nSamples), nBands(numBands), getNBeamsPerHemifield(
 		beamFormedAudioVector.push_back(tempvector);
 	}
 
-	// Allocating the required vectors to create the reduced beamFormed audio 
+	// Allocating the required vectors to create the reduced beamFormed audio
 	for (int i = 0; i < totalBeams; i++) {
 
 		std::vector<double> tempvector(nBands, 0);
-		
+
 		reducedBeamFormedAudioVector.push_back(tempvector);
 	}
 }
@@ -77,7 +77,7 @@ std::vector<std::vector<std::vector<float> > > BeamFormer::getBeamAudio() {
 
 	// construct the threads once
 	std::vector<std::thread> myThread(limit);
-	
+
 	// run beamforming on all indices
 	while (i < totalBeams) {
 		for ( ; i < totalBeams; i++) {
@@ -89,7 +89,7 @@ std::vector<std::vector<std::vector<float> > > BeamFormer::getBeamAudio() {
 			myThread[i-j] = std::thread(&BeamFormer::audioMultiThreadingLoop, this, i);
 		}
 
-		// join the finished threads so 
+		// join the finished threads so
 		// that they may be reassigned
 		for (int k = 0; j < i; j++, k++)
 			myThread[k].join();
@@ -106,7 +106,7 @@ std::vector<std::vector<double> > BeamFormer::getReducedBeamAudio() {
 
 	// construct the threads once
 	std::vector<std::thread> myThread(limit);
-	
+
 	// run beamforming on all indices
 	while (i < totalBeams) {
 		for ( ; i < totalBeams; i++) {
@@ -117,8 +117,8 @@ std::vector<std::vector<double> > BeamFormer::getReducedBeamAudio() {
 			// begin thread
 			myThread[i-j] = std::thread(&BeamFormer::reducedAudioMultiThreadingLoop, this, i);
 		}
-		
-		// join the finished threads so 
+
+		// join the finished threads so
 		// that they may be reassigned
 		for (int k = 0; j < i; j++, k++)
 			myThread[k].join();
@@ -144,6 +144,6 @@ void BeamFormer::reducedAudioMultiThreadingLoop(int i) {
 		for (int k = 0; k < frameSamples; k++) {
 			reducedBeamFormedAudioVector[i][j] += pow((inputSignal[j][k] + inputSignal[j + nBands][myMod(k + ((getNBeamsPerHemifield) - i), frameSamples)]), 2);
 		}
-		reducedBeamFormedAudioVector[i][j] = sqrt((static_cast<double>(1) / frameSamples) * (reducedBeamFormedAudioVector[i][j]));
+		reducedBeamFormedAudioVector[i][j] = sqrt(reducedBeamFormedAudioVector[i][j] / ( (double) frameSamples));
 	}
 }

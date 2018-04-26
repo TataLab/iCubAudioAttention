@@ -69,7 +69,7 @@ bool AudioBayesianRatethread::threadInit() {
 		// A long term Bayesian map term map
 		longMap.push_back(tempvector);
 	}
-    
+
     // initialize probability angle map.
     for (int i = 0; i < interpolateNSamples * 2; i++) {
     	longProbabilityAngleMap.push_back(0.0);
@@ -198,23 +198,23 @@ void AudioBayesianRatethread::run() {
 
 	// Calls a function that will take the current
 	// audio map and create the Bayesian maps
-    // reads the angles passed via input port	
-    setAcousticMap(); 
+    // reads the angles passed via input port
+    setAcousticMap();
 
 
-	if (outPort->getOutputCount()) {	    		
+	if (outPort->getOutputCount()) {
         // copies the data in the longMap vector into the outputMatrix
 		// and sends the matrix along with the envelope via the output Port
 		sendAudioMap(longMap);
 	}
-    
+
 
    // if (outProbabilityPort->getOutputCount()) {
-        // copoes the data in the longProbabilityAngleMap vector into the 
-        // outProbabilityMap and sends it along with the envelope via the 
+        // copoes the data in the longProbabilityAngleMap vector into the
+        // outProbabilityMap and sends it along with the envelope via the
         // outProbability port.
     	sendProbabilityMap(longProbabilityAngleMap);
-   // }   
+   // }
 
 	// Calls the Memory maper and memory maps it to
 	// the following file: /tmp/bayesianProbabilityLongMap.tmp
@@ -287,7 +287,7 @@ void AudioBayesianRatethread::calcOffset() {
 	//to do:  redesign this to make use of the SpatialSound class which contains
 	//information about altitude and azimuth so that yarpBayesianMap never needs
 	//to get the position of the head directly from the robot
-	if (headAngleInPort->getInputCount()) { 
+	if (headAngleInPort->getInputCount()) {
 		headAngleBottle = headAngleInPort->read(true);   //blocking reading for synchr with the input
 		offset = headAngleBottle->get(0).asDouble();
         offset += 270;
@@ -312,15 +312,15 @@ void AudioBayesianRatethread::sendAudioMap(std::vector <std::vector <double>> &p
         outputMatrix->setRow(i, tempV);
     }
 
-    outPort->setEnvelope(ts);
+  outPort->setEnvelope(ts);
 	outPort->write(*outputMatrix);
 }
 
 void AudioBayesianRatethread::sendProbabilityMap(std::vector <double> &outputProbabilityMap) {
-    
+
     yarp::sig::Matrix& m = outProbabilityPort->prepare();
-    m.resize(1, interpolateNSamples*2);  
-     
+    m.resize(1, interpolateNSamples*2);
+
     yarp::sig::Vector tempV(interpolateNSamples * 2);
 
 	for (int i = 0; i < interpolateNSamples * 2; i++) {

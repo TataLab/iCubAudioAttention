@@ -5,9 +5,8 @@
 
 #include "audioPreprocesserModule.h"
 
-
 int main(int argc, char * argv[]) {
-    
+
     /* initialize yarp network */
     yarp::os::Network yarp;
 
