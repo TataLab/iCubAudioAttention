@@ -16,32 +16,29 @@
   * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
   * Public License for more details
 */
-  
+
 /**
  * @file main.cpp
  * @brief main code for the tutorial module.
  */
 
-#include "iCub/freqVisualisationModule.h" 
+#include "iCub/freqVisualisationModule.h"
 
 using namespace yarp::os;
 using namespace yarp::sig;
 
-
 int main(int argc, char * argv[])
 {
-    
+
     Network yarp;
-    freqVisualisationModule module; 
+    freqVisualisationModule module;
 
     ResourceFinder rf;
     rf.setVerbose(true);
     rf.setDefaultConfigFile("freqVisualisation.ini");    //overridden by --from parameter
     rf.setDefaultContext("icubAudioAttention");    //overridden by --context parameter
-    rf.configure(argc, argv);  
- 
+    rf.configure(argc, argv);
+
     module.runModule(rf);
     return 0;
 }
-
-

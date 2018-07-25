@@ -132,14 +132,15 @@ bool AudioPreprocesserRatethread::threadInit() {
 	// construct a yarp Matrix for sending an Audio Map
 	outAudioMap = new yarp::sig::Matrix(nBands, interpolateNSamples * 2);
 
+	//TODO: comeback
 	// construct a yarp Matrix for sending GammaTone Filtered Audio
 	outGammaToneFilteredAudioMap = new yarp::sig::Matrix(nBands*2, frameSamples);
-    
-    // construct a yarp Matrix for sending Beam Formed Audio
-    outBeamFormedAudioMap = new yarp::sig::Matrix(totalBeams * nBands, frameSamples);
 
-    // construct a yarp Matrix for sending Reduced Beam Formed Audio
-    outReducedBeamFormedAudioMap = new yarp::sig::Matrix(nBands, totalBeams);
+	// construct a yarp Matrix for sending Beam Formed Audio
+  outBeamFormedAudioMap = new yarp::sig::Matrix(totalBeams * nBands, frameSamples);
+
+  // construct a yarp Matrix for sending Reduced Beam Formed Audio
+  outReducedBeamFormedAudioMap = new yarp::sig::Matrix(nBands, totalBeams);
 
 	// initializing completed successfully
 	yInfo("Initialization of the processing thread correctly ended");
@@ -176,11 +177,11 @@ void AudioPreprocesserRatethread::run() {
 
 	// initialize rawAudio to be usable
 	for (int col = 0 ; col < frameSamples; col++) {
-		for (int micLoop = 0; micLoop < nMics; micLoop++) {	  		
+		for (int micLoop = 0; micLoop < nMics; micLoop++) {
             rawAudio[col*nMics + micLoop] = s->get(col, micLoop) / normDivid; //double check casting
         }
     }
-    
+
 
 	// run the Filter Bank on the raw Audio
 	gammatoneAudioFilter->gammatoneFilterBank(rawAudio);
@@ -311,8 +312,8 @@ void AudioPreprocesserRatethread::loadFile(yarp::os::ResourceFinder &rf) {
 		yInfo("nMics = %d", nMics);
 		yInfo("interpolateNSamples = %d", interpolateNSamples );
 		yInfo("total beams = %d",totalBeams);
-        yInfo("low Cutting frequency = %d",lowCf);
-        yInfo("high Cutting frequency = %d",highCf);
+    yInfo("low Cutting frequency = %d",lowCf);
+    yInfo("high Cutting frequency = %d",highCf);
 	}
 
 	catch (int a) {
@@ -352,7 +353,7 @@ void AudioPreprocesserRatethread::sendBeamFormedAudio(const std::vector<std::vec
 
                 tempV[frame] = beamFormedAudio[beam][band][frame];
             }
-        
+
         	outBeamFormedAudioMap->setRow(band + beam * nBands, tempV);
         }
     }
@@ -369,7 +370,7 @@ void AudioPreprocesserRatethread::sendBeamFormedAudio(const std::vector<std::vec
     //yDebug("after sending matrix %d %d", outBeamFormedAudioMap->rows(), outBeamFormedAudioMap->cols());
 	// set the envelope for the Beam Formed Audio port
 	outBeamFormedAudioPort->setEnvelope(ts);
-    
+
 	// publish the map onto the network
 	outBeamFormedAudioPort->write(*outBeamFormedAudioMap);
 }
