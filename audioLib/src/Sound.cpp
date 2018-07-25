@@ -133,7 +133,7 @@ void Sound::init(int bytesPerSample) {
   
     implementation = new yarp::sig::FlexImage();
     yAssert(implementation!=NULL);
-
+    bytesPerSample=4;
     //yAssert(bytesPerSample==2); // that's all thats implemented right now
     if(bytesPerSample == 2) {
       HELPER(implementation).setPixelSize(sizeof(yarp::sig::PixelMono16));
@@ -216,6 +216,7 @@ bool Sound::read(ConnectionReader& connection) {
     // lousy format - fix soon!
     //yInfo("getting sound at 4 bytes per sample");
     yarp::sig::FlexImage& img = HELPER(implementation);
+    //yDebug("write img pixelsize %d", img.getPixelSize());
     Bottle bot;
     bool ok = PortablePair<yarp::sig::FlexImage,Bottle>::readPair(connection,img,bot);
     frequency = bot.get(0).asInt();
@@ -227,7 +228,7 @@ bool Sound::read(ConnectionReader& connection) {
 bool Sound::write(ConnectionWriter& connection) {
     // lousy format - fix soon!
     yarp::sig::FlexImage& img = HELPER(implementation);
-    //yDebug("write img pixelsize %d", img.getPixelSize());
+    yDebug("write img pixelsize %d", img.getPixelSize());
     Bottle bot;
     bot.addInt(frequency);
     //bot.addInt(img.getPixelSize());
