@@ -137,10 +137,10 @@ bool AudioPreprocesserRatethread::threadInit() {
 	outGammaToneFilteredAudioMap = new yarp::sig::Matrix(nBands*2, frameSamples);
 
 	// construct a yarp Matrix for sending Beam Formed Audio
-  outBeamFormedAudioMap = new yarp::sig::Matrix(totalBeams * nBands, frameSamples);
+  	outBeamFormedAudioMap = new yarp::sig::Matrix(totalBeams * nBands, frameSamples);
 
-  // construct a yarp Matrix for sending Reduced Beam Formed Audio
-  outReducedBeamFormedAudioMap = new yarp::sig::Matrix(nBands, totalBeams);
+  	// construct a yarp Matrix for sending Reduced Beam Formed Audio
+  	outReducedBeamFormedAudioMap = new yarp::sig::Matrix(nBands, totalBeams);
 
 	// initializing completed successfully
 	yInfo("Initialization of the processing thread correctly ended");
@@ -312,8 +312,8 @@ void AudioPreprocesserRatethread::loadFile(yarp::os::ResourceFinder &rf) {
 		yInfo("nMics = %d", nMics);
 		yInfo("interpolateNSamples = %d", interpolateNSamples );
 		yInfo("total beams = %d",totalBeams);
-    yInfo("low Cutting frequency = %d",lowCf);
-    yInfo("high Cutting frequency = %d",highCf);
+    	yInfo("low Cutting frequency = %d",lowCf);
+    	yInfo("high Cutting frequency = %d",highCf);
 	}
 
 	catch (int a) {
@@ -427,6 +427,7 @@ void AudioPreprocesserRatethread::sendAudioMap() {
 
 inline double AudioPreprocesserRatethread::linerApproximation(int x, int x1, double y1, int x2, double y2) {
 	return y1 + ((y2 - y1) * (x - x1)) / (x2 - x1);
+	//return y2;
 }
 
 

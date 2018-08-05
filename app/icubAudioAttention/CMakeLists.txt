@@ -2,7 +2,7 @@
 # Authors:  Francesco Rea, Austin Kothig, Marko Ilievski
 # CopyPolicy: Released under the terms of the GNU GPL v2.0.
 
-set(appname Audio_Preprocessor)
+set(appname icubAudioAttention)
 
 file(GLOB conf ${CMAKE_CURRENT_SOURCE_DIR}/conf/*.ini ${CMAKE_CURRENT_SOURCE_DIR}/conf/*.xml)
 file(GLOB scripts ${CMAKE_CURRENT_SOURCE_DIR}/scripts/*.template ${CMAKE_CURRENT_SOURCE_DIR}/scripts/*.sh )
