@@ -2,8 +2,8 @@
 
 /*
   * Copyright (C)2017  Department of Neuroscience - University of Lethbridge
-  * Author:Matt Tata, Marko Ilievski
-  * email: m.ilievski@uleth.ca, matthew.tata@uleth.ca, francesco.rea@iit.it
+  * Author:Matt Tata, Marko Ilievski, Austin Kothig, Francesco Rea
+  * email: m.ilievski@uleth.ca, matthew.tata@uleth.ca, kothiga@ueth.ca, francesco.rea@iit.it
   * Permission is granted to copy, distribute, and/or modify this program
   * under the terms of the GNU General Public License, version 2 or any
   * later version published by the Free Software Foundation.
@@ -25,6 +25,10 @@
 #include "gammatoneFilter.h"
 
 #define erb(x)         ( 24.7 * ( 4.37e-3 * ( x ) + 1.0 ) )
+
+inline float myAbs(float x) {
+	return (x >= 0.00001f) ? x : -1.f * x;
+}
 
 
 GammatoneFilter::GammatoneFilter(int SampleRate, int lowCF, int highCF, int numBands, int nSamples, int numMics, bool hr) :
@@ -56,6 +60,11 @@ samplingRate(SampleRate), lowerCF(lowCF), higherCF(highCF), nBands(numBands), fr
 		filteredAudio.push_back(temp);
 	}
 
+	for (int i = 0; i < nBands; i++) {
+		powerAudio.push_back(0);
+	}
+
+
 	tpt = (M_PI + M_PI) / samplingRate;
 }
 
@@ -75,13 +84,16 @@ void GammatoneFilter::gammatoneFilterBank(float *inAudio) {
 		for (int j = 0; j < frameSamples; j++)
 			inputSplitAudio[i][j] = inAudio[j*nMics + i];
 
+
+	int itrband;
 	for (int i = 0; i < nMics; i++)
 		for (int ch = 0; ch < nBands; ch++) {
 
             float *p = singleFilter(inputSplitAudio[i], cfs[ch]);
 
+			itrband = ch + (i * nBands);
             for (int frame = 0; frame < frameSamples; frame++) {
-    					filteredAudio[ch + (i * nBands)][frame] = p[frame];
+    			filteredAudio[itrband][frame] = p[frame];
             }
         }
 }
@@ -237,4 +249,37 @@ float* GammatoneFilter::singleFilter(float* input, double centerFreqency) {
 	}
 
 	return tempFilteredAudio;
+}
+
+
+std::vector< float > GammatoneFilter::getPowerAudio() {
+
+	//-- Take the average of power at each 
+	//-- framesample, for each band.
+	int itrBand;
+	float currentBand;
+	for (int band = 0; band < nBands; band++) {
+		currentBand = 0.f;
+
+		//-- Go through each mic that makes up the filtered audio.
+		for (int mic = 0; mic < nMics; mic++) {
+
+			//-- Set the current index of band
+			//-- that is being iterated over.
+			itrBand = (mic * nBands) + band;
+
+			//-- add this sample to the running sum.
+			for (int frame = 0; frame < frameSamples; frame++) {
+				currentBand += myAbs(filteredAudio[itrBand][frame]);
+			}
+		}
+
+		//-- Take the average of power for the current band.
+		currentBand /= (nMics * frameSamples);
+		
+		//-- Append this the the power map.
+		powerAudio[band] = currentBand;
+	}
+
+	return powerAudio;
 }

@@ -2,8 +2,8 @@
 
 /*
   * Copyright (C)2017  Department of Neuroscience - University of Lethbridge
-  * Author:Matt Tata, Marko Ilievski
-  * email: m.ilievski@uleth.ca, matthew.tata@uleth.ca, francesco.rea@iit.it
+  * Author: Matt Tata, Marko Ilievski, Austin Kothig, Francesco Rea
+  * email: m.ilievski@uleth.ca, matthew.tata@uleth.ca, kothiga@uleth.ca, francesco.rea@iit.it
   * Permission is granted to copy, distribute, and/or modify this program
   * under the terms of the GNU General Public License, version 2 or any
   * later version published by the Free Software Foundation.
@@ -73,6 +73,16 @@ class GammatoneFilter {
 	 *	@return filtered audio
 	 */
 	std::vector< float* > getFilteredAudio();
+
+
+	/**
+	 *  getPowerAudio
+	 * 
+	 *  Returns a vector containing the power of the filtered audio, at each band across framesamples.
+	 * 
+	 *  @return power of filtered audio
+	 */
+	std::vector< float > getPowerAudio();
 
 
 	/**
@@ -185,6 +195,7 @@ class GammatoneFilter {
 	//
 	std::vector< float* > inputSplitAudio;	// Splits the input 
 	std::vector< float* > filteredAudio;	// filtered audio 
+	std::vector< float  > powerAudio;       // power of filtered audio
 	std::vector< double > cfs;				// Perimeters to calculate the center frequencies that the gammatone filter bank will use
 	
 	const float *inputSignal;				// input audio

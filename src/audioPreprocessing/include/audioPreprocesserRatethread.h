@@ -67,6 +67,7 @@ class AudioPreprocesserRatethread : public yarp::os::RateThread {
 	//
 	yarp::os::BufferedPort<yarp::sig::Sound> *inPort;
 	yarp::os::Port *outGammaToneAudioPort;
+    yarp::os::Port *outGammaTonePowerAudioPort;
 	yarp::os::Port *outReducedBeamFormedAudioPort;
 	yarp::os::Port *outBeamFormedAudioPort;
 	yarp::os::Port *outAudioMapEgoPort;
@@ -80,6 +81,7 @@ class AudioPreprocesserRatethread : public yarp::os::RateThread {
 	//
 	yarp::sig::Matrix* outAudioMap;
 	yarp::sig::Matrix* outGammaToneFilteredAudioMap;
+    yarp::sig::Matrix* outGammaTonePowerAudioMap;
 	yarp::sig::Matrix* outBeamFormedAudioMap;
 	yarp::sig::Matrix* outReducedBeamFormedAudioMap;
 
@@ -241,12 +243,24 @@ class AudioPreprocesserRatethread : public yarp::os::RateThread {
     /**
      *  sendGammatoneFilteredAudio
      *
-     *  Function used to send audio after its pass though the gammaton filter.
-     *  The audio is held in outGammatoneFilteredAudio matrix and is sent though port GammatoneFilteredAudioPort.
+     *  Function used to send audio after its pass though the gammatone filter.
+     *  The audio is held in outGammatToneFilteredAudio matrix and is sent though port GammatoneFilteredAudioPort.
      *
      *  @param gammatoneAudio : filtered gammatone audio
      */
     void sendGammatoneFilteredAudio(const std::vector<float*> &gammatoneAudio);
+
+
+    /**
+     *  sendGammatonePowerAudio
+     * 
+     *  Function used to send the power of gammatone filtered audio at each band.
+     *  The audio is held in outGammaTonePowerAudio matrix and is send 
+     *  through port /iCubAudioAttention/GammaTonePowerAudio:o.
+     * 
+     *  @param gammatonePower : power of gammatone audio across framesamples per beam.
+     */
+    void sendGammatonePowerAudio(const std::vector<float> &gammatonePower);
 
 
     /**

@@ -45,11 +45,13 @@ AudioPreprocesserRatethread::AudioPreprocesserRatethread(std::string _robot, std
 AudioPreprocesserRatethread::~AudioPreprocesserRatethread() {
 	delete inPort;
 	delete outGammaToneAudioPort;
+	delete outGammaTonePowerAudioPort;
 	delete outBeamFormedAudioPort;
 	delete outReducedBeamFormedAudioPort;
 	delete outAudioMapEgoPort;
 	delete outAudioMap;
 	delete outGammaToneFilteredAudioMap;
+	delete outGammaTonePowerAudioMap;
 	delete gammatoneAudioFilter;
 	delete beamForm;
 	delete[] rawAudio;
@@ -70,6 +72,14 @@ bool AudioPreprocesserRatethread::threadInit() {
 	outGammaToneAudioPort = new yarp::os::Port();
 	if (!outGammaToneAudioPort->open("/iCubAudioAttention/GammaToneFilteredAudio:o")) {
 		yError("unable to open port to send Gammatone Filtered Audio");
+		return false;
+	}
+
+
+	// output port for sending the power of GammaTone Filtered Audio
+	outGammaTonePowerAudioPort = new yarp::os::Port();
+	if (!outGammaTonePowerAudioPort->open("/iCubAudioAttention/GammaTonePowerAudio:o")) {
+		yError("unable to open port to send Power of Gammatone Filtered Audio");
 		return false;
 	}
 
@@ -104,10 +114,8 @@ bool AudioPreprocesserRatethread::threadInit() {
 			yError("Could not make connection to /sender. \nExiting. \n");
 			return false;
 		}
-	}
-
-	// inPort failed to open. quit.
-	else {
+	} else {
+		// inPort failed to open. quit.
 		return false;
 	}
 
@@ -135,6 +143,9 @@ bool AudioPreprocesserRatethread::threadInit() {
 	//TODO: comeback
 	// construct a yarp Matrix for sending GammaTone Filtered Audio
 	outGammaToneFilteredAudioMap = new yarp::sig::Matrix(nBands*2, frameSamples);
+
+	// construct a yarp Matrix for sending the Power of GammaTone Filtered Audio.
+	outGammaTonePowerAudioMap = new yarp::sig::Matrix(1, nBands);
 
 	// construct a yarp Matrix for sending Beam Formed Audio
   	outBeamFormedAudioMap = new yarp::sig::Matrix(totalBeams * nBands, frameSamples);
@@ -182,7 +193,6 @@ void AudioPreprocesserRatethread::run() {
         }
     }
 
-
 	// run the Filter Bank on the raw Audio
 	gammatoneAudioFilter->gammatoneFilterBank(rawAudio);
 
@@ -191,6 +201,13 @@ void AudioPreprocesserRatethread::run() {
 		// a sendable format, set the envelope,
 		// then publish to the network
 		sendGammatoneFilteredAudio(gammatoneAudioFilter->getFilteredAudio());
+	}
+	
+	if (outGammaTonePowerAudioPort->getOutputCount()) {
+		// format the power of gammatone filtered audio into 
+		// a sendable format, set the envelope,
+		// then publish to the network.
+		sendGammatonePowerAudio(gammatoneAudioFilter->getPowerAudio());
 	}
 
 	// set the beamformers audio to be the filtered audio
@@ -246,6 +263,7 @@ void AudioPreprocesserRatethread::threadRelease() {
 	// stop all ports
 	inPort->interrupt();
 	outGammaToneAudioPort->interrupt();
+	outGammaTonePowerAudioPort->interrupt();
 	outBeamFormedAudioPort->interrupt();
 	outReducedBeamFormedAudioPort->interrupt();
 	outAudioMapEgoPort->interrupt();
@@ -253,6 +271,7 @@ void AudioPreprocesserRatethread::threadRelease() {
 	// release all ports
 	inPort->close();
 	outGammaToneAudioPort->close();
+	outGammaTonePowerAudioPort->close();
 	outBeamFormedAudioPort->close();
 	outReducedBeamFormedAudioPort->close();
 	outAudioMapEgoPort->close();
@@ -342,6 +361,40 @@ void AudioPreprocesserRatethread::sendGammatoneFilteredAudio(const std::vector<f
 	// publish the map onto the network
 	outGammaToneAudioPort->write(*outGammaToneFilteredAudioMap);
 }
+
+
+void AudioPreprocesserRatethread::sendGammatonePowerAudio(const std::vector<float> &gammatonePower) {
+
+	float max=-5.f, min=5.f;
+	
+	//-- Fill the yarp matrix with the power of gammatone filtered audio.
+	yarp::sig::Vector tempV(nBands);
+
+	std::cerr << "\n\n Begin: \n";
+	for (int band = 0; band < nBands; band++) {
+		tempV[band] = gammatonePower[band];
+
+		if (tempV[band] > max) {
+			max = tempV[band];
+		} 
+		if (tempV[band] < min) {
+			min = tempV[band];
+		}
+
+		std::cerr << gammatonePower[band] << " ";
+	} std::cerr << std::endl;
+
+	std::cerr << "max:" << max << "\tmin:" << min << std::endl;
+
+	outGammaTonePowerAudioMap->setRow(0, tempV);
+
+	//-- Set the envelope for the Gammatone Power Audio Port.
+	outGammaTonePowerAudioPort->setEnvelope(ts);
+
+	//-- Publish the map onto the yarp network.
+	outGammaTonePowerAudioPort->write(*outGammaTonePowerAudioMap);
+}
+
 
 void AudioPreprocesserRatethread::sendBeamFormedAudio(const std::vector<std::vector<std::vector<float> > > &beamFormedAudio) {
 

@@ -18,6 +18,12 @@
 
   <module>
       <name> frequencyVisualisation </name>
+      <parameters> --name /gammatonePowerVisualiser </parameters>
+      <node> icub </node>
+  </module>
+
+  <module>
+      <name> frequencyVisualisation </name>
       <parameters> --name /reducedBeamFormedVisualiser </parameters>
       <node> icub </node>
   </module>
@@ -46,6 +52,13 @@
       <parameters> --x 100 --y 350 --h 320 --w 240 --r 33 --name /gammatoneView </parameters>
       <node> icub </node>
   </module>
+
+  <module>
+      <name> yarpview </name>
+      <parameters> --x 100 --y 350 --h 320 --w 240 --r 33 --name /gammatonePowerView </parameters>
+      <node> icub </node>
+  </module>
+
 
   <module>
       <name> yarpview </name>
@@ -79,6 +92,12 @@
   </connection>  
 
   <connection>
+      <from> /iCubAudioAttention/GammaTonePowerAudio:o </from>
+      <to>   /gammatonePowerVisualiser/map:i           </to>
+      <protocol> tcp </protocol>
+  </connection>
+
+  <connection>
       <from> /iCubAudioAttention/ReducedBeamFormedAudio:o </from>
       <to>   /reducedBeamFormedVisualiser/map:i           </to>
       <protocol> tcp </protocol>
@@ -106,6 +125,12 @@
   <connection>
       <from> /gammatoneVisualiser/img:o </from>
       <to>   /gammatoneView             </to>
+      <protocol> tcp </protocol>
+  </connection>
+
+  <connection>
+      <from> /gammatonePowerVisualiser/img:o </from>
+      <to>   /gammatonePowerView             </to>
       <protocol> tcp </protocol>
   </connection>
 

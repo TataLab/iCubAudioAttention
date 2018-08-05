@@ -38,7 +38,7 @@ AudioBayesianRatethread::~AudioBayesianRatethread() {
 	delete inPort;
 	delete headAngleInPort;
 	delete outPort;
-  delete outProbabilityPort;
+  	delete outProbabilityPort;
 }
 
 
@@ -313,7 +313,7 @@ void AudioBayesianRatethread::sendAudioMap(std::vector <std::vector <double>> &p
         outputMatrix->setRow(i, tempV);
     }
 
-  outPort->setEnvelope(ts);
+ 	outPort->setEnvelope(ts);
 	outPort->write(*outputMatrix);
 }
 
