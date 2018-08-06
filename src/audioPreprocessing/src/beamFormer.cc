@@ -55,6 +55,11 @@ nMics(numMics), frameSamples(nSamples), nBands(numBands), getNBeamsPerHemifield(
 
 		reducedBeamFormedAudioVector.push_back(tempvector);
 	}
+
+	// Allocate space for the powerAudio vector.
+	for (int i = 0; i < nBands; i++) {
+		powerAudio.push_back(0.0);
+	}
 }
 
 
@@ -146,4 +151,32 @@ void BeamFormer::reducedAudioMultiThreadingLoop(int i) {
 		}
 		reducedBeamFormedAudioVector[i][j] = sqrt(reducedBeamFormedAudioVector[i][j] / ( (double) frameSamples));
 	}
+}
+
+
+std::vector< double > BeamFormer::getPowerAudio() {
+
+	//-- Clear out the previous powerAudio vector.
+	for (int band = 0; band < nBands; band++) {
+		powerAudio[band] = 0.0;
+	}
+
+
+	//-- Take the average of power at each
+	//-- beam and average it.
+	for (int beam = 0; beam < totalBeams; beam++) {
+
+		//-- This stride pattern is not ideal for powerAudio,
+		//-- but it is the best we can do for reduced beam formed audio vector.
+		for (int band = 0; band < nBands; band++) {
+			powerAudio[band] += reducedBeamFormedAudioVector[beam][band];
+		}
+	}
+
+	//-- Go through now and find the mean at each index of powerAudio.
+	for (int band = 0; band < nBands; band++) {
+		powerAudio[band] /= totalBeams;
+	}
+
+	return powerAudio;
 }

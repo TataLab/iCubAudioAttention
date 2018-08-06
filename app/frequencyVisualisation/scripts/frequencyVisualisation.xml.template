@@ -30,6 +30,12 @@
 
   <module>
       <name> frequencyVisualisation </name>
+      <parameters> --name /beamFormedPowerVisualiser </parameters>
+      <node> icub </node>
+  </module>
+
+  <module>
+      <name> frequencyVisualisation </name>
       <parameters> --name /bayesianVisualiser --gain 100</parameters>
       <node> icub </node>
   </module>
@@ -63,6 +69,12 @@
   <module>
       <name> yarpview </name>
       <parameters> --x 100 --y 850 --h 320 --w 240 --r 33 --name /reducedBeamFormedView </parameters>
+      <node>icub</node>
+  </module>
+
+  <module>
+      <name> yarpview </name>
+      <parameters> --x 100 --y 850 --h 320 --w 240 --r 33 --name /beamFormedPowerView </parameters>
       <node>icub</node>
   </module>
 
@@ -104,6 +116,12 @@
   </connection>
 
   <connection>
+      <from> /iCubAudioAttention/BeamFormedPowerAudio:o </from>
+      <to>   /beamFormedPowerVisualiser/map:i           </to>
+      <protocol> tcp </protocol>
+  </connection>
+
+  <connection>
       <from> /iCubAudioAttention/BayesianMap:o </from>
       <to>   /bayesianVisualiser/map:i         </to>
       <protocol> tcp </protocol>
@@ -137,6 +155,12 @@
   <connection>
       <from> /reducedBeamFormedVisualiser/img:o </from>
       <to>   /reducedBeamFormedView             </to>
+      <protocol> tcp </protocol>
+  </connection>
+
+  <connection>
+      <from> /beamFormedPowerVisualiser/img:o </from>
+      <to>   /beamFormedPowerView             </to>
       <protocol> tcp </protocol>
   </connection>
 

@@ -70,6 +70,7 @@ class AudioPreprocesserRatethread : public yarp::os::RateThread {
     yarp::os::Port *outGammaTonePowerAudioPort;
 	yarp::os::Port *outReducedBeamFormedAudioPort;
 	yarp::os::Port *outBeamFormedAudioPort;
+    yarp::os::Port *outBeamFormedPowerAudioPort;
 	yarp::os::Port *outAudioMapEgoPort;
 
 	yarp::os::Stamp ts;
@@ -84,6 +85,7 @@ class AudioPreprocesserRatethread : public yarp::os::RateThread {
     yarp::sig::Matrix* outGammaTonePowerAudioMap;
 	yarp::sig::Matrix* outBeamFormedAudioMap;
 	yarp::sig::Matrix* outReducedBeamFormedAudioMap;
+    yarp::sig::Matrix* outBeamFormedPowerAudioMap;
 
 	std::vector < std::vector < std::vector < float > > > beamFormedAudioVector;
 	std::vector < std::vector < double > > highResolutionAudioMap;
@@ -255,7 +257,7 @@ class AudioPreprocesserRatethread : public yarp::os::RateThread {
      *  sendGammatonePowerAudio
      * 
      *  Function used to send the power of gammatone filtered audio at each band.
-     *  The audio is held in outGammaTonePowerAudio matrix and is send 
+     *  The audio is held in outGammaTonePowerAudio matrix and is sent
      *  through port /iCubAudioAttention/GammaTonePowerAudio:o.
      * 
      *  @param gammatonePower : power of gammatone audio across framesamples per beam.
@@ -277,6 +279,18 @@ class AudioPreprocesserRatethread : public yarp::os::RateThread {
      *  Function used to send beam formed audio that is held in outBeamFormedAudio though port beamFormedAudioPort.
      */
     void sendReducedBeamFormedAudio(const std::vector<std::vector<double> > &reducedBeamFormedAudio);
+
+
+    /**
+     *  sendBeamFormedPowerAudio
+     * 
+     *  Function used to send the power of beam formed audio at each beam.
+     *  The audio is held in outBeamFormedPowerAudio matrix and is sent
+     *  through port /iCubAudioAttention/BeamFormedPowerAudio:o.
+     * 
+     *  @param beamFormedPower : power of reduced beamformed audio across each band.
+     */
+    void sendBeamFormedPowerAudio(const std::vector< double > &beamFormedPower);
 
 
     /**

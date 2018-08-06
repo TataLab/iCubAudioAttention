@@ -48,12 +48,19 @@ AudioPreprocesserRatethread::~AudioPreprocesserRatethread() {
 	delete outGammaTonePowerAudioPort;
 	delete outBeamFormedAudioPort;
 	delete outReducedBeamFormedAudioPort;
+	delete outBeamFormedPowerAudioPort;
 	delete outAudioMapEgoPort;
+
 	delete outAudioMap;
 	delete outGammaToneFilteredAudioMap;
 	delete outGammaTonePowerAudioMap;
+	delete outBeamFormedAudioMap;
+	delete outReducedBeamFormedAudioMap;
+	delete outBeamFormedPowerAudioMap;
+
 	delete gammatoneAudioFilter;
 	delete beamForm;
+
 	delete[] rawAudio;
 }
 
@@ -85,7 +92,7 @@ bool AudioPreprocesserRatethread::threadInit() {
 
 
 	// output port for sending BeamFormed Audio
-	outBeamFormedAudioPort= new yarp::os::Port();
+	outBeamFormedAudioPort = new yarp::os::Port();
 	if (!outBeamFormedAudioPort->open("/iCubAudioAttention/BeamFormedAudio:o")) {
 		yError("unable to open port to send Beamformed Audio");
 		return false;
@@ -93,9 +100,17 @@ bool AudioPreprocesserRatethread::threadInit() {
 
 
 	// output port for sending BeamFormed Audio
-	outReducedBeamFormedAudioPort= new yarp::os::Port();
-	if (!outReducedBeamFormedAudioPort->open("/iCubAudioAttention/ReducedBeamFormedAudio:o")){
+	outReducedBeamFormedAudioPort = new yarp::os::Port();
+	if (!outReducedBeamFormedAudioPort->open("/iCubAudioAttention/ReducedBeamFormedAudio:o")) {
 		yError("unable to open port to send Reduced Beamformed Audio");
+		return false;
+	}
+
+
+	// output port for sending the power of the BeamFormed Audio
+	outBeamFormedPowerAudioPort = new yarp::os::Port();
+	if (!outBeamFormedPowerAudioPort->open("/iCubAudioAttention/BeamFormedPowerAudio:o")) {
+		yError("unable to open port to send the power of the BeamFormed Audio");
 		return false;
 	}
 
@@ -152,6 +167,9 @@ bool AudioPreprocesserRatethread::threadInit() {
 
   	// construct a yarp Matrix for sending Reduced Beam Formed Audio
   	outReducedBeamFormedAudioMap = new yarp::sig::Matrix(nBands, totalBeams);
+
+	// construct a yarp Matrix for sending the power of the Beam Formed Audio
+	outBeamFormedPowerAudioMap = new yarp::sig::Matrix(1, nBands);
 
 	// initializing completed successfully
 	yInfo("Initialization of the processing thread correctly ended");
@@ -233,6 +251,13 @@ void AudioPreprocesserRatethread::run() {
 		sendReducedBeamFormedAudio(reducedBeamFormedAudioVector);
 	}
 
+	if (outBeamFormedPowerAudioPort->getOutputCount()) {
+		// format the power of the beam formed audio into 
+		// a sendable format, set the envelope,
+		// then publish to the network.
+		sendBeamFormedPowerAudio(beamForm->getPowerAudio());
+	}
+
 	// do an interpolate on the reducedBeamFormedAudioVector
 	// to produce a highResolutionAudioMap
 	linerInterpolate();
@@ -266,6 +291,7 @@ void AudioPreprocesserRatethread::threadRelease() {
 	outGammaTonePowerAudioPort->interrupt();
 	outBeamFormedAudioPort->interrupt();
 	outReducedBeamFormedAudioPort->interrupt();
+	outBeamFormedPowerAudioPort->interrupt();
 	outAudioMapEgoPort->interrupt();
 
 	// release all ports
@@ -274,6 +300,7 @@ void AudioPreprocesserRatethread::threadRelease() {
 	outGammaTonePowerAudioPort->close();
 	outBeamFormedAudioPort->close();
 	outReducedBeamFormedAudioPort->close();
+	outBeamFormedPowerAudioPort->close();
 	outAudioMapEgoPort->close();
 }
 
@@ -364,27 +391,13 @@ void AudioPreprocesserRatethread::sendGammatoneFilteredAudio(const std::vector<f
 
 
 void AudioPreprocesserRatethread::sendGammatonePowerAudio(const std::vector<float> &gammatonePower) {
-
-	float max=-5.f, min=5.f;
 	
 	//-- Fill the yarp matrix with the power of gammatone filtered audio.
 	yarp::sig::Vector tempV(nBands);
 
-	std::cerr << "\n\n Begin: \n";
 	for (int band = 0; band < nBands; band++) {
 		tempV[band] = gammatonePower[band];
-
-		if (tempV[band] > max) {
-			max = tempV[band];
-		} 
-		if (tempV[band] < min) {
-			min = tempV[band];
-		}
-
-		std::cerr << gammatonePower[band] << " ";
-	} std::cerr << std::endl;
-
-	std::cerr << "max:" << max << "\tmin:" << min << std::endl;
+	}
 
 	outGammaTonePowerAudioMap->setRow(0, tempV);
 
@@ -456,6 +469,25 @@ void AudioPreprocesserRatethread::sendReducedBeamFormedAudio(const std::vector<s
 
 	// publish the map onto the network
 	outReducedBeamFormedAudioPort->write(*outReducedBeamFormedAudioMap);
+}
+
+
+void AudioPreprocesserRatethread::sendBeamFormedPowerAudio(const std::vector< double > &beamFormedPower) {
+
+	//-- Fill the yarp matrix with the power of the beams formed audio.
+	yarp::sig::Vector tempV(nBands);
+
+	for (int band = 0; band < nBands; band++) {
+		tempV[band] = beamFormedPower[band];
+	}
+
+	outBeamFormedPowerAudioMap->setRow(0, tempV);
+
+	//-- Set the envelope for the Beamformed Power Audio Port.
+	outBeamFormedPowerAudioPort->setEnvelope(ts);
+
+	//-- Publish the map onto the yarp network.
+	outBeamFormedPowerAudioPort->write(*outBeamFormedPowerAudioMap);
 }
 
 
