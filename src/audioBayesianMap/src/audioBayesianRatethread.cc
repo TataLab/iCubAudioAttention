@@ -38,7 +38,7 @@ AudioBayesianRatethread::~AudioBayesianRatethread() {
 	delete inPort;
 	delete headAngleInPort;
 	delete outPort;
-    delete outProbabilityPort;
+  	delete outProbabilityPort;
 }
 
 
@@ -254,6 +254,7 @@ void AudioBayesianRatethread::loadFile(yarp::os::ResourceFinder &rf) {
 		yInfo("nBands = %d", nBands);
 		yInfo("nMics = %d", nMics);
 		yInfo("interpolateNSamples = %d", interpolateNSamples );
+		yInfo("longBufferSize = %d", longTimeFrame);
 	}
 
 	catch (int a) {
@@ -312,7 +313,7 @@ void AudioBayesianRatethread::sendAudioMap(std::vector <std::vector <double>> &p
         outputMatrix->setRow(i, tempV);
     }
 
-  outPort->setEnvelope(ts);
+ 	outPort->setEnvelope(ts);
 	outPort->write(*outputMatrix);
 }
 

@@ -91,6 +91,16 @@ class BeamFormer {
 	std::vector<std::vector<double> > getReducedBeamAudio();
 
 
+	/**
+	 *  getPowerAudio
+	 * 
+	 *  Function that will sum the power of a single band, across the reduced beamformed beams.
+	 * 
+	 *  @return average power of beams
+	 */
+	std::vector< double > getPowerAudio();
+
+
  private:
 	/**
 	 *	reducedAudioMultiThreadingLoop
@@ -122,6 +132,7 @@ class BeamFormer {
 	std::vector < float* > inputSignal;											 // The input audio signal
 	std::vector < std::vector < std::vector < float > > > beamFormedAudioVector; // The uncompressed beamformed data if getBeamAudio() was called
 	std::vector < std::vector < double > > reducedBeamFormedAudioVector;		 // The compressed beamformed data if getReducedBeamAudio() was called
+	std::vector < double > powerAudio;                                           // The power of each band, measured by average beams.
 };
 
 #endif  //_BEAM_FORMER_H_
