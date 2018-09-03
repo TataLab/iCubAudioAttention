@@ -70,7 +70,8 @@ class AudioPreprocesserRatethread : public yarp::os::RateThread {
     yarp::os::Port *outGammaTonePowerAudioPort;
 	yarp::os::Port *outReducedBeamFormedAudioPort;
 	yarp::os::Port *outBeamFormedAudioPort;
-    yarp::os::BufferedPort<yarp::sig::Matrix> *outBeamFormedPowerAudioPort;
+    //yarp::os::BufferedPort<yarp::sig::Matrix> *outBeamFormedPowerAudioPort;
+    yarp::os::Port *outBeamFormedPowerAudioPort;
 	yarp::os::Port *outAudioMapEgoPort;
 
 	yarp::os::Stamp ts;
