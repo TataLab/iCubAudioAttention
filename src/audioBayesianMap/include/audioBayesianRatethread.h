@@ -61,6 +61,7 @@ class AudioBayesianRatethread : public yarp::os::RateThread {
 
 	//
 	// Incoming and Outgoing Ports
+	//
     yarp::os::BufferedPort<yarp::os::Bottle > *headAngleInPort;
 	yarp::os::BufferedPort<yarp::sig::Matrix> *inPort;
 	yarp::os::Port *outPort;
@@ -99,7 +100,6 @@ class AudioBayesianRatethread : public yarp::os::RateThread {
 	int nMics;
 	int noiseBufferMap;
 	int numberOfNoiseMaps;
-
 
 	int totalBeams;
 

@@ -1,0 +1,224 @@
+// -*- mode:C++; tab-width:4; c-basic-offset:4; indent-tabs-mode:nil -*-
+
+/*
+  * Copyright (C)2018  Department of Neuroscience - University of Lethbridge
+  * Author: Austin Kothig, Matt Tata
+  * email: kothiga@uleth.ca matthew.tata@uleth.ca
+  * Permission is granted to copy, distribute, and/or modify this program
+  * under the terms of the GNU General Public License, version 2 or any
+  * later version published by the Free Software Foundation.
+  *
+  * A copy of the license can be found at
+  * http://www.robotcub.org/icub/license/gpl.txt
+  *
+  * This program is distributed in the hope that it will be useful, but
+  * WITHOUT ANY WARRANTY; without even the implied warranty of
+  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+  * Public License for more details
+*/
+
+/**
+ * @file audioPowerMapRatethread.h
+ * @brief Header file of the power map ratethread.
+ *        This is where the processing happens.
+ */
+
+#ifndef _AUDIO_POWER_MAP_RATETHREAD_H_
+#define _AUDIO_POWER_MAP_RATETHREAD_H_
+
+#include <yarp/sig/all.h>
+#include <yarp/os/all.h>
+#include <yarp/dev/all.h>
+#include <yarp/os/RateThread.h>
+#include <yarp/os/Log.h>
+
+#include <iostream>
+#include <queue>
+#include <vector>
+#include <time.h>
+
+class AudioPowerMapRatethread : public yarp::os::RateThread {
+
+ private:
+
+    //--
+    //-- Name Strings.
+    //--
+    std::string name;               // rootname of all the ports opened by this thread
+    std::string robot;              // name of the robot
+    std::string configFile;         // name of the configFile where the parameter of the camera are set
+    std::string inputPortName;      // name of input port for incoming events, typically from aexGrabber
+
+
+    //--
+    //-- Incoming and Outgoing Ports.
+    //--
+    yarp::os::Port *inPowerMapPort;
+    yarp::os::BufferedPort<yarp::sig::Matrix> *inBayesPort;
+    yarp::os::BufferedPort<yarp::sig::Matrix> *outPowerMapPort;
+    yarp::os::BufferedPort<yarp::sig::Matrix> *outProbabilityPort;
+
+    yarp::os::Stamp ts;   // time stamper
+    
+
+    //--
+    //-- Containers for Matrix and Maps.
+    //--
+    yarp::sig::Matrix *inPowerMapMatrix;
+    yarp::sig::Matrix *inBayesMatrix;
+    yarp::sig::Matrix *outPowerMapMatrix;
+    yarp::sig::Matrix *outProbabilityMap;
+
+    std::vector < std::vector <double> > currentAudioMap;
+    std::vector < std::vector <double> > probabilityMap;
+
+	std::queue <double> bufferedOffSet;
+	std::queue < std::vector < std::vector <double> > > bufferedMap;
+
+
+    //--
+    //-- Memory Mapping Variables.
+    //--
+    int interpolateNSamples;
+	int nBands;
+	int nMics;
+	int noiseBufferMap;
+	int numberOfNoiseMaps;
+
+	int totalBeams;
+
+	int TimeFrame;
+
+	double nBeamsPerHemi;
+	double offset;
+
+	bool first;
+
+	std::string fileName;
+
+    //--
+    //-- Variables Need to time the Update Module.
+    //--
+    long mtime, seconds, useconds;
+	double startTime, stopTime;
+
+
+ public:
+
+    /**
+     *  Default Constructor.
+     */
+    AudioPowerMapRatethread();
+
+    /**
+     *  Constructor.
+     * 
+     *  Set robotname and configFile, then calls loadFile
+     *  on the passed in resource finder.
+     * 
+     *  @param _robotname  : name of the robot
+     *  @param _configFile : configuration file
+     *  @param rf          : resource finder object for setting constants
+     */
+    AudioPowerMapRatethread(std::string _robotname, std::string _configFile, yarp::os::ResourceFinder &rf);
+
+
+    /**
+     *  Destructor.
+     */
+    ~AudioPowerMapRatethread();
+
+
+    /**
+     *  threadInit
+     * 
+     *  Initialize the threads.
+     * 
+     *  @return Whether or not initialization executed successfully.
+     */
+    bool threadInit();
+
+
+    /**
+     *  threadRelease
+     * 
+     *  Correctly releases all threads.
+     */
+    void threadRelease();
+
+
+    /**
+     *  run
+     * 
+     *  Active part of the thread.
+     */
+    void run();
+
+
+    /**
+	 *  setName
+	 *
+	 *  Function that sets the rootname of all the ports that are going to be created by the thread.
+	 *
+	 *  @param str : the rootname used for all ports opened by this thread
+	 */
+	void setName(std::string str);
+
+
+    /**
+	 *  getName
+	 *
+	 *  Function that returns the original root name and appends another string iff passed as parameter.
+	 *
+	 *  @param p : pointer to the string that has to be added
+	 *
+	 *  @return rootname
+	 */
+	std::string getName(const char* p);
+
+
+    /**
+	 *  setInputPortName
+	 *
+	 *  Function that sets the inputPort name.
+	 *
+	 *  @param inPrtName : the name to set input ports to
+	 */
+	void setInputPortName(std::string inpPrtName);
+
+
+    /**
+	 *  processing
+	 *
+	 *  Method for the processing in the ratethread.
+	 *
+	 *  @return whether processing was successful
+	 */
+	bool processing();
+
+
+    /**
+	 *  processing
+	 *
+	 *  Method for the processing in the ratethread.
+	 *
+	 *  @param mat : matrix to be processed in the method
+	 */
+	bool processing(yarp::sig::Matrix *mat);
+
+
+    /**
+	 *  processing
+	 *
+	 *  Method for the processing in the ratethread.
+	 *
+	 *  @param b : bottle to be processed in the method
+	 */
+	bool processing(yarp::os::Bottle *b);
+
+
+
+
+
+
+};
