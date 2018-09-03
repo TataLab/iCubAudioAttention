@@ -47,7 +47,7 @@ int main(int argc, char * argv[]) {
 		return -1;
 	}
 
-    audioPowerMapModule module;
+    AudioPowerMapModule module;
     module.runModule(rf);
 
     return 0;

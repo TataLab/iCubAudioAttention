@@ -36,7 +36,7 @@
 
   <module>
       <name> frequencyVisualisation </name>
-      <parameters> --name /bayesianVisualiser --gain 100</parameters>
+      <parameters> --name /bayesianVisualiser --gain 100 </parameters>
       <node> icub </node>
   </module>
 
@@ -45,6 +45,19 @@
       <parameters> --name /probabilityVisualiser --gain 100 </parameters>
       <node> icub </node>
   </module>
+
+  <module>
+      <name> frequencyVisualisation </name>
+      <parameters> --name /bayesPowerVisualiser --gain 100 </parameters>
+      <node> icub </node>
+  </module>
+
+  <module>
+      <name> frequencyVisualisation </name>
+      <parameters> --name /bayesPowerAngleVisualiser --gain 100 </parameters>
+      <node> icub </node>
+  </module>
+
 
 
   <module>
@@ -89,6 +102,19 @@
       <parameters> --x 100 --y 600 --h 320 --w 240 --r 33 --name /probabilityView </parameters>
       <node> icub </node>
   </module>
+
+  <module>
+      <name> yarpview </name>
+      <parameters> --x 100 --y 600 --h 320 --w 240 --r 33 --name /bayesPowerView </parameters>
+      <node> icub </node>
+  </module>
+
+  <module>
+      <name> yarpview </name>
+      <parameters> --x 100 --y 600 --h 320 --w 240 --r 33 --name /bayesPowerAngleView </parameters>
+      <node> icub </node>
+  </module>
+
   
 
   <connection>
@@ -133,6 +159,19 @@
       <protocol> tcp </protocol>
   </connection> 
 
+  <connection>
+      <from> /AudioPowerMap/BayesPower:o  </from>
+      <to>   /bayesPowerVisualiser/map:i  </to>
+      <protocol> tcp </protocol>
+  </connection> 
+
+  <connection>
+      <from> /AudioPowerMap/BayesPowerAngle:o  </from>
+      <to>   /bayesPowerAngleVisualiser/map:i  </to>
+      <protocol> tcp </protocol>
+  </connection> 
+
+
 
   <connection>
       <from> /audioMapVisualiser/img:o </from>
@@ -176,5 +215,17 @@
       <protocol> tcp </protocol>
   </connection>
 
-</application>
+  <connection>
+      <from> /bayesPowerVisualiser/img:o </from>
+      <to>   /bayesPowerView             </to>
+      <protocol> tcp </protocol>
+  </connection>
 
+
+  <connection>
+      <from> /bayesPowerAngleVisualiser/img:o </from>
+      <to>   /bayesPowerAngleView             </to>
+      <protocol> tcp </protocol>
+  </connection>
+
+</application>

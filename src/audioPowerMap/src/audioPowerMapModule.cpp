@@ -22,7 +22,7 @@
  * @brief Implementation of the power map module.
  */
 
-#include "audioPowerMapModule.h"
+#include "iCub/audioPowerMapModule.h"
 
 using namespace yarp::os;
 

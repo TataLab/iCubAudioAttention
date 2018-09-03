@@ -20,6 +20,12 @@
       <node> icub </node>
   </module>
 
+  <module>
+      <name> audioPowerMap </name>
+      <parameters></parameters>
+      <node> icub </node>
+  </module>
+    
 
   <connection>
     	<from> /sender                                 </from>
@@ -39,5 +45,16 @@
       <protocol> tcp </protocol>
   </connection>
 
-</application>
+  <connection>
+      <from> /iCubAudioAttention/BeamFormedPowerAudio:o </from>
+      <to>   /AudioPowerMap/BandsPower:i                </to>
+      <protocol> tcp </protocol>
+  </connection>
 
+  <connection>
+      <from> /iCubAudioAttention/BayesianMap:o </from>
+      <to>   /AudioPowerMap/BayesMap:i         </to>
+      <protocol> tcp </protocol>
+  </connection>
+
+</application>

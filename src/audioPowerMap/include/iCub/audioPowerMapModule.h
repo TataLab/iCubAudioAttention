@@ -35,7 +35,7 @@
 #include <yarp/sig/Sound.h>
 #include <yarp/sig/Vector.h>
 
-#include <audioPowerMapRatethread.h>
+#include "iCub/audioPowerMapRatethread.h"
 
 class AudioPowerMapModule : public yarp::os::RFModule {
 

@@ -37,6 +37,8 @@
 #include <vector>
 #include <time.h>
 
+#define THRATE 80 //ms
+
 class AudioPowerMapRatethread : public yarp::os::RateThread {
 
  private:
@@ -53,10 +55,15 @@ class AudioPowerMapRatethread : public yarp::os::RateThread {
     //--
     //-- Incoming and Outgoing Ports.
     //--
-    yarp::os::Port *inPowerMapPort;
-    yarp::os::BufferedPort<yarp::sig::Matrix> *inBayesPort;
-    yarp::os::BufferedPort<yarp::sig::Matrix> *outPowerMapPort;
-    yarp::os::BufferedPort<yarp::sig::Matrix> *outProbabilityPort;
+    yarp::os::BufferedPort<yarp::sig::Matrix> *inBandsPowerPort;
+    yarp::os::BufferedPort<yarp::sig::Matrix> *inBayesMapPort;
+    yarp::os::BufferedPort<yarp::sig::Matrix> *outBayesPowerPort;
+    yarp::os::BufferedPort<yarp::sig::Matrix> *outBayesPowerAnglePort;
+
+    // TODO:
+    yarp::os::BufferedPort<yarp::sig::Matrix> *outProbabilityPowerPort;
+    yarp::os::BufferedPort<yarp::sig::Matrix> *outBayesProbabilityPowerPort;
+    yarp::os::BufferedPort<yarp::sig::Matrix> *outBayesProbabilityPowerAnglePort;
 
     yarp::os::Stamp ts;   // time stamper
     
@@ -64,22 +71,27 @@ class AudioPowerMapRatethread : public yarp::os::RateThread {
     //--
     //-- Containers for Matrix and Maps.
     //--
-    yarp::sig::Matrix *inPowerMapMatrix;
-    yarp::sig::Matrix *inBayesMatrix;
-    yarp::sig::Matrix *outPowerMapMatrix;
-    yarp::sig::Matrix *outProbabilityMap;
+    yarp::sig::Matrix *inBandsPowerMatrix;
+    yarp::sig::Matrix *inBayesMapMatrix;
+    yarp::sig::Matrix *outBayesPowerMatrix;
+    yarp::sig::Matrix *outBayesPowerAngleMatrix;
 
-    std::vector < std::vector <double> > currentAudioMap;
-    std::vector < std::vector <double> > probabilityMap;
+    // TODO:
+    yarp::sig::Matrix *outProbabilityPowerMatrix;
+    yarp::sig::Matrix *outBayesProbabilityPowerMatrix;
+    yarp::sig::Matrix *outBayesProbabilityPowerAngleMatrix;
 
-	std::queue <double> bufferedOffSet;
-	std::queue < std::vector < std::vector <double> > > bufferedMap;
-
+    std::vector <double>                 currentBandPowerMap;
+	std::vector < std::vector <double> > currentBayesMap;
+    std::vector < std::vector <double> > currentBayesPowerMap;
+    std::vector <double>                 currentBayesPowerAngleMap;
+	
 
     //--
     //-- Memory Mapping Variables.
     //--
     int interpolateNSamples;
+    int totalSamples;
 	int nBands;
 	int nMics;
 	int noiseBufferMap;
@@ -178,16 +190,6 @@ class AudioPowerMapRatethread : public yarp::os::RateThread {
 
 
     /**
-	 *  setInputPortName
-	 *
-	 *  Function that sets the inputPort name.
-	 *
-	 *  @param inPrtName : the name to set input ports to
-	 */
-	void setInputPortName(std::string inpPrtName);
-
-
-    /**
 	 *  processing
 	 *
 	 *  Method for the processing in the ratethread.
@@ -197,28 +199,40 @@ class AudioPowerMapRatethread : public yarp::os::RateThread {
 	bool processing();
 
 
-    /**
-	 *  processing
+ private:
+
+	/**
+	 *  loadFile
 	 *
-	 *  Method for the processing in the ratethread.
+	 *  Accesses the loadFile.xml that is found in the root directory of this
+	 *  module and load all required parameters for the beam former.
 	 *
-	 *  @param mat : matrix to be processed in the method
+	 *  @param rf : resource finder object containing the values of presets
 	 */
-	bool processing(yarp::sig::Matrix *mat);
+	void loadFile(yarp::os::ResourceFinder &rf);
+    
 
 
-    /**
-	 *  processing
-	 *
-	 *  Method for the processing in the ratethread.
-	 *
-	 *  @param b : bottle to be processed in the method
-	 */
-	bool processing(yarp::os::Bottle *b);
+    void setInputBayesMap();
+    void setInputBandPower();
+
+    void normalizeBandPower();
+
+    void combineBayesPower();
+    void collapseBayesPower();
 
 
 
 
+
+
+
+    void sendBayesPower();
+    void sendBayesPowerAngle();
 
 
 };
+
+#endif  //_AUDIO_POWER_MAP_RATETHREAD_H_
+
+//----- end-of-file --- ( next line intentionally left blank ) ------------------
