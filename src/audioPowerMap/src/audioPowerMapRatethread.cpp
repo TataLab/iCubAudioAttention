@@ -378,7 +378,7 @@ void AudioPowerMapRatethread::sendBayesPower() {
 void AudioPowerMapRatethread::sendBayesPowerAngle() {
 
     yarp::sig::Matrix &m = outBayesPowerAnglePort->prepare();
-    m.resize(0, totalSamples);
+    m.resize(1, totalSamples);
 
     yarp::sig::Vector tempvector(totalSamples);
 
