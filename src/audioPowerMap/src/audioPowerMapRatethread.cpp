@@ -62,23 +62,31 @@ bool AudioPowerMapRatethread::threadInit() {
     for (int band = 0; band < nBands; band++) {
         std::vector<double> tempvector;
         for (int samp = 0; samp < totalSamples; samp++) {
-            tempvector.push_back(0.0);
+            tempvector.push_back(1.0);
         }
 
+        //-- 128x360
         currentBayesMap.push_back(tempvector);
         currentBayesPowerMap.push_back(tempvector);
+        currentBayesProbabilityPowerMap.push_back(tempvector);
 
+        //-- 1x128
         currentBandPowerMap.push_back(0.0);
-        currentBayesPowerAngleMap.push_back(0.0);
+        currentProbabilityPowerMap.push_back(0.0);
     }
 
-    //-- Allocate memory for yarp matrix.
-    inBandsPowerMatrix       = new yarp::sig::Matrix(1, nBands);
-    inBayesMapMatrix         = new yarp::sig::Matrix(nBands, totalSamples);
-    outBayesPowerMatrix      = new yarp::sig::Matrix(nBands, totalSamples);
-    outBayesPowerAngleMatrix = new yarp::sig::Matrix(1, totalSamples);
+    //-- 1x360
+    for (int samp = 0; samp < totalSamples; samp++) {
+        currentBayesPowerAngleMap.push_back(0.0);
+        currentBayesProbabilityPowerAngleMap.push_back(0.0);
+    }
+    
 
-    // TODO: 
+    //-- Allocate memory for yarp matrix.
+    inBandsPowerMatrix                  = new yarp::sig::Matrix(1, nBands);
+    inBayesMapMatrix                    = new yarp::sig::Matrix(nBands, totalSamples);
+    outBayesPowerMatrix                 = new yarp::sig::Matrix(nBands, totalSamples);
+    outBayesPowerAngleMatrix            = new yarp::sig::Matrix(1, totalSamples);
     outProbabilityPowerMatrix           = new yarp::sig::Matrix(1, nBands);
     outBayesProbabilityPowerMatrix      = new yarp::sig::Matrix(nBands, totalSamples);
     outBayesProbabilityPowerAngleMatrix = new yarp::sig::Matrix(1, totalSamples);
@@ -190,13 +198,14 @@ void AudioPowerMapRatethread::run() {
     setInputBayesMap();
 
 
+    //-- Optional: Output the Instantaneous Power Map  
     //-- Only do work for this section if there is a connection to this port.
     if (outBayesPowerPort->getOutputCount() || outBayesPowerAnglePort->getOutputCount()) {
 
         //-- Multiply the instantaneous power map by the bayes map,
         //-- to find the power power of each belief.
         //-- This needs to happen before collapsing.
-        combineBayesPower();
+        combineBayesPower(currentBayesPowerMap, currentBayesMap, currentBandPowerMap);
 
         //-- If there is someone connect to this port, send the data.
         if (outBayesPowerPort->getOutputCount()) {
@@ -206,7 +215,7 @@ void AudioPowerMapRatethread::run() {
         //-- If there is someone connect to this port, collapse
         //-- the combined bayes power map, and send the data.
         if (outBayesPowerAnglePort->getOutputCount()) {
-            collapseBayesPower();
+            collapseBayesPower(currentBayesPowerAngleMap, currentBayesPowerMap);
             sendBayesPowerAngle();
         }
     }
@@ -275,7 +284,7 @@ void AudioPowerMapRatethread::setInputBandPower() {
     }
 
     //-- Normalize the band power.
-    normalizeBandPower();
+    normalizeVector(currentBandPowerMap);
 }
 
 
@@ -292,60 +301,55 @@ void AudioPowerMapRatethread::setInputBayesMap() {
 }
 
 
-void AudioPowerMapRatethread::normalizeBandPower() {
+void AudioPowerMapRatethread::normalizeVector(std::vector<double> &targetVector) {
 
-    //-- Loop through the band power input and normalize each index.
+    //-- Loop through the length (band or angles) and normalize each index.
     //-- This normalization is done by summing up all the elements
     //-- together and then dividing each element in the column by the sum.
-    double sum = 0.0;
-    for (int band = 0; band < nBands; band++) {
-        sum += currentBandPowerMap[band];
+    unsigned int len = targetVector.size();
+    double sum       = 0.0;
+
+    for (int idx = 0; idx < len; idx++) {
+        sum += targetVector[idx];
     }
 
-    for (int band = 0; band < nBands; band++) {
-        currentBandPowerMap[band] /= sum;
+    for (int idx = 0; idx < len; idx++) {
+        targetVector[idx] /= sum;
     }
 }
 
 
-void AudioPowerMapRatethread::combineBayesPower() {
+void AudioPowerMapRatethread::combineBayesPower(std::vector < std::vector <double> > &targetMap, std::vector < std::vector <double> > &bandAngleMap, std::vector <double> &bandMap) {
 
-    //-- Multiply the normalized 
-
+    //-- Multiply the normalized.
+    double currentBand = 0.0;
     for (int band = 0; band < nBands; band++) {
 
-        double currentBand = currentBandPowerMap[band];
+        currentBand = bandMap[band];
 
         for (int samp = 0; samp < totalSamples; samp++) {
-            currentBayesPowerMap[band][samp] = currentBayesMap[band][samp] * currentBand;
+            targetMap[band][samp] = bandAngleMap[band][samp] * currentBand;
         }
     }
 }
 
 
-void AudioPowerMapRatethread::collapseBayesPower() {
+void AudioPowerMapRatethread::collapseBayesPower(std::vector <double> &targetMap, std::vector < std::vector <double> > &sourceMap) {
 
     //-- Clear out the angle map.
     for (int samp = 0; samp < totalSamples; samp++) {
-        currentBayesPowerAngleMap[samp] = 0.0;
+        targetMap[samp] = 0.0;
     }
 
     //-- Sum up the power of each band for all samples.
     for (int band = 0; band < nBands; band++) {
         for (int samp = 0; samp < totalSamples; samp++) {
-            currentBayesPowerAngleMap[samp] += currentBayesPowerMap[band][samp];
+            targetMap[samp] += sourceMap[band][samp];
         }
     }
 
-    //-- Normalize the values of the angle map.
-    double sum = 0.0;
-    for (int samp = 0; samp < totalSamples; samp++) {
-        sum += currentBayesPowerAngleMap[samp];
-    }
-
-    for (int samp = 0; samp < totalSamples; samp++) {
-        currentBayesPowerAngleMap[samp] /= sum;
-    }
+    //-- Normalize the target.
+    normalizeVector(targetMap);
 }
 
 
