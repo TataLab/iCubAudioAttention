@@ -84,6 +84,7 @@ class AudioPowerMapRatethread : public yarp::os::RateThread {
     std::vector <double>                 currentProbabilityPowerMap;
     std::vector < std::vector <double> > currentBayesProbabilityPowerMap;
     std::vector <double>                 currentBayesProbabilityPowerAngleMap;
+    std::queue < std::vector <double> >  bufferedPowerMap;
 	
 
     //--
@@ -93,6 +94,7 @@ class AudioPowerMapRatethread : public yarp::os::RateThread {
     int nSamples;
 	int nBands;
 	int nMics;
+    int bufferSize;
 	int noiseBufferMap;
 	int numberOfNoiseMaps;
 
@@ -206,32 +208,25 @@ class AudioPowerMapRatethread : public yarp::os::RateThread {
 	 *  @param rf : resource finder object containing the values of presets
 	 */
 	void loadFile(yarp::os::ResourceFinder &rf);
-    
-
 
     void setInputBayesMap();
     void setInputBandPower();
+
+
+    void updatePowerProbability();
+    void removeMap(std::vector <double> &probabilityPowerMap, std::vector <double> oldPowerMap);
+    void addMap(std::vector <double> &probabilityPowerMap, std::vector <double> newPowerMap);
 
     void normalizeVector(std::vector<double> &targetVector);
 
     void combineBayesPower(std::vector < std::vector <double> > &targetMap, std::vector < std::vector <double> > &bandAngleMap, std::vector <double> &bandMap);
     void collapseBayesPower(std::vector <double> &targetMap, std::vector < std::vector <double> > &sourceMap);
 
-
-
-
-
-
-
     void sendBayesPower();
     void sendBayesPowerAngle();
     void sendProbabilityPower();
     void sendBayesProbabilityPower();
     void sendBayesProbabilityPowerAngle();
-
-
-
-
 };
 
 #endif  //_AUDIO_POWER_MAP_RATETHREAD_H_

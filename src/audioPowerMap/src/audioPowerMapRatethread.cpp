@@ -71,14 +71,14 @@ bool AudioPowerMapRatethread::threadInit() {
         currentBayesProbabilityPowerMap.push_back(tempvector);
 
         //-- 1x128
-        currentBandPowerMap.push_back(0.0);
-        currentProbabilityPowerMap.push_back(0.0);
+        currentBandPowerMap.push_back(1.0);
+        currentProbabilityPowerMap.push_back(1.0);
     }
 
     //-- 1x360
     for (int samp = 0; samp < nSamples; samp++) {
-        currentBayesPowerAngleMap.push_back(0.0);
-        currentBayesProbabilityPowerAngleMap.push_back(0.0);
+        currentBayesPowerAngleMap.push_back(1.0);
+        currentBayesProbabilityPowerAngleMap.push_back(1.0);
     }
     
 
@@ -221,7 +221,39 @@ void AudioPowerMapRatethread::run() {
     }
 
 
-    //-- TODO: The bayesian approach of power.
+    //-- Update the bayesian probability of power at each band.
+    updatePowerProbability();
+
+    //-- If someone is connected to this port, send data.
+    if (outProbabilityPowerPort->getOutputCount()) {
+        sendProbabilityPower();
+    }
+
+
+    if (outBayesProbabilityPowerPort->getOutputCount() || outBayesProbabilityPowerAnglePort->getOutputCount()) {
+        
+        //-- Combine the Bayesian Localization Map together with the Bayesian Power Map.
+        combineBayesPower(currentBayesProbabilityPowerMap, currentBayesMap, currentProbabilityPowerMap);
+
+        //-- Send data if someone is connected.
+        if (outBayesProbabilityPowerPort->getOutputCount()) {
+            sendBayesProbabilityPower();
+        }
+
+        //-- If someone is connected to the angle map,
+        //-- collapse and send data.
+        if (outBayesProbabilityPowerAnglePort->getOutputCount()) {
+            
+            //
+            //
+            // Finish here
+            //
+            //
+            ;
+        }
+
+    }
+
 
 
     //-- Display the time.
@@ -255,13 +287,14 @@ void AudioPowerMapRatethread::loadFile(yarp::os::ResourceFinder &rf) {
 	yInfo("loading configuration file");
 	try {
 		nBands               = rf.check("nBands", yarp::os::Value(128), "numberBands (int)").asInt();
-		interpolateNSamples  = rf.check("interpolateNSamples", yarp::os::Value(180), "interpellate N samples (int)").asInt();
+		interpolateNSamples  = rf.check("interpolateNSamples", yarp::os::Value(180), "interpolate N samples (int)").asInt();
 		nMics  				 = rf.check("nMics", yarp::os::Value(2), "numberBands (int)").asInt();
+        bufferSize           = rf.check("bufferSize", yarp::os::Value(20), "length of buffer (int)").asInt();
 		
         nSamples = interpolateNSamples * 2;
 
+        yInfo("nMics = %d", nMics);
         yInfo("nBands = %d", nBands);
-		yInfo("nMics = %d", nMics);
 		yInfo("interpolateNSamples = %d", interpolateNSamples);
         yInfo("nSamples = %d", nSamples);
 	}
@@ -301,9 +334,50 @@ void AudioPowerMapRatethread::setInputBayesMap() {
 }
 
 
-//--
-//-- TODO: other methods for bayes-power
-//--
+void AudioPowerMapRatethread::updatePowerProbability() {
+
+    //-- TODO: add functionality for creating noise map, and removing.
+
+    //-- Add the current band power map to the running buffer of samples.
+    bufferedPowerMap.push(currentBandPowerMap);
+
+    //--
+    //-- Update the running probability of power across beams.
+    //-- 
+    //-- Check if the buffer size is at capacity. If so, remove
+    //-- the oldest sample from the running bayesian map.
+    //-- 
+    if (bufferedPowerMap.size() >= bufferSize) {
+
+        removeMap(currentProbabilityPowerMap, bufferedPowerMap.front());
+        bufferedPowerMap.pop();
+    }
+
+    //-- Add the current band power map to the belief.
+    addMap(currentProbabilityPowerMap, currentBandPowerMap);
+
+    //-- Normalize the probability map.
+    normalizeVector(currentProbabilityPowerMap);
+}
+
+
+void AudioPowerMapRatethread::removeMap(std::vector <double> &probabilityPowerMap, std::vector <double> oldPowerMap) {
+
+    //-- Loops through the running probability map and removes the belief of the oldest power map.
+    for (int band = 0; band < nBands; band++) {
+        probabilityPowerMap[band] /= oldPowerMap[band];
+    }
+}
+
+
+void AudioPowerMapRatethread::addMap(std::vector <double> &probabilityPowerMap, std::vector <double> newPowerMap) {
+
+    //-- Loops through the running probability map and adds the belief of the newest power map.
+    for (int band = 0; band < nBands; band++) {
+        probabilityPowerMap[band] *= newPowerMap[band];
+    }
+}
+
 
 void AudioPowerMapRatethread::normalizeVector(std::vector<double> &targetVector) {
 
@@ -325,7 +399,8 @@ void AudioPowerMapRatethread::normalizeVector(std::vector<double> &targetVector)
 
 void AudioPowerMapRatethread::combineBayesPower(std::vector < std::vector <double> > &targetMap, std::vector < std::vector <double> > &bandAngleMap, std::vector <double> &bandMap) {
 
-    //-- Multiply the normalized.
+    //-- Multiply the band by samples map together
+    //-- and store it in the target map.
     double currentBand = 0.0;
     for (int band = 0; band < nBands; band++) {
 
@@ -334,6 +409,9 @@ void AudioPowerMapRatethread::combineBayesPower(std::vector < std::vector <doubl
         for (int samp = 0; samp < nSamples; samp++) {
             targetMap[band][samp] = bandAngleMap[band][samp] * currentBand;
         }
+
+        //-- Normalize this row.
+        normalizeVector(targetMap[band]);
     }
 }
 
