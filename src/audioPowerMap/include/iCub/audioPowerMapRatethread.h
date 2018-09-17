@@ -90,7 +90,7 @@ class AudioPowerMapRatethread : public yarp::os::RateThread {
     //-- Memory Mapping Variables.
     //--
     int interpolateNSamples;
-    int totalSamples;
+    int nSamples;
 	int nBands;
 	int nMics;
 	int noiseBufferMap;
@@ -225,6 +225,11 @@ class AudioPowerMapRatethread : public yarp::os::RateThread {
 
     void sendBayesPower();
     void sendBayesPowerAngle();
+    void sendProbabilityPower();
+    void sendBayesProbabilityPower();
+    void sendBayesProbabilityPowerAngle();
+
+
 
 
 };
