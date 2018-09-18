@@ -58,6 +58,26 @@
       <node> icub </node>
   </module>
 
+  <module>
+      <name> frequencyVisualisation </name>
+      <parameters> --name /probabilityPowerVisualiser --gain 100 </parameters>
+      <node> icub </node>
+  </module>
+
+  <module>
+      <name> frequencyVisualisation </name>
+      <parameters> --name /bayesProbabilityPowerVisualiser --gain 100 </parameters>
+      <node> icub </node>
+  </module>
+
+  <module>
+      <name> frequencyVisualisation </name>
+      <parameters> --name /bayesProbabilityPowerAngleVisualiser --gain 100 </parameters>
+      <node> icub </node>
+  </module>
+  
+
+
 
 
   <module>
@@ -115,7 +135,27 @@
       <node> icub </node>
   </module>
 
+  <module>
+      <name> yarpview </name>
+      <parameters> --x 100 --y 600 --h 320 --w 240 --r 33 --name /probabilityPowerView </parameters>
+      <node> icub </node>
+  </module>
+
+  <module>
+      <name> yarpview </name>
+      <parameters> --x 100 --y 600 --h 320 --w 240 --r 33 --name /bayesProbabilityPowerView </parameters>
+      <node> icub </node>
+  </module>
+
+  <module>
+      <name> yarpview </name>
+      <parameters> --x 100 --y 600 --h 320 --w 240 --r 33 --name /bayesProbabilityPowerAngleView </parameters>
+      <node> icub </node>
+  </module>
+
   
+
+
 
   <connection>
       <from> /iCubAudioAttention/AudioMapEgo:o </from>
@@ -171,6 +211,26 @@
       <protocol> tcp </protocol>
   </connection> 
 
+  <connection>
+      <from> /AudioPowerMap/ProbabilityPower:o  </from>
+      <to>   /probabilityPowerVisualiser/map:i  </to>
+      <protocol> tcp </protocol>
+  </connection> 
+  
+  <connection>
+      <from> /AudioPowerMap/BayesProbabilityPower:o  </from>
+      <to>   /bayesProbabilityPowerVisualiser/map:i  </to>
+      <protocol> tcp </protocol>
+  </connection> 
+
+  <connection>
+      <from> /AudioPowerMap/BayesProbabilityPowerAngle:o  </from>
+      <to>   /bayesProbabilityPowerAngleVisualiser/map:i  </to>
+      <protocol> tcp </protocol>
+  </connection> 
+
+
+
 
 
   <connection>
@@ -221,10 +281,27 @@
       <protocol> tcp </protocol>
   </connection>
 
-
   <connection>
       <from> /bayesPowerAngleVisualiser/img:o </from>
       <to>   /bayesPowerAngleView             </to>
+      <protocol> tcp </protocol>
+  </connection>
+
+  <connection>
+      <from> /probabilityPowerVisualiser/img:o </from>
+      <to>   /probabilityPowerView             </to>
+      <protocol> tcp </protocol>
+  </connection>
+
+  <connection>
+      <from> /bayesProbabilityPowerVisualiser/img:o </from>
+      <to>   /bayesProbabilityPowerView             </to>
+      <protocol> tcp </protocol>
+  </connection>
+
+  <connection>
+      <from> /bayesProbabilityPowerAngleVisualiser/img:o </from>
+      <to>   /bayesProbabilityPowerAngleView             </to>
       <protocol> tcp </protocol>
   </connection>
 
