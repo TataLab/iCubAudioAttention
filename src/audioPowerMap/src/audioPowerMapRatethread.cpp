@@ -123,7 +123,6 @@ bool AudioPowerMapRatethread::threadInit() {
     }
 
 
-    // TODO:
     outProbabilityPowerPort = new yarp::os::BufferedPort<yarp::sig::Matrix>();
     if (!outProbabilityPowerPort->open(getName("/ProbabilityPower:o"))) {
         yError("unable to open port to send probability of the power of bands.");
@@ -243,18 +242,10 @@ void AudioPowerMapRatethread::run() {
         //-- If someone is connected to the angle map,
         //-- collapse and send data.
         if (outBayesProbabilityPowerAnglePort->getOutputCount()) {
-            
-            //
-            //
-            // Finish here
-            //
-            //
-            ;
+            collapseBayesPower(currentBayesProbabilityPowerAngleMap, currentBayesProbabilityPowerMap);
+            sendBayesProbabilityPowerAngle();
         }
-
     }
-
-
 
     //-- Display the time.
 	stopTime = yarp::os::Time::now();
