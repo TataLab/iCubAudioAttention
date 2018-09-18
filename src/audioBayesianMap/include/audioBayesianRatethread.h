@@ -100,6 +100,7 @@ class AudioBayesianRatethread : public yarp::os::RateThread {
 	int nMics;
 	int noiseBufferMap;
 	int numberOfNoiseMaps;
+	int panAngle;
 
 	int totalBeams;
 
@@ -293,12 +294,12 @@ class AudioBayesianRatethread : public yarp::os::RateThread {
 
 
 	/**
-	 *  normalizePropabilityMap
+	 *  normalizeProbabilityMap
 	 *
 	 *  @param probabilityMap : a map of the auditory sean with probabilities
 	 *                          that a given sound is at a given angle.
 	 */
-	void normalizePropabilityMap(std::vector <std::vector <double> > &probabilityMap);
+	void normalizeProbabilityMap(std::vector <std::vector <double> > &probabilityMap);
 
 
 	/**
