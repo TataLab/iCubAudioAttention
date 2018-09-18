@@ -91,7 +91,7 @@ class AudioPowerMapRatethread : public yarp::os::RateThread {
     //-- Memory Mapping Variables.
     //--
     int interpolateNSamples;
-    int nSamples;
+    int nAngles;
 	int nBands;
 	int nMics;
     int bufferSize;
