@@ -275,19 +275,22 @@ bool AudioPowerMapRatethread::processing() {
 void AudioPowerMapRatethread::loadFile(yarp::os::ResourceFinder &rf) {
     
     // import all relevant data fron the .ini file
-	yInfo("loading configuration file");
+	yInfo("Loading Configuration File.");
 	try {
-		nBands               = rf.check("nBands", yarp::os::Value(128), "numberBands (int)").asInt();
-		interpolateNSamples  = rf.check("interpolateNSamples", yarp::os::Value(180), "interpolate N samples (int)").asInt();
-		nMics  				 = rf.check("nMics", yarp::os::Value(2), "numberBands (int)").asInt();
-        bufferSize           = rf.check("bufferSize", yarp::os::Value(20), "length of buffer (int)").asInt();
+		nBands               = rf.findGroup("preprocessing").check("nBands", yarp::os::Value(128), "numberBands (int)").asInt();
+		interpolateNSamples  = rf.findGroup("preprocessing").check("interpolateNSamples", yarp::os::Value(180), "interpolate N samples (int)").asInt();
+		
+        nMics  				 = rf.findGroup("sampling").check("nMics", yarp::os::Value(2), "numberBands (int)").asInt();
+        
+        bufferSize           = rf.findGroup("powermap").check("bufferSize", yarp::os::Value(20), "length of buffer (int)").asInt();
 		
         nSamples = interpolateNSamples * 2;
 
-        yInfo("nMics = %d", nMics);
-        yInfo("nBands = %d", nBands);
-		yInfo("interpolateNSamples = %d", interpolateNSamples);
-        yInfo("nSamples = %d", nSamples);
+        yInfo("\t nMics               = %d", nMics);
+        yInfo("\t nBands              = %d", nBands);
+		yInfo("\t interpolateNSamples = %d", interpolateNSamples);
+        yInfo("\t nSamples            = %d", nSamples);
+        yInfo("\t bufferSize          = %d", bufferSize);
 	}
 
 	catch (int a) {

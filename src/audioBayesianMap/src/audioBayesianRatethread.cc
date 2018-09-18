@@ -233,18 +233,22 @@ bool AudioBayesianRatethread::processing() {
 void AudioBayesianRatethread::loadFile(yarp::os::ResourceFinder &rf) {
 
 	// import all relevant data fron the .ini file
-	yInfo("loading configuration file");
+	yInfo("Loading Configuration File.");
 	try {
-		nBands              = rf.check("nBands", yarp::os::Value(128), "numberBands (int)").asInt();
-		interpolateNSamples = rf.check("interpolateNSamples", yarp::os::Value(180), "interpellate N samples (int)").asInt();
-		longTimeFrame 	    = rf.check("longBufferSize", yarp::os::Value(360), "long Buffer Size (int)").asInt();
-		nMics  				= rf.check("nMics", yarp::os::Value(2), "numberBands (int)").asInt();
-		panAngle            = rf.check("panAngle", yarp::os::Value(2), "joint index of pan angle (int)").asInt();
-		yInfo("nBands = %d", nBands);
-		yInfo("nMics = %d", nMics);
-		yInfo("interpolateNSamples = %d", interpolateNSamples );
-		yInfo("longBufferSize = %d", longTimeFrame);
-		yInfo("Index for Pan Angle = %d", panAngle);
+		nMics  				= rf.findGroup("sampling").check("nMics", yarp::os::Value(2), "numberBands (int)").asInt();
+		
+		nBands              = rf.findGroup("preprocessing").check("nBands", yarp::os::Value(128), "numberBands (int)").asInt();
+		interpolateNSamples = rf.findGroup("preprocessing").check("interpolateNSamples", yarp::os::Value(180), "interpellate N samples (int)").asInt();
+		
+		longTimeFrame 	    = rf.findGroup("bayesian").check("longBufferSize", yarp::os::Value(360), "long Buffer Size (int)").asInt();
+		
+		panAngle            = rf.findGroup("robotspec").check("panAngle", yarp::os::Value(2), "joint index of pan angle (int)").asInt();
+		
+		yInfo("\t nMics               = %d", nMics);
+		yInfo("\t nBands              = %d", nBands);
+		yInfo("\t interpolateNSamples = %d", interpolateNSamples );
+		yInfo("\t longBufferSize      = %d", longTimeFrame);
+		yInfo("\t Index for Pan Angle = %d", panAngle);
 	}
 
 	catch (int a) {
