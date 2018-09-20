@@ -68,7 +68,7 @@ bool freqVisualisationModule::configure(yarp::os::ResourceFinder &rf) {
                             "Gain for visualization (int)").asInt();
     std::cerr << "init gain is " << gain << std::endl;
     string grid              = rf.check("grid",
-                            Value("vert"),
+                            Value("none"),
                             "visualisation of grid(string)").asString();
     yInfo("Visualisation of a grid: %s", grid.c_str());
 
