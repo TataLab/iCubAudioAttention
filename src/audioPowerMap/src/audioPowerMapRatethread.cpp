@@ -476,7 +476,7 @@ void AudioPowerMapRatethread::sendProbabilityPower() {
     yarp::sig::Vector tempvector(1);
 
     for (int band = 0; band < nBands; band++) {
-        tempvector[band] = currentProbabilityPowerMap[band];
+        tempvector[0] = currentProbabilityPowerMap[band];
         m.setRow(band, tempvector);
     }
 
