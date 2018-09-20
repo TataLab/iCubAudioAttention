@@ -15,6 +15,7 @@ INCLUDE_DIRECTORIES(
     ${ICUB_INCLUDE_DIRS}	
     ${ICUB_CONTRIB_DIRS}
     ${ATTENTIONLIB_INCLUDE_DIRS}
+    ${OpenCV_INCLUDE_DIRS}
 )
 
 # Search for source code.
@@ -31,7 +32,7 @@ IF (folder_source)
     )
 
     TARGET_LINK_LIBRARIES(${KEYWORD}        
-
+      ${OpenCV_LIBRARIES}
       ${YARP_LIBRARIES}
       )	
 

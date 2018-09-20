@@ -12,6 +12,7 @@ SET(PROJECT_INCLUDE_DIRS
 # Find .cpp and .h files automatically.  This is a bit lazy,
 # and in principle it would be better to list these files manually.
 SET(folder_source 
+  ./src/SoundFile.cpp
   ./src/spatialSound.cpp
   ./src/Sound.cpp
 )
@@ -19,6 +20,7 @@ SET(folder_source
 SET(folder_header 
   ./include/iCub/audio/spatialSound.h
   ./include/iCub/audio/Sound.h
+  ./include/iCub/audio/SoundFile.h
 )
 
 MESSAGE("folder_header ${folder_header}")

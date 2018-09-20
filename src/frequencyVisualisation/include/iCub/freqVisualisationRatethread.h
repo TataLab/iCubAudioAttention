@@ -34,6 +34,8 @@
 #include <iostream>
 #include <fstream>
 #include <time.h>
+#include <cv.h>
+#include <highgui.h>
 
 
 class freqVisualisationRatethread : public yarp::os::RateThread {
@@ -110,7 +112,12 @@ public:
     * function that sets the gain for the image
     */
     void setGain(int inGain);
-
+    
+    /**
+     * method for the use of opencv functions
+     **/
+    bool addLegend();
+    
      /**
      * method for the processing in the ratethread
      * @param mat matrix to be processed in the method
