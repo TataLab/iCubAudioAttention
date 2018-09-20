@@ -471,15 +471,14 @@ void AudioPowerMapRatethread::sendBayesPowerAngle() {
 void AudioPowerMapRatethread::sendProbabilityPower() {
 
     yarp::sig::Matrix &m = outProbabilityPowerPort->prepare();
-    m.resize(1, nBands);
+    m.resize(nBands, 1);
 
-    yarp::sig::Vector tempvector(nBands);
+    yarp::sig::Vector tempvector(1);
 
     for (int band = 0; band < nBands; band++) {
         tempvector[band] = currentProbabilityPowerMap[band];
+        m.setRow(band, tempvector);
     }
-
-    m.setRow(0, tempvector);
 
     outProbabilityPowerPort->setEnvelope(ts);
     outProbabilityPowerPort->write();
