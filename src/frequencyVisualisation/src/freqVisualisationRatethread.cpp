@@ -149,6 +149,22 @@ void freqVisualisationRatethread::run() {
 
 }
 
+bool freqVisualisationRatethread::addLegend() {
+    int iplwidth = outputImage->width();
+    int iplheight = outputImage->height();
+    IplImage* iplimage = cvCreateImage(cvSize(iplwidth,iplheight),IPL_DEPTH_8U,3);
+    IplImage* iplcopy;
+    outputImage->wrapIplImage(iplcopy);
+    
+    CvPoint centroid;
+    centroid.x = 100;
+    centroid.y = 1;
+    CvFont font;
+    cvInitFont(&font,CV_FONT_HERSHEY_SIMPLEX, 0.4, 0.4, 0, 1, CV_AA);
+    cvPutText(iplcopy, "1m", centroid, &font, cvScalar(255, 255, 255) );
+    return true;
+}
+
 bool freqVisualisationRatethread::processing(Matrix* mat){
     // here goes the processing...
     int nRows = mat->rows();
@@ -163,21 +179,41 @@ bool freqVisualisationRatethread::processing(Matrix* mat){
     int padding = outputImage->getPadding();
     for (int r = 0; r < nRows; r++) {
         for (int c = 0; c < nCols; c++) {
-            value = *pMat;
-            COLOUR col = GetColour(value * visGain, 0.0, 1.0);
-            //*pImage = 0;
-            *pImage = col.r * 255;
-            pImage++;
-            //*pImage = (unsigned char) floor(255 * gain * value);
-            *pImage = col.g * 255;
-            pImage++;
-            //*pImage = 0;
-            *pImage = col.b * 255;
-            pImage++;
-            pMat++;
+            if((c%(nCols>>2)== 0)&&(c!=0)) {
+                value = *pMat;
+                COLOUR col = GetColour(value * visGain, 0.0, 1.0);
+                //*pImage = 0;
+                *pImage = 0 * 255;
+                pImage++;
+                //*pImage = (unsigned char) floor(255 * gain * value);
+                *pImage = 0 * 255;
+                pImage++;
+                //*pImage = 0;
+                *pImage = 0 * 255;
+                pImage++;
+                pMat++;
+            }
+            else {
+                value = *pMat;
+                COLOUR col = GetColour(value * visGain, 0.0, 1.0);
+                //*pImage = 0;
+                *pImage = col.r * 255;
+                pImage++;
+                //*pImage = (unsigned char) floor(255 * gain * value);
+                *pImage = col.g * 255;
+                pImage++;
+                //*pImage = 0;
+                *pImage = col.b * 255;
+                pImage++;
+                pMat++;
+            }
         }
         pImage += padding;
     }
+
+    //adding leggend
+    //addLegend();
+    
     return true;
 }
 
