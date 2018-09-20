@@ -326,15 +326,15 @@ void AudioPreprocesserRatethread::loadFile(yarp::os::ResourceFinder &rf) {
 		totalBeams = nBeamsPerHemi * 2 + 1;
 
 		// print information from rf to the console
-		yInfo("\t nMics                  = %d", nMics);
-		yInfo("\t micDistance            = %f", micDistance);
-		yInfo("\t frameSamples           = %d", frameSamples);
-		yInfo("\t nBands                 = %d", nBands);
-    	yInfo("\t low Cutting frequency  = %d",lowCf);
-    	yInfo("\t high Cutting frequency = %d",highCf);
-		yInfo("\t _beamsPerHemi       %d = %f / %d * %d", nBeamsPerHemi, micDistance, C, samplingRate);
-		yInfo("\t total beams            = %d",totalBeams);
-		yInfo("\t interpolateNSamples    = %d", interpolateNSamples );
+		yInfo("\t nMics                      = %d", nMics);
+		yInfo("\t micDistance                = %f", micDistance);
+		yInfo("\t frameSamples               = %d", frameSamples);
+		yInfo("\t nBands                     = %d", nBands);
+    	yInfo("\t low Cutting frequency      = %d",lowCf);
+    	yInfo("\t high Cutting frequency     = %d",highCf);
+		yInfo("\t _beamsPerHemi           %d = %f / %d * %d", nBeamsPerHemi, micDistance, C, samplingRate);
+		yInfo("\t total beams                = %d",totalBeams);
+		yInfo("\t interpolateNSamples        = %d", interpolateNSamples );
 	}
 
 	catch (int a) {

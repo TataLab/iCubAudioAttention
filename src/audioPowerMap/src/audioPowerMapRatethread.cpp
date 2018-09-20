@@ -405,7 +405,7 @@ void AudioPowerMapRatethread::combineBayesPower(std::vector < std::vector <doubl
         }
 
         //-- Normalize this row.
-        normalizeVector(targetMap[band]);
+        //normalizeVector(targetMap[band]);
     }
 }
 
