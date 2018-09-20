@@ -309,58 +309,32 @@ void AudioPreprocesserRatethread::threadRelease() {
 void AudioPreprocesserRatethread::loadFile(yarp::os::ResourceFinder &rf) {
 
 	// import all relevant data fron the .ini file
-	yInfo("loading configuration file");
+	yInfo("Loading Configuration File.");
 	try {
-		frameSamples        =  rf.check("frameSamples",
-										Value(4096),
-										"frame samples (int)").asInt();
-
-		nBands              =  rf.check("nBands",
-										Value(128),
-										"numberBands (int)").asInt();
-
-		nMics               =  rf.check("nMics",
-										Value(2),
-										"number mics (int)").asInt();
-
-		interpolateNSamples =  rf.check("interpolateNSamples",
-										Value(180),
-										"interpellate N samples (int)").asInt();
-
-		micDistance         =  rf.check("micDistance",
-										Value(0.145),
-										"micDistance (double)").asDouble();
-
-		C                   =  rf.check("C",
-										Value(338),
-										"C speed of sound (int)").asInt();
-
-		samplingRate        =  rf.check("samplingRate",
-										Value(48000),
-										"sampling rate of mics (int)").asInt();
-
-		lowCf               =  rf.check("lowCf",
-										Value(1000),
-										"lowest center frequency(int)").asInt();
-
-		highCf              =  rf.check("highCf",
-										Value(3000),
-										"highest center frequency(int)").asInt();
-
-		// print information from rf to the console
-		yInfo("micDistance = %f", micDistance);
+		C            = rf.findGroup("sampling").check("C",            Value(338),   "C speed of sound (int)").asInt();
+		nMics        = rf.findGroup("sampling").check("nMics",        Value(2),     "number mics (int)").asInt();
+		micDistance  = rf.findGroup("sampling").check("micDistance",  Value(0.145), "micDistance (double)").asDouble();
+		frameSamples = rf.findGroup("sampling").check("frameSamples", Value(4096),  "frame samples (int)").asInt();
+		samplingRate = rf.findGroup("sampling").check("samplingRate", Value(48000), "sampling rate of mics (int)").asInt();
+		
+		nBands              = rf.findGroup("preprocessing").check("nBands",              Value(128),  "numberBands (int)").asInt();
+		lowCf               = rf.findGroup("preprocessing").check("lowCf",               Value(1000), "lowest center frequency (int)").asInt();
+		highCf              = rf.findGroup("preprocessing").check("highCf",              Value(3000), "highest center frequency (int)").asInt();
+		interpolateNSamples = rf.findGroup("preprocessing").check("interpolateNSamples", Value(180),  "interpellate N samples (int)").asInt();
+		
 		nBeamsPerHemi  = (int)((micDistance / C) * samplingRate) - 1;
-
-		yInfo("_beamsPerHemi %d = %f / %d * %d", nBeamsPerHemi, micDistance, C, samplingRate);
 		totalBeams = nBeamsPerHemi * 2 + 1;
 
-		yInfo("frameSamples = %d", frameSamples);
-		yInfo("nBands = %d", nBands);
-		yInfo("nMics = %d", nMics);
-		yInfo("interpolateNSamples = %d", interpolateNSamples );
-		yInfo("total beams = %d",totalBeams);
-    	yInfo("low Cutting frequency = %d",lowCf);
-    	yInfo("high Cutting frequency = %d",highCf);
+		// print information from rf to the console
+		yInfo("\t nMics                  = %d", nMics);
+		yInfo("\t micDistance            = %f", micDistance);
+		yInfo("\t frameSamples           = %d", frameSamples);
+		yInfo("\t nBands                 = %d", nBands);
+    	yInfo("\t low Cutting frequency  = %d",lowCf);
+    	yInfo("\t high Cutting frequency = %d",highCf);
+		yInfo("\t _beamsPerHemi       %d = %f / %d * %d", nBeamsPerHemi, micDistance, C, samplingRate);
+		yInfo("\t total beams            = %d",totalBeams);
+		yInfo("\t interpolateNSamples    = %d", interpolateNSamples );
 	}
 
 	catch (int a) {

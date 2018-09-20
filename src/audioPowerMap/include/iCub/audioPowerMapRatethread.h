@@ -59,8 +59,6 @@ class AudioPowerMapRatethread : public yarp::os::RateThread {
     yarp::os::BufferedPort<yarp::sig::Matrix> *inBayesMapPort;
     yarp::os::BufferedPort<yarp::sig::Matrix> *outBayesPowerPort;
     yarp::os::BufferedPort<yarp::sig::Matrix> *outBayesPowerAnglePort;
-
-    // TODO:
     yarp::os::BufferedPort<yarp::sig::Matrix> *outProbabilityPowerPort;
     yarp::os::BufferedPort<yarp::sig::Matrix> *outBayesProbabilityPowerPort;
     yarp::os::BufferedPort<yarp::sig::Matrix> *outBayesProbabilityPowerAnglePort;
@@ -75,8 +73,6 @@ class AudioPowerMapRatethread : public yarp::os::RateThread {
     yarp::sig::Matrix *inBayesMapMatrix;
     yarp::sig::Matrix *outBayesPowerMatrix;
     yarp::sig::Matrix *outBayesPowerAngleMatrix;
-
-    // TODO:
     yarp::sig::Matrix *outProbabilityPowerMatrix;
     yarp::sig::Matrix *outBayesProbabilityPowerMatrix;
     yarp::sig::Matrix *outBayesProbabilityPowerAngleMatrix;
@@ -85,15 +81,20 @@ class AudioPowerMapRatethread : public yarp::os::RateThread {
 	std::vector < std::vector <double> > currentBayesMap;
     std::vector < std::vector <double> > currentBayesPowerMap;
     std::vector <double>                 currentBayesPowerAngleMap;
+    std::vector <double>                 currentProbabilityPowerMap;
+    std::vector < std::vector <double> > currentBayesProbabilityPowerMap;
+    std::vector <double>                 currentBayesProbabilityPowerAngleMap;
+    std::queue < std::vector <double> >  bufferedPowerMap;
 	
 
     //--
     //-- Memory Mapping Variables.
     //--
     int interpolateNSamples;
-    int totalSamples;
+    int nAngles;
 	int nBands;
 	int nMics;
+    int bufferSize;
 	int noiseBufferMap;
 	int numberOfNoiseMaps;
 
@@ -102,9 +103,6 @@ class AudioPowerMapRatethread : public yarp::os::RateThread {
 	int TimeFrame;
 
 	double nBeamsPerHemi;
-	double offset;
-
-	bool first;
 
 	std::string fileName;
 
@@ -210,27 +208,25 @@ class AudioPowerMapRatethread : public yarp::os::RateThread {
 	 *  @param rf : resource finder object containing the values of presets
 	 */
 	void loadFile(yarp::os::ResourceFinder &rf);
-    
-
 
     void setInputBayesMap();
     void setInputBandPower();
 
-    void normalizeBandPower();
 
-    void combineBayesPower();
-    void collapseBayesPower();
+    void updatePowerProbability();
+    void removeMap(std::vector <double> &probabilityPowerMap, std::vector <double> oldPowerMap);
+    void addMap(std::vector <double> &probabilityPowerMap, std::vector <double> newPowerMap);
 
+    void normalizeVector(std::vector<double> &targetVector);
 
-
-
-
-
+    void combineBayesPower(std::vector < std::vector <double> > &targetMap, std::vector < std::vector <double> > &bandAngleMap, std::vector <double> &bandMap);
+    void collapseBayesPower(std::vector <double> &targetMap, std::vector < std::vector <double> > &sourceMap);
 
     void sendBayesPower();
     void sendBayesPowerAngle();
-
-
+    void sendProbabilityPower();
+    void sendBayesProbabilityPower();
+    void sendBayesProbabilityPowerAngle();
 };
 
 #endif  //_AUDIO_POWER_MAP_RATETHREAD_H_

@@ -1,8 +1,6 @@
 #include <yarp/os/all.h>
 #include <yarp/dev/all.h>
 
-#include <iostream>
-
 #include "audioPreprocesserModule.h"
 
 int main(int argc, char * argv[]) {
@@ -15,10 +13,10 @@ int main(int argc, char * argv[]) {
     rf.setDefaultConfigFile("audioConfig.ini");    //overridden by --from parameter
     rf.setDefaultContext("icubAudioAttention");    //overridden by --context parameter
     rf.configure(argc, argv);
-    std::cout << "[INFO] Configuring and starting module. \n";
+    yInfo("Configuring and starting module.");
 
     if (!yarp.checkNetwork(1)) {
-        printf("[ERROR] YARP server not available!\n");
+        yError("YARP server not available!");
         return -1;
     }
 

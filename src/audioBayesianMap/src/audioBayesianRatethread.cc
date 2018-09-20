@@ -219,7 +219,7 @@ void AudioBayesianRatethread::run() {
 	// Calls the Memory maper and memory maps it to
 	// the following file: /tmp/bayesianProbabilityLongMap.tmp
 	stopTime = yarp::os::Time::now();
-	yInfo("Count:%d Time:%f. \n", ts.getCount(),  stopTime-startTime);
+	yInfo("Count:%d Time:%f Offset:%f. \n", ts.getCount(),  stopTime-startTime, offset);
 	startTime = stopTime;
 }
 
@@ -233,28 +233,22 @@ bool AudioBayesianRatethread::processing() {
 void AudioBayesianRatethread::loadFile(yarp::os::ResourceFinder &rf) {
 
 	// import all relevant data fron the .ini file
-	yInfo("loading configuration file");
+	yInfo("Loading Configuration File.");
 	try {
-		nBands 				 =  rf.check("nBands",
-										 yarp::os::Value(128),
-										 "numberBands (int)").asInt();
-
-		interpolateNSamples  =  rf.check("interpolateNSamples",
-										 yarp::os::Value(180),
-										 "interpellate N samples (int)").asInt();
-
-		longTimeFrame 		 =  rf.check("longBufferSize",
-										 yarp::os::Value(360),
-										 "long Buffer Size (int)").asInt();
-
-		nMics  				 =  rf.check("nMics",
-										 yarp::os::Value(2),
-										 "numberBands (int)").asInt();
-
-		yInfo("nBands = %d", nBands);
-		yInfo("nMics = %d", nMics);
-		yInfo("interpolateNSamples = %d", interpolateNSamples );
-		yInfo("longBufferSize = %d", longTimeFrame);
+		nMics  				= rf.findGroup("sampling").check("nMics", yarp::os::Value(2), "numberBands (int)").asInt();
+		
+		nBands              = rf.findGroup("preprocessing").check("nBands", yarp::os::Value(128), "numberBands (int)").asInt();
+		interpolateNSamples = rf.findGroup("preprocessing").check("interpolateNSamples", yarp::os::Value(180), "interpellate N samples (int)").asInt();
+		
+		longTimeFrame 	    = rf.findGroup("bayesian").check("longBufferSize", yarp::os::Value(360), "long Buffer Size (int)").asInt();
+		
+		panAngle            = rf.findGroup("robotspec").check("panAngle", yarp::os::Value(2), "joint index of pan angle (int)").asInt();
+		
+		yInfo("\t nMics               = %d", nMics);
+		yInfo("\t nBands              = %d", nBands);
+		yInfo("\t interpolateNSamples = %d", interpolateNSamples );
+		yInfo("\t longBufferSize      = %d", longTimeFrame);
+		yInfo("\t Index for Pan Angle = %d", panAngle);
 	}
 
 	catch (int a) {
@@ -265,7 +259,7 @@ void AudioBayesianRatethread::loadFile(yarp::os::ResourceFinder &rf) {
 }
 
 
-void AudioBayesianRatethread::normalizePropabilityMap(std::vector <std::vector <double>> &probabilityMap) {
+void AudioBayesianRatethread::normalizeProbabilityMap(std::vector <std::vector <double>> &probabilityMap) {
 
 	// Loops though the Map given as input and normalizes each column
 	// This normalization is done by summing up all the elements
@@ -290,13 +284,13 @@ void AudioBayesianRatethread::calcOffset() {
 	//to get the position of the head directly from the robot
 	if (headAngleInPort->getInputCount()) {
 		headAngleBottle = headAngleInPort->read(true);   //blocking reading for synchr with the input
-		offset = headAngleBottle->get(0).asDouble();
+		offset = headAngleBottle->get(panAngle).asDouble();
         offset += 270;
 	}
     // Pushes the current offset into a buffer which
     // is needed to remove "old" audio maps
     bufferedOffSet.push(offset);
-    yInfo("offset = %f\n",offset);
+    //yInfo("offset = %f\n",offset);
 }
 
 
@@ -392,7 +386,7 @@ void AudioBayesianRatethread::setAcousticMap() {
 
 	// Calls a function that normalizations
 	// the columns of the currentAudioMap
-	normalizePropabilityMap(currentAudioMap);
+	normalizeProbabilityMap(currentAudioMap);
 
 	// Calls a function to calculated the offset of the
 	// current audio map based on the position of the iCub head
@@ -536,7 +530,7 @@ void AudioBayesianRatethread::createBaysianMaps() {
 
 	// Calls a function that normalizations
 	// the columns of the long Bayesian Map
-	normalizePropabilityMap(longMap);
+	normalizeProbabilityMap(longMap);
 }
 
 

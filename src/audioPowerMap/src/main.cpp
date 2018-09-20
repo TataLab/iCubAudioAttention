@@ -40,10 +40,10 @@ int main(int argc, char * argv[]) {
     rf.setDefaultConfigFile("audioConfig.ini");    //overridden by --from parameter
     rf.setDefaultContext("icubAudioAttention");    //overridden by --context parameter
     rf.configure(argc, argv);
-    yInfo("[INFO] Configuring and starting module.\n");
+    yInfo("Configuring and starting module.");
 
 	if (!yarp.checkNetwork(1)) {
-		yError("[ERROR] YARP server not available!\n");
+		yError("YARP server not available!");
 		return -1;
 	}
 
