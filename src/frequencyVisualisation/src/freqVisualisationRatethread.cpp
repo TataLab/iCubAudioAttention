@@ -194,8 +194,9 @@ bool freqVisualisationRatethread::processing(Matrix* mat){
         nColsDiv4 = nCols>>2;
     }
     else {
-        nColsDiv4 = 0;
+        nColsDiv4 = 1;
     }
+    yInfo("nCols %d nColsDiv4 %", nCols, nColsDiv4);
     for (int r = 0; r < nRows; r++) {
         for (int c = 0; c < nCols; c++) {
             // drawing of the line only if the width is 16pixels
