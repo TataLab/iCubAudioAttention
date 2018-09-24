@@ -317,7 +317,7 @@ class AudioPreprocesserRatethread : public yarp::os::RateThread {
 
 
     /**
-     *  linerApproximation
+     *  linearApproximation
      *
      *  Helper function used by linerInterp to do liner interpolation between points (x1,y1) and (x2,y2).
      *
@@ -329,17 +329,17 @@ class AudioPreprocesserRatethread : public yarp::os::RateThread {
      *
      *  @return the corresponding y value of the asked x
      */
-    inline double linerApproximation(int x, int x1, double y1, int x2, double y2);
+    inline double linearApproximation(int x, int x1, double y1, int x2, double y2);
 
 
     /**
-     *  linerInterpolate
+     *  linearInterpolate
      *
      *  Taking the Audio data that is found in reducedBeamFormedAudioVector.
      *  Creates an interpolation of the data corresponding to the interpolateNSamples that was specified in the xml.
      *  The data of this function will be saved in highResolutionAudioMap.
      */
-    void linerInterpolate();
+    void linearInterpolate();
 
 
     /**

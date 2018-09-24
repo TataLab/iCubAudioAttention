@@ -274,6 +274,12 @@ void AudioBayesianRatethread::normalizeProbabilityMap(std::vector <std::vector <
 			probabilityMap[i][j] /= sum;
 		}
 	}
+
+	//--debug.
+	for (int i = 0; i < interpolateNSamples * 2; i++) {
+		if (i % 6) std::cout << std::endl;
+		std::cout << probabilityMap[34][i] << " ";
+	} std::cout << std::endl << std::endl;
 }
 
 

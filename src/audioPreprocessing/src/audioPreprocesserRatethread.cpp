@@ -328,7 +328,7 @@ void AudioPreprocesserRatethread::run() {
 
 	// do an interpolate on the lowResolutionAudioMap
 	// to produce a highResolutionAudioMap
-	linerInterpolate();
+	linearInterpolate();
     //splineInterpolate();
 
 	if (outAudioMapEgoPort->getOutputCount()) {
@@ -591,8 +591,21 @@ void AudioPreprocesserRatethread::setLowResolutionMap() {
 
 	for (int band = 0; band < nBands; band++) {
 
+		//int current_beam = 0;
+		//for (int beam = nBeams-nBeamsPerHemi-1; beam < nBeams-1; beam++) {
+		//	lowResolutionAudioMap[band][current_beam++] = reducedBeamFormedAudioVector[beam][band];
+		//}
+//
+		//for (int beam = 0; beam < nBeams; beam++) {
+		//	lowResolutionAudioMap[band][current_beam++] = reducedBeamFormedAudioVector[beam][band];
+		//}
+//
+		//for (int beam = 1; beam < nBeams-nBeamsPerHemi-1; beam++) {
+		//	lowResolutionAudioMap[band][current_beam++] = reducedBeamFormedAudioVector[beam][band];
+		//}
+
 		int current_beam = 0;
-		for (int beam = nBeams-nBeamsPerHemi-1; beam < nBeams-1; beam++) {
+		for (int beam = nBeams-nBeamsPerHemi-1; beam > 0; beam--) {
 			lowResolutionAudioMap[band][current_beam++] = reducedBeamFormedAudioVector[beam][band];
 		}
 
@@ -600,20 +613,27 @@ void AudioPreprocesserRatethread::setLowResolutionMap() {
 			lowResolutionAudioMap[band][current_beam++] = reducedBeamFormedAudioVector[beam][band];
 		}
 
-		for (int beam = 1; beam < nBeams-nBeamsPerHemi-1; beam++) {
+		for (int beam = nBeams-2; beam > nBeams-nBeamsPerHemi-1; beam--) {
 			lowResolutionAudioMap[band][current_beam++] = reducedBeamFormedAudioVector[beam][band];
 		}
 	}
+
+
+	//--debug.
+	for (int i = 0; i < nMicAngles; i++) {
+		if (i % 6) std::cout << std::endl;
+		std::cout << lowResolutionAudioMap[34][i] << " ";
+	} std::cout << std::endl << std::endl;
 }
 
 
 
-inline double AudioPreprocesserRatethread::linerApproximation(int x, int x1, double y1, int x2, double y2) {
+inline double AudioPreprocesserRatethread::linearApproximation(int x, int x1, double y1, int x2, double y2) {
 	return y1 + ((y2 - y1) * (x - x1)) / (x2 - x1);
 }
 
 
-void AudioPreprocesserRatethread::linerInterpolate() {
+void AudioPreprocesserRatethread::linearInterpolate() {
 
 	/*  TODO : REMOVE THIS BLOCK.
 
@@ -672,7 +692,7 @@ void AudioPreprocesserRatethread::linerInterpolate() {
 			}
 
 			//-- Interpolate for this position.
-			highResolutionAudioMap[sAngle][band] = linerApproximation(
+			highResolutionAudioMap[sAngle][band] = linearApproximation(
 				spaceAngles[sAngle],
 				micAngles[mAngle-1],
 				lowResolutionAudioMap[band][mAngle-1],
