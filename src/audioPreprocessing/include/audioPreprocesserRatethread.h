@@ -329,7 +329,7 @@ class AudioPreprocesserRatethread : public yarp::os::RateThread {
      *
      *  @return the corresponding y value of the asked x
      */
-    inline double linearApproximation(int x, int x1, double y1, int x2, double y2);
+    inline double linearApproximation(double x, double x1, double y1, double x2, double y2);
 
 
     /**

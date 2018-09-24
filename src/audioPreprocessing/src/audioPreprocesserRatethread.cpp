@@ -617,18 +617,11 @@ void AudioPreprocesserRatethread::setLowResolutionMap() {
 			lowResolutionAudioMap[band][current_beam++] = reducedBeamFormedAudioVector[beam][band];
 		}
 	}
-
-
-	//--debug.
-	for (int i = 0; i < nMicAngles; i++) {
-		if (i % 6) std::cout << std::endl;
-		std::cout << lowResolutionAudioMap[34][i] << " ";
-	} std::cout << std::endl << std::endl;
 }
 
 
 
-inline double AudioPreprocesserRatethread::linearApproximation(int x, int x1, double y1, int x2, double y2) {
+inline double AudioPreprocesserRatethread::linearApproximation(double x, double x1, double y1, double x2, double y2) {
 	return y1 + ((y2 - y1) * (x - x1)) / (x2 - x1);
 }
 
