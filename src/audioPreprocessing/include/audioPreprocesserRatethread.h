@@ -102,31 +102,35 @@ class AudioPreprocesserRatethread : public yarp::os::RateThread {
 	BeamFormer *beamForm;
 
 
-    //
-    // derived variables
-    //
     int lastframe;
-    int totalBeams;
     int longBufferSize;
-    int nBeamsPerHemi;
+    
 
     double startTime;
     double stopTime;
 
 
-    //
-    // variables from resource finder
-    //
-    int C;
-    int frameSamples;
-    int highCf;
-    int interpolateNSamples;
-    int lowCf;
-    int nBands;
-    int nMics;
-    int samplingRate;
-
+    //--
+    //-- Variables Set on Init.
+    //--
+    double C;
+    int    nMics;
     double micDistance;
+    int    frameSamples;
+    int    samplingRate;
+    int    nBands;
+    int    lowCf;
+    int    highCf;
+    int    interpolateNSamples;
+
+    int    nBeamsPerHemi;
+    int    nBeams;
+    
+    
+    
+    
+
+    
 
 
  public:

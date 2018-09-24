@@ -164,10 +164,10 @@ bool AudioPreprocesserRatethread::threadInit() {
 	outGammaTonePowerAudioMap = new yarp::sig::Matrix(1, nBands);
 
 	// construct a yarp Matrix for sending Beam Formed Audio
-  	outBeamFormedAudioMap = new yarp::sig::Matrix(totalBeams * nBands, frameSamples);
+  	outBeamFormedAudioMap = new yarp::sig::Matrix(nBeams * nBands, frameSamples);
 
   	// construct a yarp Matrix for sending Reduced Beam Formed Audio
-  	outReducedBeamFormedAudioMap = new yarp::sig::Matrix(nBands, totalBeams);
+  	outReducedBeamFormedAudioMap = new yarp::sig::Matrix(nBands, nBeams);
 
 	// construct a yarp Matrix for sending the power of the Beam Formed Audio
 	outBeamFormedPowerAudioMap = new yarp::sig::Matrix(1, nBands);
@@ -322,19 +322,24 @@ void AudioPreprocesserRatethread::loadFile(yarp::os::ResourceFinder &rf) {
 		highCf              = rf.findGroup("preprocessing").check("highCf",              Value(3000), "highest center frequency (int)").asInt();
 		interpolateNSamples = rf.findGroup("preprocessing").check("interpolateNSamples", Value(180),  "interpellate N samples (int)").asInt();
 		
-		nBeamsPerHemi  = (int)((micDistance / C) * samplingRate) - 1;
-		totalBeams = nBeamsPerHemi * 2 + 1;
+		//nBeamsPerHemi  = (int)((micDistance / C) * samplingRate) - 1;
+		//nBeams = nBeamsPerHemi * 2 + 1;
+
+		//-- Take the ceiling of of (D/C)/Rate.
+		//--   ceiling = (x + y - 1) / y
+		nBeamsPerHemi = ((micDistance * samplingRate) + C - 1.0) / C;
+		nBeams = 2 * nBeamsPerHemi + 1;
 
 		// print information from rf to the console
-		yInfo("\t nMics                      = %d", nMics);
-		yInfo("\t micDistance                = %f", micDistance);
-		yInfo("\t frameSamples               = %d", frameSamples);
-		yInfo("\t nBands                     = %d", nBands);
-    	yInfo("\t low Cutting frequency      = %d",lowCf);
-    	yInfo("\t high Cutting frequency     = %d",highCf);
-		yInfo("\t _beamsPerHemi           %d = %f / %d * %d", nBeamsPerHemi, micDistance, C, samplingRate);
-		yInfo("\t total beams                = %d",totalBeams);
-		yInfo("\t interpolateNSamples        = %d", interpolateNSamples );
+		yInfo("\t nMics                        = %d", nMics);
+		yInfo("\t micDistance                  = %f", micDistance);
+		yInfo("\t frameSamples                 = %d", frameSamples);
+		yInfo("\t nBands                       = %d", nBands);
+    	yInfo("\t low Cutting frequency        = %d",lowCf);
+    	yInfo("\t high Cutting frequency       = %d",highCf);
+		yInfo("\t Num Beams Per Hemifield   %d = %f / %d * %d", nBeamsPerHemi, micDistance, C, samplingRate);
+		yInfo("\t Total Beams                  = %d",nBeams);
+		yInfo("\t interpolateNSamples          = %d", interpolateNSamples );
 	}
 
 	catch (int a) {
@@ -387,7 +392,7 @@ void AudioPreprocesserRatethread::sendGammatonePowerAudio(const std::vector<floa
 void AudioPreprocesserRatethread::sendBeamFormedAudio(const std::vector<std::vector<std::vector<float> > > &beamFormedAudio) {
 
 	// fill the yarp Matrix with uncompressed beamformed audio
-    for (int beam = 0; beam < totalBeams; beam++) {
+    for (int beam = 0; beam < nBeams; beam++) {
         for (int band = 0; band < nBands; band++) {
             yarp::sig::Vector tempV(frameSamples);
             for (int frame = 0; frame < frameSamples; frame++) {
@@ -401,8 +406,8 @@ void AudioPreprocesserRatethread::sendBeamFormedAudio(const std::vector<std::vec
 
     /*
 	for (int i = 0; i < nBands; i++) {
-		yarp::sig::Vector tempV(totalBeams);
-		for (int j = 0; j < totalBeams; j++) {
+		yarp::sig::Vector tempV(nBeams);
+		for (int j = 0; j < nBeams; j++) {
 			tempV[j] = beamFormedAudio[i][j];
 		}
 		outBeamFormedAudioMap->setRow(i, tempV);
@@ -423,7 +428,7 @@ void AudioPreprocesserRatethread::sendReducedBeamFormedAudio(const std::vector<s
 
     //********************************************************************
 	// fill the yarp Matrix with reduced beamformed audio
-	for (int i = 0; i < totalBeams; i++) {
+	for (int i = 0; i < nBeams; i++) {
 		yarp::sig::Vector tempV(nBands);
 		for (int j = 0; j < nBands; j++) {
 			tempV[j] = reducedBeamFormedAudio[i][j];
@@ -432,8 +437,8 @@ void AudioPreprocesserRatethread::sendReducedBeamFormedAudio(const std::vector<s
 	}
     //********************************************************************
     for (int i = 0; i < nBands; i++) {
-		yarp::sig::Vector tempV(totalBeams);
-		for (int j = 0; j < totalBeams; j++) {
+		yarp::sig::Vector tempV(nBeams);
+		for (int j = 0; j < nBeams; j++) {
 			tempV[j] = reducedBeamFormedAudio[j][i];
 		}
 		outReducedBeamFormedAudioMap->setRow(i, tempV);
@@ -515,7 +520,7 @@ inline double AudioPreprocesserRatethread::linerApproximation(int x, int x1, dou
 
 void AudioPreprocesserRatethread::linerInterpolate() {
 
-	double offset = (interpolateNSamples / (double)totalBeams);
+	double offset = (interpolateNSamples / (double)nBeams);
 
 	for (int i = 0; i < nBands; i++) {
 
@@ -525,7 +530,7 @@ void AudioPreprocesserRatethread::linerInterpolate() {
 		// interpolation for the first half
 		for (int j = 0; j < interpolateNSamples; j++) {
 
-			if (j == (int)curroffset && k < (totalBeams - 1)) {
+			if (j == (int)curroffset && k < (nBeams - 1)) {
 				curroffset += offset;
 				k++;
 			}
@@ -628,7 +633,7 @@ knotValues AudioPreprocesserRatethread::calcSplineKnots(double x1, double y1, do
 
 void AudioPreprocesserRatethread::splineInterpolate() {
 
-	double offset = (interpolateNSamples / (double)totalBeams);
+	double offset = (interpolateNSamples / (double)nBeams);
 
 	for (int i = 0; i < nBands; i++) {
 
@@ -637,7 +642,7 @@ void AudioPreprocesserRatethread::splineInterpolate() {
 
 		// interpolation for the first half
 		for (int j = 0; j < interpolateNSamples; j++) {
-			if (j == (int)curroffset && k < (totalBeams - 1)) {
+			if (j == (int)curroffset && k < (nBeams - 1)) {
 				curroffset += offset;
 				k++;
 			}
