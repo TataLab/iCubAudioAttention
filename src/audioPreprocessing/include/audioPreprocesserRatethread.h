@@ -27,6 +27,7 @@
 #define _AUDIO_PREPROCESSER_RATETHREAD_H_
 
 #include <iostream>
+//#include <cmath>
 
 #include <yarp/dev/all.h>
 
@@ -41,7 +42,8 @@
 #include "gammatoneFilter.h"
 #include "beamFormer.h"
 
-const float normDivid = pow(2,15); 
+const float  normDivid = pow(2,15);
+const double _pi       = 2 * acos(0.0); 
 
 //const float normDivid = pow(2,23);  // Number that is used to convert the integer number received
                                     // as the audio signal and convert it to a double audio signal
@@ -95,11 +97,18 @@ class AudioPreprocesserRatethread : public yarp::os::RateThread {
 	float *rawAudio;
 
 
+
+    //----------------------------------
+    
+    yarp::sig::Vector spaceAngles;
+    yarp::sig::Vector micAngles;
+
+
 	//
 	// processing objects
 	//
 	GammatoneFilter *gammatoneAudioFilter;
-	BeamFormer *beamForm;
+	BeamFormer      *beamForm;
 
 
     int lastframe;
@@ -122,9 +131,13 @@ class AudioPreprocesserRatethread : public yarp::os::RateThread {
     int    lowCf;
     int    highCf;
     int    interpolateNSamples;
+    int    radialRes_degrees;
 
     int    nBeamsPerHemi;
     int    nBeams;
+    int    nMicAngles;
+    double radialRes_radians;
+    int    nSpaceAngles;
     
     
     

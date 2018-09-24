@@ -144,6 +144,66 @@ bool AudioPreprocesserRatethread::threadInit() {
 	// prepare other memory structures
 	rawAudio = new float[(frameSamples * nMics)];
 
+	//--
+	//-- Find the Spacing of the beams, for proper interpolation.
+	//--
+
+	//-- Generate the angles at which each beam is pointed.
+	yarp::sig::Vector angles(nBeams);
+	for (int beam = 0; beam < nBeams; beam++) {
+		angles[beam] = (1.0 / micDistance) * (-nBeamsPerHemi + beam) * (C / samplingRate);
+		angles[beam] = (angles[beam] <= -1.0) ? -1.0 : angles[beam];  //-- Make sure we are in 
+		angles[beam] = (angles[beam] >=  1.0) ?  1.0 : angles[beam];  //-- range to avoid NAN.
+		angles[beam] = asin(angles[beam]);
+	}
+
+
+	//-- Generate a lineaer distribution of the angles in space.
+	double linspace_step = ((_pi - radialRes_radians) - (-_pi)) / (nSpaceAngles - 1.0);
+	double current_step  = -_pi;
+
+	spaceAngles.resize(nSpaceAngles, 0.0);
+	
+	for (int angle = 0; angle < nSpaceAngles; angle++) {
+		spaceAngles[angle] = current_step;
+		current_step += linspace_step;
+	}
+
+
+	//-- Generate the non-linear distribution of where all beams are pointed.
+	int current_mic_pos = 0;
+
+	micAngles.resize(nMicAngles, 0.0);
+
+	//-- First section is the last half of angles + pi.
+	for (int beam = nBeams-nBeamsPerHemi-1; beam < nBeams-1; beam++) {
+		micAngles[current_mic_pos++] = angles[beam] + _pi;
+	}
+
+	//-- Second section is just the entire angles.
+	for (int beam = 0; beam < nBeams; beam++) {
+		micAngles[current_mic_pos++] = angles[beam];
+	}
+
+	//-- Third section is the first half of angles + pi.
+	for (int beam = 1; beam < nBeams-nBeamsPerHemi-1; beam++) {
+		micAngles[current_mic_pos++] = angles[beam] + _pi;
+	}
+	
+	//-- Unwrap the micAngles by changing deltas between values to 2*pi complement.
+	for (int angle = 1; angle < nMicAngles; angle++) {		
+		double delta = micAngles[angle] - micAngles[angle-1];
+		delta = (delta > _pi) ? delta - 2 * _pi : ( (delta < -_pi) ? delta + 2 * _pi : delta );
+		micAngles[angle] = micAngles[angle-1] + delta;
+	}
+
+	//-- Normalize all microphone positions to +/- pi.
+	for (int angle = 0; angle < nMicAngles; angle++) {
+		micAngles[angle] -= (2 * _pi);
+	}
+
+
+
 	// initialize a two dimentianl vector that
 	// is 2 * interpolateNSamples x nBands
 	for (int i = 0; i < interpolateNSamples * 2; i++) {
@@ -311,35 +371,41 @@ void AudioPreprocesserRatethread::loadFile(yarp::os::ResourceFinder &rf) {
 	// import all relevant data fron the .ini file
 	yInfo("Loading Configuration File.");
 	try {
-		C            = rf.findGroup("sampling").check("C",            Value(338),   "C speed of sound (int)").asInt();
-		nMics        = rf.findGroup("sampling").check("nMics",        Value(2),     "number mics (int)").asInt();
-		micDistance  = rf.findGroup("sampling").check("micDistance",  Value(0.145), "micDistance (double)").asDouble();
-		frameSamples = rf.findGroup("sampling").check("frameSamples", Value(4096),  "frame samples (int)").asInt();
-		samplingRate = rf.findGroup("sampling").check("samplingRate", Value(48000), "sampling rate of mics (int)").asInt();
+		C            = rf.findGroup("sampling").check("C",            Value(336.628), "C speed of sound (double)").asDouble();
+		nMics        = rf.findGroup("sampling").check("nMics",        Value(2),       "number mics (int)").asInt();
+		micDistance  = rf.findGroup("sampling").check("micDistance",  Value(0.145),   "micDistance (double)").asDouble();
+		frameSamples = rf.findGroup("sampling").check("frameSamples", Value(4096),    "frame samples (int)").asInt();
+		samplingRate = rf.findGroup("sampling").check("samplingRate", Value(48000),   "sampling rate of mics (int)").asInt();
 		
 		nBands              = rf.findGroup("preprocessing").check("nBands",              Value(128),  "numberBands (int)").asInt();
 		lowCf               = rf.findGroup("preprocessing").check("lowCf",               Value(1000), "lowest center frequency (int)").asInt();
 		highCf              = rf.findGroup("preprocessing").check("highCf",              Value(3000), "highest center frequency (int)").asInt();
 		interpolateNSamples = rf.findGroup("preprocessing").check("interpolateNSamples", Value(180),  "interpellate N samples (int)").asInt();
-		
-		//nBeamsPerHemi  = (int)((micDistance / C) * samplingRate) - 1;
-		//nBeams = nBeamsPerHemi * 2 + 1;
+		radialRes_degrees   = rf.findGroup("preprocessing").check("radialRes_degrees",   Value(1),    "Degrees Per Possible Head Direction (int)").asInt();
+
 
 		//-- Take the ceiling of of (D/C)/Rate.
 		//--   ceiling = (x + y - 1) / y
-		nBeamsPerHemi = ((micDistance * samplingRate) + C - 1.0) / C;
-		nBeams = 2 * nBeamsPerHemi + 1;
+		nBeamsPerHemi     = ((micDistance * samplingRate) + C - 1.0) / C;
+		nBeams            = 2 * nBeamsPerHemi + 1;
+	    nMicAngles        = nBeams * 2 - 2;
+		radialRes_radians = _pi / 180.0 * radialRes_degrees;
+		nSpaceAngles      = 360 / radialRes_degrees;
 
-		// print information from rf to the console
-		yInfo("\t nMics                        = %d", nMics);
-		yInfo("\t micDistance                  = %f", micDistance);
-		yInfo("\t frameSamples                 = %d", frameSamples);
-		yInfo("\t nBands                       = %d", nBands);
-    	yInfo("\t low Cutting frequency        = %d",lowCf);
-    	yInfo("\t high Cutting frequency       = %d",highCf);
-		yInfo("\t Num Beams Per Hemifield   %d = %f / %d * %d", nBeamsPerHemi, micDistance, C, samplingRate);
-		yInfo("\t Total Beams                  = %d",nBeams);
-		yInfo("\t interpolateNSamples          = %d", interpolateNSamples );
+		//-- Print information from rf to the console.
+		yInfo("\t nMics                           = %d", nMics);
+		yInfo("\t micDistance                     = %f", micDistance);
+		yInfo("\t frameSamples                    = %d", frameSamples);
+		yInfo("\t nBands                          = %d", nBands);
+    	yInfo("\t low Cutting frequency           = %d", lowCf);
+    	yInfo("\t high Cutting frequency          = %d", highCf);
+		yInfo("\t Num Beams Per Hemifield      %d = ceil(%f / %f * %d)", nBeamsPerHemi, micDistance, C, samplingRate);
+		yInfo("\t Total Num Beams                 = %d", nBeams);
+		yInfo("\t nMicAngles                      = %d", nMicAngles);
+		yInfo("\t interpolateNSamples             = %d", interpolateNSamples );
+		yInfo("\t Radial Resolution (Degrees)     = %d", radialRes_degrees);
+		yInfo("\t Radial Resolution (Radians)     = %f", radialRes_radians);
+		yInfo("\t Num Space Angles                = %d", nSpaceAngles);
 	}
 
 	catch (int a) {
@@ -514,11 +580,12 @@ void AudioPreprocesserRatethread::sendAudioMap() {
 
 inline double AudioPreprocesserRatethread::linerApproximation(int x, int x1, double y1, int x2, double y2) {
 	return y1 + ((y2 - y1) * (x - x1)) / (x2 - x1);
-	//return y2;
 }
 
 
 void AudioPreprocesserRatethread::linerInterpolate() {
+
+	/*  TODO : REMOVE THIS BLOCK.
 
 	double offset = (interpolateNSamples / (double)nBeams);
 
@@ -559,6 +626,29 @@ void AudioPreprocesserRatethread::linerInterpolate() {
 																reducedBeamFormedAudioVector[k][i],		// y1
 																curroffset,								// x2
 																reducedBeamFormedAudioVector[k-1][i]);	// y2
+		}
+	}
+	*/ 
+
+	for (int band = 0; band < nBands; band++) {
+		
+		int mAngle = 1;
+		for (int sAngle = 0; sAngle < nSpaceAngles; sAngle++) {
+			
+			//-- If the offset angle is smaller than the normal angle, 
+			//-- move to the next offset angle.
+			if (spaceAngles[sAngle] > micAngles[mAngle] && mAngle < nMicAngles-1) {
+				mAngle++;
+			}
+
+			//-- Interpolate for this position.
+			highResolutionAudioMap[sAngle][band] = linerApproximation(
+				spaceAngles[sAngle],
+				micAngles[mAngle-1],
+				reducedBeamFormedAudioVector[mAngle-1][band],
+				micAngles[mAngle],
+				reducedBeamFormedAudioVector[mAngle][band]
+			);
 		}
 	}
 }
