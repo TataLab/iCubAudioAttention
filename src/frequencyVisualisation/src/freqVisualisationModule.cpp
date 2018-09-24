@@ -67,6 +67,11 @@ bool freqVisualisationModule::configure(yarp::os::ResourceFinder &rf) {
                             Value(1),
                             "Gain for visualization (int)").asInt();
     std::cerr << "init gain is " << gain << std::endl;
+    string grid              = rf.check("grid",
+                            Value("none"),
+                            "visualisation of grid(string)").asString();
+    yInfo("Visualisation of a grid: %s", grid.c_str());
+
     /*
     * attach a port of the same name as the module (prefixed with a /) to the module
     * so that messages received from the port are redirected to the respond method
@@ -95,6 +100,7 @@ bool freqVisualisationModule::configure(yarp::os::ResourceFinder &rf) {
     rThread = new freqVisualisationRatethread(robotName, configFile);
     rThread->setName(getName().c_str());
     rThread->setGain(gain);
+    rThread->setGrid(grid);
     //rThread->setInputPortName(inputPortName.c_str());
     
     /* now start the thread to do the work */

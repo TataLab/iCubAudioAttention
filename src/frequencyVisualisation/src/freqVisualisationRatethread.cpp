@@ -124,8 +124,19 @@ void freqVisualisationRatethread::setGain(int inGain) {
     this->visGain = inGain;
 }
 
+void freqVisualisationRatethread::setGrid(string str) {
+    if (strcmp(str.c_str(), "vert") == 0) {
+        grid = 2;
+    }
+    else if (strcmp(str.c_str(), "hor") == 0) {
+        grid = 1;
+    }
+    else {
+        grid = 0;
+    }
+}
+
 void freqVisualisationRatethread::run() {
-    //code here .....
     if (inputPort.getInputCount()) {
         Matrix* mat = inputPort.read(false);   //blocking reading for synchr with the input
         if (mat!=NULL) {
@@ -177,9 +188,19 @@ bool freqVisualisationRatethread::processing(Matrix* mat){
     double* pMat = mat->data();
     double value;
     int padding = outputImage->getPadding();
+    int nColsDiv4;
+    //checking if two shifts are allowed
+    if(nCols%4 == 0) {
+        nColsDiv4 = nCols>>2;
+    }
+    else {
+        nColsDiv4 = 1;
+    }
+    yInfo("nCols %d nColsDiv4 %", nCols, nColsDiv4);
     for (int r = 0; r < nRows; r++) {
         for (int c = 0; c < nCols; c++) {
-            if((c%(nCols>>2)== 0)&&(c!=0)) {
+            // drawing of the line only if the width is 16pixels
+            if((c%nColsDiv4 == 0)&&(c!=0)&&(nColsDiv4>=4)&&(grid==2)) {
                 value = *pMat;
                 COLOUR col = GetColour(value * visGain, 0.0, 1.0);
                 //*pImage = 0;

@@ -45,6 +45,7 @@ private:
     int imageOutHeight;
     int imageOutWidth;
     int visGain;
+    int grid;                       // grid visualisation: 0-none, 1-hor, 2-vert
 
     std::string robot;              // name of the robot
     std::string configFile;         // name of the configFile where the parameter of the camera are set
@@ -112,6 +113,11 @@ public:
     * function that sets the gain for the image
     */
     void setGain(int inGain);
+
+    /**
+    * function that sets the visualisation grid
+    */
+    void setGrid(std::string grid);
     
     /**
      * method for the use of opencv functions
