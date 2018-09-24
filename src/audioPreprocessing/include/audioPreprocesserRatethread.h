@@ -103,6 +103,8 @@ class AudioPreprocesserRatethread : public yarp::os::RateThread {
     yarp::sig::Vector spaceAngles;
     yarp::sig::Vector micAngles;
 
+    yarp::sig::Matrix lowResolutionAudioMap;
+
 
 	//
 	// processing objects
@@ -309,6 +311,9 @@ class AudioPreprocesserRatethread : public yarp::os::RateThread {
      *  @param beamFormedPower : power of reduced beamformed audio across each band.
      */
     void sendBeamFormedPowerAudio(const std::vector< double > &beamFormedPower);
+
+
+    void setLowResolutionMap();
 
 
     /**

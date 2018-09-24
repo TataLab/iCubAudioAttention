@@ -203,6 +203,11 @@ bool AudioPreprocesserRatethread::threadInit() {
 	}
 
 
+	//-- Allocate space for the low resolution audio map,
+	//-- then clear it to all zeros.
+	lowResolutionAudioMap.resize(nBands, nMicAngles);
+	lowResolutionAudioMap.zero();
+
 
 	// initialize a two dimentianl vector that
 	// is 2 * interpolateNSamples x nBands
@@ -319,7 +324,9 @@ void AudioPreprocesserRatethread::run() {
 		sendBeamFormedPowerAudio(beamForm->getPowerAudio());
 	}
 
-	// do an interpolate on the reducedBeamFormedAudioVector
+	setLowResolutionMap();
+
+	// do an interpolate on the lowResolutionAudioMap
 	// to produce a highResolutionAudioMap
 	linerInterpolate();
     //splineInterpolate();
@@ -492,7 +499,7 @@ void AudioPreprocesserRatethread::sendReducedBeamFormedAudio(const std::vector<s
 
     //yDebug("size of reduced beam former %d %d \n", reducedBeamFormedAudio.size(), reducedBeamFormedAudio[0].size());
 
-    //********************************************************************
+    /********************************************************************
 	// fill the yarp Matrix with reduced beamformed audio
 	for (int i = 0; i < nBeams; i++) {
 		yarp::sig::Vector tempV(nBands);
@@ -501,8 +508,10 @@ void AudioPreprocesserRatethread::sendReducedBeamFormedAudio(const std::vector<s
 		}
 		outReducedBeamFormedAudioMap->setRow(i, tempV);
 	}
-    //********************************************************************
-    for (int i = 0; i < nBands; i++) {
+    //********************************************************************/
+
+    // fill the yarp Matrix with reduced beamformed audio
+	for (int i = 0; i < nBands; i++) {
 		yarp::sig::Vector tempV(nBeams);
 		for (int j = 0; j < nBeams; j++) {
 			tempV[j] = reducedBeamFormedAudio[j][i];
@@ -578,6 +587,27 @@ void AudioPreprocesserRatethread::sendAudioMap() {
 }
 
 
+void AudioPreprocesserRatethread::setLowResolutionMap() {
+
+	for (int band = 0; band < nBands; band++) {
+
+		int current_beam = 0;
+		for (int beam = nBeams-nBeamsPerHemi-1; beam < nBeams-1; beam++) {
+			lowResolutionAudioMap[band][current_beam++] = reducedBeamFormedAudioVector[beam][band];
+		}
+
+		for (int beam = 0; beam < nBeams; beam++) {
+			lowResolutionAudioMap[band][current_beam++] = reducedBeamFormedAudioVector[beam][band];
+		}
+
+		for (int beam = 1; beam < nBeams-nBeamsPerHemi-1; beam++) {
+			lowResolutionAudioMap[band][current_beam++] = reducedBeamFormedAudioVector[beam][band];
+		}
+	}
+}
+
+
+
 inline double AudioPreprocesserRatethread::linerApproximation(int x, int x1, double y1, int x2, double y2) {
 	return y1 + ((y2 - y1) * (x - x1)) / (x2 - x1);
 }
@@ -645,9 +675,9 @@ void AudioPreprocesserRatethread::linerInterpolate() {
 			highResolutionAudioMap[sAngle][band] = linerApproximation(
 				spaceAngles[sAngle],
 				micAngles[mAngle-1],
-				reducedBeamFormedAudioVector[mAngle-1][band],
+				lowResolutionAudioMap[band][mAngle-1],
 				micAngles[mAngle],
-				reducedBeamFormedAudioVector[mAngle][band]
+				lowResolutionAudioMap[band][mAngle]
 			);
 		}
 	}
