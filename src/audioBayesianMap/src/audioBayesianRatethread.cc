@@ -285,7 +285,8 @@ void AudioBayesianRatethread::calcOffset() {
 	if (headAngleInPort->getInputCount()) {
 		headAngleBottle = headAngleInPort->read(true);   //blocking reading for synchr with the input
 		offset = headAngleBottle->get(panAngle).asDouble();
-        offset += 270;
+        //offset += 270;
+		offset += 180;
 	}
     // Pushes the current offset into a buffer which
     // is needed to remove "old" audio maps
