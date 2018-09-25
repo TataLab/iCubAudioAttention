@@ -289,7 +289,10 @@ void AudioBayesianRatethread::calcOffset() {
         
 	}
 	//offset += 270.0;
-	offset += 180.0;
+	//offset += 180.0;
+	offset += 360.0; // center of ego map is now 180 degrees.
+
+
     // Pushes the current offset into a buffer which
     // is needed to remove "old" audio maps
     bufferedOffSet.push(offset);
@@ -446,7 +449,7 @@ void AudioBayesianRatethread::addMap(std::vector <std::vector <double> > &probab
 	// Bayesian map corresponding to the input probabilityMap
 	for (int i = 0; i <  nBands; i++) {
 		for (int j = 0; j < interpolateNSamples * 2; j++) {
-			int o =  myModed((j + (int)offset), interpolateNSamples * 2);
+			int o =  myModed((j + myRound(offset)), interpolateNSamples * 2);
 			probabilityMap[i][j] *= inputCurrentAudioMap[i][o];
 		}
 	}
@@ -465,7 +468,7 @@ void AudioBayesianRatethread::removeMap(std::vector <std::vector <double> > &pro
 	// the Bayesian map corresponding to the input probabilityMap
 	for (int i = 0; i <  nBands; i++) {
 		for (int j = 0; j < interpolateNSamples * 2; j++) {
-			int o =  myModed((j + (int)bufferedOffSet.front()), interpolateNSamples * 2);
+			int o =  myModed((j + myRound(bufferedOffSet.front())), interpolateNSamples * 2);
 			probabilityMap[i][j] /= inputCurrentAudioMap[i][o];
 		}
 	}
@@ -478,7 +481,7 @@ void AudioBayesianRatethread::removeNoise(std::vector <std::vector <double>> &pr
 	// corresponding to the input probabilityMap
 	for (int i = 0; i <  nBands; i++) {
 		for (int j = 0; j < interpolateNSamples * 2; j++) {
-			int o =  myModed((j + (int)offset), interpolateNSamples * 2);
+			int o =  myModed((j + myRound(offset)), interpolateNSamples * 2);
 			probabilityMap[i][j] /= noiseMap[i][o];
 		}
 	}
