@@ -49,6 +49,7 @@ AudioPreprocesserRatethread::~AudioPreprocesserRatethread() {
 	delete outBeamFormedAudioPort;
 	delete outReducedBeamFormedAudioPort;
 	delete outBeamFormedPowerAudioPort;
+	delete outLowResolutionAudioMapPort;
 	delete outAudioMapEgoPort;
 
 	delete outAudioMap;
@@ -115,6 +116,12 @@ bool AudioPreprocesserRatethread::threadInit() {
 		return false;
 	}
 
+	outLowResolutionAudioMapPort = new yarp::os::BufferedPort<yarp::sig::Matrix>();
+	if (!outLowResolutionAudioMapPort->open("/iCubAudioAttention/LowResolutionAudioMap:o")) {
+		yError("unable to open port to send the low resolution audio map");
+		return false;
+	}
+
 
 	// output port for sending the Audio Map
 	outAudioMapEgoPort = new yarp::os::Port();
@@ -125,15 +132,15 @@ bool AudioPreprocesserRatethread::threadInit() {
 
 
 	// error checking
-	if (yarp::os::Network::exists("/iCubAudioAttention/AudioPreprocesser:i")) {
-		if (yarp::os::Network::connect("/sender", "/iCubAudioAttention/AudioPreprocesser:i") == false) {
-			yError("Could not make connection to /sender. \nExiting. \n");
-			return false;
-		}
-	} else {
-		// inPort failed to open. quit.
-		return false;
-	}
+	//if (yarp::os::Network::exists("/iCubAudioAttention/AudioPreprocesser:i")) {
+	//	if (yarp::os::Network::connect("/sender", "/iCubAudioAttention/AudioPreprocesser:i") == false) {
+	//		yError("Could not make connection to /sender. \nExiting. \n");
+	//		return false;
+	//	}
+	//} else {
+	//	// inPort failed to open. quit.
+	//	return false;
+	//}
 
 	// prepare GammatoneFilter object
 	gammatoneAudioFilter = new GammatoneFilter(samplingRate, lowCf, highCf, nBands, frameSamples, nMics, false);
@@ -326,6 +333,12 @@ void AudioPreprocesserRatethread::run() {
 
 	setLowResolutionMap();
 
+
+	if (outLowResolutionAudioMapPort->getOutputCount()) {
+		sendLowResolutionAudioMap();
+	}
+
+
 	// do an interpolate on the lowResolutionAudioMap
 	// to produce a highResolutionAudioMap
 	linearInterpolate();
@@ -360,6 +373,7 @@ void AudioPreprocesserRatethread::threadRelease() {
 	outBeamFormedAudioPort->interrupt();
 	outReducedBeamFormedAudioPort->interrupt();
 	outBeamFormedPowerAudioPort->interrupt();
+	outLowResolutionAudioMapPort->interrupt();
 	outAudioMapEgoPort->interrupt();
 
 	// release all ports
@@ -369,6 +383,7 @@ void AudioPreprocesserRatethread::threadRelease() {
 	outBeamFormedAudioPort->close();
 	outReducedBeamFormedAudioPort->close();
 	outBeamFormedPowerAudioPort->close();
+	outLowResolutionAudioMapPort->close();
 	outAudioMapEgoPort->close();
 }
 
@@ -568,6 +583,30 @@ void AudioPreprocesserRatethread::sendBeamFormedPowerAudio(const std::vector< do
 }
 
 
+void AudioPreprocesserRatethread::sendLowResolutionAudioMap() {
+
+	//-- Init a matrix to publish on.
+	yarp::sig::Matrix& m = outLowResolutionAudioMapPort->prepare();
+	m.resize(nBands, nMicAngles);
+
+	//-- Fill the yarp matrix with the power of the beams formed audio.
+	yarp::sig::Vector tempV(nMicAngles);
+
+	for (int band = 0; band < nBands; band++) {
+		for (int angle = 0; angle < nMicAngles; angle++) {
+			tempV[angle] = lowResolutionAudioMap[band][angle];
+		}
+		//-- Add this to the buffered port.
+		m.setRow(band, tempV);
+	}
+
+	//-- Set the envelope for the Beamformed Power Audio Port.
+	outLowResolutionAudioMapPort->setEnvelope(ts);
+
+	//-- Publish the map onto the yarp network.
+	outLowResolutionAudioMapPort->write();
+}
+
 void AudioPreprocesserRatethread::sendAudioMap() {
 
 	// fill the yarp Matrix with interpolated beamformed audio
@@ -590,19 +629,6 @@ void AudioPreprocesserRatethread::sendAudioMap() {
 void AudioPreprocesserRatethread::setLowResolutionMap() {
 
 	for (int band = 0; band < nBands; band++) {
-
-		//int current_beam = 0;
-		//for (int beam = nBeams-nBeamsPerHemi-1; beam < nBeams-1; beam++) {
-		//	lowResolutionAudioMap[band][current_beam++] = reducedBeamFormedAudioVector[beam][band];
-		//}
-//
-		//for (int beam = 0; beam < nBeams; beam++) {
-		//	lowResolutionAudioMap[band][current_beam++] = reducedBeamFormedAudioVector[beam][band];
-		//}
-//
-		//for (int beam = 1; beam < nBeams-nBeamsPerHemi-1; beam++) {
-		//	lowResolutionAudioMap[band][current_beam++] = reducedBeamFormedAudioVector[beam][band];
-		//}
 
 		int current_beam = 0;
 		for (int beam = nBeams-nBeamsPerHemi-1; beam > 0; beam--) {

@@ -74,6 +74,7 @@ class AudioPreprocesserRatethread : public yarp::os::RateThread {
 	yarp::os::Port *outBeamFormedAudioPort;
     //yarp::os::BufferedPort<yarp::sig::Matrix> *outBeamFormedPowerAudioPort;
     yarp::os::Port *outBeamFormedPowerAudioPort;
+    yarp::os::BufferedPort<yarp::sig::Matrix> *outLowResolutionAudioMapPort;
 	yarp::os::Port *outAudioMapEgoPort;
 
 	yarp::os::Stamp ts;
@@ -260,6 +261,8 @@ class AudioPreprocesserRatethread : public yarp::os::RateThread {
      *  The audio map is stored in outAudioMap and sent though port audioMapPort.
      */
      void sendAudioMap();
+
+    void sendLowResolutionAudioMap();
 
 
     /**

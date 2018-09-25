@@ -282,12 +282,14 @@ void AudioBayesianRatethread::calcOffset() {
 	//to do:  redesign this to make use of the SpatialSound class which contains
 	//information about altitude and azimuth so that yarpBayesianMap never needs
 	//to get the position of the head directly from the robot
+	offset = 0.0;
 	if (headAngleInPort->getInputCount()) {
 		headAngleBottle = headAngleInPort->read(true);   //blocking reading for synchr with the input
 		offset = headAngleBottle->get(panAngle).asDouble();
-        //offset += 270;
-		offset += 180;
+        
 	}
+	//offset += 270.0;
+	offset += 180.0;
     // Pushes the current offset into a buffer which
     // is needed to remove "old" audio maps
     bufferedOffSet.push(offset);
