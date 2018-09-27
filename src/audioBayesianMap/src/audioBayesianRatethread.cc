@@ -219,7 +219,7 @@ void AudioBayesianRatethread::run() {
 	// Calls the Memory maper and memory maps it to
 	// the following file: /tmp/bayesianProbabilityLongMap.tmp
 	stopTime = yarp::os::Time::now();
-	yInfo("Count:%d Time:%f Offset:%f. \n", ts.getCount(),  stopTime-startTime, offset);
+	yInfo("Count:%d Time:%f Offset:%f. \n", ts.getCount(),  stopTime-startTime, offset-360.0);
 	startTime = stopTime;
 }
 
@@ -285,7 +285,7 @@ void AudioBayesianRatethread::calcOffset() {
 	offset = 0.0;
 	if (headAngleInPort->getInputCount()) {
 		headAngleBottle = headAngleInPort->read(true);   //blocking reading for synchr with the input
-		offset = headAngleBottle->get(panAngle).asDouble();
+		offset -= headAngleBottle->get(panAngle).asDouble();
         
 	}
 	//offset += 270.0;

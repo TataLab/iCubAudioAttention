@@ -529,7 +529,7 @@ void AudioPreprocesserRatethread::sendReducedBeamFormedAudio(const std::vector<s
 	for (int i = 0; i < nBands; i++) {
 		yarp::sig::Vector tempV(nBeams);
 		for (int j = 0; j < nBeams; j++) {
-			tempV[j] = reducedBeamFormedAudio[j][i];
+			tempV[j] = reducedBeamFormedAudio[i][j];
 		}
 		outReducedBeamFormedAudioMap->setRow(i, tempV);
 	}
@@ -632,15 +632,15 @@ void AudioPreprocesserRatethread::setLowResolutionMap() {
 
 		int current_beam = 0;
 		for (int beam = nBeams-nBeamsPerHemi-1; beam > 0; beam--) {
-			lowResolutionAudioMap[band][current_beam++] = reducedBeamFormedAudioVector[beam][band];
+			lowResolutionAudioMap[band][current_beam++] = reducedBeamFormedAudioVector[band][beam];
 		}
 
 		for (int beam = 0; beam < nBeams; beam++) {
-			lowResolutionAudioMap[band][current_beam++] = reducedBeamFormedAudioVector[beam][band];
+			lowResolutionAudioMap[band][current_beam++] = reducedBeamFormedAudioVector[band][beam];
 		}
 
 		for (int beam = nBeams-2; beam > nBeams-nBeamsPerHemi-1; beam--) {
-			lowResolutionAudioMap[band][current_beam++] = reducedBeamFormedAudioVector[beam][band];
+			lowResolutionAudioMap[band][current_beam++] = reducedBeamFormedAudioVector[band][beam];
 		}
 	}
 }
