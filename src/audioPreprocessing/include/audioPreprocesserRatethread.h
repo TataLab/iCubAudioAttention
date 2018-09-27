@@ -77,6 +77,8 @@ class AudioPreprocesserRatethread : public yarp::os::RateThread {
     yarp::os::BufferedPort<yarp::sig::Matrix> *outLowResolutionAudioMapPort;
 	yarp::os::Port *outAudioMapEgoPort;
 
+    yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelRgb> > *outGammatoneFilterVisPort;
+
 	yarp::os::Stamp ts;
 	yarp::sig::Sound* s;
 
@@ -274,6 +276,8 @@ class AudioPreprocesserRatethread : public yarp::os::RateThread {
      *  @param gammatoneAudio : filtered gammatone audio
      */
     void sendGammatoneFilteredAudio(const std::vector<float*> &gammatoneAudio);
+
+    void sendGammatoneFilteredAudioVis(const std::vector<float*> &gammatoneAudio);
 
 
     /**

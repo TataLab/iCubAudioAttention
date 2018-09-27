@@ -51,6 +51,7 @@ AudioPreprocesserRatethread::~AudioPreprocesserRatethread() {
 	delete outBeamFormedPowerAudioPort;
 	delete outLowResolutionAudioMapPort;
 	delete outAudioMapEgoPort;
+	delete outGammatoneFilterVisPort;
 
 	delete outAudioMap;
 	delete outGammaToneFilteredAudioMap;
@@ -88,6 +89,12 @@ bool AudioPreprocesserRatethread::threadInit() {
 	outGammaTonePowerAudioPort = new yarp::os::Port();
 	if (!outGammaTonePowerAudioPort->open("/iCubAudioAttention/GammaTonePowerAudio:o")) {
 		yError("unable to open port to send Power of Gammatone Filtered Audio");
+		return false;
+	}
+
+	outGammatoneFilterVisPort = new yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelRgb> >();
+	if (!outGammatoneFilterVisPort->open("/iCubAudioAttention/GammatoneVis/img:o")) { 
+		yError("unable to open port to send visualization of the Gammatone Filtered Audio");
 		return false;
 	}
 
@@ -301,6 +308,15 @@ void AudioPreprocesserRatethread::run() {
 		sendGammatonePowerAudio(gammatoneAudioFilter->getPowerAudio());
 	}
 
+	if (outGammatoneFilterVisPort->getOutputCount()) {
+		sendGammatoneFilteredAudioVis(gammatoneAudioFilter->getFilteredAudio());
+	}
+
+
+
+
+
+
 	// set the beamformers audio to be the filtered audio
 	beamForm->inputAudio(gammatoneAudioFilter->getFilteredAudio());
 
@@ -474,6 +490,59 @@ void AudioPreprocesserRatethread::sendGammatonePowerAudio(const std::vector<floa
 
 	//-- Publish the map onto the yarp network.
 	outGammaTonePowerAudioPort->write(*outGammaTonePowerAudioMap);
+}
+
+
+void AudioPreprocesserRatethread::sendGammatoneFilteredAudioVis(const std::vector<float*> &gammatoneAudio) {
+
+	yarp::sig::ImageOf<yarp::sig::PixelRgb> &img = outGammatoneFilterVisPort->prepare();
+	img.resize(frameSamples, nBands);
+
+	unsigned char* pImage = img.getRawImage();
+	int padding = img.getPadding();
+	
+	float value = 0.f;
+	int currentBand = 0;
+
+	for (int band = 0; band < nBands; band++) {
+		for (int frame = 0; frame < frameSamples; frame++) {
+			
+			for (int pos = 0; pos < 3; pos++) {
+				
+				if (pos % 3 == 2) {
+					//-- Ignore Blue Channel.
+					pImage++; continue;
+				} else if (pos % 3 == 1) {
+					//-- Second Half Chanel. Green.
+					currentBand = band + nBands;
+				} else {
+					//--- First Half Channel. Red.
+					currentBand = band;
+				}
+
+				//-- Grab the current value from the filtered audio.
+				value = gammatoneAudio[currentBand][frame];
+
+				if (value <= 0.f) {
+					//-- Ignore values below zero.
+					value = 0.f;
+				}
+
+				//-- Normalize the values in range of 1.
+				value /= 1.26f;
+
+				//-- Set the color value.
+				*pImage = value * 255.f;
+
+				//-- Move to next pixel.
+				pImage++;
+			}
+		}
+		pImage += padding;
+	}
+
+	outGammatoneFilterVisPort->setEnvelope(ts);
+	outGammatoneFilterVisPort->write();
 }
 
 

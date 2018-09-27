@@ -49,7 +49,7 @@ samplingRate(SampleRate), lowerCF(lowCF), higherCF(highCF), nBands(numBands), fr
 		float* currentMicArray = new float[frameSamples];
 
 		for (int j = 0; j < frameSamples; j++)
-			currentMicArray[j] = 0;
+			currentMicArray[j] = 0.f;
 
 		inputSplitAudio.push_back(currentMicArray);
 	}
@@ -61,9 +61,8 @@ samplingRate(SampleRate), lowerCF(lowCF), higherCF(highCF), nBands(numBands), fr
 	}
 
 	for (int i = 0; i < nBands; i++) {
-		powerAudio.push_back(0);
+		powerAudio.push_back(0.f);
 	}
-
 
 	tpt = (M_PI + M_PI) / samplingRate;
 }
