@@ -79,7 +79,8 @@ int main(int argc, char *argv[]) {
 
     //Grab and send
     Sound s;
-
+    double t1, t2, tdiff;
+    
     //unsigned char* dataSound;
     //short* dataAnalysis;
 #ifdef DEBUG
@@ -92,17 +93,17 @@ int main(int argc, char *argv[]) {
     Stamp ts;
     while (true)
     {
-      double t1=yarp::os::Time::now();
+      t1=yarp::os::Time::now();
       ts.update();  
       //s = p.prepare();           
       
       get->getSound(s);        
 
 #ifdef DEBUG          
-		  //v1 = s.get(i,j);
+		//v1 = s.get(i,j);
   		//v = (NetInt16) v1;
   		printf("%d \n",s.get(0,0));
-		  printf("%d \n",s.get(0,1));
+		printf("%d \n",s.get(0,1));
   		//v2 = s.get(i+1,j+1); 
   		//dataAnalysis = (short*) dataSound;
 #endif        
@@ -110,8 +111,9 @@ int main(int argc, char *argv[]) {
       p.setEnvelope(ts);
       p.write(s);
 
-      double t2=yarp::os::Time::now();
-      printf("acquired %f seconds \n", t2-t1);
+      t2=yarp::os::Time::now();
+      tdiff= t2-t1;
+      printf("acquired %f seconds \n", tdiff);
     }
     get->stopRecording();  //stops recording.
 
