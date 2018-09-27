@@ -27,6 +27,7 @@
 #define _AUDIO_PREPROCESSER_RATETHREAD_H_
 
 #include <iostream>
+//#include <cmath>
 
 #include <yarp/dev/all.h>
 
@@ -41,7 +42,8 @@
 #include "gammatoneFilter.h"
 #include "beamFormer.h"
 
-const float normDivid = pow(2,15); 
+const float  normDivid = pow(2,15);
+const double _pi       = 2 * acos(0.0); 
 
 //const float normDivid = pow(2,23);  // Number that is used to convert the integer number received
                                     // as the audio signal and convert it to a double audio signal
@@ -72,6 +74,7 @@ class AudioPreprocesserRatethread : public yarp::os::RateThread {
 	yarp::os::Port *outBeamFormedAudioPort;
     //yarp::os::BufferedPort<yarp::sig::Matrix> *outBeamFormedPowerAudioPort;
     yarp::os::Port *outBeamFormedPowerAudioPort;
+    yarp::os::BufferedPort<yarp::sig::Matrix> *outLowResolutionAudioMapPort;
 	yarp::os::Port *outAudioMapEgoPort;
 
 	yarp::os::Stamp ts;
@@ -95,38 +98,55 @@ class AudioPreprocesserRatethread : public yarp::os::RateThread {
 	float *rawAudio;
 
 
+
+    //----------------------------------
+    
+    yarp::sig::Vector spaceAngles;
+    yarp::sig::Vector micAngles;
+
+    yarp::sig::Matrix lowResolutionAudioMap;
+
+
 	//
 	// processing objects
 	//
 	GammatoneFilter *gammatoneAudioFilter;
-	BeamFormer *beamForm;
+	BeamFormer      *beamForm;
 
 
-    //
-    // derived variables
-    //
     int lastframe;
-    int totalBeams;
     int longBufferSize;
-    int nBeamsPerHemi;
+    
 
     double startTime;
     double stopTime;
 
 
-    //
-    // variables from resource finder
-    //
-    int C;
-    int frameSamples;
-    int highCf;
-    int interpolateNSamples;
-    int lowCf;
-    int nBands;
-    int nMics;
-    int samplingRate;
-
+    //--
+    //-- Variables Set on Init.
+    //--
+    double C;
+    int    nMics;
     double micDistance;
+    int    frameSamples;
+    int    samplingRate;
+    int    nBands;
+    int    lowCf;
+    int    highCf;
+    int    interpolateNSamples;
+    int    radialRes_degrees;
+
+    int    nBeamsPerHemi;
+    int    nBeams;
+    int    nMicAngles;
+    double radialRes_radians;
+    int    nSpaceAngles;
+    
+    
+    
+    
+
+    
 
 
  public:
@@ -242,6 +262,8 @@ class AudioPreprocesserRatethread : public yarp::os::RateThread {
      */
      void sendAudioMap();
 
+    void sendLowResolutionAudioMap();
+
 
     /**
      *  sendGammatoneFilteredAudio
@@ -294,8 +316,11 @@ class AudioPreprocesserRatethread : public yarp::os::RateThread {
     void sendBeamFormedPowerAudio(const std::vector< double > &beamFormedPower);
 
 
+    void setLowResolutionMap();
+
+
     /**
-     *  linerApproximation
+     *  linearApproximation
      *
      *  Helper function used by linerInterp to do liner interpolation between points (x1,y1) and (x2,y2).
      *
@@ -307,17 +332,17 @@ class AudioPreprocesserRatethread : public yarp::os::RateThread {
      *
      *  @return the corresponding y value of the asked x
      */
-    inline double linerApproximation(int x, int x1, double y1, int x2, double y2);
+    inline double linearApproximation(double x, double x1, double y1, double x2, double y2);
 
 
     /**
-     *  linerInterpolate
+     *  linearInterpolate
      *
      *  Taking the Audio data that is found in reducedBeamFormedAudioVector.
      *  Creates an interpolation of the data corresponding to the interpolateNSamples that was specified in the xml.
      *  The data of this function will be saved in highResolutionAudioMap.
      */
-    void linerInterpolate();
+    void linearInterpolate();
 
 
     /**

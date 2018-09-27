@@ -49,6 +49,7 @@ AudioPreprocesserRatethread::~AudioPreprocesserRatethread() {
 	delete outBeamFormedAudioPort;
 	delete outReducedBeamFormedAudioPort;
 	delete outBeamFormedPowerAudioPort;
+	delete outLowResolutionAudioMapPort;
 	delete outAudioMapEgoPort;
 
 	delete outAudioMap;
@@ -115,6 +116,12 @@ bool AudioPreprocesserRatethread::threadInit() {
 		return false;
 	}
 
+	outLowResolutionAudioMapPort = new yarp::os::BufferedPort<yarp::sig::Matrix>();
+	if (!outLowResolutionAudioMapPort->open("/iCubAudioAttention/LowResolutionAudioMap:o")) {
+		yError("unable to open port to send the low resolution audio map");
+		return false;
+	}
+
 
 	// output port for sending the Audio Map
 	outAudioMapEgoPort = new yarp::os::Port();
@@ -125,15 +132,15 @@ bool AudioPreprocesserRatethread::threadInit() {
 
 
 	// error checking
-	if (yarp::os::Network::exists("/iCubAudioAttention/AudioPreprocesser:i")) {
-		if (yarp::os::Network::connect("/sender", "/iCubAudioAttention/AudioPreprocesser:i") == false) {
-			yError("Could not make connection to /sender. \nExiting. \n");
-			return false;
-		}
-	} else {
-		// inPort failed to open. quit.
-		return false;
-	}
+	//if (yarp::os::Network::exists("/iCubAudioAttention/AudioPreprocesser:i")) {
+	//	if (yarp::os::Network::connect("/sender", "/iCubAudioAttention/AudioPreprocesser:i") == false) {
+	//		yError("Could not make connection to /sender. \nExiting. \n");
+	//		return false;
+	//	}
+	//} else {
+	//	// inPort failed to open. quit.
+	//	return false;
+	//}
 
 	// prepare GammatoneFilter object
 	gammatoneAudioFilter = new GammatoneFilter(samplingRate, lowCf, highCf, nBands, frameSamples, nMics, false);
@@ -143,6 +150,71 @@ bool AudioPreprocesserRatethread::threadInit() {
 
 	// prepare other memory structures
 	rawAudio = new float[(frameSamples * nMics)];
+
+	//--
+	//-- Find the Spacing of the beams, for proper interpolation.
+	//--
+
+	//-- Generate the angles at which each beam is pointed.
+	yarp::sig::Vector angles(nBeams);
+	for (int beam = 0; beam < nBeams; beam++) {
+		angles[beam] = (1.0 / micDistance) * (-nBeamsPerHemi + beam) * (C / samplingRate);
+		angles[beam] = (angles[beam] <= -1.0) ? -1.0 : angles[beam];  //-- Make sure we are in 
+		angles[beam] = (angles[beam] >=  1.0) ?  1.0 : angles[beam];  //-- range to avoid NAN.
+		angles[beam] = asin(angles[beam]);
+	}
+
+
+	//-- Generate a lineaer distribution of the angles in space.
+	double linspace_step = ((_pi - radialRes_radians) - (-_pi)) / (nSpaceAngles - 1.0);
+	double current_step  = -_pi;
+
+	spaceAngles.resize(nSpaceAngles, 0.0);
+	
+	for (int angle = 0; angle < nSpaceAngles; angle++) {
+		spaceAngles[angle] = current_step;
+		current_step += linspace_step;
+	}
+
+
+	//-- Generate the non-linear distribution of where all beams are pointed.
+	int current_mic_pos = 0;
+
+	micAngles.resize(nMicAngles, 0.0);
+
+	//-- First section is the last half of angles + pi.
+	for (int beam = nBeams-nBeamsPerHemi-1; beam < nBeams-1; beam++) {
+		micAngles[current_mic_pos++] = angles[beam] + _pi;
+	}
+
+	//-- Second section is just the entire angles.
+	for (int beam = 0; beam < nBeams; beam++) {
+		micAngles[current_mic_pos++] = angles[beam];
+	}
+
+	//-- Third section is the first half of angles + pi.
+	for (int beam = 1; beam < nBeams-nBeamsPerHemi-1; beam++) {
+		micAngles[current_mic_pos++] = angles[beam] + _pi;
+	}
+	
+	//-- Unwrap the micAngles by changing deltas between values to 2*pi complement.
+	for (int angle = 1; angle < nMicAngles; angle++) {		
+		double delta = micAngles[angle] - micAngles[angle-1];
+		delta = (delta > _pi) ? delta - 2 * _pi : ( (delta < -_pi) ? delta + 2 * _pi : delta );
+		micAngles[angle] = micAngles[angle-1] + delta;
+	}
+
+	//-- Normalize all microphone positions to +/- pi.
+	for (int angle = 0; angle < nMicAngles; angle++) {
+		micAngles[angle] -= (2 * _pi);
+	}
+
+
+	//-- Allocate space for the low resolution audio map,
+	//-- then clear it to all zeros.
+	lowResolutionAudioMap.resize(nBands, nMicAngles);
+	lowResolutionAudioMap.zero();
+
 
 	// initialize a two dimentianl vector that
 	// is 2 * interpolateNSamples x nBands
@@ -164,10 +236,10 @@ bool AudioPreprocesserRatethread::threadInit() {
 	outGammaTonePowerAudioMap = new yarp::sig::Matrix(1, nBands);
 
 	// construct a yarp Matrix for sending Beam Formed Audio
-  	outBeamFormedAudioMap = new yarp::sig::Matrix(totalBeams * nBands, frameSamples);
+  	outBeamFormedAudioMap = new yarp::sig::Matrix(nBeams * nBands, frameSamples);
 
   	// construct a yarp Matrix for sending Reduced Beam Formed Audio
-  	outReducedBeamFormedAudioMap = new yarp::sig::Matrix(nBands, totalBeams);
+  	outReducedBeamFormedAudioMap = new yarp::sig::Matrix(nBands, nBeams);
 
 	// construct a yarp Matrix for sending the power of the Beam Formed Audio
 	outBeamFormedPowerAudioMap = new yarp::sig::Matrix(1, nBands);
@@ -259,9 +331,17 @@ void AudioPreprocesserRatethread::run() {
 		sendBeamFormedPowerAudio(beamForm->getPowerAudio());
 	}
 
-	// do an interpolate on the reducedBeamFormedAudioVector
+	setLowResolutionMap();
+
+
+	if (outLowResolutionAudioMapPort->getOutputCount()) {
+		sendLowResolutionAudioMap();
+	}
+
+
+	// do an interpolate on the lowResolutionAudioMap
 	// to produce a highResolutionAudioMap
-	linerInterpolate();
+	linearInterpolate();
     //splineInterpolate();
 
 	if (outAudioMapEgoPort->getOutputCount()) {
@@ -293,6 +373,7 @@ void AudioPreprocesserRatethread::threadRelease() {
 	outBeamFormedAudioPort->interrupt();
 	outReducedBeamFormedAudioPort->interrupt();
 	outBeamFormedPowerAudioPort->interrupt();
+	outLowResolutionAudioMapPort->interrupt();
 	outAudioMapEgoPort->interrupt();
 
 	// release all ports
@@ -302,6 +383,7 @@ void AudioPreprocesserRatethread::threadRelease() {
 	outBeamFormedAudioPort->close();
 	outReducedBeamFormedAudioPort->close();
 	outBeamFormedPowerAudioPort->close();
+	outLowResolutionAudioMapPort->close();
 	outAudioMapEgoPort->close();
 }
 
@@ -311,30 +393,41 @@ void AudioPreprocesserRatethread::loadFile(yarp::os::ResourceFinder &rf) {
 	// import all relevant data fron the .ini file
 	yInfo("Loading Configuration File.");
 	try {
-		C            = rf.findGroup("sampling").check("C",            Value(338),   "C speed of sound (int)").asInt();
-		nMics        = rf.findGroup("sampling").check("nMics",        Value(2),     "number mics (int)").asInt();
-		micDistance  = rf.findGroup("sampling").check("micDistance",  Value(0.145), "micDistance (double)").asDouble();
-		frameSamples = rf.findGroup("sampling").check("frameSamples", Value(4096),  "frame samples (int)").asInt();
-		samplingRate = rf.findGroup("sampling").check("samplingRate", Value(48000), "sampling rate of mics (int)").asInt();
+		C            = rf.findGroup("sampling").check("C",            Value(336.628), "C speed of sound (double)").asDouble();
+		nMics        = rf.findGroup("sampling").check("nMics",        Value(2),       "number mics (int)").asInt();
+		micDistance  = rf.findGroup("sampling").check("micDistance",  Value(0.145),   "micDistance (double)").asDouble();
+		frameSamples = rf.findGroup("sampling").check("frameSamples", Value(4096),    "frame samples (int)").asInt();
+		samplingRate = rf.findGroup("sampling").check("samplingRate", Value(48000),   "sampling rate of mics (int)").asInt();
 		
 		nBands              = rf.findGroup("preprocessing").check("nBands",              Value(128),  "numberBands (int)").asInt();
 		lowCf               = rf.findGroup("preprocessing").check("lowCf",               Value(1000), "lowest center frequency (int)").asInt();
 		highCf              = rf.findGroup("preprocessing").check("highCf",              Value(3000), "highest center frequency (int)").asInt();
 		interpolateNSamples = rf.findGroup("preprocessing").check("interpolateNSamples", Value(180),  "interpellate N samples (int)").asInt();
-		
-		nBeamsPerHemi  = (int)((micDistance / C) * samplingRate) - 1;
-		totalBeams = nBeamsPerHemi * 2 + 1;
+		radialRes_degrees   = rf.findGroup("preprocessing").check("radialRes_degrees",   Value(1),    "Degrees Per Possible Head Direction (int)").asInt();
 
-		// print information from rf to the console
-		yInfo("\t nMics                      = %d", nMics);
-		yInfo("\t micDistance                = %f", micDistance);
-		yInfo("\t frameSamples               = %d", frameSamples);
-		yInfo("\t nBands                     = %d", nBands);
-    	yInfo("\t low Cutting frequency      = %d",lowCf);
-    	yInfo("\t high Cutting frequency     = %d",highCf);
-		yInfo("\t _beamsPerHemi           %d = %f / %d * %d", nBeamsPerHemi, micDistance, C, samplingRate);
-		yInfo("\t total beams                = %d",totalBeams);
-		yInfo("\t interpolateNSamples        = %d", interpolateNSamples );
+
+		//-- Take the ceiling of of (D/C)/Rate.
+		//--   ceiling = (x + y - 1) / y
+		nBeamsPerHemi     = ((micDistance * samplingRate) + C - 1.0) / C;
+		nBeams            = 2 * nBeamsPerHemi + 1;
+	    nMicAngles        = nBeams * 2 - 2;
+		radialRes_radians = _pi / 180.0 * radialRes_degrees;
+		nSpaceAngles      = 360 / radialRes_degrees;
+
+		//-- Print information from rf to the console.
+		yInfo("\t nMics                           = %d", nMics);
+		yInfo("\t micDistance                     = %f", micDistance);
+		yInfo("\t frameSamples                    = %d", frameSamples);
+		yInfo("\t nBands                          = %d", nBands);
+    	yInfo("\t low Cutting frequency           = %d", lowCf);
+    	yInfo("\t high Cutting frequency          = %d", highCf);
+		yInfo("\t Num Beams Per Hemifield      %d = ceil(%f / %f * %d)", nBeamsPerHemi, micDistance, C, samplingRate);
+		yInfo("\t Total Num Beams                 = %d", nBeams);
+		yInfo("\t nMicAngles                      = %d", nMicAngles);
+		yInfo("\t interpolateNSamples             = %d", interpolateNSamples );
+		yInfo("\t Radial Resolution (Degrees)     = %d", radialRes_degrees);
+		yInfo("\t Radial Resolution (Radians)     = %f", radialRes_radians);
+		yInfo("\t Num Space Angles                = %d", nSpaceAngles);
 	}
 
 	catch (int a) {
@@ -387,7 +480,7 @@ void AudioPreprocesserRatethread::sendGammatonePowerAudio(const std::vector<floa
 void AudioPreprocesserRatethread::sendBeamFormedAudio(const std::vector<std::vector<std::vector<float> > > &beamFormedAudio) {
 
 	// fill the yarp Matrix with uncompressed beamformed audio
-    for (int beam = 0; beam < totalBeams; beam++) {
+    for (int beam = 0; beam < nBeams; beam++) {
         for (int band = 0; band < nBands; band++) {
             yarp::sig::Vector tempV(frameSamples);
             for (int frame = 0; frame < frameSamples; frame++) {
@@ -401,8 +494,8 @@ void AudioPreprocesserRatethread::sendBeamFormedAudio(const std::vector<std::vec
 
     /*
 	for (int i = 0; i < nBands; i++) {
-		yarp::sig::Vector tempV(totalBeams);
-		for (int j = 0; j < totalBeams; j++) {
+		yarp::sig::Vector tempV(nBeams);
+		for (int j = 0; j < nBeams; j++) {
 			tempV[j] = beamFormedAudio[i][j];
 		}
 		outBeamFormedAudioMap->setRow(i, tempV);
@@ -421,19 +514,21 @@ void AudioPreprocesserRatethread::sendReducedBeamFormedAudio(const std::vector<s
 
     //yDebug("size of reduced beam former %d %d \n", reducedBeamFormedAudio.size(), reducedBeamFormedAudio[0].size());
 
-    //********************************************************************
+    /********************************************************************
 	// fill the yarp Matrix with reduced beamformed audio
-	for (int i = 0; i < totalBeams; i++) {
+	for (int i = 0; i < nBeams; i++) {
 		yarp::sig::Vector tempV(nBands);
 		for (int j = 0; j < nBands; j++) {
 			tempV[j] = reducedBeamFormedAudio[i][j];
 		}
 		outReducedBeamFormedAudioMap->setRow(i, tempV);
 	}
-    //********************************************************************
-    for (int i = 0; i < nBands; i++) {
-		yarp::sig::Vector tempV(totalBeams);
-		for (int j = 0; j < totalBeams; j++) {
+    //********************************************************************/
+
+    // fill the yarp Matrix with reduced beamformed audio
+	for (int i = 0; i < nBands; i++) {
+		yarp::sig::Vector tempV(nBeams);
+		for (int j = 0; j < nBeams; j++) {
 			tempV[j] = reducedBeamFormedAudio[j][i];
 		}
 		outReducedBeamFormedAudioMap->setRow(i, tempV);
@@ -488,6 +583,30 @@ void AudioPreprocesserRatethread::sendBeamFormedPowerAudio(const std::vector< do
 }
 
 
+void AudioPreprocesserRatethread::sendLowResolutionAudioMap() {
+
+	//-- Init a matrix to publish on.
+	yarp::sig::Matrix& m = outLowResolutionAudioMapPort->prepare();
+	m.resize(nBands, nMicAngles);
+
+	//-- Fill the yarp matrix with the power of the beams formed audio.
+	yarp::sig::Vector tempV(nMicAngles);
+
+	for (int band = 0; band < nBands; band++) {
+		for (int angle = 0; angle < nMicAngles; angle++) {
+			tempV[angle] = lowResolutionAudioMap[band][angle];
+		}
+		//-- Add this to the buffered port.
+		m.setRow(band, tempV);
+	}
+
+	//-- Set the envelope for the Beamformed Power Audio Port.
+	outLowResolutionAudioMapPort->setEnvelope(ts);
+
+	//-- Publish the map onto the yarp network.
+	outLowResolutionAudioMapPort->write();
+}
+
 void AudioPreprocesserRatethread::sendAudioMap() {
 
 	// fill the yarp Matrix with interpolated beamformed audio
@@ -507,15 +626,37 @@ void AudioPreprocesserRatethread::sendAudioMap() {
 }
 
 
-inline double AudioPreprocesserRatethread::linerApproximation(int x, int x1, double y1, int x2, double y2) {
-	return y1 + ((y2 - y1) * (x - x1)) / (x2 - x1);
-	//return y2;
+void AudioPreprocesserRatethread::setLowResolutionMap() {
+
+	for (int band = 0; band < nBands; band++) {
+
+		int current_beam = 0;
+		for (int beam = nBeams-nBeamsPerHemi-1; beam > 0; beam--) {
+			lowResolutionAudioMap[band][current_beam++] = reducedBeamFormedAudioVector[beam][band];
+		}
+
+		for (int beam = 0; beam < nBeams; beam++) {
+			lowResolutionAudioMap[band][current_beam++] = reducedBeamFormedAudioVector[beam][band];
+		}
+
+		for (int beam = nBeams-2; beam > nBeams-nBeamsPerHemi-1; beam--) {
+			lowResolutionAudioMap[band][current_beam++] = reducedBeamFormedAudioVector[beam][band];
+		}
+	}
 }
 
 
-void AudioPreprocesserRatethread::linerInterpolate() {
 
-	double offset = (interpolateNSamples / (double)totalBeams);
+inline double AudioPreprocesserRatethread::linearApproximation(double x, double x1, double y1, double x2, double y2) {
+	return y1 + ((y2 - y1) * (x - x1)) / (x2 - x1);
+}
+
+
+void AudioPreprocesserRatethread::linearInterpolate() {
+
+	/*  TODO : REMOVE THIS BLOCK.
+
+	double offset = (interpolateNSamples / (double)nBeams);
 
 	for (int i = 0; i < nBands; i++) {
 
@@ -525,7 +666,7 @@ void AudioPreprocesserRatethread::linerInterpolate() {
 		// interpolation for the first half
 		for (int j = 0; j < interpolateNSamples; j++) {
 
-			if (j == (int)curroffset && k < (totalBeams - 1)) {
+			if (j == (int)curroffset && k < (nBeams - 1)) {
 				curroffset += offset;
 				k++;
 			}
@@ -554,6 +695,29 @@ void AudioPreprocesserRatethread::linerInterpolate() {
 																reducedBeamFormedAudioVector[k][i],		// y1
 																curroffset,								// x2
 																reducedBeamFormedAudioVector[k-1][i]);	// y2
+		}
+	}
+	*/ 
+
+	for (int band = 0; band < nBands; band++) {
+		
+		int mAngle = 1;
+		for (int sAngle = 0; sAngle < nSpaceAngles; sAngle++) {
+			
+			//-- If the offset angle is smaller than the normal angle, 
+			//-- move to the next offset angle.
+			if (spaceAngles[sAngle] > micAngles[mAngle] && mAngle < nMicAngles-1) {
+				mAngle++;
+			}
+
+			//-- Interpolate for this position.
+			highResolutionAudioMap[sAngle][band] = linearApproximation(
+				spaceAngles[sAngle],
+				micAngles[mAngle-1],
+				lowResolutionAudioMap[band][mAngle-1],
+				micAngles[mAngle],
+				lowResolutionAudioMap[band][mAngle]
+			);
 		}
 	}
 }
@@ -628,7 +792,7 @@ knotValues AudioPreprocesserRatethread::calcSplineKnots(double x1, double y1, do
 
 void AudioPreprocesserRatethread::splineInterpolate() {
 
-	double offset = (interpolateNSamples / (double)totalBeams);
+	double offset = (interpolateNSamples / (double)nBeams);
 
 	for (int i = 0; i < nBands; i++) {
 
@@ -637,7 +801,7 @@ void AudioPreprocesserRatethread::splineInterpolate() {
 
 		// interpolation for the first half
 		for (int j = 0; j < interpolateNSamples; j++) {
-			if (j == (int)curroffset && k < (totalBeams - 1)) {
+			if (j == (int)curroffset && k < (nBeams - 1)) {
 				curroffset += offset;
 				k++;
 			}
