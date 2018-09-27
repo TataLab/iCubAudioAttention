@@ -32,7 +32,7 @@ inline int myMod(int a, int b) {
 
 BeamFormer::BeamFormer(int numBands, int nSamples, int numMics, int numBeamsHemifield) :
 nMics(numMics), frameSamples(nSamples), nBands(numBands), getNBeamsPerHemifield(numBeamsHemifield) {
-
+ 
 	totalBeams = (getNBeamsPerHemifield*2) + 1;
 
 	// Allocating the required vectors to create the beamFormed audio
