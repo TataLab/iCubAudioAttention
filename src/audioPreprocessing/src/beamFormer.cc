@@ -25,36 +25,39 @@
 #include "beamFormer.h"
 
 
-inline int myMod(int a, int b) {
-	return  a >= 0 ? a % b : (a % b) + b;
-}
+inline int myMod(int a, int b) { return  a >= 0 ? a % b : (a % b) + b; }
 
 
-BeamFormer::BeamFormer(int numBands, int nSamples, int numMics, int numBeamsHemifield) :
-nMics(numMics), frameSamples(nSamples), nBands(numBands), getNBeamsPerHemifield(numBeamsHemifield) {
+BeamFormer::BeamFormer(int numBands, int numSamples, int numMics, int numBeamsHemifield) :
+ nBands(numBands), frameSamples(numSamples), nMics(numMics), nBeamsPerHemi(numBeamsHemifield) {
  
-	totalBeams = (getNBeamsPerHemifield*2) + 1;
+	nBeams = (nBeamsPerHemi*2) + 1;
 
 	// Allocating the required vectors to create the beamFormed audio
-	for (int i = 0; i < totalBeams; i++) {
+	for (int i = 0; i < nBands; i++) {
 
 		std::vector<std::vector<float> > tempvector;
 
-		for (int j = 0; j < nBands; j++) {
-			std::vector<float> temparray(frameSamples, 0);
+		for (int j = 0; j < nBeams; j++) {
+			std::vector<float> temparray(frameSamples, 0.f);
 			tempvector.push_back(temparray);
 		}
 
 		beamFormedAudioVector.push_back(tempvector);
+
+		std::vector<double> tempvec(nBeams, 0.0);
+		reducedBeamFormedAudioVector.push_back(tempvec);
 	}
 
 	// Allocating the required vectors to create the reduced beamFormed audio
-	for (int i = 0; i < totalBeams; i++) {
+	/*
+	for (int i = 0; i < nBeams; i++) {
 
 		std::vector<double> tempvector(nBands, 0);
 
 		reducedBeamFormedAudioVector.push_back(tempvector);
 	}
+	*/
 
 	// Allocate space for the powerAudio vector.
 	for (int i = 0; i < nBands; i++) {
@@ -78,26 +81,26 @@ void BeamFormer::inputAudio(std::vector< float* > inAudio) {
 std::vector<std::vector<std::vector<float> > > BeamFormer::getBeamAudio() {
 
 	// init
-	int i = 0, j = 0, limit = std::thread::hardware_concurrency() * 4;
+	int band = 0, lowerBand = 0, limit = std::thread::hardware_concurrency();
 
 	// construct the threads once
 	std::vector<std::thread> myThread(limit);
 
 	// run beamforming on all indices
-	while (i < totalBeams) {
-		for ( ; i < totalBeams; i++) {
+	while (band < nBands) {
+		for ( ; band < nBands; band++) {
 
 			// break if at thread limit
-			if (i-j+1 > limit) break;
+			if (band-lowerBand+1 > limit) break;
 
 			// begin thread
-			myThread[i-j] = std::thread(&BeamFormer::audioMultiThreadingLoop, this, i);
+			myThread[band-lowerBand] = std::thread(&BeamFormer::audioMultiThreadingLoop, this, band);
 		}
 
 		// join the finished threads so
 		// that they may be reassigned
-		for (int k = 0; j < i; j++, k++)
-			myThread[k].join();
+		for (int thread_id = 0; lowerBand < band; lowerBand++, thread_id++)
+			myThread[thread_id].join();
 	}
 
 	return beamFormedAudioVector;
@@ -107,75 +110,68 @@ std::vector<std::vector<std::vector<float> > > BeamFormer::getBeamAudio() {
 std::vector<std::vector<double> > BeamFormer::getReducedBeamAudio() {
 
 	// init
-	int i = 0, j = 0, limit = std::thread::hardware_concurrency() * 4;
+	int band = 0, lowerBand = 0, limit = std::thread::hardware_concurrency();
 
 	// construct the threads once
 	std::vector<std::thread> myThread(limit);
 
 	// run beamforming on all indices
-	while (i < totalBeams) {
-		for ( ; i < totalBeams; i++) {
+	while (band < nBands) {
+		for ( ; band < nBands; band++) {
 
 			// break if at thread limit
-			if (i-j+1 > limit) break;
+			if (band-lowerBand+1 > limit) break;
 
 			// begin thread
-			myThread[i-j] = std::thread(&BeamFormer::reducedAudioMultiThreadingLoop, this, i);
+			myThread[band-lowerBand] = std::thread(&BeamFormer::reducedAudioMultiThreadingLoop, this, band);
 		}
 
 		// join the finished threads so
 		// that they may be reassigned
-		for (int k = 0; j < i; j++, k++)
-			myThread[k].join();
+		for (int thread_id = 0; lowerBand < band; lowerBand++, thread_id++)
+			myThread[thread_id].join();
 	}
 
 	return reducedBeamFormedAudioVector;
 }
 
 
-void BeamFormer::audioMultiThreadingLoop(int i) {
+void BeamFormer::audioMultiThreadingLoop(int band) {
 
-	for (int j = 0; j < nBands; j++) {
-		for (int k = 0; k < frameSamples; k++) {
-			beamFormedAudioVector[i][j][k] = (inputSignal[j][k] + inputSignal[j + nBands][myMod(k + ((getNBeamsPerHemifield) - i), frameSamples)]);
+	for (int beam = 0; beam < nBeams; beam++) {
+		for (int frame = 0; frame < frameSamples; frame++) {
+			beamFormedAudioVector[band][beam][frame] = (inputSignal[band][frame] + inputSignal[band + nBands][myMod(frame + (nBeamsPerHemi - beam), frameSamples)]);
 		}
 	}
 }
 
 
-void BeamFormer::reducedAudioMultiThreadingLoop(int i) {
+void BeamFormer::reducedAudioMultiThreadingLoop(int band) {
 
-	for (int j = 0; j < nBands; j++) {
-		for (int k = 0; k < frameSamples; k++) {
-			reducedBeamFormedAudioVector[i][j] += pow((inputSignal[j][k] + inputSignal[j + nBands][myMod(k + ((getNBeamsPerHemifield) - i), frameSamples)]), 2);
+	for (int beam = 0; beam < nBeams; beam++) {
+		for (int frame = 0; frame < frameSamples; frame++) {
+			reducedBeamFormedAudioVector[band][beam] += pow((inputSignal[band][frame] + inputSignal[band + nBands][myMod(frame + (nBeamsPerHemi - beam), frameSamples)]), 2);
 		}
-		reducedBeamFormedAudioVector[i][j] = sqrt(reducedBeamFormedAudioVector[i][j] / ( (double) frameSamples));
+		reducedBeamFormedAudioVector[band][beam] = sqrt(reducedBeamFormedAudioVector[band][beam] / ((double)frameSamples));
 	}
 }
 
 
 std::vector< double > BeamFormer::getPowerAudio() {
-
-	//-- Clear out the previous powerAudio vector.
+	
 	for (int band = 0; band < nBands; band++) {
+
+		//-- Clear out the previous powerAudio vector.
 		powerAudio[band] = 0.0;
-	}
-
-
-	//-- Take the average of power at each
-	//-- beam and average it.
-	for (int beam = 0; beam < totalBeams; beam++) {
-
-		//-- This stride pattern is not ideal for powerAudio,
-		//-- but it is the best we can do for reduced beam formed audio vector.
-		for (int band = 0; band < nBands; band++) {
-			powerAudio[band] += reducedBeamFormedAudioVector[beam][band];
+	
+		//-- Take the average of power at each
+		//-- beam and average it.
+		for (int beam = 0; beam < nBeams; beam++) {
+			powerAudio[band] += reducedBeamFormedAudioVector[band][beam];
 		}
-	}
 
-	//-- Go through now and find the mean at each index of powerAudio.
-	for (int band = 0; band < nBands; band++) {
-		powerAudio[band] /= totalBeams;
+		//-- Go through now and find the mean at each index of powerAudio.
+		powerAudio[band] /= nBeams;
 	}
 
 	return powerAudio;

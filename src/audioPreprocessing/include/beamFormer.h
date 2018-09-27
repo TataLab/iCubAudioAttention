@@ -44,7 +44,7 @@ class BeamFormer {
 	 *	@param           numMics : number of microphones
 	 *	@param numBeamsHemifield : number of beams in hemifield
 	 */
-	BeamFormer(int numBands, int nSamples, int numMics, int numBeamsHemifield);
+	BeamFormer(int numBands, int numSamples, int numMics, int numBeamsHemifield);
 
 
 	/**
@@ -72,7 +72,7 @@ class BeamFormer {
 	 *	Function that will run multithread function that will calculate the Beamformed 
 	 *	Audio from information that is stored in inputSignal.
 	 *
-	 *	@return Beamformed data that is stored in vector of size(totalBeams) containing a vector of 
+	 *	@return Beamformed data that is stored in vector of size(nBeams) containing a vector of 
 	 * 			size(number of Bands) that contains a array of float with a size(samples in frame).
 	 */
 	 std::vector<std::vector<std::vector<float> > > getBeamAudio();
@@ -85,7 +85,7 @@ class BeamFormer {
 	 *	Beamformed Audio from information that is stored in inputSignal.
 	 *	This Function then compresses the data in the time frame by running RMS(root mean square).
 	 *
-	 *	@return Compressed beamformed data that is stored in vector of size(totalBeams) containing 
+	 *	@return Compressed beamformed data that is stored in vector of size(nBeams) containing 
 	 *	        a vector of size(number of Bands) that contains the average power in each frame.
 	 */
 	std::vector<std::vector<double> > getReducedBeamAudio();
@@ -126,8 +126,8 @@ class BeamFormer {
 	int frameSamples;				// The number of samples in each frame of audio data
 	int nBands;						// The maximum number of bands for the given spacing of the mics
 
-	int getNBeamsPerHemifield;		// The maximum number of bands in each hemifield
-	int totalBeams;					// Total number of beams that is used
+	int nBeamsPerHemi;		// The maximum number of bands in each hemifield
+	int nBeams;					    // Total number of beams that is used
 
 	std::vector < float* > inputSignal;											 // The input audio signal
 	std::vector < std::vector < std::vector < float > > > beamFormedAudioVector; // The uncompressed beamformed data if getBeamAudio() was called
