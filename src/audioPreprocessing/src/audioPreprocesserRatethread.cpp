@@ -509,15 +509,16 @@ void AudioPreprocesserRatethread::sendGammatoneFilteredAudioVis(const std::vecto
 			
 			for (int pos = 0; pos < 3; pos++) {
 				
-				if (pos % 3 == 2) {
-					//-- Ignore Blue Channel.
-					pImage++; continue;
-				} else if (pos % 3 == 1) {
-					//-- Second Half Chanel. Green.
+				if (pos == 2) {
+					//-- First Half Channel. Blue
+                    currentBand = band;
+				} else if (pos == 1) {
+					//-- Second Half Channel. Green.
 					currentBand = band + nBands;
-				} else {
-					//--- First Half Channel. Red.
-					currentBand = band;
+				} else { 
+                    //--- Ignore Red Channel.
+                    pImage++; continue;
+
 				}
 
 				//-- Grab the current value from the filtered audio.
