@@ -105,7 +105,11 @@ int main(int argc, char *argv[]) {
     bool usePrerecorded  = false;  // set default value
     string moduleName, robotName, robotPortName;
     string prerecordedFilePath;
-    yarp::sig::Sound s;
+
+    // selecting of the correct audio class (12bit or 24bit)
+    yarp::sig::Sound s; 
+    //audio::Sound s;
+    
     IAudioGrabberSound *get;
     int32_t buffermicif [NUM_MICS * SAMP_BUF_SIZE] = {0};
     int32_t bufferleft [SAMP_BUF_SIZE] = {0};
@@ -168,7 +172,7 @@ int main(int argc, char *argv[]) {
     /* detects whether the preferrable input is from prerecorded file */
     else if(rf.check("usePrerecorded")){
 
-      prerecordedFilePath             = rf.check("usePrerecorded",
+      prerecordedFilePath = rf.check("usePrerecorded",
 					Value("audio.wav"),
 					"file path (string)").asString();
       yInfo("acquiring from preRecorded file %s \n", prerecordedFilePath.c_str());
@@ -200,8 +204,17 @@ int main(int argc, char *argv[]) {
     // BufferedPort<Sound> p;
     Port p;
     p.open("/audioGrabber/sender");
-    
 
+    /*********************************************************/
+    // Get a portaudio read device.
+    Property conf;
+    conf.put("device","portaudio");
+    conf.put("read", "");
+    // conf.put("samples", rate * rec_seconds);
+    conf.put("samples", fixedNSample);
+    conf.put("rate", rate);
+    PolyDriver poly(conf);
+    
     /*********************************************************/
     // preparing the interface with the iKinGazeCtrl
 
@@ -237,34 +250,26 @@ int main(int argc, char *argv[]) {
     //}
     
     /*********************************************************/
-
-
+    
     if(usePortAudio) {
-        yInfo("reading from the portaudio device \n");
-        // Get a portaudio read device.
-        Property conf;
-        conf.put("device","portaudio");
-        conf.put("read", "");
-        // conf.put("samples", rate * rec_seconds);
-        conf.put("samples", fixedNSample);
-        conf.put("rate", rate);
-        PolyDriver poly(conf);
-        
-        // Make sure we can read sound
-        poly.view(get);
-        if (get==NULL) {
-            printf("cannot open interface");
-            return 1;
-        }
-        else{
-            printf("correctly opened the interface rate: %d, number of samples: %f, number of channels %d \n",rate, rate*rec_seconds, 2);
-            //Grab and send
-            get->startRecording(); //this is optional, the first get->getsound() will do this anyway
-        }
-        
-        //Grab and send
-        audio::Sound s;
-        get->startRecording(); //this is optional, the first get->getsound() will do this anyway.
+       yInfo("reading from the portaudio device \n");
+         
+       // Make sure we can read sound
+       poly.view(get);
+       if (get==NULL) {
+           yError("cannot open interface");
+           return 1;
+       }
+       else{
+           printf("correctly opened the interface rate: %d, number of samples: %f, number of channels %d \n",rate, rate*rec_seconds, 2);
+           //Grab and send
+           //get->startRecording(); //this is optional, the first get->getsound() will do this anyway
+       }
+       
+       //Grab and send
+       get->startRecording(); //this is optional, the first get->getsound() will do this anyway.
+       yInfo("success ending the usePortAudio branch");
+       
     } // end of the portAudio branch
     
     //******************************************************************************
@@ -299,7 +304,9 @@ int main(int argc, char *argv[]) {
     if(usePrerecorded) {
       yInfo("reading from the Prerecorded file \n");
       bool res = readWavFile(prerecordedFilePath);
-      Time::delay(1);      
+      numberFrames = 1;
+      Time::delay(1);
+      yInfo("reading from the Prerecorded file... Success");
     } // end of the usePrerecorded branch 
     
     //******************************************************************************
@@ -308,15 +315,16 @@ int main(int argc, char *argv[]) {
     
     //spatialSound* soundToSend= new spatialSound(4);
     //soundToSend->setNumberOfAngles(2);
-    audio::Sound* soundToSend= new audio::Sound(4);
+    audio::Sound* soundToSend = new audio::Sound(4);
     soundToSend->resize(SAMP_BUF_SIZE,STEREO);
-    soundToSend->setFrequency(SAMPLERATE);
+    //soundToSend->setFrequency(SAMPLERATE);
     
     Stamp ts;
     Vector angles(3);
     Stamp  anglesStamp;
     int dimensionToRead = sizeof(int32_t) * NUM_MICS * SAMP_BUF_SIZE;
-     
+
+    yInfo("starting the cycle...");
     while (true)
     {
         double t1=yarp::os::Time::now();
@@ -360,8 +368,9 @@ int main(int argc, char *argv[]) {
         }
         else if(usePrerecorded) {
             // read each sample from data chunk if PCM
-            //printf("starting stream Wav...");
+            printf("starting stream Wav...");
             if((numberFrames + 1) * SAMP_BUF_SIZE < num_samples) {
+                yDebug("streamingWavFile. NumberFrames: %d", numberFrames);
                 bool ret = streamWavFile(numberFrames, soundToSend);
                 Time::delay(0.080);
                 numberFrames++;
@@ -374,8 +383,15 @@ int main(int argc, char *argv[]) {
         else {
             yInfo("IDLE.....");
         }
+        
         p.setEnvelope(ts);
-        p.write(*soundToSend);
+        if(usePortAudio) {
+            p.write(s);
+        }
+        else {
+            p.write(*soundToSend);
+        }
+            
         
         //*********************************************************************
         
@@ -390,16 +406,16 @@ int main(int argc, char *argv[]) {
 
 bool streamWavFile(int numberFrames, audio::Sound* soundToSend) {
     int read = 0;
-    //yDebug("streamWavFile");
+    yDebug("streamWavFile");
     if (header.format_type == 1) { // PCM
-                
+        yDebug("format_type PCM");
         long i =0;
         char data_buffer[size_of_each_sample];
         int  size_is_correct = TRUE;
 
         // make sure that the bytes-per-sample is completely divisible by num.of channels
         long bytes_in_each_channel = (size_of_each_sample / header.channels);
-        //printf("size_of_each_sample %d bytes in each channel %d", size_of_each_sample,bytes_in_each_channel );
+        printf("size_of_each_sample %d bytes in each channel %d", size_of_each_sample,bytes_in_each_channel );
         
         if ((bytes_in_each_channel  * header.channels) != size_of_each_sample) {
             printf("Error: %ld x %ud <> %ld\n", bytes_in_each_channel, header.channels, size_of_each_sample);
@@ -432,13 +448,14 @@ bool streamWavFile(int numberFrames, audio::Sound* soundToSend) {
 
             
             
-            //printf("\n\n.Valid range for data values : %ld to %ld \n", low_limit, high_limit);
+            printf("\n\n.Valid range for data values : %ld to %ld \n", low_limit, high_limit);
             //for (i =1; i <= num_samples; i++) {
             for  (i =1; i <= SAMP_BUF_SIZE; i++) {
-                //printf("==========Sample %ld / %ld=============\n", SAMP_BUF_SIZE * numberFrames + i, num_samples);
-                read = fread(data_buffer, sizeof(data_buffer), 1, ptr);
-                
-                if (/*read == 1*/ true) {
+                printf("==========Sample %ld / %ld=============\n", SAMP_BUF_SIZE * numberFrames + i, num_samples);
+                read = fread(data_buffer, sizeof(data_buffer), 2, ptr);
+
+                //printf("data correctly read from the file %d \n",read);
+                if (read == 2) {
 				
                     // dump the data read
                     unsigned int  xchannels = 0;
@@ -446,9 +463,10 @@ bool streamWavFile(int numberFrames, audio::Sound* soundToSend) {
 
                     for (xchannels = 0; xchannels < header.channels; xchannels ++ ) {
                         
-                        //printf("(size_of_each_sample %d) Channel#%d : ",size_of_each_sample, (xchannels+1));
+                        //printf("(size_of_each_sample %d) Channel#%d : \n",size_of_each_sample, (xchannels+1));
                         
                         if (bytes_in_each_channel == 4) {
+                            printf("bytes_in_each_channel 4 \n");
                             // // convert data from little endian in each channel sample
                             /*data_in_channel =	data_buffer[3] | 
                                 (data_buffer[2]<<8) | 
@@ -457,22 +475,23 @@ bool streamWavFile(int numberFrames, audio::Sound* soundToSend) {
                             */
                             
                             // convert data from little endian to big endian based on bytes in each channel sample
+                            
                             data_in_channel =	data_buffer[0 + xchannels * 4] | 
                                 (data_buffer[1 + xchannels * 4]<<8) | 
                                 (data_buffer[2 + xchannels * 4]<<16) | 
                                 (data_buffer[3 + xchannels * 4]<<24);
 
-                            
-                            
                         }
                         else if (bytes_in_each_channel == 2) {
+                            printf("bytes_in_each_channel 2 \n ");                            
                             data_in_channel = data_buffer[0] |
                                 (data_buffer[1] << 8);
                         }
                         else if (bytes_in_each_channel == 1) {
+                            printf("bytes_in_each_channel 1 \n");                            
                             data_in_channel = data_buffer[0];
                         }
-                        //printf("%d ", data_in_channel);
+                        printf("%d \n", data_in_channel);
                         soundToSend->set(data_in_channel, i - 1, xchannels);
 
                         // check if value was in range
@@ -480,10 +499,10 @@ bool streamWavFile(int numberFrames, audio::Sound* soundToSend) {
                             printf("**value out of range\n");
                         }
 
-                        //printf(" | ");
+                        printf(" | ");
                     }
 
-                    //printf("\n");
+                    printf("\n");
                 }
                 else {
                     printf("Error reading file. %d bytes\n", read);
@@ -494,7 +513,7 @@ bool streamWavFile(int numberFrames, audio::Sound* soundToSend) {
         } // 	if (size_is_correct)                
     } //  if (header.format_type == 1)
 
-    //printf("returning...");
+    printf("returning...");
     return true;
 }
 
@@ -608,7 +627,7 @@ bool readWavFile(string filename) {
 
     // calculate no.of samples
     num_samples = (8 * header.data_size) / (header.channels * header.bits_per_sample);
-    printf("Number of samples:%lu \n", num_samples);
+    printf("Numberof samples:%lu \n", num_samples);
 
     size_of_each_sample = (header.channels * header.bits_per_sample) / 8;
     printf("Size of each sample:%ld bytes\n", size_of_each_sample);
@@ -617,7 +636,7 @@ bool readWavFile(string filename) {
     float duration_in_seconds = (float) header.overall_size / header.byterate;
     printf("Approx.Duration in seconds=%f\n", duration_in_seconds);
     printf("Approx.Duration in h:m:s=%s\n", seconds_to_time(duration_in_seconds));
-
+    yInfo("File correctly recorded");
 }
 
 
