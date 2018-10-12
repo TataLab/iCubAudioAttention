@@ -150,7 +150,8 @@ bool AudioPreprocesserRatethread::threadInit() {
 	//}
 
 	// prepare GammatoneFilter object
-	gammatoneAudioFilter = new GammatoneFilter(samplingRate, lowCf, highCf, nBands, frameSamples, nMics, false);
+	//gammatoneAudioFilter = new GammatoneFilter(samplingRate, lowCf, highCf, nBands, frameSamples, nMics, false);
+	gammatoneAudioFilter = new GammatoneFilter(samplingRate, lowCf, highCf, nBands, frameSamples, nMics, true);
 
 	// prepare BeamFormer object
 	beamForm = new BeamFormer(nBands, frameSamples, nMics, nBeamsPerHemi);
@@ -415,16 +416,17 @@ void AudioPreprocesserRatethread::loadFile(yarp::os::ResourceFinder &rf) {
 		frameSamples = rf.findGroup("sampling").check("frameSamples", Value(4096),    "frame samples (int)").asInt();
 		samplingRate = rf.findGroup("sampling").check("samplingRate", Value(48000),   "sampling rate of mics (int)").asInt();
 		
-		nBands              = rf.findGroup("preprocessing").check("nBands",              Value(128),  "numberBands (int)").asInt();
-		lowCf               = rf.findGroup("preprocessing").check("lowCf",               Value(1000), "lowest center frequency (int)").asInt();
-		highCf              = rf.findGroup("preprocessing").check("highCf",              Value(3000), "highest center frequency (int)").asInt();
+		nBands              = rf.findGroup("preprocessing").check("nBands",              Value(32),   "numberBands (int)").asInt();
+		lowCf               = rf.findGroup("preprocessing").check("lowCf",               Value(80),   "lowest center frequency (int)").asInt();
+		highCf              = rf.findGroup("preprocessing").check("highCf",              Value(8000), "highest center frequency (int)").asInt();
 		interpolateNSamples = rf.findGroup("preprocessing").check("interpolateNSamples", Value(180),  "interpellate N samples (int)").asInt();
 		radialRes_degrees   = rf.findGroup("preprocessing").check("radialRes_degrees",   Value(1),    "Degrees Per Possible Head Direction (int)").asInt();
 
 
 		//-- Take the ceiling of of (D/C)/Rate.
 		//--   ceiling = (x + y - 1) / y
-		nBeamsPerHemi     = ((micDistance * samplingRate) + C - 1.0) / C;
+		//nBeamsPerHemi     = ((micDistance * samplingRate) + C - 1.0) / C;
+		nBeamsPerHemi     = int((micDistance / C) * samplingRate) - 1;
 		nBeams            = 2 * nBeamsPerHemi + 1;
 	    nMicAngles        = nBeams * 2 - 2;
 		radialRes_radians = _pi / 180.0 * radialRes_degrees;
