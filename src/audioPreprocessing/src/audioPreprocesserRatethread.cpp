@@ -659,29 +659,28 @@ void AudioPreprocesserRatethread::frontFieldMirror(yarp::sig::Vector &target, co
 	target.resize(source.size() * 2, 0.0);
 
 	//-- Get the length of the source vector.
-	int length      = source.size();
-	int half_length = length / 2;
+	int full_length      = source.size();
+	int half_length = full_length / 2;
 
 	//-- Use this for continuous iteration.
 	int current_position = 0;
 
 	//-- Mirror First Quarter with Second.
-	for (int position = length - half_length - 1; position > -1; position--) {
-		target[current_position++] = source[position];
+	for (int index = full_length - half_length - 1; index > -1; index--) {
+		target[current_position++] = source[index];
 	}
 
 	//-- Set Second and Third Quarter as normal.
-	for (int position = 0; position < length; position++) {
-		target[current_position++] = source[position];
+	for (int index = 0; index < full_length; index++) {
+		target[current_position++] = source[index];
 	}
 
 	//-- Mirror Fourth Quarter with Third.
-	for (int position = length - 1; position > length - half_length - 1; position--) {
-		target[current_position++] = source[position];
+	for (int index = full_length - 1; index > full_length - half_length - 1; index--) {
+		target[current_position++] = source[index];
 	}
+	
 	*/
-
-
 	
 	// Alternative Method for mirroring front field.
 
@@ -689,8 +688,9 @@ void AudioPreprocesserRatethread::frontFieldMirror(yarp::sig::Vector &target, co
 	target.resize(source.size() * 2, 0.0);
 
 	//-- Get the length of the source vector.
-	int full_length = source.size();
-	int half_length = full_length / 2;
+	int full_length  = source.size();
+	int half_length  = full_length / 2;
+	int two_and_half = full_length + full_length + half_length - 1;
 
 	for (int index = 0; index < half_length; index++) {
 		target[half_length + index]     = source[index];
@@ -698,8 +698,8 @@ void AudioPreprocesserRatethread::frontFieldMirror(yarp::sig::Vector &target, co
 	}
 
 	for (int index = half_length; index < full_length; index++) {
-		target[ half_length + index] = source[index];
-		target[(full_length+full_length+half_length-1) - index] = source[index];
+		target[half_length  + index] = source[index];
+		target[two_and_half - index] = source[index];
 	}
 	
 }
