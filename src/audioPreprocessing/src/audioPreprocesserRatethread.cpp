@@ -150,8 +150,8 @@ bool AudioPreprocesserRatethread::threadInit() {
 	//}
 
 	// prepare GammatoneFilter object
-	//gammatoneAudioFilter = new GammatoneFilter(samplingRate, lowCf, highCf, nBands, frameSamples, nMics, false);
-	gammatoneAudioFilter = new GammatoneFilter(samplingRate, lowCf, highCf, nBands, frameSamples, nMics, true);
+	gammatoneAudioFilter = new GammatoneFilter(samplingRate, lowCf, highCf, nBands, frameSamples, nMics, false);
+	//gammatoneAudioFilter = new GammatoneFilter(samplingRate, lowCf, highCf, nBands, frameSamples, nMics, true);
 
 	// prepare BeamFormer object
 	beamForm = new BeamFormer(nBands, frameSamples, nMics, nBeamsPerHemi);
@@ -679,9 +679,8 @@ void AudioPreprocesserRatethread::frontFieldMirror(yarp::sig::Vector &target, co
 	for (int index = full_length - 1; index > full_length - half_length - 1; index--) {
 		target[current_position++] = source[index];
 	}
-	
 	*/
-	
+
 	// Alternative Method for mirroring front field.
 
 	//-- Make sure space is allocated.
