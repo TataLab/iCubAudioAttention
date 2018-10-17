@@ -376,8 +376,8 @@ void AudioPreprocesserRatethread::loadFile(yarp::os::ResourceFinder &rf) {
 
 		//-- Take the ceiling of of (D/C)/Rate.
 		//--   ceiling = (x + y - 1) / y
-		//nBeamsPerHemi     = ((micDistance * samplingRate) + C - 1.0) / C;
-		nBeamsPerHemi     = int((micDistance / C) * samplingRate) - 1;
+		nBeamsPerHemi     = ((micDistance * samplingRate) + C - 1.0) / C;
+		//nBeamsPerHemi     = int((micDistance / C) * samplingRate) - 1;
 		nBeams            = 2 * nBeamsPerHemi + 1;
 	    nMicAngles        = nBeams * 2 - 2;
 		radialRes_radians = _pi / 180.0 * radialRes_degrees;
@@ -654,6 +654,7 @@ void AudioPreprocesserRatethread::sendAudioMap() {
 
 void AudioPreprocesserRatethread::frontFieldMirror(yarp::sig::Vector &target, const yarp::sig::Vector &source) {
 	
+	/*
 	//-- Make sure space is allocated.
 	target.resize(source.size() * 2, 0.0);
 
@@ -678,6 +679,29 @@ void AudioPreprocesserRatethread::frontFieldMirror(yarp::sig::Vector &target, co
 	for (int position = length - 1; position > length - half_length - 1; position--) {
 		target[current_position++] = source[position];
 	}
+	*/
+
+
+	
+	// Alternative Method for mirroring front field.
+
+	//-- Make sure space is allocated.
+	target.resize(source.size() * 2, 0.0);
+
+	//-- Get the length of the source vector.
+	int full_length = source.size();
+	int half_length = full_length / 2;
+
+	for (int index = 0; index < half_length; index++) {
+		target[half_length + index]     = source[index];
+		target[half_length - index - 1] = source[index];
+	}
+
+	for (int index = half_length; index < full_length; index++) {
+		target[ half_length + index] = source[index];
+		target[(full_length+full_length+half_length-1) - index] = source[index];
+	}
+	
 }
 
 
