@@ -109,13 +109,14 @@ class AudioPreprocesserRatethread : public yarp::os::RateThread {
     
     yarp::sig::Matrix egoSpaceMap;
 
-    //yarp::sig::Vector spaceAngles;
+    yarp::sig::Vector spaceAngles;
+    yarp::sig::Vector micAngles;
+
     yarp::sig::Vector normalAngles;
     yarp::sig::Vector angles;
-    //yarp::sig::Vector micAngles;
+    
 
     yarp::sig::Vector angle_index;
-
     yarp::sig::Matrix lowResolutionAudioMap;
 
 

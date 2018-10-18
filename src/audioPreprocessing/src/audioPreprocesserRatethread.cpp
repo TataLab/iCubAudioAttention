@@ -30,6 +30,16 @@ using namespace yarp::os;
 #define THRATE 80 //ms
 
 
+//-- TODO: REMOVE THIS.
+#include <iomanip>
+void yarpPrintVector(const yarp::sig::Vector &outVector) {
+	for (int i = 0; i < outVector.size(); i++) {
+		if (i % 6 == 0) std::cout << std::endl;
+			std::cout << std::setw(12) << outVector[i] << " ";    
+		} std::cout << "\n\n";
+}
+
+
 AudioPreprocesserRatethread::AudioPreprocesserRatethread() : RateThread(THRATE) {
 	robot = "icub";
 }
@@ -164,10 +174,8 @@ bool AudioPreprocesserRatethread::threadInit() {
 	//-- Find the Spacing of the beams, for proper interpolation.
 	setAngleSpacing();
 
-	//--
 	//-- TODO: Change if works.
-	//--
-	setSampleDelay();
+	//setSampleDelay();
 
 	//-- Allocate space for the low resolution audio map,
 	//-- then clear it to all zeros.
@@ -635,6 +643,22 @@ void AudioPreprocesserRatethread::sendLowResolutionAudioMap() {
 void AudioPreprocesserRatethread::sendAudioMap() {
 
 	// fill the yarp Matrix with interpolated beamformed audio
+	for (int i = 0; i < nBands; i++) {
+		yarp::sig::Vector tempV(interpolateNSamples * 2);
+		for (int j = 0; j < interpolateNSamples * 2; j++) {
+			tempV[j] = highResolutionAudioMap[j][i];
+		}
+		outAudioMap->setRow(i, tempV);
+	}
+
+	// set the envelope for the Audio Map port
+	outAudioMapEgoPort->setEnvelope(ts);
+
+	// publish the map onto the network
+	outAudioMapEgoPort->write(*outAudioMap);
+
+	/*
+	// fill the yarp Matrix with interpolated beamformed audio
 	yarp::sig::Vector tempV(interpolateNSamples * 2);
 
 	for (int i = 0; i < nBands; i++) {	
@@ -649,6 +673,7 @@ void AudioPreprocesserRatethread::sendAudioMap() {
 
 	// publish the map onto the network
 	outAudioMapEgoPort->write(*outAudioMap);
+	*/
 }
 
 
@@ -659,7 +684,7 @@ void AudioPreprocesserRatethread::frontFieldMirror(yarp::sig::Vector &target, co
 	target.resize(source.size() * 2, 0.0);
 
 	//-- Get the length of the source vector.
-	int full_length      = source.size();
+	int full_length = source.size();
 	int half_length = full_length / 2;
 
 	//-- Use this for continuous iteration.
@@ -717,19 +742,19 @@ void AudioPreprocesserRatethread::setAngleSpacing() {
 
 
 	//-- Generate a lineaer distribution of the angles in space.
-	//double linspace_step = ((_pi - radialRes_radians) - (-_pi)) / (nSpaceAngles - 1.0);
-	//double current_step  = -_pi;
-	//
-	//spaceAngles.resize(nSpaceAngles, 0.0);
-	//
-	//for (int angle = 0; angle < nSpaceAngles; angle++) {
-	//	spaceAngles[angle] = current_step;
-	//	current_step += linspace_step;
-	//}
+	double linspace_step = ((_pi - radialRes_radians) - (-_pi)) / (nSpaceAngles - 1.0);
+	double current_step  = -_pi;
+	
+	spaceAngles.resize(nSpaceAngles, 0.0);
+	
+	for (int angle = 0; angle < nSpaceAngles; angle++) {
+		spaceAngles[angle] = current_step;
+		current_step += linspace_step;
+	}
 
 	//-- Generate a linear distribution of the angles in the front hemisphere.
-	double linspace_step = (((_pi/ 2) - radialRes_radians) - (-_pi / 2)) / (180.0 - 1.0);
-	double current_step  = (-_pi / 2);
+	linspace_step = (((_pi/ 2) - radialRes_radians) - (-_pi / 2)) / (180.0 - 1.0);
+	current_step  = (-_pi / 2);
 
 	normalAngles.resize(180, 0.0);
 
@@ -740,36 +765,36 @@ void AudioPreprocesserRatethread::setAngleSpacing() {
 
 
 	//-- Generate the non-linear distribution of where all beams are pointed.
-	//int current_mic_pos = 0;
-	//
-	//micAngles.resize(nMicAngles, 0.0);
-	//
-	////-- First section is the last half of angles + pi.
-	//for (int beam = nBeams-nBeamsPerHemi-1; beam < nBeams-1; beam++) {
-	//	micAngles[current_mic_pos++] = angles[beam] + _pi;
-	//}
-	//
-	////-- Second section is just the entire angles.
-	//for (int beam = 0; beam < nBeams; beam++) {
-	//	micAngles[current_mic_pos++] = angles[beam];
-	//}
-	//
-	////-- Third section is the first half of angles + pi.
-	//for (int beam = 1; beam < nBeams-nBeamsPerHemi-1; beam++) {
-	//	micAngles[current_mic_pos++] = angles[beam] + _pi;
-	//}
-	//
-	////-- Unwrap the micAngles by changing deltas between values to 2*pi complement.
-	//for (int angle = 1; angle < nMicAngles; angle++) {		
-	//	double delta = micAngles[angle] - micAngles[angle-1];
-	//	delta = (delta > _pi) ? (delta - 2 * _pi) : ( (delta < -_pi) ? (delta + 2 * _pi) : (delta) );
-	//	micAngles[angle] = micAngles[angle-1] + delta;
-	//}
-	//
-	////-- Normalize all microphone positions to +/- pi.
-	//for (int angle = 0; angle < nMicAngles; angle++) {
-	//	micAngles[angle] -= (2 * _pi);
-	//}
+	int current_mic_pos = 0;
+	
+	micAngles.resize(nMicAngles, 0.0);
+	
+	//-- First section is the last half of angles + pi.
+	for (int beam = nBeams-nBeamsPerHemi-1; beam < nBeams-1; beam++) {
+		micAngles[current_mic_pos++] = angles[beam] + _pi;
+	}
+	
+	//-- Second section is just the entire angles.
+	for (int beam = 0; beam < nBeams; beam++) {
+		micAngles[current_mic_pos++] = angles[beam];
+	}
+	
+	//-- Third section is the first half of angles + pi.
+	for (int beam = 1; beam < nBeams-nBeamsPerHemi-1; beam++) {
+		micAngles[current_mic_pos++] = angles[beam] + _pi;
+	}
+	
+	//-- Unwrap the micAngles by changing deltas between values to 2*pi complement.
+	for (int angle = 1; angle < nMicAngles; angle++) {		
+		double delta = micAngles[angle] - micAngles[angle-1];
+		delta = (delta > _pi) ? (delta - 2 * _pi) : ( (delta < -_pi) ? (delta + 2 * _pi) : (delta) );
+		micAngles[angle] = micAngles[angle-1] + delta;
+	}
+	
+	//-- Normalize all microphone positions to +/- pi.
+	for (int angle = 0; angle < nMicAngles; angle++) {
+		micAngles[angle] -= (2 * _pi);
+	}
 }
 
 
@@ -869,7 +894,7 @@ void AudioPreprocesserRatethread::linearInterpolate() {
 	}
 	*/ 
 
-	/*
+	
 	for (int band = 0; band < nBands; band++) {
 		
 		int mAngle = 1;
@@ -891,8 +916,9 @@ void AudioPreprocesserRatethread::linearInterpolate() {
 			);
 		}
 	}
-	*/
+	
 
+	/*
 	int idx0, idx1;
 	yarp::sig::Vector source(180, 0.0);
 	yarp::sig::Vector target(360, 0.0);
@@ -921,6 +947,7 @@ void AudioPreprocesserRatethread::linearInterpolate() {
 		frontFieldMirror(target, source);
 		egoSpaceMap.setRow(band, target);
 	}
+	*/
 }
 
 
