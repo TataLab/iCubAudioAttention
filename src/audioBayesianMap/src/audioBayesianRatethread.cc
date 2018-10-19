@@ -260,12 +260,15 @@ void AudioBayesianRatethread::loadFile(yarp::os::ResourceFinder &rf) {
 
 
 void AudioBayesianRatethread::normalizeProbabilityMap(std::vector <std::vector <double>> &probabilityMap) {
+
     
     double pre_min=999, post_min=999, pre_max=-999, post_max=-999;           
     
 	// Loops though the Map given as input and normalizes each column
 	// This normalization is done by summing up all the elements
 	// together and then dividing each element in the column by the sum
+
+    /*
     double sum = 0.0;
     
 	for (int i = 0; i <  nBands; i++) {
@@ -296,19 +299,24 @@ void AudioBayesianRatethread::normalizeProbabilityMap(std::vector <std::vector <
               << " -- Max 2: " << post_max << " Min 2: " << post_min
               << std::endl;
 
+    */
+    
+    
+    for (int i = 0; i <  nBands; i++) {
 
-	/*
-	for (int i = 0; i <  nBands; i++) {
-		double sum = 0;
-		for (int j = 0; j < interpolateNSamples * 2; j++) {
-			sum += probabilityMap[i][j];
-		}
+        double sum = 0.0;
 
-		for (int j = 0; j < interpolateNSamples * 2; j++) {
-			probabilityMap[i][j] /= sum;
-		}
-	}
-	*/
+        for (int j = 0; j < interpolateNSamples * 2; j++) {
+            sum += probabilityMap[i][j];
+        }
+        
+
+        for (int j = 0; j < interpolateNSamples * 2; j++) {
+            probabilityMap[i][j] /= sum;
+        }
+
+    }
+	
 }
 
 
@@ -320,7 +328,7 @@ void AudioBayesianRatethread::calcOffset() {
 	offset = 0.0;
 	if (headAngleInPort->getInputCount()) {
 		headAngleBottle = headAngleInPort->read(true);   //blocking reading for synchr with the input
-		offset -= headAngleBottle->get(panAngle).asDouble();
+		offset += headAngleBottle->get(panAngle).asDouble();
         //offset = 0;
 	}
 	//offset += 270.0;

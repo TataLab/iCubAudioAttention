@@ -27,6 +27,7 @@
 
 using namespace yarp::os;
 
+//#define THRATE 55 //ms
 #define THRATE 80 //ms
 
 
@@ -307,12 +308,12 @@ void AudioPreprocesserRatethread::run() {
 		sendBeamFormedPowerAudio(beamForm->getPowerAudio());
 	}
 
-	//setLowResolutionMap();
+	setLowResolutionMap();
 
 
-	//if (outLowResolutionAudioMapPort->getOutputCount()) {
-	//	sendLowResolutionAudioMap();
-	//}
+	if (outLowResolutionAudioMapPort->getOutputCount()) {
+		sendLowResolutionAudioMap();
+	}
 
 
 	// do an interpolate on the lowResolutionAudioMap
