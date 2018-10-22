@@ -219,7 +219,7 @@ void AudioBayesianRatethread::run() {
 	// Calls the Memory maper and memory maps it to
 	// the following file: /tmp/bayesianProbabilityLongMap.tmp
 	stopTime = yarp::os::Time::now();
-	yInfo("Count:%d Time:%f Offset:%f. \n", ts.getCount(),  stopTime-startTime, offset-360.0);
+	yInfo("Count:%d Time:%f Offset:%f. \n", ts.getCount(),  stopTime-startTime, offset);
 	startTime = stopTime;
 }
 
@@ -260,20 +260,23 @@ void AudioBayesianRatethread::loadFile(yarp::os::ResourceFinder &rf) {
 
 
 void AudioBayesianRatethread::normalizeProbabilityMap(std::vector <std::vector <double>> &probabilityMap) {
-
+    
 	// Loops though the Map given as input and normalizes each column
 	// This normalization is done by summing up all the elements
-	// together and then dividing each element in the column by the sum
-	for (int i = 0; i <  nBands; i++) {
-		double sum = 0;
-		for (int j = 0; j < interpolateNSamples * 2; j++) {
-			sum += probabilityMap[i][j];
-		}
+	// together and then dividing each element in the column by the sum   
+    
+    for (int i = 0; i <  nBands; i++) {
 
-		for (int j = 0; j < interpolateNSamples * 2; j++) {
-			probabilityMap[i][j] /= sum;
-		}
-	}
+        double sum = 0.0;
+
+        for (int j = 0; j < interpolateNSamples * 2; j++) {
+            sum += probabilityMap[i][j];
+        }
+
+        for (int j = 0; j < interpolateNSamples * 2; j++) {
+            probabilityMap[i][j] /= sum;
+        }
+    }
 }
 
 
@@ -285,8 +288,8 @@ void AudioBayesianRatethread::calcOffset() {
 	offset = 0.0;
 	if (headAngleInPort->getInputCount()) {
 		headAngleBottle = headAngleInPort->read(true);   //blocking reading for synchr with the input
-		offset -= headAngleBottle->get(panAngle).asDouble();
-        
+		offset += headAngleBottle->get(panAngle).asDouble();
+        //offset = 0;
 	}
 	//offset += 270.0;
 	//offset += 180.0;
@@ -392,13 +395,13 @@ void AudioBayesianRatethread::setAcousticMap() {
 
 	// Calls a function that normalizations
 	// the columns of the currentAudioMap
-	normalizeProbabilityMap(currentAudioMap);
+
+	//normalizeProbabilityMap(currentAudioMap);
+
 
 	// Calls a function to calculated the offset of the
 	// current audio map based on the position of the iCub head
 	calcOffset();
-
-
 
 
 	/*
@@ -449,7 +452,9 @@ void AudioBayesianRatethread::addMap(std::vector <std::vector <double> > &probab
 	// Bayesian map corresponding to the input probabilityMap
 	for (int i = 0; i <  nBands; i++) {
 		for (int j = 0; j < interpolateNSamples * 2; j++) {
-			int o =  myModed((j + myRound(offset)), interpolateNSamples * 2);
+			//int o =  myModed((j + myRound(offset)), interpolateNSamples * 2);
+			//int o = (j + myRound(offset)) % (interpolateNSamples * 2);
+            int o = myModed((j + myRound(offset)), (interpolateNSamples * 2) );
 			probabilityMap[i][j] *= inputCurrentAudioMap[i][o];
 		}
 	}
@@ -468,7 +473,10 @@ void AudioBayesianRatethread::removeMap(std::vector <std::vector <double> > &pro
 	// the Bayesian map corresponding to the input probabilityMap
 	for (int i = 0; i <  nBands; i++) {
 		for (int j = 0; j < interpolateNSamples * 2; j++) {
-			int o =  myModed((j + myRound(bufferedOffSet.front())), interpolateNSamples * 2);
+			//int o =  myModed((j + myRound(bufferedOffSet.front())), interpolateNSamples * 2);
+            //int o = (j + myRound(bufferedOffSet.front())) % (interpolateNSamples * 2);
+            //int o = (j + myRound(offset)) % (interpolateNSamples * 2);
+            int o = myModed((j + myRound(bufferedOffSet.front())), (interpolateNSamples * 2) );
 			probabilityMap[i][j] /= inputCurrentAudioMap[i][o];
 		}
 	}
@@ -564,7 +572,7 @@ void AudioBayesianRatethread::collapseMap(const std::vector <std::vector <double
 		}
 	}
 
-	double sum = 0;
+	double sum = 0.0;
 	for (int j = 0; j < interpolateNSamples * 2; j++) {
 		sum+=outputProbabilityMap[j];
 	}

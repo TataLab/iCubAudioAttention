@@ -52,6 +52,10 @@ struct knotValues {
     double k0, k1, k2;
 };
 
+//inline int    myRound(double a) { return  a - (int)a >= 0.5000 ? (int)a+1 : (int)a; }
+//inline double myRound(double a) { return  a - (int)a >= 0.5000 ? (int)a+1 : (int)a; }
+inline double myRound(double a) { return  a >= 0.000000001 ? ((a - (int)a >= 0.50) ? ((int)a + 1) : ((int)a)) : ((a - (int)a <= -0.50) ? ((int)a-1) : ((int)a)); }
+
 class AudioPreprocesserRatethread : public yarp::os::RateThread {
 
  private:
@@ -103,9 +107,16 @@ class AudioPreprocesserRatethread : public yarp::os::RateThread {
 
     //----------------------------------
     
+    yarp::sig::Matrix egoSpaceMap;
+
     yarp::sig::Vector spaceAngles;
     yarp::sig::Vector micAngles;
 
+    yarp::sig::Vector normalAngles;
+    yarp::sig::Vector angles;
+    
+
+    yarp::sig::Vector angle_index;
     yarp::sig::Matrix lowResolutionAudioMap;
 
 
@@ -143,6 +154,7 @@ class AudioPreprocesserRatethread : public yarp::os::RateThread {
     int    nMicAngles;
     double radialRes_radians;
     int    nSpaceAngles;
+    int    nNormalAngles;
     
     
     
@@ -318,6 +330,12 @@ class AudioPreprocesserRatethread : public yarp::os::RateThread {
      *  @param beamFormedPower : power of reduced beamformed audio across each band.
      */
     void sendBeamFormedPowerAudio(const std::vector< double > &beamFormedPower);
+
+    void frontFieldMirror(yarp::sig::Vector &target, const yarp::sig::Vector &source);
+
+    void setAngleSpacing();
+    void setSampleDelay();
+
 
 
     void setLowResolutionMap();

@@ -43,10 +43,14 @@
 #include <queue>
 #include <vector>
 
+//#define THRATE 55 //ms
 #define THRATE 80 //ms
+
 inline int    myModed(int a, int b) { return  a >= 0 ? a % b : (a % b) + b; }
 inline double myABS  (double a)     { return  a >= 0 ? a : ((a) * -1);      }
-inline int    myRound(double a)     { return  a - (int)a >= 0.5000 ? (int)a+1 : (int)a; }
+//inline int    myRound(double a)     { return  a - (int)a >= 0.5000 ? (int)a+1 : (int)a; }
+inline int myRound(double a) { return  a >= 0.000000001 ? ((a - (int)a >= 0.50) ? ((int)a + 1) : ((int)a)) : ((a - (int)a <= -0.50) ? ((int)a-1) : ((int)a)); }
+
 
 class AudioBayesianRatethread : public yarp::os::RateThread {
 

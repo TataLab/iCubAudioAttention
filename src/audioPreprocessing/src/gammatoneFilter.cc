@@ -209,11 +209,11 @@ float* GammatoneFilter::singleFilter(float* input, double centerFreqency) {
 	double a = exp(-tptbw);
 	double gain = (tptbw * tptbw * tptbw * tptbw) / 3;
 
-	double a1 = 4.0 * a;
+	double a1 =  4.0 * a;
 	double a2 = -6.0 * a * a;
-	double a3 = 4.0 * a * a * a;
-	double a4 = -a * a * a * a;
-	double a5 = a * a;
+	double a3 =  4.0 * a * a * a;
+	double a4 = -a   * a * a * a;
+	double a5 =  a   * a;
 
 	double coscf = cos(tpt * centerFreqency);
 	double sincf = sin(tpt * centerFreqency);
