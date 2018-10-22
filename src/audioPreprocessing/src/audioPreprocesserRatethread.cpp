@@ -31,16 +31,6 @@ using namespace yarp::os;
 #define THRATE 80 //ms
 
 
-//-- TODO: REMOVE THIS.
-#include <iomanip>
-void yarpPrintVector(const yarp::sig::Vector &outVector) {
-	for (int i = 0; i < outVector.size(); i++) {
-		if (i % 6 == 0) std::cout << std::endl;
-			std::cout << std::setw(12) << outVector[i] << " ";    
-		} std::cout << "\n\n";
-}
-
-
 AudioPreprocesserRatethread::AudioPreprocesserRatethread() : RateThread(THRATE) {
 	robot = "icub";
 }

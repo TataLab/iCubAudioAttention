@@ -240,10 +240,6 @@ float* GammatoneFilter::singleFilter(float* input, double centerFreqency) {
 
 		tempFilteredAudio[t] = (u0r * qcos + u0i * qsin) * gain;
 
-        if (myAbs(tempFilteredAudio[t]) < 0.01) {
-            tempFilteredAudio[t] = 0.0;
-        }
-
 		if (hrect && tempFilteredAudio[t] < 0)
 			tempFilteredAudio[t] = 0;
 
