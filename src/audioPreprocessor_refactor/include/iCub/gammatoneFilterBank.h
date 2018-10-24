@@ -51,7 +51,6 @@ class GammatoneFilterBank {
 	int  highCf;
 	bool halfRec;
 	bool erbSpaced;
-	int  degreeRes;
 
 	double tpt;
 	yarp::sig::Vector cfs;
@@ -83,11 +82,19 @@ class GammatoneFilterBank {
     /* ===========================================================================
 	 *  Apply a 4th order gammatone filter onto the previously set raw audio.
 	 * 
-     * @param filterBank : target for the filtered audio (number of mics * number of bands, number of samples).
-	 * @param RawAudio   : raw audio (number of mics, number of samples).
+     * @param FilterBank : Target for the filtered audio (number of mics * number of bands, number of samples).
+	 * @param RawAudio   : Raw audio (number of mics, number of samples).
 	 * =========================================================================== */
-    void getGammatoneFilteredAudio(yarp::sig::Matrix& FilterBank, yarp::sig::Matrix& RawAudio);
+    void getGammatoneFilteredAudio(yarp::sig::Matrix& FilterBank, const yarp::sig::Matrix& RawAudio);
 
+
+    /* ===========================================================================
+	 *  Find the total RMS power for each band across samples.
+	 * 
+	 * @param BankPower  : Target for the power of each band (number of mics, number of bands).
+     * @param FilterBank : The filtered audio (number of mics * number of bands, number of samples).
+	 * =========================================================================== */
+    void getGammatoneFilteredPower(yarp::sig::Matrix& BankPower, const yarp::sig::Matrix& FilterBank);
 
   private:
 	

@@ -40,6 +40,7 @@
 #include <yarp/os/Log.h>
 
 #include <iCub/gammatoneFilterBank.h>
+#include <iCub/interauralCues.h>
 
 class AudioPreprocessorPeriodicThread : public yarp::os::PeriodicThread {
 
@@ -80,6 +81,7 @@ class AudioPreprocessorPeriodicThread : public yarp::os::PeriodicThread {
 	 *  Encapsulated objects to perform processing.
 	 * =========================================================================== */
 	GammatoneFilterBank* gammatoneFilterBank;
+	InterauralCues*      interauralCues;
 
 	/* ===========================================================================
 	 *  Variables received from the resource finder.

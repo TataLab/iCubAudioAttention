@@ -132,7 +132,7 @@ bool AudioPreprocessorPeriodicThread::configure(yarp::os::ResourceFinder &rf) {
 	 *  Initialize the processing objects.
 	 * =========================================================================== */
 	gammatoneFilterBank = new GammatoneFilterBank(numMics, samplingRate, numFrameSamples, numBands, lowCf, highCf, halfRec, erbSpaced);
-
+	interauralCues      = new InterauralCues();
 
 	return true;
 }
@@ -221,16 +221,25 @@ void AudioPreprocessorPeriodicThread::setInputPortName(std::string InpPort) {
 void AudioPreprocessorPeriodicThread::run() {    
 	
 	if (inRawAudioPort.getInputCount()) {
+		
 		inputSound = inRawAudioPort.read(true);
 		inRawAudioPort.getEnvelope(timeStamp);
 		result = processing();
+
+		//-- TODO: This may be better moved into processing loop.
+		if (outGammatoneFilteredAudioPort.getOutputCount()) {
+			outGammatoneFilteredAudioPort.prepare() = GammatoneFilteredAudioMatrix;
+			outGammatoneFilteredAudioPort.write();
+		}
+
+		if (outGammatoneFilteredPowerPort.getOutputCount()) {
+			outGammatoneFilteredPowerPort.prepare() = GammatoneFilteredPowerMatrix;
+			outGammatoneFilteredPowerPort.write();
+		}
+
 	}
 
 
-	if (outGammatoneFilteredAudioPort.getOutputCount()) {
-		outGammatoneFilteredAudioPort.prepare() = GammatoneFilteredAudioMatrix;
-		outGammatoneFilteredAudioPort.write();
-	}
 
 	//if (outputPort.getOutputCount()) {
 	//	*outputImage = outputPort.prepare();
@@ -258,6 +267,16 @@ bool AudioPreprocessorPeriodicThread::processing() {
 		RawAudioMatrix                 //-- Source.
 	);
 
+	//-- If a port is connected, compute the RMS
+	//--  power of the filter banks beams.
+	if (outGammatoneFilteredPowerPort.getOutputCount()) {
+		gammatoneFilterBank->getGammatoneFilteredPower(
+			GammatoneFilteredPowerMatrix,
+			GammatoneFilteredAudioMatrix
+		);
+	}
+
+	
 	
 
 

@@ -56,9 +56,9 @@ GammatoneFilterBank::~GammatoneFilterBank() {
 }
 
 
-void GammatoneFilterBank::getGammatoneFilteredAudio(yarp::sig::Matrix& FilterBank, yarp::sig::Matrix& RawAudio) {
+void GammatoneFilterBank::getGammatoneFilteredAudio(yarp::sig::Matrix& FilterBank, const yarp::sig::Matrix& RawAudio) {
 
-	//-- Make sure space is allocated for the filtered audio.
+	//-- Ensure space is allocated for the filtered audio.
 	FilterBank.resize(numMics * numBands, numFrameSamples);
 
 	//-- Loop variabes.
@@ -168,6 +168,33 @@ void GammatoneFilterBank::getGammatoneFilteredAudio(yarp::sig::Matrix& FilterBan
 }
 
 
+void GammatoneFilterBank::getGammatoneFilteredPower(yarp::sig::Matrix& BankPower, const yarp::sig::Matrix& FilterBank) {
+
+	//-- Ensure space is allocated for this. Clear it to zeros.
+	BankPower.resize(numMics, numBands);
+	BankPower.zero();
+
+	for (int mic = 0; mic < numMics; mic++) {
+
+		//--
+		//-- TODO: parallelize this loop if needed. 
+		//--
+
+		for (int band = 0; band < numBands; band++) {
+
+			//-- Reduce computation by storing this once.
+			const int itrband  = band + (mic * numBands);
+
+			//-- Sum the squares of the provided filter bank.
+			for (int sample = 0; sample < numFrameSamples; sample++) {
+				BankPower[mic][band] += pow(FilterBank[itrband][sample], 2.0);
+			}
+
+			//-- Take the root of the mean.
+			BankPower[mic][band] = sqrt( BankPower[mic][band] / (double) numFrameSamples );
+		}
+	}
+}
 
 
 void GammatoneFilterBank::makeErbCFs() {
