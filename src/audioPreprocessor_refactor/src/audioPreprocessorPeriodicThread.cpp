@@ -125,14 +125,14 @@ bool AudioPreprocessorPeriodicThread::configure(yarp::os::ResourceFinder &rf) {
 	BeamformedRmsAudioMatrix.resize(numBands, numBeams);
 	BeamformedRmsAudioMatrix.zero();
 
-	BeamformedRmsPowerMatrix.resize(numBands, 1);
+	BeamformedRmsPowerMatrix.resize(numBands, 2);
 	BeamformedRmsPowerMatrix.zero();
 
 	/* ===========================================================================
 	 *  Initialize the processing objects.
 	 * =========================================================================== */
 	gammatoneFilterBank = new GammatoneFilterBank(numMics, samplingRate, numFrameSamples, numBands, lowCf, highCf, halfRec, erbSpaced);
-	interauralCues      = new InterauralCues();
+	interauralCues      = new InterauralCues(numMics, micDistance, speedOfSound, samplingRate, numFrameSamples, numBands, numBeamsPerHemifield);
 
 	return true;
 }
@@ -267,8 +267,8 @@ bool AudioPreprocessorPeriodicThread::processing() {
 		RawAudioMatrix                 //-- Source.
 	);
 
-	//-- If a port is connected, compute the RMS
-	//--  power of the filter banks beams.
+	//-- OPTIONAL: If a port is connected, compute 
+	//--  the RMS power of the filter banks beams.
 	if (outGammatoneFilteredPowerPort.getOutputCount()) {
 		gammatoneFilterBank->getGammatoneFilteredPower(
 			GammatoneFilteredPowerMatrix,
@@ -276,7 +276,7 @@ bool AudioPreprocessorPeriodicThread::processing() {
 		);
 	}
 
-	
+
 	
 
 

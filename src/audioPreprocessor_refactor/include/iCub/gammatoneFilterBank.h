@@ -38,8 +38,6 @@ class GammatoneFilterBank {
 
   private:
     
-    const double _pi = 2 * acos(0.0); //-- High precision pi.
-    
 	/* ===========================================================================
 	 *  Variables set in the constructor. Should not be changed for life of object.
 	 * =========================================================================== */
@@ -52,8 +50,9 @@ class GammatoneFilterBank {
 	bool halfRec;
 	bool erbSpaced;
 
-	double tpt;
 	yarp::sig::Vector cfs;
+	double            tpt;
+	const double      _pi = 2 * acos(0.0); //-- High precision pi.
 
 
   public:
@@ -62,8 +61,8 @@ class GammatoneFilterBank {
 	 *  Main Constructor.
 	 * 
 	 * @param mics    : Number of Microphones.
-	 * @param samples : Sampling Rate the Audio was Captured at.
-     * @param frames  : Number of Samples in a Frame.
+	 * @param samples : Number of Samples Recorded per Second.
+	 * @param frames  : Number of Samples in incoming Frame.
      * @param bands   : Number of Frequency Bands.
      * @param lcf     : Lowest Center Frequency.
      * @param hcf     : Highest Center Frequency.
@@ -80,7 +79,7 @@ class GammatoneFilterBank {
 
 
     /* ===========================================================================
-	 *  Apply a 4th order gammatone filter onto the previously set raw audio.
+	 *  Apply a 4th order gammatone filter onto the provided raw audio.
 	 * 
      * @param FilterBank : Target for the filtered audio (number of mics * number of bands, number of samples).
 	 * @param RawAudio   : Raw audio (number of mics, number of samples).
@@ -95,6 +94,7 @@ class GammatoneFilterBank {
      * @param FilterBank : The filtered audio (number of mics * number of bands, number of samples).
 	 * =========================================================================== */
     void getGammatoneFilteredPower(yarp::sig::Matrix& BankPower, const yarp::sig::Matrix& FilterBank);
+
 
   private:
 	
