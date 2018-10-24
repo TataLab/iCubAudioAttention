@@ -56,10 +56,10 @@ GammatoneFilterBank::~GammatoneFilterBank() {
 }
 
 
-void GammatoneFilterBank::getGammatoneFilteredAudio(yarp::sig::Matrix& filterBank, yarp::sig::Matrix& RawAudio) {
+void GammatoneFilterBank::getGammatoneFilteredAudio(yarp::sig::Matrix& FilterBank, yarp::sig::Matrix& RawAudio) {
 
 	//-- Make sure space is allocated for the filtered audio.
-	filterBank.resize(numMics * numBands, numFrameSamples);
+	FilterBank.resize(numMics * numBands, numFrameSamples);
 
 	//-- Loop variabes.
 	int mic, band, sample;
@@ -152,11 +152,11 @@ void GammatoneFilterBank::getGammatoneFilteredAudio(yarp::sig::Matrix& filterBan
 				p4i = p3i; p3i = p2i; p2i = p1i; p1i = p0i;
 
 				//-- Find the Basilar Membrane Response.
-				filterBank[itrband][sample] = (u0r * qcos + u0i * qsin) * gain;
+				FilterBank[itrband][sample] = (u0r * qcos + u0i * qsin) * gain;
 				
 				//-- Apply Half-Wave Rectifying if enabled.
-				if (halfRec && filterBank[itrband][sample] < 0.0) {
-					filterBank[itrband][sample] = 0.0;
+				if (halfRec && FilterBank[itrband][sample] < 0.0) {
+					FilterBank[itrband][sample] = 0.0;
 				}
 
 				//-- Update coefficients.

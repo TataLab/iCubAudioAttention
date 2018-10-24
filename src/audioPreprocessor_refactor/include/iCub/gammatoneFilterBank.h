@@ -86,7 +86,7 @@ class GammatoneFilterBank {
      * @param filterBank : target for the filtered audio (number of mics * number of bands, number of samples).
 	 * @param RawAudio   : raw audio (number of mics, number of samples).
 	 * =========================================================================== */
-    void getGammatoneFilteredAudio(yarp::sig::Matrix& filterBank, yarp::sig::Matrix& RawAudio);
+    void getGammatoneFilteredAudio(yarp::sig::Matrix& FilterBank, yarp::sig::Matrix& RawAudio);
 
 
   private:

@@ -43,7 +43,7 @@ AudioPreprocessorPeriodicThread::AudioPreprocessorPeriodicThread(std::string _ro
 
 
 AudioPreprocessorPeriodicThread::~AudioPreprocessorPeriodicThread() {
-
+	delete gammatoneFilterBank;
 }
 
 
@@ -62,12 +62,12 @@ bool AudioPreprocessorPeriodicThread::configure(yarp::os::ResourceFinder &rf) {
 	samplingRate    = rf.findGroup("sampling").check("samplingRate",    yarp::os::Value(48000),   "sampling rate of mics (int)"           ).asInt();
 	numFrameSamples = rf.findGroup("sampling").check("numFrameSamples", yarp::os::Value(4096),    "number of frame samples received (int)").asInt();
 
-	numBands  = rf.findGroup("preprocessing").check("numBands",  yarp::os::Value(128),   "number of frequency bands (int)"        ).asInt();
-	lowCf     = rf.findGroup("preprocessing").check("lowCf",     yarp::os::Value(380),   "lowest center frequency (int)"          ).asInt();
-	highCf    = rf.findGroup("preprocessing").check("highCf",    yarp::os::Value(2800),  "highest center frequency (int)"         ).asInt();
-	halfRec   = rf.findGroup("preprocessing").check("halfRec",   yarp::os::Value(false), "half wave rectifying (boolean)"         ).asBool();
-	erbSpaced = rf.findGroup("preprocessing").check("erbSpaced", yarp::os::Value(true),  "ERB spaced centre frequencies (boolean)").asBool();
-	degreeRes = rf.findGroup("preprocessing").check("degreeRes", yarp::os::Value(1),     "degree resolution for a single position (int)").asInt();
+	numBands  = rf.findGroup("processing").check("numBands",  yarp::os::Value(128),   "number of frequency bands (int)"              ).asInt();
+	lowCf     = rf.findGroup("processing").check("lowCf",     yarp::os::Value(380),   "lowest center frequency (int)"                ).asInt();
+	highCf    = rf.findGroup("processing").check("highCf",    yarp::os::Value(2800),  "highest center frequency (int)"               ).asInt();
+	halfRec   = rf.findGroup("processing").check("halfRec",   yarp::os::Value(false), "half wave rectifying (boolean)"               ).asBool();
+	erbSpaced = rf.findGroup("processing").check("erbSpaced", yarp::os::Value(true),  "ERB spaced centre frequencies (boolean)"      ).asBool();
+	degreeRes = rf.findGroup("processing").check("degreeRes", yarp::os::Value(1),     "degree resolution for a single position (int)").asInt();
 	
 	/* ===========================================================================
 	 *  Derive additional variables given the ones above.
@@ -76,24 +76,36 @@ bool AudioPreprocessorPeriodicThread::configure(yarp::os::ResourceFinder &rf) {
 	//-- Take the ceiling of of (D/C)/Rate.
 	//--   ceiling = (x + y - 1) / y
 	numBeamsPerHemifield = ((micDistance * samplingRate) + speedOfSound - 1.0) / speedOfSound;
+
+	//-- Take the one less the floor of (D/C)*Rate
 	//numBeamsPerHemifield = int((micDistance / speedOfSound) * samplingRate) - 1; //-- For a different number of beams.
+	
+	//-- Find the total number of beams for the front field.
 	numBeams = 2 * numBeamsPerHemifield + 1;
 
 
 	/* =========================================================================== 
 	 *  Print the resulting variables to the console.
 	 * =========================================================================== */
-	yInfo( "\t Index of Pan Joint            : %d", panAngle             );
-	yInfo( "\t Number of Microphones         : %d", numMics              );
-	yInfo( "\t Microphone Distance           : %f", micDistance          );
-	yInfo( "\t Speed of Sound                : %f", speedOfSound         );
-	yInfo( "\t Sampling Rate                 : %d", samplingRate         );
-	yInfo( "\t Number of Frames Samples      : %d", numFrameSamples      );
-	yInfo( "\t Number of Frequency Bands     : %d", numBands             );
-	yInfo( "\t Lowest Center Frequency       : %d", lowCf                );
-	yInfo( "\t Highest Center Frequency      : %d", highCf               );
-	yInfo( "\t Number of Beams Per Hemifield : %d", numBeamsPerHemifield );
-	yInfo( "\t Number of Front Field Beams   : %d", numBeams             );
+	yInfo("\n\t               [ROBOT SPECIFIC]               "                                                   );
+	yInfo(  "\t ============================================ "                                                   );
+	yInfo(  "\t Index of Pan Joint            : %d", panAngle                            );
+	yInfo(  "\t Number of Microphones         : %d", numMics                             );
+	yInfo(  "\t Microphone Distance           : %f", micDistance                         );
+	yInfo("\n\t                  [SAMPLING]                  "                                                      );
+	yInfo(  "\t ============================================ "                                                   );
+	yInfo(  "\t Speed of Sound                : %f", speedOfSound                        );
+	yInfo(  "\t Sampling Rate                 : %d", samplingRate                        );
+	yInfo(  "\t Number of Frames Samples      : %d", numFrameSamples                     );
+	yInfo("\n\t                 [PROCESSING]                 "                                                     );
+	yInfo(  "\t ============================================ "                                                   );
+	yInfo(  "\t Number of Frequency Bands     : %d", numBands                            );
+	yInfo(  "\t Lowest Center Frequency       : %d", lowCf                               );
+	yInfo(  "\t Highest Center Frequency      : %d", highCf                              );
+	yInfo(  "\t Half-Wave Rectifying          : %s", halfRec   ? "ENABLED"  : "DISABLED" );
+	yInfo(  "\t Center Frequency Spacing      : %s", erbSpaced ? "ERB-Rate" : "Linear"   );
+	yInfo(  "\t Number of Beams Per Hemifield : %d", numBeamsPerHemifield                );
+	yInfo(  "\t Number of Front Field Beams   : %d", numBeams                            );
 
 	/* ===========================================================================
 	 *  Initialize the matrices used for data processing.
@@ -115,6 +127,12 @@ bool AudioPreprocessorPeriodicThread::configure(yarp::os::ResourceFinder &rf) {
 
 	BeamformedRmsPowerMatrix.resize(numBands, 1);
 	BeamformedRmsPowerMatrix.zero();
+
+	/* ===========================================================================
+	 *  Initialize the processing objects.
+	 * =========================================================================== */
+	gammatoneFilterBank = new GammatoneFilterBank(numMics, samplingRate, numFrameSamples, numBands, lowCf, highCf, halfRec, erbSpaced);
+
 
 	return true;
 }
@@ -204,7 +222,14 @@ void AudioPreprocessorPeriodicThread::run() {
 	
 	if (inRawAudioPort.getInputCount()) {
 		inputSound = inRawAudioPort.read(true);
+		inRawAudioPort.getEnvelope(timeStamp);
 		result = processing();
+	}
+
+
+	if (outGammatoneFilteredAudioPort.getOutputCount()) {
+		outGammatoneFilteredAudioPort.prepare() = GammatoneFilteredAudioMatrix;
+		outGammatoneFilteredAudioPort.write();
 	}
 
 	//if (outputPort.getOutputCount()) {
@@ -212,7 +237,6 @@ void AudioPreprocessorPeriodicThread::run() {
 	//	outputImage->resize(inputImage->width(), inputImage->height());
 	//	outputPort.write();
 	//}
-
 }
 
 
@@ -221,19 +245,20 @@ bool AudioPreprocessorPeriodicThread::processing() {
 	//-- Separate the sound into left and right channels.	
 	for (int sample = 0; sample < numFrameSamples; sample++) {
 		for (int channel = 0; channel < numMics; channel++) {
-			RawAudioMatrix[channel][sample] = inputSound->get(sample, channel);
+			RawAudioMatrix[channel][sample] = inputSound->get(sample, channel) / _norm;
 		}
 	}
 
+	/* ===========================================================================
+	 *  Apply a 4th order gammatone filter onto the
+	 *   raw audio for the specified number of bands.
+	 * =========================================================================== */
+	gammatoneFilterBank->getGammatoneFilteredAudio(
+		GammatoneFilteredAudioMatrix,  //-- Target.
+		RawAudioMatrix                 //-- Source.
+	);
+
 	
-
-
-	
-
-
-
-
-
 
 
 	return true;

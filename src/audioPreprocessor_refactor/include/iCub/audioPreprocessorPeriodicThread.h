@@ -39,6 +39,8 @@
 #include <yarp/os/PeriodicThread.h>
 #include <yarp/os/Log.h>
 
+#include <iCub/gammatoneFilterBank.h>
+
 class AudioPreprocessorPeriodicThread : public yarp::os::PeriodicThread {
 
   private:
@@ -49,6 +51,8 @@ class AudioPreprocessorPeriodicThread : public yarp::os::PeriodicThread {
 	std::string robot;          //-- Name of the robot.
 	std::string configFile;     //-- Name of the configFile where the parameter of the camera are set.
 	std::string inputPortName;  //-- Name of input port for incoming events, typically from aexGrabber.
+
+	yarp::os::Stamp timeStamp;  //-- Time stamp updated by yarp network.
 
 	/* ===========================================================================
 	 *  Yarp Ports for Sending and Receiving Data from this Periodic Thread.
@@ -71,6 +75,11 @@ class AudioPreprocessorPeriodicThread : public yarp::os::PeriodicThread {
 	yarp::sig::Matrix BeamformedAudioMatrix;
 	yarp::sig::Matrix BeamformedRmsAudioMatrix;
 	yarp::sig::Matrix BeamformedRmsPowerMatrix;
+
+	/* ===========================================================================
+	 *  Encapsulated objects to perform processing.
+	 * =========================================================================== */
+	GammatoneFilterBank* gammatoneFilterBank;
 
 	/* ===========================================================================
 	 *  Variables received from the resource finder.
