@@ -43,11 +43,78 @@ AudioPreprocessorPeriodicThread::AudioPreprocessorPeriodicThread(std::string _ro
 
 
 AudioPreprocessorPeriodicThread::~AudioPreprocessorPeriodicThread() {
-	
+
 }
 
 
 bool AudioPreprocessorPeriodicThread::configure(yarp::os::ResourceFinder &rf) {
+
+	/* ===========================================================================
+	 *  Pull variables for this module from the resource finder.
+	 * =========================================================================== */
+	yInfo( "Loading Configuration File." );
+
+	panAngle    = rf.findGroup("robotspec").check("panAngle",    yarp::os::Value(2),     "index of pan joint (int)"          ).asInt();
+	numMics     = rf.findGroup("robotspec").check("numMics",     yarp::os::Value(2),     "number of mics (int)"              ).asInt();
+	micDistance = rf.findGroup("robotspec").check("micDistance", yarp::os::Value(0.145), "distance between the mics (double)").asDouble();
+
+	speedOfSound    = rf.findGroup("sampling").check("speedOfSound",    yarp::os::Value(336.628), "speed of sound (double)"               ).asDouble();
+	samplingRate    = rf.findGroup("sampling").check("samplingRate",    yarp::os::Value(48000),   "sampling rate of mics (int)"           ).asInt();
+	numFrameSamples = rf.findGroup("sampling").check("numFrameSamples", yarp::os::Value(4096),    "number of frame samples received (int)").asInt();
+
+	numBands  = rf.findGroup("preprocessing").check("numBands",  yarp::os::Value(128),   "number of frequency bands (int)"        ).asInt();
+	lowCf     = rf.findGroup("preprocessing").check("lowCf",     yarp::os::Value(380),   "lowest center frequency (int)"          ).asInt();
+	highCf    = rf.findGroup("preprocessing").check("highCf",    yarp::os::Value(2800),  "highest center frequency (int)"         ).asInt();
+	halfRec   = rf.findGroup("preprocessing").check("halfRec",   yarp::os::Value(false), "half wave rectifying (boolean)"         ).asBool();
+	erbSpaced = rf.findGroup("preprocessing").check("erbSpaced", yarp::os::Value(true),  "ERB spaced centre frequencies (boolean)").asBool();
+	degreeRes = rf.findGroup("preprocessing").check("degreeRes", yarp::os::Value(1),     "degree resolution for a single position (int)").asInt();
+	
+	/* ===========================================================================
+	 *  Derive additional variables given the ones above.
+	 * =========================================================================== */
+	
+	//-- Take the ceiling of of (D/C)/Rate.
+	//--   ceiling = (x + y - 1) / y
+	numBeamsPerHemifield = ((micDistance * samplingRate) + speedOfSound - 1.0) / speedOfSound;
+	//numBeamsPerHemifield = int((micDistance / speedOfSound) * samplingRate) - 1; //-- For a different number of beams.
+	numBeams = 2 * numBeamsPerHemifield + 1;
+
+
+	/* =========================================================================== 
+	 *  Print the resulting variables to the console.
+	 * =========================================================================== */
+	yInfo( "\t Index of Pan Joint            : %d", panAngle             );
+	yInfo( "\t Number of Microphones         : %d", numMics              );
+	yInfo( "\t Microphone Distance           : %f", micDistance          );
+	yInfo( "\t Speed of Sound                : %f", speedOfSound         );
+	yInfo( "\t Sampling Rate                 : %d", samplingRate         );
+	yInfo( "\t Number of Frames Samples      : %d", numFrameSamples      );
+	yInfo( "\t Number of Frequency Bands     : %d", numBands             );
+	yInfo( "\t Lowest Center Frequency       : %d", lowCf                );
+	yInfo( "\t Highest Center Frequency      : %d", highCf               );
+	yInfo( "\t Number of Beams Per Hemifield : %d", numBeamsPerHemifield );
+	yInfo( "\t Number of Front Field Beams   : %d", numBeams             );
+
+	/* ===========================================================================
+	 *  Initialize the matrices used for data processing.
+	 * =========================================================================== */
+	RawAudioMatrix.resize(numMics, numFrameSamples);
+	RawAudioMatrix.zero();
+
+	GammatoneFilteredAudioMatrix.resize(numMics * numBands, numFrameSamples);
+	GammatoneFilteredAudioMatrix.zero();
+
+	GammatoneFilteredPowerMatrix.resize(numBands, numMics);
+	GammatoneFilteredPowerMatrix.zero();
+
+	BeamformedAudioMatrix.resize(numBeams * numBands, numFrameSamples);
+	BeamformedAudioMatrix.zero();
+
+	BeamformedRmsAudioMatrix.resize(numBands, numBeams);
+	BeamformedRmsAudioMatrix.zero();
+
+	BeamformedRmsPowerMatrix.resize(numBands, 1);
+	BeamformedRmsPowerMatrix.zero();
 
 	return true;
 }
@@ -55,15 +122,38 @@ bool AudioPreprocessorPeriodicThread::configure(yarp::os::ResourceFinder &rf) {
 
 bool AudioPreprocessorPeriodicThread::threadInit() {
 
-	//-- Opening the port for direct input.
-	if (!inputPort.open(getName("/image:i").c_str())) {
-		yError("Unable to open port to receive input.");
-		return false;  //-- Unable to open. Let RFModule know so that it won't run.
+	/* ===========================================================================
+	 *  Initialize all ports. If any fail to open, return false to 
+	 *   let RFModule know initialization was unsuccessful.
+	 * =========================================================================== */
+	if (!inRawAudioPort.open(getName("/rawAudio:i").c_str())) {
+		yError("Unable to open port for receiving raw audio from head.");
+		return false;
 	}
 
-	if (!outputPort.open(getName("/img:o").c_str())) {
-		yError("Unable to open port to send unmasked events.");
-		return false;  //-- Unable to open. Let RFModule know so that it won't run.
+	if (!outGammatoneFilteredAudioPort.open(getName("/gammatoneFilteredAudio:o").c_str())) {
+		yError("Unable to open port for sending the output of the gammatone filter bank.");
+		return false;
+	}
+
+	if (!outGammatoneFilteredPowerPort.open(getName("/gammatoneFilteredPower:o").c_str())) {
+		yError("Unable to open port for sending the power of bands of the gammatone filter bank.");
+		return false;
+	}
+
+	if (!outBeamformedAudioPort.open(getName("/beamformedAudio:o").c_str())) {
+		yError("Unable to open port for sending the beamformed audio.");
+		return false;
+	}
+
+	if (!outBeamformedRmsAudioPort.open(getName("/beamformedRmsAudio:o").c_str())) {
+		yError("Unable to open port for sending the root mean square of beamformed audio.");
+		return false;
+	}
+
+	if (!outBeamformedRmsPowerPort.open(getName("/beamformedRmsPowerPort:o").c_str())) {
+		yError("Unable to open port for sending the power of bands of the root mean square of beamformed audio.");
+		return false;
 	}
 
 	yInfo("Initialization of the processing thread correctly ended.");
@@ -75,12 +165,21 @@ bool AudioPreprocessorPeriodicThread::threadInit() {
 void AudioPreprocessorPeriodicThread::threadRelease() {
 
 	//-- Stop all threads.
-	inputPort.interrupt();
-	outputPort.interrupt();
+	inRawAudioPort.interrupt();
+	outGammatoneFilteredAudioPort.interrupt();
+	outGammatoneFilteredPowerPort.interrupt();
+	outBeamformedAudioPort.interrupt();
+	outBeamformedRmsAudioPort.interrupt();
+	outBeamformedRmsPowerPort.interrupt();
 
 	//-- Close the threads.
-	inputPort.close();
-	outputPort.close();
+	inRawAudioPort.close();
+	outGammatoneFilteredAudioPort.close();
+	outGammatoneFilteredPowerPort.close();
+	outBeamformedAudioPort.close();
+	outBeamformedRmsAudioPort.close();
+	outBeamformedRmsPowerPort.close();
+
 }
 
 
@@ -103,22 +202,40 @@ void AudioPreprocessorPeriodicThread::setInputPortName(std::string InpPort) {
 
 void AudioPreprocessorPeriodicThread::run() {    
 	
-	if (inputPort.getInputCount()) {
-		inputImage = inputPort.read(true);   //-- Blocking reading for synchr with the input
+	if (inRawAudioPort.getInputCount()) {
+		inputSound = inRawAudioPort.read(true);
 		result = processing();
 	}
 
-	if (outputPort.getOutputCount()) {
-		*outputImage = outputPort.prepare();
-		outputImage->resize(inputImage->width(), inputImage->height());
-		outputPort.write();
-	}
+	//if (outputPort.getOutputCount()) {
+	//	*outputImage = outputPort.prepare();
+	//	outputImage->resize(inputImage->width(), inputImage->height());
+	//	outputPort.write();
+	//}
 
 }
 
 
-bool AudioPreprocessorPeriodicThread::processing(){
-	// here goes the processing...
+bool AudioPreprocessorPeriodicThread::processing() {
+	
+	//-- Separate the sound into left and right channels.	
+	for (int sample = 0; sample < numFrameSamples; sample++) {
+		for (int channel = 0; channel < numMics; channel++) {
+			RawAudioMatrix[channel][sample] = inputSound->get(sample, channel);
+		}
+	}
+
+	
+
+
+	
+
+
+
+
+
+
+
 	return true;
 }
 

@@ -29,26 +29,24 @@ bool AudioPreprocessorModule::configure(yarp::os::ResourceFinder &rf) {
 
 	/* ===========================================================================
 	 *  Get the module name which will form the stem of all module port names.
-	 *  Next set the module name before getting any other parameters, 
-	 *  specifically the port names which are dependent on the module name.
+	 *   Next set the module name before getting any other parameters, 
+	 *   specifically the port names which are dependent on the module name.
 	 * =========================================================================== */
-	moduleName = rf.check("name", yarp::os::Value("/tutorial"), "module name (string)").asString();
+	moduleName = rf.check("name", yarp::os::Value("/audioPreprocessor"), "module name (string)").asString();
 	setName(moduleName.c_str());
-
 
 	/* ===========================================================================
 	 *  Get the robot name which will form the stem of the robot ports names
-	 *  and append the specific part and device required.
+	 *   and append the specific part and device required.
 	 * =========================================================================== */
 	robotName = rf.check("robot", yarp::os::Value("icub"), "Robot name (string)").asString();
 	robotPortName = "/" + robotName + "/head";
-
 	inputPortName = rf.check("inputPortName", yarp::os::Value(":i"), "Input port name (string)").asString();
 	
-	
 	/* ===========================================================================
-	 *  Attach a port of the same name as the module (prefixed with a /) to the module
-	 *  so that messages received from the port are redirected to the respond method.
+	 *  Attach a port of the same name as the module (prefixed with a /) 
+	 *   to the module so that messages received from the port are 
+	 *   redirected to the respond method.
 	 * =========================================================================== */
 	handlerPortName  = "";
 	handlerPortName += getName();
@@ -68,7 +66,6 @@ bool AudioPreprocessorModule::configure(yarp::os::ResourceFinder &rf) {
 		configFile.clear();
 	}
 
-
 	/* =========================================================================== 
 	 *  Create the thread and pass pointers to the module parameters.
 	 * =========================================================================== */
@@ -80,12 +77,10 @@ bool AudioPreprocessorModule::configure(yarp::os::ResourceFinder &rf) {
 		return false;
 	}
 	
-
 	/* ===========================================================================
 	 *  Now start the thread to do the work. 
 	 * =========================================================================== */
 	periodicThread->start();
-
 
 	//-- Let the RFModule know everything went 
 	//-- well so that it will then run the module.
