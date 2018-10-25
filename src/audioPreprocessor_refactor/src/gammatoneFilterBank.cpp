@@ -65,27 +65,23 @@ void GammatoneFilterBank::getGammatoneFilteredAudio(yarp::sig::Matrix& FilterBan
 	int mic, band, sample;
 
 	//--
-	//-- TODO: OpenMP here.
+	//-- TODO: Uncomment when ready to multi-thread.
 	//--
 	//-- Ensure this is include above.
 	//-- #include <omp.h>
 	//--
 	//-- Number of threads should be specified in ini.
 	//--
-	//-- Potentially add an additional version of this function
-	//--  that is strictly serial.
-	//--
 	//-- Ensure this is called at some point. 
 	//--  omp_set_num_threads(t);
 	//--
-	//# pragma omp parallel	  	\
-  	//shared (filterBank, RawAudio, numMics, numBands, numFrameSamples)	 \
-  	//private (mic, band, sample)
+	/*
+	# pragma omp parallel	  	\
+  	 shared (filterBank, RawAudio, numMics, numBands, numFrameSamples)	 \
+  	 private (mic, band, sample)
+	*/
 	for (mic = 0; mic < numMics; mic++) {
 	
-		//-- 
-		//-- TODO: Uncomment.
-		//--
 		//# pragma omp for schedule(guided)
 		for (band = 0; band < numBands; band++) {
 			
@@ -170,9 +166,8 @@ void GammatoneFilterBank::getGammatoneFilteredAudio(yarp::sig::Matrix& FilterBan
 
 void GammatoneFilterBank::getGammatoneFilteredPower(yarp::sig::Matrix& BankPower, const yarp::sig::Matrix& FilterBank) {
 
-	//-- Ensure space is allocated for this. Clear it to zeros.
+	//-- Ensure space is allocated for the powermap.
 	BankPower.resize(numMics, numBands);
-	BankPower.zero();
 
 	for (int mic = 0; mic < numMics; mic++) {
 
@@ -185,13 +180,16 @@ void GammatoneFilterBank::getGammatoneFilteredPower(yarp::sig::Matrix& BankPower
 			//-- Reduce computation by storing this once.
 			const int itrband  = band + (mic * numBands);
 
+			//-- Set the current band to 0 before beginning.
+			double bandSum = 0.0;
+
 			//-- Sum the squares of the provided filter bank.
 			for (int sample = 0; sample < numFrameSamples; sample++) {
-				BankPower[mic][band] += pow(FilterBank[itrband][sample], 2.0);
+				bandSum += pow(FilterBank[itrband][sample], 2.0);
 			}
 
 			//-- Take the root of the mean.
-			BankPower[mic][band] = sqrt( BankPower[mic][band] / (double) numFrameSamples );
+			BankPower[mic][band] = sqrt( bandSum / (double) numFrameSamples );
 		}
 	}
 }
@@ -201,7 +199,7 @@ void GammatoneFilterBank::makeErbCFs() {
 
 	//-- Make sure space is allocated for the 
 	//-- center frequency table.
-	cfs.resize(numBands, 0.0);
+	cfs.resize(numBands);
 
 	//-- Calculates the lower bound in ERB space.
 	double lowERB = HzToErbRate(lowCf);
@@ -224,7 +222,7 @@ void GammatoneFilterBank::makeLinearCFs() {
 	
 	//-- Make sure space is allocated for the 
 	//-- center frequency table.
-	cfs.resize(numBands, 0.0);
+	cfs.resize(numBands);
 
 	//-- Calculates the incrementing amount.
 	double linspace_step = (highCf - lowCf) / (numBands - 1.0);

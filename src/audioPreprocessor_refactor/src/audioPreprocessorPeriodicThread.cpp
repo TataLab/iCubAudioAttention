@@ -87,18 +87,18 @@ bool AudioPreprocessorPeriodicThread::configure(yarp::os::ResourceFinder &rf) {
 	/* =========================================================================== 
 	 *  Print the resulting variables to the console.
 	 * =========================================================================== */
-	yInfo("\n\t               [ROBOT SPECIFIC]               "                                                   );
-	yInfo(  "\t ============================================ "                                                   );
+	yInfo("\n\t               [ROBOT SPECIFIC]               "                           );
+	yInfo(  "\t ============================================ "                           );
 	yInfo(  "\t Index of Pan Joint            : %d", panAngle                            );
 	yInfo(  "\t Number of Microphones         : %d", numMics                             );
 	yInfo(  "\t Microphone Distance           : %f", micDistance                         );
-	yInfo("\n\t                  [SAMPLING]                  "                                                      );
-	yInfo(  "\t ============================================ "                                                   );
+	yInfo("\n\t                  [SAMPLING]                  "                           );
+	yInfo(  "\t ============================================ "                           );
 	yInfo(  "\t Speed of Sound                : %f", speedOfSound                        );
 	yInfo(  "\t Sampling Rate                 : %d", samplingRate                        );
 	yInfo(  "\t Number of Frames Samples      : %d", numFrameSamples                     );
-	yInfo("\n\t                 [PROCESSING]                 "                                                     );
-	yInfo(  "\t ============================================ "                                                   );
+	yInfo("\n\t                 [PROCESSING]                 "                           );
+	yInfo(  "\t ============================================ "                           );
 	yInfo(  "\t Number of Frequency Bands     : %d", numBands                            );
 	yInfo(  "\t Lowest Center Frequency       : %d", lowCf                               );
 	yInfo(  "\t Highest Center Frequency      : %d", highCf                              );
@@ -116,16 +116,16 @@ bool AudioPreprocessorPeriodicThread::configure(yarp::os::ResourceFinder &rf) {
 	GammatoneFilteredAudioMatrix.resize(numMics * numBands, numFrameSamples);
 	GammatoneFilteredAudioMatrix.zero();
 
-	GammatoneFilteredPowerMatrix.resize(numBands, numMics);
+	GammatoneFilteredPowerMatrix.resize(numMics, numBands);
 	GammatoneFilteredPowerMatrix.zero();
 
-	BeamformedAudioMatrix.resize(numBeams * numBands, numFrameSamples);
+	BeamformedAudioMatrix.resize(numBands * numBeams, numFrameSamples);
 	BeamformedAudioMatrix.zero();
 
 	BeamformedRmsAudioMatrix.resize(numBands, numBeams);
 	BeamformedRmsAudioMatrix.zero();
 
-	BeamformedRmsPowerMatrix.resize(numBands, 2);
+	BeamformedRmsPowerMatrix.resize(2, numBands);
 	BeamformedRmsPowerMatrix.zero();
 
 	/* ===========================================================================
@@ -144,6 +144,26 @@ bool AudioPreprocessorPeriodicThread::threadInit() {
 	 *  Initialize all ports. If any fail to open, return false to 
 	 *   let RFModule know initialization was unsuccessful.
 	 * =========================================================================== */
+
+	/* 
+	bool successful_thread_init = true;
+	successful_thread_init &= inRawAudioPort.open                ( getName( "/rawAudio:i"               ).c_str() );
+	successful_thread_init &= outGammatoneFilteredAudioPort.open ( getName( "/gammatoneFilteredAudio:o" ).c_str() );
+	successful_thread_init &= outGammatoneFilteredPowerPort.open ( getName( "/gammatoneFilteredPower:o" ).c_str() );
+	successful_thread_init &= outBeamformedAudioPort.open        ( getName( "/beamformedAudio:o"        ).c_str() );
+	successful_thread_init &= outBeamformedRmsAudioPort.open     ( getName( "/beamformedRmsAudio:o"     ).c_str() );
+	successful_thread_init &= outBeamformedRmsPowerPort.open     ( getName( "/beamformedRmsPowerPort:o" ).c_str() );
+
+	if (successful_thread_init) {
+		yInfo("Initialization of the processing thread correctly ended.");
+	} else {
+		yError("Unable to open port for audioPreprocessor.");
+	}
+
+	return successful_thread_init;
+	*/
+
+
 	if (!inRawAudioPort.open(getName("/rawAudio:i").c_str())) {
 		yError("Unable to open port for receiving raw audio from head.");
 		return false;
@@ -237,6 +257,21 @@ void AudioPreprocessorPeriodicThread::run() {
 			outGammatoneFilteredPowerPort.write();
 		}
 
+		if (outBeamformedAudioPort.getOutputCount()) {
+			outBeamformedAudioPort.prepare() = BeamformedAudioMatrix;
+			outBeamformedAudioPort.write();
+		}
+
+		if (outBeamformedRmsAudioPort.getOutputCount()) {
+			outBeamformedRmsAudioPort.prepare() = BeamformedRmsAudioMatrix;
+			outBeamformedRmsAudioPort.write();
+		}
+
+		if (outBeamformedRmsPowerPort.getOutputCount()) {
+			outBeamformedRmsPowerPort.prepare() = BeamformedRmsPowerMatrix;
+			outBeamformedRmsPowerPort.write();
+		}
+
 	}
 
 
@@ -258,26 +293,49 @@ bool AudioPreprocessorPeriodicThread::processing() {
 		}
 	}
 
+
 	/* ===========================================================================
 	 *  Apply a 4th order gammatone filter onto the
 	 *   raw audio for the specified number of bands.
 	 * =========================================================================== */
-	gammatoneFilterBank->getGammatoneFilteredAudio(
-		GammatoneFilteredAudioMatrix,  //-- Target.
-		RawAudioMatrix                 //-- Source.
+	gammatoneFilterBank->getGammatoneFilteredAudio (
+		/* Target = */ GammatoneFilteredAudioMatrix,
+		/* Source = */ RawAudioMatrix
 	);
 
-	//-- OPTIONAL: If a port is connected, compute 
-	//--  the RMS power of the filter banks beams.
+
+	/* ===========================================================================
+	 *  OPTIONAL: If a port is connected, compute the 
+	 *   RMS power of the filter banks bands.
+	 * =========================================================================== */
 	if (outGammatoneFilteredPowerPort.getOutputCount()) {
-		gammatoneFilterBank->getGammatoneFilteredPower(
-			GammatoneFilteredPowerMatrix,
-			GammatoneFilteredAudioMatrix
+		gammatoneFilterBank->getGammatoneFilteredPower (
+			/* Target = */ GammatoneFilteredPowerMatrix,
+			/* Source = */ GammatoneFilteredAudioMatrix
 		);
 	}
 
-
 	
+	/* ===========================================================================
+	 *  Apply a delay and sum beamformer with RMS applied 
+	 *   across the frame onto the filtered left and right channel. 
+	 * =========================================================================== */
+	interauralCues->getBeamformedRmsAudio (
+		/* Target = */ BeamformedRmsAudioMatrix,
+		/* Source = */ GammatoneFilteredAudioMatrix
+	);
+
+
+	/* ===========================================================================
+	 *  OPTIONAL: If a port is connected, compute the 
+	 *   RMS power of the beamformed bands.
+	 * =========================================================================== */
+	if (outBeamformedRmsPowerPort.getOutputCount()) {
+		interauralCues->getBeamformedRmsPower (
+			/* Target = */ BeamformedRmsPowerMatrix,
+			/* Source = */ BeamformedRmsAudioMatrix
+		);
+	}
 
 
 	return true;
