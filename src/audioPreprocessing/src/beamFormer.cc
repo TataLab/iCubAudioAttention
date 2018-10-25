@@ -25,7 +25,8 @@
 #include "beamFormer.h"
 
 
-inline int myMod(int a, int b) { return  a >= 0 ? a % b : (a % b) + b; }
+//inline int myMod(int a, int b) { return  a >= 0 ? a % b : (a % b) + b; }
+inline int myMod(int a, int b) { return  a >= 0 ? a % b : ((a % b) + b) % b; }
 
 
 BeamFormer::BeamFormer(int numBands, int numSamples, int numMics, int numBeamsHemifield) :
