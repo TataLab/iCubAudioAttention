@@ -149,10 +149,13 @@ void BeamFormer::audioMultiThreadingLoop(int band) {
 void BeamFormer::reducedAudioMultiThreadingLoop(int band) {
 
 	for (int beam = 0; beam < nBeams; beam++) {
+
+		double beamSum = 0.0;
 		for (int frame = 0; frame < frameSamples; frame++) {
-			reducedBeamFormedAudioVector[band][beam] += pow((inputSignal[band][frame] + inputSignal[band + nBands][myMod(frame + (nBeamsPerHemi - beam), frameSamples)]), 2);
+			beamSum += pow((inputSignal[band][frame] + inputSignal[band + nBands][myMod(frame + (nBeamsPerHemi - beam), frameSamples)]), 2);
 		}
-		reducedBeamFormedAudioVector[band][beam] = sqrt(reducedBeamFormedAudioVector[band][beam] / ((double)frameSamples));
+		
+		reducedBeamFormedAudioVector[band][beam] = sqrt(beamSum / ((double)frameSamples));
 	}
 }
 
