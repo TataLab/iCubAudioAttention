@@ -101,7 +101,7 @@ public:
 
     virtual bool read(yarp::os::ConnectionReader& connection);
 
-    virtual bool write(yarp::os::ConnectionWriter& connection);
+    virtual bool write(yarp::os::ConnectionWriter& connection) const override;
 
     unsigned char *getRawData() const;
 
