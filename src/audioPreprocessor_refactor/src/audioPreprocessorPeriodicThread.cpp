@@ -67,7 +67,7 @@ bool AudioPreprocessorPeriodicThread::configure(yarp::os::ResourceFinder &rf) {
 	highCf    = rf.findGroup("processing").check("highCf",    yarp::os::Value(2800),  "highest center frequency (int)"               ).asInt();
 	halfRec   = rf.findGroup("processing").check("halfRec",   yarp::os::Value(false), "half wave rectifying (boolean)"               ).asBool();
 	erbSpaced = rf.findGroup("processing").check("erbSpaced", yarp::os::Value(true),  "ERB spaced centre frequencies (boolean)"      ).asBool();
-	degreeRes = rf.findGroup("processing").check("degreeRes", yarp::os::Value(1),     "degree resolution for a single position (int)").asInt();
+	angleRes  = rf.findGroup("processing").check("angleRes", yarp::os::Value(1),      "degree resolution for a single position (int)").asInt();
 	
 	/* ===========================================================================
 	 *  Derive additional variables given the ones above.
@@ -82,6 +82,11 @@ bool AudioPreprocessorPeriodicThread::configure(yarp::os::ResourceFinder &rf) {
 	
 	//-- Find the total number of beams for the front field.
 	numBeams = 2 * numBeamsPerHemifield + 1;
+
+	//-- Using the provided angle resolution, find number of 
+	//-- front and full field angle positions we will use.
+	numFrontFieldAngles = _baseAngles * angleRes + 1;
+	numFullFieldAngles  = _baseAngles * angleRes * 2;
 
 
 	/* =========================================================================== 
@@ -106,6 +111,9 @@ bool AudioPreprocessorPeriodicThread::configure(yarp::os::ResourceFinder &rf) {
 	yInfo(  "\t Center Frequency Spacing      : %s", erbSpaced ? "ERB-Rate" : "Linear"   );
 	yInfo(  "\t Number of Beams Per Hemifield : %d", numBeamsPerHemifield                );
 	yInfo(  "\t Number of Front Field Beams   : %d", numBeams                            );
+	yInfo(  "\t Number of Front Field Angles  : %d", numFrontFieldAngles                 );
+	yInfo(  "\t Number of Full Field Angles   : %d", numFullFieldAngles                  );
+
 
 	/* ===========================================================================
 	 *  Initialize the matrices used for data processing.
@@ -128,11 +136,15 @@ bool AudioPreprocessorPeriodicThread::configure(yarp::os::ResourceFinder &rf) {
 	BeamformedRmsPowerMatrix.resize(2, numBands);
 	BeamformedRmsPowerMatrix.zero();
 
+	AllocentricAudioMatrix.resize(numBands, numFullFieldAngles);
+	AllocentricAudioMatrix.zero();
+
+
 	/* ===========================================================================
 	 *  Initialize the processing objects.
 	 * =========================================================================== */
 	gammatoneFilterBank = new GammatoneFilterBank(numMics, samplingRate, numFrameSamples, numBands, lowCf, highCf, halfRec, erbSpaced);
-	interauralCues      = new InterauralCues(numMics, micDistance, speedOfSound, samplingRate, numFrameSamples, numBands, numBeamsPerHemifield);
+	interauralCues      = new InterauralCues(numMics, micDistance, speedOfSound, samplingRate, numFrameSamples, numBands, numBeamsPerHemifield, angleRes);
 
 	return true;
 }
@@ -144,25 +156,6 @@ bool AudioPreprocessorPeriodicThread::threadInit() {
 	 *  Initialize all ports. If any fail to open, return false to 
 	 *   let RFModule know initialization was unsuccessful.
 	 * =========================================================================== */
-
-	/* 
-	bool successful_thread_init = true;
-	successful_thread_init &= inRawAudioPort.open                ( getName( "/rawAudio:i"               ).c_str() );
-	successful_thread_init &= outGammatoneFilteredAudioPort.open ( getName( "/gammatoneFilteredAudio:o" ).c_str() );
-	successful_thread_init &= outGammatoneFilteredPowerPort.open ( getName( "/gammatoneFilteredPower:o" ).c_str() );
-	successful_thread_init &= outBeamformedAudioPort.open        ( getName( "/beamformedAudio:o"        ).c_str() );
-	successful_thread_init &= outBeamformedRmsAudioPort.open     ( getName( "/beamformedRmsAudio:o"     ).c_str() );
-	successful_thread_init &= outBeamformedRmsPowerPort.open     ( getName( "/beamformedRmsPowerPort:o" ).c_str() );
-
-	if (successful_thread_init) {
-		yInfo("Initialization of the processing thread correctly ended.");
-	} else {
-		yError("Unable to open port for audioPreprocessor.");
-	}
-
-	return successful_thread_init;
-	*/
-
 
 	if (!inRawAudioPort.open(getName("/rawAudio:i").c_str())) {
 		yError("Unable to open port for receiving raw audio from head.");
@@ -189,8 +182,13 @@ bool AudioPreprocessorPeriodicThread::threadInit() {
 		return false;
 	}
 
-	if (!outBeamformedRmsPowerPort.open(getName("/beamformedRmsPowerPort:o").c_str())) {
+	if (!outBeamformedRmsPowerPort.open(getName("/beamformedRmsPower:o").c_str())) {
 		yError("Unable to open port for sending the power of bands of the root mean square of beamformed audio.");
+		return false;
+	}
+
+	if (!outAllocentricAudioPort.open(getName("/allocentricAudio:o").c_str())) {
+		yError("Unable to open port for sending the allocentric audio map.");
 		return false;
 	}
 
@@ -209,6 +207,7 @@ void AudioPreprocessorPeriodicThread::threadRelease() {
 	outBeamformedAudioPort.interrupt();
 	outBeamformedRmsAudioPort.interrupt();
 	outBeamformedRmsPowerPort.interrupt();
+	outAllocentricAudioPort.interrupt();
 
 	//-- Close the threads.
 	inRawAudioPort.close();
@@ -217,7 +216,7 @@ void AudioPreprocessorPeriodicThread::threadRelease() {
 	outBeamformedAudioPort.close();
 	outBeamformedRmsAudioPort.close();
 	outBeamformedRmsPowerPort.close();
-
+	outAllocentricAudioPort.close();
 }
 
 
@@ -272,15 +271,11 @@ void AudioPreprocessorPeriodicThread::run() {
 			outBeamformedRmsPowerPort.write();
 		}
 
+		if (outAllocentricAudioPort.getOutputCount()) {
+			outAllocentricAudioPort.prepare() = AllocentricAudioMatrix;
+			outAllocentricAudioPort.write();
+		}
 	}
-
-
-
-	//if (outputPort.getOutputCount()) {
-	//	*outputImage = outputPort.prepare();
-	//	outputImage->resize(inputImage->width(), inputImage->height());
-	//	outputPort.write();
-	//}
 }
 
 
@@ -336,6 +331,16 @@ bool AudioPreprocessorPeriodicThread::processing() {
 			/* Source = */ BeamformedRmsAudioMatrix
 		);
 	}
+
+
+	/* ===========================================================================
+	 *  Interpolate over, and mirror the front field auditory scene
+	 * =========================================================================== */
+	interauralCues->getAngleNormalAudioMap (
+		/* Target = */ AllocentricAudioMatrix,
+		/* Source = */ BeamformedRmsAudioMatrix,
+		/* Offset = */ 0 //TODO: Get head offset in preprocessor.
+	);
 
 
 	return true;

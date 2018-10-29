@@ -45,9 +45,27 @@ class InterauralCues {
 	int    numFrameSamples;
 	int    numBands;
 	int    numBeamsPerHemifield;
+	int    angleResolution;
 
-    const double _pi = 2 * acos(0.0); //-- High precision pi.
+	/* ===========================================================================
+	 *  Derive variables from constructor.
+	 * =========================================================================== */
     double numBeams;
+	int    numFrontFieldAngles;
+	int    numFullFieldAngles;
+
+	/* ===========================================================================
+	 *  Constant variables.
+	 * =========================================================================== */
+    const double _pi         = 2 * acos(0.0); //-- High precision pi.
+	const int    _baseAngles = 180;           //-- Base number of degree positions. 
+
+	/* ===========================================================================
+	 *  Yarp Matrices and Vectors used for encapsulated computation and look up tables.
+	 * =========================================================================== */
+	yarp::sig::Vector frontFieldBeamAngles;
+	yarp::sig::Vector frontFieldRealAngles;
+	yarp::sig::Matrix frontFieldAudioMap;
 	
 
   public:
@@ -62,8 +80,9 @@ class InterauralCues {
 	 * @param frames       : Number of Samples in incoming Frame.
      * @param bands        : Number of Frequency Bands.
      * @param beamsPerHemi : Number of Beams in a single hemi field.
+	 * @param resolution   : Number of positions one degree should cover.
 	 * =========================================================================== */
-	InterauralCues(int mics, int dist, int c, int samples, int frames, int bands, int beamsPerHemi);
+	InterauralCues(int mics, int dist, int c, int samples, int frames, int bands, int beamsPerHemi, int resolution);
 
 
 	/* ===========================================================================
@@ -96,17 +115,59 @@ class InterauralCues {
 	/* ===========================================================================
 	 *  Find the total RMS power for each band across beams.
 	 * 
-	 * @param BankPower  : Target for the power of each band (number of bands).
-     * @param FilterBank : The filtered audio (number of mics * number of bands, number of samples).
+	 * @param BeamPower          : Target for the power of each band (number of bands).
+     * @param BeamformedRmsAudio : The RMS of beamformed audio (number of bands, number of beams).
 	 * =========================================================================== */
-    void getBeamformedRmsPower(yarp::sig::Matrix& BeamPower, const yarp::sig::Matrix& );
+    void getBeamformedRmsPower(yarp::sig::Matrix& BeamPower, const yarp::sig::Matrix& BeamformedRmsAudio);
+
+
+	/* ===========================================================================
+	 *  Find the full field audio map where column spacing is linear by angle.
+	 * 
+	 * @param AngleNormalAudio   : Target for the angle normal audio map (number of bands, total angle positions).
+     * @param BeamformedRmsAudio : The RMS of beamformed audio (number of bands, number of beams).
+	 * @param Offset             : The Offset of the head realative to zero.
+	 * =========================================================================== */
+	void getAngleNormalAudioMap(yarp::sig::Matrix& AngleNormalAudio, const yarp::sig::Matrix& BeamformedRmsAudio, const int Offset);
+
+
 
 
   private:
 	
-	;
+	/* ===========================================================================
+	 *  Given the Rms of the front field beams, for each frequency band 
+	 *   interpolate over the beams to produce degree normal audio map
+	 *   of the front field auditory scene.
+	 * 
+	 * @param FrontFieldAudio    : Target for angle normal audio map (number of bands, number of angle positions).
+	 * @param BeamformedRmsAudio : The RMS of beamformed audio (number of bands, number of beams).
+	 * =========================================================================== */
+	void interpolateFrontFieldBeamsRms(yarp::sig::Matrix& FrontFieldAudio, const yarp::sig::Matrix& BeamformedRmsAudio);
 
 
+	/* ===========================================================================
+	 *  Given a front field auditory map, mirror it onto the back field.
+	 *   the map will be offsetted by the provided int.
+	 * 
+	 * @param FullFieldAudio  : Target for full field (360 degree) audio map (number of bands, total angle positions).
+	 * @param FrontFieldAudio : The angle normal audio map of the front field auditory scene (number of bands, number of angle positions).
+	 * @param Offset          : The number of samples the auditory environment should be offset by. (-1 = offset right, 0 = no offset, 1 = offset left).
+	 * =========================================================================== */
+	void mirrorFrontField(yarp::sig::Matrix& FullFieldAudio, const yarp::sig::Matrix& FrontFieldAudio, const int Offset);
+
+
+	/* ===========================================================================
+	 *  Fills the vector frontFieldBeamAngles with the left to right 
+	 *   angles (in radians), each beam is pointed.
+	 * =========================================================================== */
+	void setFrontFieldBeamAngles();
+
+
+	/* ===========================================================================
+	 *  Fills the vector frontFieldRealAngles with full front field angles (in radians).
+	 * =========================================================================== */
+    void setFrontFieldRealAngles();
 };
 
 #endif //_INTERAURAL_CUES_H_

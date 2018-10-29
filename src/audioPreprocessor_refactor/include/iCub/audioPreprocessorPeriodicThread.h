@@ -64,6 +64,7 @@ class AudioPreprocessorPeriodicThread : public yarp::os::PeriodicThread {
 	yarp::os::BufferedPort< yarp::sig::Matrix > outBeamformedAudioPort;
 	yarp::os::BufferedPort< yarp::sig::Matrix > outBeamformedRmsAudioPort;
 	yarp::os::BufferedPort< yarp::sig::Matrix > outBeamformedRmsPowerPort;
+	yarp::os::BufferedPort< yarp::sig::Matrix > outAllocentricAudioPort;
 
 	/* ===========================================================================
 	 *  Yarp Matrices used for Modules Computation. 
@@ -76,6 +77,7 @@ class AudioPreprocessorPeriodicThread : public yarp::os::PeriodicThread {
 	yarp::sig::Matrix BeamformedAudioMatrix;
 	yarp::sig::Matrix BeamformedRmsAudioMatrix;
 	yarp::sig::Matrix BeamformedRmsPowerMatrix;
+	yarp::sig::Matrix AllocentricAudioMatrix;
 
 	/* ===========================================================================
 	 *  Encapsulated objects to perform processing.
@@ -99,19 +101,22 @@ class AudioPreprocessorPeriodicThread : public yarp::os::PeriodicThread {
 	int    highCf;
 	bool   halfRec;
 	bool   erbSpaced;
-	int    degreeRes;
+	int    angleRes;
 
 	/* ===========================================================================
 	 *  Derive variables from resource finders variables.
 	 * =========================================================================== */
 	int numBeamsPerHemifield;
 	int numBeams;
+    int numFrontFieldAngles;
+    int numFullFieldAngles;
 
 	/* ===========================================================================
 	 *  Constant variables.
 	 * =========================================================================== */
-	const double _norm = pow(2,15);     //-- Used to convert received int to double.
-	const double _pi   = 2 * acos(0.0); //-- High precision pi.
+	const double _norm       = pow(2,15);     //-- Used to convert received int to double.
+	const double _pi         = 2 * acos(0.0); //-- High precision pi.
+	const int    _baseAngles = 180;           //-- Base number of angles in front field.
 
 
   public:
