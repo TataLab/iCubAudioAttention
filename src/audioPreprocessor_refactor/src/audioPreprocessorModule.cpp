@@ -118,7 +118,7 @@ bool AudioPreprocessorModule::respond(const yarp::os::Bottle& command, yarp::os:
 		reply.addString("quitting");
 		return false;
 	} else if (command.get(0).asString() == "help") {
-		yInfo(helpMessage.c_str());
+		yInfo("%s", helpMessage.c_str());
 		reply.addString("ok");
 	}
 	
