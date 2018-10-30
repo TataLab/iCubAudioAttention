@@ -92,27 +92,27 @@ bool AudioPreprocessorPeriodicThread::configure(yarp::os::ResourceFinder &rf) {
 	/* =========================================================================== 
 	 *  Print the resulting variables to the console.
 	 * =========================================================================== */
-	yInfo("\n\t               [ROBOT SPECIFIC]               "                             );
-	yInfo(  "\t ============================================ "                             );
-	yInfo(  "\t Index of Pan Joint            : %d",   panAngle                            );
-	yInfo(  "\t Number of Microphones         : %d",   numMics                             );
-	yInfo(  "\t Microphone Distance           : %f",   micDistance                         );
-	yInfo("\n\t                  [SAMPLING]                  "                             );
-	yInfo(  "\t ============================================ "                             );
-	yInfo(  "\t Speed of Sound                : %f",   speedOfSound                        );
-	yInfo(  "\t Sampling Rate                 : %d",   samplingRate                        );
-	yInfo(  "\t Number of Frames Samples      : %d",   numFrameSamples                     );
-	yInfo("\n\t                 [PROCESSING]                 "                             );
-	yInfo(  "\t ============================================ "                             );
-	yInfo(  "\t Number of Frequency Bands     : %d",   numBands                            );
-	yInfo(  "\t Lowest Center Frequency       : %d",   lowCf                               );
-	yInfo(  "\t Highest Center Frequency      : %d",   highCf                              );
-	yInfo(  "\t Half-Wave Rectifying          : %s",   halfRec   ? "ENABLED"  : "DISABLED" );
-	yInfo(  "\t Center Frequency Spacing      : %s",   erbSpaced ? "ERB-Rate" : "Linear"   );
-	yInfo(  "\t Number of Beams Per Hemifield : %d",   numBeamsPerHemifield                );
-	yInfo(  "\t Number of Front Field Beams   : %d",   numBeams                            );
-	yInfo(  "\t Number of Front Field Angles  : %d",   numFrontFieldAngles                 );
-	yInfo(  "\t Number of Full Field Angles   : %d\n", numFullFieldAngles                  );
+	yInfo("\n\t               [ROBOT SPECIFIC]               "                              );
+	yInfo(  "\t ============================================ "                              );
+	yInfo(  "\t  Index of Pan Joint            : %d",   panAngle                            );
+	yInfo(  "\t  Number of Microphones         : %d",   numMics                             );
+	yInfo(  "\t  Microphone Distance           : %f",   micDistance                         );
+	yInfo("\n\t                  [SAMPLING]                  "                              );
+	yInfo(  "\t ============================================ "                              );
+	yInfo(  "\t  Speed of Sound                : %f",   speedOfSound                        );
+	yInfo(  "\t  Sampling Rate                 : %d",   samplingRate                        );
+	yInfo(  "\t  Number of Frames Samples      : %d",   numFrameSamples                     );
+	yInfo("\n\t                 [PROCESSING]                 "                              );
+	yInfo(  "\t ============================================ "                              );
+	yInfo(  "\t  Number of Frequency Bands     : %d",   numBands                            );
+	yInfo(  "\t  Lowest Center Frequency       : %d",   lowCf                               );
+	yInfo(  "\t  Highest Center Frequency      : %d",   highCf                              );
+	yInfo(  "\t  Half-Wave Rectifying          : %s",   halfRec   ? "ENABLED"  : "DISABLED" );
+	yInfo(  "\t  Center Frequency Spacing      : %s",   erbSpaced ? "ERB-Rate" :  "Linear"  );
+	yInfo(  "\t  Number of Beams Per Hemifield : %d",   numBeamsPerHemifield                );
+	yInfo(  "\t  Number of Front Field Beams   : %d",   numBeams                            );
+	yInfo(  "\t  Number of Front Field Angles  : %d",   numFrontFieldAngles                 );
+	yInfo(  "\t  Number of Full Field Angles   : %d\n", numFullFieldAngles                  );
 
 
 	/* ===========================================================================

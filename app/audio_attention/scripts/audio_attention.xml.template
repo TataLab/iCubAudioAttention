@@ -1,0 +1,36 @@
+<application>
+
+    <name> Audio Attention </name>
+
+    <!-->  
+    MODULES.    
+    <!-->
+    <module>
+        <name> audioCaptureInterface </name>
+        <parameters> --usePrerecorded ~/Documents/pyAudio/freq_780_lag_00.wav </parameters>
+        <node> icub </node>
+    </module>
+
+    <module>
+        <name> audioPreprocessor_refactor </name>
+        <parameters></parameters>
+        <node> icub </node>
+    </module>
+
+
+    <!-->  
+    CONNECTIONS.
+    <!-->
+    <connection>
+        <from> /audioGrabber/sender          </from>
+        <to>   /audioPreprocessor/rawAudio:i </to>
+        <protocol> tcp </protocol>
+    </connection>
+
+    <connection>
+        <from> /audioGrabber/sender </from>
+        <to>   /yarphear            </to>
+        <protocol> tcp </protocol>
+    </connection>
+
+</application>
