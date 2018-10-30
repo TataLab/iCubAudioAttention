@@ -28,7 +28,7 @@
 inline int    myMod(int a, int b) { return a >= 0 ? a % b : ((a % b) + b) % b; }
 inline double lininterp(double x, double x1, double y1, double x2, double y2) { return y1 + ((y2 - y1) * (x - x1)) / (x2 - x1); }
 
-InterauralCues::InterauralCues(int mics, int dist, int c, int samples, int frames, int bands, int beamsPerHemi, int resolution) : 
+InterauralCues::InterauralCues(int mics, double dist, double c, int samples, int frames, int bands, int beamsPerHemi, int resolution) : 
 	numMics(mics), 
     micDistance(dist),
     speedOfSound(c),
@@ -188,7 +188,7 @@ void InterauralCues::interpolateFrontFieldBeamsRms(yarp::sig::Matrix& FrontField
 
     //-- Iterate through and linearly interpolate the non-linear beams across linearly spaced angles.
     int band, beam, realAngle;
-
+    
     #ifdef WITH_OMP
     #pragma omp parallel \
      shared  (FrontFieldAudio, BeamformedRmsAudio, frontFieldRealAngles, frontFieldBeamAngles, numBands, numFrontFieldAngles) \
@@ -201,16 +201,16 @@ void InterauralCues::interpolateFrontFieldBeamsRms(yarp::sig::Matrix& FrontField
         beam = 0;
         for (realAngle = 0; realAngle < numFrontFieldAngles; realAngle++) {
 
-            if (frontFieldRealAngles[realAngle] > frontFieldBeamAngles[beam+1]) {
-                beam += 1;
+            if (frontFieldRealAngles[realAngle] > frontFieldBeamAngles[beam+1] && beam+2 < numBeams) {
+                   beam += 1;
             }
 
             FrontFieldAudio[band][realAngle] = lininterp (
                 /* x  = */ frontFieldRealAngles[realAngle],
                 /* x1 = */ frontFieldBeamAngles[beam],
                 /* y1 = */ BeamformedRmsAudio[band][beam],
-                /* x2 = */ frontFieldBeamAngles[beam],
-                /* y2 = */ BeamformedRmsAudio[band][beam]
+                /* x2 = */ frontFieldBeamAngles[beam+1],
+                /* y2 = */ BeamformedRmsAudio[band][beam+1]
             );
         }
     }
@@ -264,7 +264,8 @@ void InterauralCues::setFrontFieldBeamAngles() {
     
     //-- Generate the angles at which each beam is pointed.
 	for (int beam = 0; beam < numBeams; beam++) {
-		frontFieldBeamAngles[beam] = (1.0 / micDistance) * (-numBeamsPerHemifield + beam) * (speedOfSound / samplingRate);
+
+		frontFieldBeamAngles[beam] = (1.0 / micDistance) * (-numBeamsPerHemifield + beam) * (speedOfSound / (double) samplingRate);
 		frontFieldBeamAngles[beam] = (frontFieldBeamAngles[beam] <= -1.0) ? -1.0 : frontFieldBeamAngles[beam];  //-- Make sure we are in 
 		frontFieldBeamAngles[beam] = (frontFieldBeamAngles[beam] >=  1.0) ?  1.0 : frontFieldBeamAngles[beam];  //-- range to avoid NAN.
 		frontFieldBeamAngles[beam] = asin(frontFieldBeamAngles[beam]);

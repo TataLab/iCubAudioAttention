@@ -92,9 +92,6 @@ bool AudioPreprocessorPeriodicThread::configure(yarp::os::ResourceFinder &rf) {
 	numFrontFieldAngles = _baseAngles * angleRes + 1;
 	numFullFieldAngles  = _baseAngles * angleRes * 2;
 
-	#ifdef WITH_OMP
-	omp_set_num_threads(numOmpThreads);
-	#endif
 
 	/* =========================================================================== 
 	 *  Print the resulting variables to the console.
@@ -121,6 +118,7 @@ bool AudioPreprocessorPeriodicThread::configure(yarp::os::ResourceFinder &rf) {
 	yInfo(  "\t Number of Front Field Angles     : %d",   numFrontFieldAngles                 );
 	yInfo(  "\t Number of Full Field Angles      : %d",   numFullFieldAngles                  );
 	#ifdef WITH_OMP
+	omp_set_num_threads(numOmpThreads);
 	yInfo(  "\t Number of OpenMP Threads SET/MAX : %d/%d", numOmpThreads, omp_get_max_threads());
 	#endif
 	yInfo( " " );

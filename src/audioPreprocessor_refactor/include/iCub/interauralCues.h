@@ -43,7 +43,7 @@ class InterauralCues {
 	 *  Variables set in the constructor. Should not be changed for life of object.
 	 * =========================================================================== */
     int    numMics;
-	int    micDistance;
+	double micDistance;
 	double speedOfSound;
 	int    samplingRate;
 	int    numFrameSamples;
@@ -54,9 +54,9 @@ class InterauralCues {
 	/* ===========================================================================
 	 *  Derive variables from constructor.
 	 * =========================================================================== */
-    double numBeams;
-	int    numFrontFieldAngles;
-	int    numFullFieldAngles;
+    int numBeams;
+	int numFrontFieldAngles;
+	int numFullFieldAngles;
 
 	/* ===========================================================================
 	 *  Constant variables.
@@ -86,7 +86,7 @@ class InterauralCues {
      * @param beamsPerHemi : Number of Beams in a single hemi field.
 	 * @param resolution   : Number of positions one degree should cover.
 	 * =========================================================================== */
-	InterauralCues(int mics, int dist, int c, int samples, int frames, int bands, int beamsPerHemi, int resolution);
+	InterauralCues(int mics, double dist, double c, int samples, int frames, int bands, int beamsPerHemi, int resolution);
 
 
 	/* ===========================================================================
