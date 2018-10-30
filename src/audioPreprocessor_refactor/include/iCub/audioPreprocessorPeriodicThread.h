@@ -55,6 +55,9 @@ class AudioPreprocessorPeriodicThread : public yarp::os::PeriodicThread {
 
 	yarp::os::Stamp timeStamp;  //-- Time stamp updated by yarp network.
 
+	double startTime;           //-- Used for keeping time and reporting temporal
+    double stopTime;            //-- events to the user via command line.
+
 	/* ===========================================================================
 	 *  Yarp Ports for Sending and Receiving Data from this Periodic Thread.
 	 * =========================================================================== */

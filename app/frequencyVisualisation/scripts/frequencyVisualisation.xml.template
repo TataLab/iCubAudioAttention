@@ -1,330 +1,186 @@
 <application>
 
-  <name> Frequency Visualisation </name>
+<name> Frequency Visualisation All </name>
 
-  <dependancy> /iCubAudioAttention/AudioMapEgo:o </dependancy>
+    <!-->  
 
-  <module>
-      <name> frequencyVisualisation </name>
-      <parameters> --name /audioMapVisualiser </parameters>
-      <node> icub </node>
-  </module>
+        Visualisation Tool & Windows. 
 
-  <module>
-      <name> frequencyVisualisation </name>
-      <parameters> --name /lowResolutionAudioVisualiser </parameters>
-      <node> icub </node>
-  </module>
+    <!-->
+    <module>
+        <name> frequencyVisualisation </name>
+        <parameters> --name /tempVisualiser </parameters>
+        <node> dio </node>
+    </module>
 
-  <module>
-      <name> frequencyVisualisation </name>
-      <parameters> --name /gammatoneVisualiser </parameters>
-      <node> icub </node>
-  </module>
-
-  <module>
-      <name> frequencyVisualisation </name>
-      <parameters> --name /gammatonePowerVisualiser </parameters>
-      <node> icub </node>
-  </module>
-
-  <module>
-      <name> frequencyVisualisation </name>
-      <parameters> --name /reducedBeamFormedVisualiser </parameters>
-      <node> icub </node>
-  </module>
-
-  <module>
-      <name> frequencyVisualisation </name>
-      <parameters> --name /beamFormedPowerVisualiser </parameters>
-      <node> icub </node>
-  </module>
-
-  <module>
-      <name> frequencyVisualisation </name>
-      <parameters> --name /bayesianVisualiser --gain 100 </parameters>
-      <node> icub </node>
-  </module>
-
-  <module>
-      <name> frequencyVisualisation </name>
-      <parameters> --name /probabilityVisualiser --gain 100 </parameters>
-      <node> icub </node>
-  </module>
-
-  <module>
-      <name> frequencyVisualisation </name>
-      <parameters> --name /bayesPowerVisualiser --gain 100 </parameters>
-      <node> icub </node>
-  </module>
-
-  <module>
-      <name> frequencyVisualisation </name>
-      <parameters> --name /bayesPowerAngleVisualiser --gain 100 </parameters>
-      <node> icub </node>
-  </module>
-
-  <module>
-      <name> frequencyVisualisation </name>
-      <parameters> --name /probabilityPowerVisualiser --gain 100 </parameters>
-      <node> icub </node>
-  </module>
-
-  <module>
-      <name> frequencyVisualisation </name>
-      <parameters> --name /bayesProbabilityPowerVisualiser --gain 100 </parameters>
-      <node> icub </node>
-  </module>
-
-  <module>
-      <name> frequencyVisualisation </name>
-      <parameters> --name /bayesProbabilityPowerAngleVisualiser --gain 100 </parameters>
-      <node> icub </node>
-  </module>
+    <module>
+        <name> yarpview </name>
+        <parameters> --x 100 --y 100 --h 320 --w 240 --r 33 --name /tempView </parameters>
+        <node> dio </node>
+    </module>
 
 
+    <!-->  
+    Gammatone Filtered Audio.
+    <!-->
+    <module>
+        <name> frequencyVisualisation </name>
+        <parameters> --name /gammatoneFilteredAudioVisualiser </parameters>
+        <node> dio </node>
+    </module>
 
-  <module>
-      <name> yarpview </name>
-      <parameters> --x 100 --y 100 --h 320 --w 240 --r 33 --name /audioMapView </parameters>
-      <node> icub </node>
-  </module>
-
-  <module>
-      <name> yarpview </name>
-      <parameters> --x 100 --y 600 --h 320 --w 240 --r 33 --name /lowResolutionAudioView </parameters>
-      <node> icub </node>
-  </module>
-
-  <module>
-      <name> yarpview </name>
-      <parameters> --x 100 --y 350 --h 320 --w 240 --r 33 --name /gammatoneView </parameters>
-      <node> icub </node>
-  </module>
-
-  <module>
-      <name> yarpview </name>
-      <parameters> --x 100 --y 350 --h 320 --w 240 --r 33 --name /gammatonePowerView </parameters>
-      <node> icub </node>
-  </module>
+    <module>
+        <name> yarpview </name>
+        <parameters> --x 100 --y 100 --h 320 --w 240 --r 33 --name /gammatoneFilteredAudioView </parameters>
+        <node> dio </node>
+    </module>
 
 
-  <module>
-      <name> yarpview </name>
-      <parameters> --x 100 --y 850 --h 320 --w 240 --r 33 --name /reducedBeamFormedView </parameters>
-      <node>icub</node>
-  </module>
+    <!-->  
+    Gammatone Filtered Power.
+    <!-->
+    <module>
+        <name> frequencyVisualisation </name>
+        <parameters> --name /gammatoneFilteredPowerVisualiser </parameters>
+        <node> dio </node>
+    </module>
 
-  <module>
-      <name> yarpview </name>
-      <parameters> --x 100 --y 850 --h 320 --w 240 --r 33 --name /beamFormedPowerView </parameters>
-      <node>icub</node>
-  </module>
-
-  <module>
-      <name> yarpview </name>
-      <parameters> --x 100 --y 600 --h 320 --w 240 --r 33 --name /bayesianView </parameters>
-      <node> icub </node>
-  </module>
-
-  <module>
-      <name> yarpview </name>
-      <parameters> --x 100 --y 600 --h 320 --w 240 --r 33 --name /probabilityView </parameters>
-      <node> icub </node>
-  </module>
-
-  <module>
-      <name> yarpview </name>
-      <parameters> --x 100 --y 600 --h 320 --w 240 --r 33 --name /bayesPowerView </parameters>
-      <node> icub </node>
-  </module>
-
-  <module>
-      <name> yarpview </name>
-      <parameters> --x 100 --y 600 --h 320 --w 240 --r 33 --name /bayesPowerAngleView </parameters>
-      <node> icub </node>
-  </module>
-
-  <module>
-      <name> yarpview </name>
-      <parameters> --x 100 --y 600 --h 320 --w 240 --r 33 --name /probabilityPowerView </parameters>
-      <node> icub </node>
-  </module>
-
-  <module>
-      <name> yarpview </name>
-      <parameters> --x 100 --y 600 --h 320 --w 240 --r 33 --name /bayesProbabilityPowerView </parameters>
-      <node> icub </node>
-  </module>
-
-  <module>
-      <name> yarpview </name>
-      <parameters> --x 100 --y 600 --h 320 --w 240 --r 33 --name /bayesProbabilityPowerAngleView </parameters>
-      <node> icub </node>
-  </module>
-
-  
+    <module>
+        <name> yarpview </name>
+        <parameters> --x 100 --y 100 --h 320 --w 240 --r 33 --name /gammatoneFilteredPowerView </parameters>
+        <node> dio </node>
+    </module>
 
 
+    <!-->  
+    RMS of Beamformed Audio.
+    <!-->
+    <module>
+        <name> frequencyVisualisation </name>
+        <parameters> --name /beamformedRmsAudioVisualiser </parameters>
+        <node> dio </node>
+    </module>
 
-  <connection>
-      <from> /iCubAudioAttention/AudioMapEgo:o </from>
-      <to>   /audioMapVisualiser/map:i         </to>
-      <protocol> tcp </protocol>
-  </connection> 
-
-  <connection>
-      <from> /iCubAudioAttention/LowResolutionAudioMap:o </from>
-      <to>   /lowResolutionAudioVisualiser/map:i         </to>
-      <protocol> tcp </protocol>
-  </connection> 
-
-  <connection>
-      <from> /iCubAudioAttention/GammaToneFilteredAudio:o </from>
-      <to>   /gammatoneVisualiser/map:i                   </to>
-      <protocol> tcp </protocol>
-  </connection>  
-
-  <connection>
-      <from> /iCubAudioAttention/GammaTonePowerAudio:o </from>
-      <to>   /gammatonePowerVisualiser/map:i           </to>
-      <protocol> tcp </protocol>
-  </connection>
-
-  <connection>
-      <from> /iCubAudioAttention/ReducedBeamFormedAudio:o </from>
-      <to>   /reducedBeamFormedVisualiser/map:i           </to>
-      <protocol> tcp </protocol>
-  </connection>
-
-  <connection>
-      <from> /iCubAudioAttention/BeamFormedPowerAudio:o </from>
-      <to>   /beamFormedPowerVisualiser/map:i           </to>
-      <protocol> tcp </protocol>
-  </connection>
-
-  <connection>
-      <from> /iCubAudioAttention/BayesianMap:o </from>
-      <to>   /bayesianVisualiser/map:i         </to>
-      <protocol> tcp </protocol>
-  </connection> 
-
-  <connection>
-      <from> /iCubAudioAttention/ProbabilityMap:o </from>
-      <to>   /probabilityVisualiser/map:i         </to>
-      <protocol> tcp </protocol>
-  </connection> 
-
-  <connection>
-      <from> /AudioPowerMap/BayesPower:o  </from>
-      <to>   /bayesPowerVisualiser/map:i  </to>
-      <protocol> tcp </protocol>
-  </connection> 
-
-  <connection>
-      <from> /AudioPowerMap/BayesPowerAngle:o  </from>
-      <to>   /bayesPowerAngleVisualiser/map:i  </to>
-      <protocol> tcp </protocol>
-  </connection> 
-
-  <connection>
-      <from> /AudioPowerMap/ProbabilityPower:o  </from>
-      <to>   /probabilityPowerVisualiser/map:i  </to>
-      <protocol> tcp </protocol>
-  </connection> 
-  
-  <connection>
-      <from> /AudioPowerMap/BayesProbabilityPower:o  </from>
-      <to>   /bayesProbabilityPowerVisualiser/map:i  </to>
-      <protocol> tcp </protocol>
-  </connection> 
-
-  <connection>
-      <from> /AudioPowerMap/BayesProbabilityPowerAngle:o  </from>
-      <to>   /bayesProbabilityPowerAngleVisualiser/map:i  </to>
-      <protocol> tcp </protocol>
-  </connection> 
+    <module>
+        <name> yarpview </name>
+        <parameters> --x 100 --y 100 --h 320 --w 240 --r 33 --name /beamformedRmsAudioView </parameters>
+        <node> dio </node>
+    </module>
 
 
+    <!-->  
+    RMS of Beamformed Power.
+    <!-->
+    <module>
+        <name> frequencyVisualisation </name>
+        <parameters> --name /beamformedRmsPowerVisualiser </parameters>
+        <node> dio </node>
+    </module>
+
+    <module>
+        <name> yarpview </name>
+        <parameters> --x 100 --y 100 --h 320 --w 240 --r 33 --name /beamformedRmsPowerView </parameters>
+        <node> dio </node>
+    </module>
 
 
+    <!-->  
+    Allocentric Audio Map.
+    <!-->
+    <module>
+        <name> frequencyVisualisation </name>
+        <parameters> --name /allocentricAudioVisualiser </parameters>
+        <node> dio </node>
+    </module>
 
-  <connection>
-      <from> /audioMapVisualiser/img:o </from>
-      <to>   /audioMapView             </to>
-      <protocol> tcp </protocol>
-  </connection>
+    <module>
+        <name> yarpview </name>
+        <parameters> --x 100 --y 100 --h 320 --w 240 --r 33 --name /allocentricAudioView </parameters>
+        <node> dio </node>
+    </module>
 
-  <connection>
-      <from> /lowResolutionAudioVisualiser/img:o </from>
-      <to>   /lowResolutionAudioView             </to>
-      <protocol> tcp </protocol>
-  </connection>
 
-  <connection>
-      <from> /gammatoneVisualiser/img:o </from>
-      <to>   /gammatoneView             </to>
-      <protocol> tcp </protocol>
-  </connection>
+    <!-->  
 
-  <connection>
-      <from> /gammatonePowerVisualiser/img:o </from>
-      <to>   /gammatonePowerView             </to>
-      <protocol> tcp </protocol>
-  </connection>
+        Connections for Ports. 
 
-  <connection>
-      <from> /reducedBeamFormedVisualiser/img:o </from>
-      <to>   /reducedBeamFormedView             </to>
-      <protocol> tcp </protocol>
-  </connection>
+    <!-->
 
-  <connection>
-      <from> /beamFormedPowerVisualiser/img:o </from>
-      <to>   /beamFormedPowerView             </to>
-      <protocol> tcp </protocol>
-  </connection>
+    <connection>
+        <from> /...:o                 </from>
+        <to>   /tempVisualiser/map:i </to>
+        <protocol> tcp </protocol>
+    </connection> 
 
-  <connection>
-      <from> /bayesianVisualiser/img:o </from>
-      <to>   /bayesianView             </to>
-      <protocol> tcp </protocol>
-  </connection>
+    <connection>
+        <from> /tempVisualiser/img:o </from>
+        <to>   /tempView             </to>
+        <protocol> tcp </protocol>
+    </connection>
 
-  <connection>
-      <from> /probabilityVisualiser/img:o </from>
-      <to>   /probabilityView             </to>
-      <protocol> tcp </protocol>
-  </connection>
 
-  <connection>
-      <from> /bayesPowerVisualiser/img:o </from>
-      <to>   /bayesPowerView             </to>
-      <protocol> tcp </protocol>
-  </connection>
+    <connection>
+        <from> /audioPreprocessor/gammatoneFilteredAudio:o </from>
+        <to>   /gammatoneFilteredAudioVisualiser/map:i     </to>
+        <protocol> tcp </protocol>
+    </connection> 
 
-  <connection>
-      <from> /bayesPowerAngleVisualiser/img:o </from>
-      <to>   /bayesPowerAngleView             </to>
-      <protocol> tcp </protocol>
-  </connection>
+    <connection>
+        <from> /gammatoneFilteredAudioVisualiser/img:o  </from>
+        <to>   /gammatoneFilteredAudioVisualiserView    </to>
+        <protocol> tcp </protocol>
+    </connection>
 
-  <connection>
-      <from> /probabilityPowerVisualiser/img:o </from>
-      <to>   /probabilityPowerView             </to>
-      <protocol> tcp </protocol>
-  </connection>
 
-  <connection>
-      <from> /bayesProbabilityPowerVisualiser/img:o </from>
-      <to>   /bayesProbabilityPowerView             </to>
-      <protocol> tcp </protocol>
-  </connection>
+    <connection>
+        <from> /audioPreprocessor/gammatoneFilteredPower:o </from>
+        <to>   /gammatoneFilteredPowerVisualiser/map:i     </to>
+        <protocol> tcp </protocol>
+    </connection> 
 
-  <connection>
-      <from> /bayesProbabilityPowerAngleVisualiser/img:o </from>
-      <to>   /bayesProbabilityPowerAngleView             </to>
-      <protocol> tcp </protocol>
-  </connection>
+    <connection>
+        <from> /gammatoneFilteredPowerVisualiser/img:o  </from>
+        <to>   /gammatoneFilteredPowerVisualiserView    </to>
+        <protocol> tcp </protocol>
+    </connection>
+
+
+    <connection>
+        <from> /audioPreprocessor/beamformedRmsAudio:o </from>
+        <to>   /beamformedRmsAudioVisualiser/map:i     </to>
+        <protocol> tcp </protocol>
+    </connection> 
+
+    <connection>
+        <from> /beamformedRmsAudioVisualiser/img:o  </from>
+        <to>   /beamformedRmsAudioVisualiserView    </to>
+        <protocol> tcp </protocol>
+    </connection>
+
+
+    <connection>
+        <from> /audioPreprocessor/beamformedRmsPower:o </from>
+        <to>   /beamformedRmsPowerVisualiser/map:i     </to>
+        <protocol> tcp </protocol>
+    </connection> 
+
+    <connection>
+        <from> /beamformedRmsPowerVisualiser/img:o  </from>
+        <to>   /beamformedRmsPowerVisualiserView    </to>
+        <protocol> tcp </protocol>
+    </connection>
+
+
+    <connection>
+        <from> /audioPreprocessor/allocentricAudio:o </from>
+        <to>   /allocentricAudioVisualiser/map:i     </to>
+        <protocol> tcp </protocol>
+    </connection> 
+
+    <connection>
+        <from> /allocentricAudioVisualiser/img:o  </from>
+        <to>   /allocentricAudioVisualiserView    </to>
+        <protocol> tcp </protocol>
+    </connection>
 
 </application>

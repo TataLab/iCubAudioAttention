@@ -30,7 +30,8 @@
 AudioPreprocessorPeriodicThread::AudioPreprocessorPeriodicThread() : 
 	PeriodicThread(THPERIOD) {
 
-	robot = "icub";        
+	robot = "icub";
+	startTime = yarp::os::Time::now();        
 }
 
 
@@ -39,11 +40,13 @@ AudioPreprocessorPeriodicThread::AudioPreprocessorPeriodicThread(std::string _ro
 
 	robot = _robot;
 	configFile = _configFile;
+	startTime = yarp::os::Time::now();
 }
 
 
 AudioPreprocessorPeriodicThread::~AudioPreprocessorPeriodicThread() {
 	delete gammatoneFilterBank;
+	delete interauralCues;
 }
 
 
@@ -92,27 +95,27 @@ bool AudioPreprocessorPeriodicThread::configure(yarp::os::ResourceFinder &rf) {
 	/* =========================================================================== 
 	 *  Print the resulting variables to the console.
 	 * =========================================================================== */
-	yInfo("\n\t               [ROBOT SPECIFIC]               "                              );
-	yInfo(  "\t ============================================ "                              );
-	yInfo(  "\t  Index of Pan Joint            : %d",   panAngle                            );
-	yInfo(  "\t  Number of Microphones         : %d",   numMics                             );
-	yInfo(  "\t  Microphone Distance           : %f",   micDistance                         );
-	yInfo("\n\t                  [SAMPLING]                  "                              );
-	yInfo(  "\t ============================================ "                              );
-	yInfo(  "\t  Speed of Sound                : %f",   speedOfSound                        );
-	yInfo(  "\t  Sampling Rate                 : %d",   samplingRate                        );
-	yInfo(  "\t  Number of Frames Samples      : %d",   numFrameSamples                     );
-	yInfo("\n\t                 [PROCESSING]                 "                              );
-	yInfo(  "\t ============================================ "                              );
-	yInfo(  "\t  Number of Frequency Bands     : %d",   numBands                            );
-	yInfo(  "\t  Lowest Center Frequency       : %d",   lowCf                               );
-	yInfo(  "\t  Highest Center Frequency      : %d",   highCf                              );
-	yInfo(  "\t  Half-Wave Rectifying          : %s",   halfRec   ? "ENABLED"  : "DISABLED" );
-	yInfo(  "\t  Center Frequency Spacing      : %s",   erbSpaced ? "ERB-Rate" :  "Linear"  );
-	yInfo(  "\t  Number of Beams Per Hemifield : %d",   numBeamsPerHemifield                );
-	yInfo(  "\t  Number of Front Field Beams   : %d",   numBeams                            );
-	yInfo(  "\t  Number of Front Field Angles  : %d",   numFrontFieldAngles                 );
-	yInfo(  "\t  Number of Full Field Angles   : %d\n", numFullFieldAngles                  );
+	yInfo("\n\t               [ROBOT SPECIFIC]               "                             );
+	yInfo(  "\t ============================================ "                             );
+	yInfo(  "\t Index of Pan Joint            : %d",   panAngle                            );
+	yInfo(  "\t Number of Microphones         : %d",   numMics                             );
+	yInfo(  "\t Microphone Distance           : %f",   micDistance                         );
+	yInfo("\n\t                  [SAMPLING]                  "                             );
+	yInfo(  "\t ============================================ "                             );
+	yInfo(  "\t Speed of Sound                : %f",   speedOfSound                        );
+	yInfo(  "\t Sampling Rate                 : %d",   samplingRate                        );
+	yInfo(  "\t Number of Frames Samples      : %d",   numFrameSamples                     );
+	yInfo("\n\t                 [PROCESSING]                 "                             );
+	yInfo(  "\t ============================================ "                             );
+	yInfo(  "\t Number of Frequency Bands     : %d",   numBands                            );
+	yInfo(  "\t Lowest Center Frequency       : %d",   lowCf                               );
+	yInfo(  "\t Highest Center Frequency      : %d",   highCf                              );
+	yInfo(  "\t Half-Wave Rectifying          : %s",   halfRec   ? "ENABLED"  : "DISABLED" );
+	yInfo(  "\t Center Frequency Spacing      : %s",   erbSpaced ? "ERB-Rate" :  "Linear"  );
+	yInfo(  "\t Number of Beams Per Hemifield : %d",   numBeamsPerHemifield                );
+	yInfo(  "\t Number of Front Field Beams   : %d",   numBeams                            );
+	yInfo(  "\t Number of Front Field Angles  : %d",   numFrontFieldAngles                 );
+	yInfo(  "\t Number of Full Field Angles   : %d\n", numFullFieldAngles                  );
 
 
 	/* ===========================================================================
@@ -192,7 +195,10 @@ bool AudioPreprocessorPeriodicThread::threadInit() {
 		return false;
 	}
 
-	yInfo("Initialization of the processing thread correctly ended.");
+
+	stopTime = yarp::os::Time::now();
+	yInfo("Initialization of the processing thread correctly ended. Time: %f.", stopTime - startTime);
+	startTime = stopTime;
 
 	return true;
 }
@@ -240,41 +246,59 @@ void AudioPreprocessorPeriodicThread::setInputPortName(std::string InpPort) {
 void AudioPreprocessorPeriodicThread::run() {    
 	
 	if (inRawAudioPort.getInputCount()) {
+
+		stopTime = yarp::os::Time::now();
+		yInfo("Time Delay        : %f", stopTime - startTime);
+		startTime = stopTime;
 		
 		inputSound = inRawAudioPort.read(true);
 		inRawAudioPort.getEnvelope(timeStamp);
 		result = processing();
 
+		stopTime = yarp::os::Time::now();
+		yInfo("Time Processing   : %f", stopTime - startTime);
+		startTime = stopTime;
+
 		//-- TODO: This may be better moved into processing loop.
 		if (outGammatoneFilteredAudioPort.getOutputCount()) {
 			outGammatoneFilteredAudioPort.prepare() = GammatoneFilteredAudioMatrix;
+			outGammatoneFilteredAudioPort.setEnvelope(timeStamp);
 			outGammatoneFilteredAudioPort.write();
 		}
 
 		if (outGammatoneFilteredPowerPort.getOutputCount()) {
 			outGammatoneFilteredPowerPort.prepare() = GammatoneFilteredPowerMatrix;
+			outGammatoneFilteredPowerPort.setEnvelope(timeStamp);
 			outGammatoneFilteredPowerPort.write();
 		}
 
 		if (outBeamformedAudioPort.getOutputCount()) {
 			outBeamformedAudioPort.prepare() = BeamformedAudioMatrix;
+			outBeamformedAudioPort.setEnvelope(timeStamp);
 			outBeamformedAudioPort.write();
 		}
 
 		if (outBeamformedRmsAudioPort.getOutputCount()) {
 			outBeamformedRmsAudioPort.prepare() = BeamformedRmsAudioMatrix;
+			outBeamformedRmsAudioPort.setEnvelope(timeStamp);
 			outBeamformedRmsAudioPort.write();
 		}
 
 		if (outBeamformedRmsPowerPort.getOutputCount()) {
 			outBeamformedRmsPowerPort.prepare() = BeamformedRmsPowerMatrix;
+			outBeamformedRmsPowerPort.setEnvelope(timeStamp);
 			outBeamformedRmsPowerPort.write();
 		}
 
 		if (outAllocentricAudioPort.getOutputCount()) {
 			outAllocentricAudioPort.prepare() = AllocentricAudioMatrix;
+			outAllocentricAudioPort.setEnvelope(timeStamp);
 			outAllocentricAudioPort.write();
 		}
+		
+		stopTime = yarp::os::Time::now();
+		yInfo("Time Transmission : %f\n", stopTime - startTime);
+		startTime = stopTime;
 	}
 }
 
