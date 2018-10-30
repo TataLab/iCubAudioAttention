@@ -39,6 +39,10 @@
 #include <yarp/os/PeriodicThread.h>
 #include <yarp/os/Log.h>
 
+#ifdef WITH_OMP
+#include <omp.h>
+#endif
+
 #include <iCub/gammatoneFilterBank.h>
 #include <iCub/interauralCues.h>
 
@@ -105,6 +109,7 @@ class AudioPreprocessorPeriodicThread : public yarp::os::PeriodicThread {
 	bool   halfRec;
 	bool   erbSpaced;
 	int    angleRes;
+	int    numOmpThreads;
 
 	/* ===========================================================================
 	 *  Derive variables from resource finders variables.

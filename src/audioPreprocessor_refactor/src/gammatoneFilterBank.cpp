@@ -64,31 +64,16 @@ void GammatoneFilterBank::getGammatoneFilteredAudio(yarp::sig::Matrix& FilterBan
 	//-- Loop variabes.
 	int mic, band, sample;
 
-	//--
-	//-- TODO: Uncomment when ready to multi-thread.
-	//--
-	//-- Ensure this is include above.
-	//-- #include <omp.h>
-	//--
-	//-- Number of threads should be specified in ini.
-	//--
-	//-- Ensure this is called at some point. 
-	//--  omp_set_num_threads(t);
-	//--
-	/*
+	#ifdef WITH_OMP
 	# pragma omp parallel	  	\
-  	 shared (filterBank, RawAudio, numMics, numBands, numFrameSamples)	 \
+  	 shared (FilterBank, RawAudio, numMics, numBands, numFrameSamples)	 \
   	 private (mic, band, sample)
-	*/
-	for (mic = 0; mic < numMics; mic++) {
 	
-		//# pragma omp for schedule(guided)
-		for (band = 0; band < numBands; band++) {
+	# pragma omp for schedule(guided)
+	#endif
+	for (band = 0; band < numBands; band++) {
+		for (mic = 0; mic < numMics; mic++) {
 			
-			//--
-			//-- TODO: Move this block into a function once validated.
-			//--
-
 			/* ===================================================================
 			 *  Store a constant iterating position,
 			 *   to avoid unnecessary computation.
@@ -170,10 +155,6 @@ void GammatoneFilterBank::getGammatoneFilteredPower(yarp::sig::Matrix& BankPower
 	BankPower.resize(numMics, numBands);
 
 	for (int mic = 0; mic < numMics; mic++) {
-
-		//--
-		//-- TODO: parallelize this loop if needed. 
-		//--
 
 		for (int band = 0; band < numBands; band++) {
 

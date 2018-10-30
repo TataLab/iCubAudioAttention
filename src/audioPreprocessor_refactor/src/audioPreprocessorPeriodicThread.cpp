@@ -65,13 +65,14 @@ bool AudioPreprocessorPeriodicThread::configure(yarp::os::ResourceFinder &rf) {
 	samplingRate    = rf.findGroup("sampling").check("samplingRate",    yarp::os::Value(48000),   "sampling rate of mics (int)"           ).asInt();
 	numFrameSamples = rf.findGroup("sampling").check("numFrameSamples", yarp::os::Value(4096),    "number of frame samples received (int)").asInt();
 
-	numBands  = rf.findGroup("processing").check("numBands",  yarp::os::Value(128),   "number of frequency bands (int)"              ).asInt();
-	lowCf     = rf.findGroup("processing").check("lowCf",     yarp::os::Value(380),   "lowest center frequency (int)"                ).asInt();
-	highCf    = rf.findGroup("processing").check("highCf",    yarp::os::Value(2800),  "highest center frequency (int)"               ).asInt();
-	halfRec   = rf.findGroup("processing").check("halfRec",   yarp::os::Value(false), "half wave rectifying (boolean)"               ).asBool();
-	erbSpaced = rf.findGroup("processing").check("erbSpaced", yarp::os::Value(true),  "ERB spaced centre frequencies (boolean)"      ).asBool();
-	angleRes  = rf.findGroup("processing").check("angleRes", yarp::os::Value(1),      "degree resolution for a single position (int)").asInt();
-	
+	numBands      = rf.findGroup("processing").check("numBands",      yarp::os::Value(128),   "number of frequency bands (int)"              ).asInt();
+	lowCf         = rf.findGroup("processing").check("lowCf",         yarp::os::Value(380),   "lowest center frequency (int)"                ).asInt();
+	highCf        = rf.findGroup("processing").check("highCf",        yarp::os::Value(2800),  "highest center frequency (int)"               ).asInt();
+	halfRec       = rf.findGroup("processing").check("halfRec",       yarp::os::Value(false), "half wave rectifying (boolean)"               ).asBool();
+	erbSpaced     = rf.findGroup("processing").check("erbSpaced",     yarp::os::Value(true),  "ERB spaced centre frequencies (boolean)"      ).asBool();
+	angleRes      = rf.findGroup("processing").check("angleRes",      yarp::os::Value(1),     "degree resolution for a single position (int)").asInt();
+	numOmpThreads = rf.findGroup("processing").check("numOmpThreads", yarp::os::Value(4),     "if enabled, the number of omp threads (int)"  ).asInt();
+
 	/* ===========================================================================
 	 *  Derive additional variables given the ones above.
 	 * =========================================================================== */
@@ -91,31 +92,38 @@ bool AudioPreprocessorPeriodicThread::configure(yarp::os::ResourceFinder &rf) {
 	numFrontFieldAngles = _baseAngles * angleRes + 1;
 	numFullFieldAngles  = _baseAngles * angleRes * 2;
 
+	#ifdef WITH_OMP
+	omp_set_num_threads(numOmpThreads);
+	#endif
 
 	/* =========================================================================== 
 	 *  Print the resulting variables to the console.
 	 * =========================================================================== */
-	yInfo("\n\t               [ROBOT SPECIFIC]               "                             );
-	yInfo(  "\t ============================================ "                             );
-	yInfo(  "\t Index of Pan Joint            : %d",   panAngle                            );
-	yInfo(  "\t Number of Microphones         : %d",   numMics                             );
-	yInfo(  "\t Microphone Distance           : %f",   micDistance                         );
-	yInfo("\n\t                  [SAMPLING]                  "                             );
-	yInfo(  "\t ============================================ "                             );
-	yInfo(  "\t Speed of Sound                : %f",   speedOfSound                        );
-	yInfo(  "\t Sampling Rate                 : %d",   samplingRate                        );
-	yInfo(  "\t Number of Frames Samples      : %d",   numFrameSamples                     );
-	yInfo("\n\t                 [PROCESSING]                 "                             );
-	yInfo(  "\t ============================================ "                             );
-	yInfo(  "\t Number of Frequency Bands     : %d",   numBands                            );
-	yInfo(  "\t Lowest Center Frequency       : %d",   lowCf                               );
-	yInfo(  "\t Highest Center Frequency      : %d",   highCf                              );
-	yInfo(  "\t Half-Wave Rectifying          : %s",   halfRec   ? "ENABLED"  : "DISABLED" );
-	yInfo(  "\t Center Frequency Spacing      : %s",   erbSpaced ? "ERB-Rate" :  "Linear"  );
-	yInfo(  "\t Number of Beams Per Hemifield : %d",   numBeamsPerHemifield                );
-	yInfo(  "\t Number of Front Field Beams   : %d",   numBeams                            );
-	yInfo(  "\t Number of Front Field Angles  : %d",   numFrontFieldAngles                 );
-	yInfo(  "\t Number of Full Field Angles   : %d\n", numFullFieldAngles                  );
+	yInfo("\n\t               [ROBOT SPECIFIC]               "                                );
+	yInfo(  "\t ============================================ "                                );
+	yInfo(  "\t Index of Pan Joint               : %d",   panAngle                            );
+	yInfo(  "\t Number of Microphones            : %d",   numMics                             );
+	yInfo(  "\t Microphone Distance              : %f",   micDistance                         );
+	yInfo("\n\t                  [SAMPLING]                  "                                );
+	yInfo(  "\t ============================================ "                                );
+	yInfo(  "\t Speed of Sound                   : %f",   speedOfSound                        );
+	yInfo(  "\t Sampling Rate                    : %d",   samplingRate                        );
+	yInfo(  "\t Number of Frames Samples         : %d",   numFrameSamples                     );
+	yInfo("\n\t                 [PROCESSING]                 "                                );
+	yInfo(  "\t ============================================ "                                );
+	yInfo(  "\t Number of Frequency Bands        : %d",   numBands                            );
+	yInfo(  "\t Lowest Center Frequency          : %d",   lowCf                               );
+	yInfo(  "\t Highest Center Frequency         : %d",   highCf                              );
+	yInfo(  "\t Half-Wave Rectifying             : %s",   halfRec   ? "ENABLED"  : "DISABLED" );
+	yInfo(  "\t Center Frequency Spacing         : %s",   erbSpaced ? "ERB-Rate" :  "Linear"  );
+	yInfo(  "\t Number of Beams Per Hemifield    : %d",   numBeamsPerHemifield                );
+	yInfo(  "\t Number of Front Field Beams      : %d",   numBeams                            );
+	yInfo(  "\t Number of Front Field Angles     : %d",   numFrontFieldAngles                 );
+	yInfo(  "\t Number of Full Field Angles      : %d",   numFullFieldAngles                  );
+	#ifdef WITH_OMP
+	yInfo(  "\t Number of OpenMP Threads SET/MAX : %d/%d", numOmpThreads, omp_get_max_threads());
+	#endif
+	yInfo( " " );
 
 
 	/* ===========================================================================
@@ -248,6 +256,7 @@ void AudioPreprocessorPeriodicThread::run() {
 	if (inRawAudioPort.getInputCount()) {
 
 		stopTime = yarp::os::Time::now();
+		yInfo( " " );
 		yInfo("Time Delay        : %f", stopTime - startTime);
 		startTime = stopTime;
 		

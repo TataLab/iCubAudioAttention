@@ -31,6 +31,10 @@
 #include <yarp/sig/all.h>
 #include <yarp/os/all.h>
 
+#ifdef WITH_OMP
+#include <omp.h>
+#endif
+
 class InterauralCues { 
 
   private:
