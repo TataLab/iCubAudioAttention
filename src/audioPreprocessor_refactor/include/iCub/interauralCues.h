@@ -119,7 +119,7 @@ class InterauralCues {
 	/* ===========================================================================
 	 *  Find the total RMS power for each band across beams.
 	 * 
-	 * @param BeamPower          : Target for the power of each band (number of bands).
+	 * @param BeamPower          : Target for the power of each band (number of bands, 2).
      * @param BeamformedRmsAudio : The RMS of beamformed audio (number of bands, number of beams).
 	 * =========================================================================== */
     void getBeamformedRmsPower(yarp::sig::Matrix& BeamPower, const yarp::sig::Matrix& BeamformedRmsAudio);

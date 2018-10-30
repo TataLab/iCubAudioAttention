@@ -61,6 +61,11 @@ class AudioPreprocessorPeriodicThread : public yarp::os::PeriodicThread {
 
 	double startTime;           //-- Used for keeping time and reporting temporal
     double stopTime;            //-- events to the user via command line.
+	
+	double timeDelay;           //-- Hold on to and store 
+	double timeReading;	        //-- time events for
+	double timeProcessing;      //-- clean display at
+	double timeTransmission;    //-- the end of a loop.
 
 	/* ===========================================================================
 	 *  Yarp Ports for Sending and Receiving Data from this Periodic Thread.

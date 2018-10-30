@@ -94,7 +94,7 @@ class GammatoneFilterBank {
     /* ===========================================================================
 	 *  Find the total RMS power for each band across samples.
 	 * 
-	 * @param BankPower  : Target for the power of each band (number of mics, number of bands).
+	 * @param BankPower  : Target for the power of each band (number of bands, number of mics).
      * @param FilterBank : The filtered audio (number of mics * number of bands, number of samples).
 	 * =========================================================================== */
     void getGammatoneFilteredPower(yarp::sig::Matrix& BankPower, const yarp::sig::Matrix& FilterBank);

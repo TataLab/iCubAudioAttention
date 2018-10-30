@@ -253,20 +253,26 @@ void AudioPreprocessorPeriodicThread::run() {
 	
 	if (inRawAudioPort.getInputCount()) {
 
-		stopTime = yarp::os::Time::now();
-		yInfo( " " );
-		yInfo("Time Delay        : %f", stopTime - startTime);
+		stopTime  = yarp::os::Time::now();
+		timeDelay = stopTime - startTime;
 		startTime = stopTime;
 		
+		//-- Get Input.
 		inputSound = inRawAudioPort.read(true);
 		inRawAudioPort.getEnvelope(timeStamp);
+
+		stopTime    = yarp::os::Time::now();
+		timeReading = stopTime - startTime;
+		startTime   = stopTime;
+
+		//-- Main Loop.
 		result = processing();
 
-		stopTime = yarp::os::Time::now();
-		yInfo("Time Processing   : %f", stopTime - startTime);
-		startTime = stopTime;
+		stopTime       = yarp::os::Time::now();
+		timeProcessing = stopTime - startTime;
+		startTime      = stopTime;
 
-		//-- TODO: This may be better moved into processing loop.
+		//-- Write to Active Ports.
 		if (outGammatoneFilteredAudioPort.getOutputCount()) {
 			outGammatoneFilteredAudioPort.prepare() = GammatoneFilteredAudioMatrix;
 			outGammatoneFilteredAudioPort.setEnvelope(timeStamp);
@@ -304,8 +310,9 @@ void AudioPreprocessorPeriodicThread::run() {
 		}
 		
 		stopTime = yarp::os::Time::now();
-		yInfo("Time Transmission : %f\n", stopTime - startTime);
+		timeTransmission = stopTime - startTime;
 		startTime = stopTime;
+	
 	}
 }
 

@@ -152,7 +152,7 @@ void GammatoneFilterBank::getGammatoneFilteredAudio(yarp::sig::Matrix& FilterBan
 void GammatoneFilterBank::getGammatoneFilteredPower(yarp::sig::Matrix& BankPower, const yarp::sig::Matrix& FilterBank) {
 
 	//-- Ensure space is allocated for the powermap.
-	BankPower.resize(numMics, numBands);
+	BankPower.resize(numBands, numMics);
 
 	for (int mic = 0; mic < numMics; mic++) {
 
@@ -170,7 +170,7 @@ void GammatoneFilterBank::getGammatoneFilteredPower(yarp::sig::Matrix& BankPower
 			}
 
 			//-- Take the root of the mean.
-			BankPower[mic][band] = sqrt( bandSum / (double) numFrameSamples );
+			BankPower[band][mic] = sqrt( bandSum / (double) numFrameSamples );
 		}
 	}
 }

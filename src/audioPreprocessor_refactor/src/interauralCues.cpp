@@ -138,7 +138,7 @@ void InterauralCues::getBeamformedRmsAudio(yarp::sig::Matrix& BeamformedAudio, c
 void InterauralCues::getBeamformedRmsPower(yarp::sig::Matrix& BeamPower, const yarp::sig::Matrix& BeamformedAudio) {
 
     //-- Ensure space is allocated for the powermap.
-	BeamPower.resize(2, numBands);
+	BeamPower.resize(numBands, 2);
 
     //-- Iterate through and take the rms of all beams for a particular band.
 	for (int band = 0; band < numBands; band++) {
@@ -152,7 +152,7 @@ void InterauralCues::getBeamformedRmsPower(yarp::sig::Matrix& BeamPower, const y
 		}
 
 		//-- Take the root of the mean.
-		BeamPower[0][band] = BeamPower[1][band] = sqrt( bandSum / (double) numBeams );
+		BeamPower[band][0] = BeamPower[band][1] = sqrt( bandSum / (double) numBeams );
 	}
 }
 
