@@ -32,9 +32,8 @@ bool AudioBayesianMapModule::configure(yarp::os::ResourceFinder &rf) {
 	 *  Next set the module name before getting any other parameters, 
 	 *  specifically the port names which are dependent on the module name.
 	 * =========================================================================== */
-	moduleName = rf.check("name", yarp::os::Value("/tutorial"), "module name (string)").asString();
+	moduleName = rf.check("name", yarp::os::Value("/AudioBayesianMap"), "module name (string)").asString();
 	setName(moduleName.c_str());
-
 
 	/* ===========================================================================
 	 *  Get the robot name which will form the stem of the robot ports names
@@ -42,9 +41,7 @@ bool AudioBayesianMapModule::configure(yarp::os::ResourceFinder &rf) {
 	 * =========================================================================== */
 	robotName = rf.check("robot", yarp::os::Value("icub"), "Robot name (string)").asString();
 	robotPortName = "/" + robotName + "/head";
-
 	inputPortName = rf.check("inputPortName", yarp::os::Value(":i"), "Input port name (string)").asString();
-	
 	
 	/* ===========================================================================
 	 *  Attach a port of the same name as the module (prefixed with a /) to the module
@@ -68,7 +65,6 @@ bool AudioBayesianMapModule::configure(yarp::os::ResourceFinder &rf) {
 		configFile.clear();
 	}
 
-
 	/* =========================================================================== 
 	 *  Create the thread and pass pointers to the module parameters.
 	 * =========================================================================== */
@@ -80,12 +76,10 @@ bool AudioBayesianMapModule::configure(yarp::os::ResourceFinder &rf) {
 		return false;
 	}
 	
-
 	/* ===========================================================================
 	 *  Now start the thread to do the work. 
 	 * =========================================================================== */
 	periodicThread->start();
-
 
 	//-- Let the RFModule know everything went 
 	//-- well so that it will then run the module.

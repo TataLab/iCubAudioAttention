@@ -32,8 +32,8 @@ int main(int argc, char * argv[]) {
 
 	yarp::os::ResourceFinder rf;
 	rf.setVerbose(true);
-	rf.setDefaultConfigFile("Audio_Attention.ini"); // overridden by --from parameter
-	rf.setDefaultContext("Audio_Attention");        // overridden by --context parameter
+	rf.setDefaultConfigFile("Audio_Attention_Config.ini"); // overridden by --from parameter
+	rf.setDefaultContext("audio_attention");        // overridden by --context parameter
 	rf.configure(argc, argv);  
  
 	module.runModule(rf);

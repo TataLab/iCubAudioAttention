@@ -168,7 +168,6 @@ bool AudioPreprocessorPeriodicThread::configure(yarp::os::ResourceFinder &rf) {
 	#endif
 	yInfo( " " );
 
-
 	return true;
 }
 
