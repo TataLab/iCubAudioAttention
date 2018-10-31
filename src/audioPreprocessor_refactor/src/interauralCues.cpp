@@ -67,7 +67,6 @@ void InterauralCues::getBeamformedAudio(yarp::sig::Matrix& BeamformedAudio, cons
     # pragma omp parallel \
       shared  (BeamformedAudio, FilterBank, numBands, numBeams, numBeamsPerHemifield, numFrameSamples) \
       private (band, beam, sample)
-
     # pragma omp for schedule(guided)
     #endif
     for (band = 0; band < numBands; band++) {
@@ -105,7 +104,6 @@ void InterauralCues::getBeamformedRmsAudio(yarp::sig::Matrix& BeamformedAudio, c
     # pragma omp parallel \
       shared  (BeamformedAudio, FilterBank, numBands, numBeams, numBeamsPerHemifield, numFrameSamples) \
       private (band, beam, sample)
-
     # pragma omp for schedule(guided)
     #endif
     for (band = 0; band < numBands; band++) {
@@ -177,7 +175,7 @@ void InterauralCues::getAngleNormalAudioMap(yarp::sig::Matrix& AngleNormalAudio,
     mirrorFrontField (
         /* Target = */ AngleNormalAudio,
         /* Source = */ frontFieldAudioMap,
-        /* Offset = */ Offset
+        /* Offset = */ Offset * angleResolution
     );
 }
 
@@ -213,6 +211,7 @@ void InterauralCues::interpolateFrontFieldBeamsRms(yarp::sig::Matrix& FrontField
                 /* x2 = */ frontFieldBeamAngles[beam+1],
                 /* y2 = */ BeamformedRmsAudio[band][beam+1]
             );
+
         }
     }
 }

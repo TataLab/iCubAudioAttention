@@ -59,6 +59,8 @@ class AudioPreprocessorPeriodicThread : public yarp::os::PeriodicThread {
 
 	yarp::os::Stamp timeStamp;  //-- Time stamp updated by yarp network.
 
+	double headOffset;          //-- Head angle of the robot.
+
 	double startTime;           //-- Used for keeping time and reporting temporal
     double stopTime;            //-- events to the user via command line.
 	
@@ -91,6 +93,12 @@ class AudioPreprocessorPeriodicThread : public yarp::os::PeriodicThread {
 	yarp::sig::Matrix BeamformedRmsAudioMatrix;
 	yarp::sig::Matrix BeamformedRmsPowerMatrix;
 	yarp::sig::Matrix AllocentricAudioMatrix;
+	
+	/* ===========================================================================
+	 *  Temporary Head Angle.
+	 * =========================================================================== */
+	yarp::os::Bottle* headAngleBottle;
+	yarp::os::BufferedPort< yarp::os::Bottle > inHeadAnglePort;
 
 	/* ===========================================================================
 	 *  Encapsulated objects to perform processing.

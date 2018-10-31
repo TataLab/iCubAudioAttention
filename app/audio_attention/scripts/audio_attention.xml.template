@@ -7,6 +7,12 @@
     <!-->
     <module>
         <name> audioCaptureInterface </name>
+        <parameters></parameters>
+        <node> icub </node>
+    </module>
+
+    <module>
+        <name> audioCaptureInterface </name>
         <parameters> --usePrerecorded ~/Documents/pyAudio/freq_780_lag_00.wav </parameters>
         <node> icub </node>
     </module>
@@ -23,7 +29,13 @@
     <!-->
     <connection>
         <from> /audioGrabber/sender          </from>
-        <to>   /audioPreprocessor/rawAudio:i </to>
+        <to>   /AudioPreprocessor/rawAudio:i </to>
+        <protocol> tcp </protocol>
+    </connection>
+
+    <connection>
+        <from> /icub/head/state:o             </from>
+        <to>   /AudioPreprocessor/headAngle:i </to>
         <protocol> tcp </protocol>
     </connection>
 

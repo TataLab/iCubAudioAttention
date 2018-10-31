@@ -27,6 +27,15 @@
 
 #define THPERIOD 0.08 // seconds.
 
+
+template<class T>
+inline int myRound(T a) {
+    int ceilValue  = (int)ceil(a);
+    int floorValue = (int)floor(a);
+    return (a - floorValue <= 0.5) ? floorValue : ceilValue;
+}
+
+
 AudioPreprocessorPeriodicThread::AudioPreprocessorPeriodicThread() : 
 	PeriodicThread(THPERIOD) {
 
@@ -206,6 +215,10 @@ bool AudioPreprocessorPeriodicThread::threadInit() {
 		return false;
 	}
 
+	if (!inHeadAnglePort.open(getName("/headAngle:i").c_str())) { //-- TODO: REWORK THIS. TEMPORARY.
+		yError("Unable to open port for receiving robot head angle.");
+		return false;
+	}
 
 	stopTime = yarp::os::Time::now();
 	yInfo("Initialization of the processing thread correctly ended. Elapsed Time: %f.", stopTime - startTime);
@@ -234,6 +247,9 @@ void AudioPreprocessorPeriodicThread::threadRelease() {
 	outBeamformedRmsAudioPort.close();
 	outBeamformedRmsPowerPort.close();
 	outAllocentricAudioPort.close();
+
+	inHeadAnglePort.interrupt();
+	inHeadAnglePort.close();
 }
 
 
@@ -266,6 +282,13 @@ void AudioPreprocessorPeriodicThread::run() {
 		//-- Get Input.
 		inputSound = inRawAudioPort.read(true);
 		inRawAudioPort.getEnvelope(timeStamp);
+
+		//-- Get head position.
+		headOffset = 0.0;
+		if (inHeadAnglePort.getInputCount()) {
+			headAngleBottle = inHeadAnglePort.read(true);
+			headOffset += headAngleBottle->get(panAngle).asDouble();
+		}
 
 		//-- Grab the time difference of reading input.
 		stopTime    = yarp::os::Time::now();
@@ -324,7 +347,7 @@ void AudioPreprocessorPeriodicThread::run() {
 
 		//-- Give time stats to the user.
 		timeTotal = timeDelay + timeReading + timeProcessing + timeTransmission;
-		yInfo("End of Loop %d:  Delay  %f  |  Reading  %f  |  Processing  %f  |  Transmission  %f  |  Total  %f  |", timeStamp.getCount(), timeDelay, timeReading, timeProcessing, timeTransmission, timeTotal);
+		yInfo("End of Loop %d:  Offset  %.2f  |  Delay  %f  |  Reading  %f  |  Processing  %f  |  Transmission  %f  |  Total  %f  |", timeStamp.getCount(), headOffset, timeDelay, timeReading, timeProcessing, timeTransmission, timeTotal);
 	}
 }
 
@@ -393,7 +416,7 @@ bool AudioPreprocessorPeriodicThread::processing() {
 	interauralCues->getAngleNormalAudioMap (
 		/* Target = */ AllocentricAudioMatrix,
 		/* Source = */ BeamformedRmsAudioMatrix,
-		/* Offset = */ 0 //TODO: Get head offset in preprocessor.
+		/* Offset = */ myRound(headOffset)
 	);
 
 

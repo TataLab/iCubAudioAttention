@@ -10,13 +10,13 @@
     <module>
         <name> frequencyVisualisation </name>
         <parameters> --name /tempVisualiser </parameters>
-        <node> dio </node>
+        <node> icub </node>
     </module>
 
     <module>
         <name> yarpview </name>
         <parameters> --x 100 --y 100 --h 320 --w 240 --r 33 --name /tempView </parameters>
-        <node> dio </node>
+        <node> icub </node>
     </module>
 
 
@@ -26,13 +26,13 @@
     <module>
         <name> frequencyVisualisation </name>
         <parameters> --name /gammatoneFilteredAudioVisualiser </parameters>
-        <node> dio </node>
+        <node> icub </node>
     </module>
 
     <module>
         <name> yarpview </name>
         <parameters> --x 100 --y 100 --h 320 --w 240 --r 33 --name /gammatoneFilteredAudioView </parameters>
-        <node> dio </node>
+        <node> icub </node>
     </module>
 
 
@@ -42,13 +42,13 @@
     <module>
         <name> frequencyVisualisation </name>
         <parameters> --name /gammatoneFilteredPowerVisualiser </parameters>
-        <node> dio </node>
+        <node> icub </node>
     </module>
 
     <module>
         <name> yarpview </name>
         <parameters> --x 100 --y 100 --h 320 --w 240 --r 33 --name /gammatoneFilteredPowerView </parameters>
-        <node> dio </node>
+        <node> icub </node>
     </module>
 
 
@@ -58,13 +58,13 @@
     <module>
         <name> frequencyVisualisation </name>
         <parameters> --name /beamformedRmsAudioVisualiser </parameters>
-        <node> dio </node>
+        <node> icub </node>
     </module>
 
     <module>
         <name> yarpview </name>
         <parameters> --x 100 --y 100 --h 320 --w 240 --r 33 --name /beamformedRmsAudioView </parameters>
-        <node> dio </node>
+        <node> icub </node>
     </module>
 
 
@@ -74,13 +74,13 @@
     <module>
         <name> frequencyVisualisation </name>
         <parameters> --name /beamformedRmsPowerVisualiser </parameters>
-        <node> dio </node>
+        <node> icub </node>
     </module>
 
     <module>
         <name> yarpview </name>
         <parameters> --x 100 --y 100 --h 320 --w 240 --r 33 --name /beamformedRmsPowerView </parameters>
-        <node> dio </node>
+        <node> icub </node>
     </module>
 
 
@@ -90,13 +90,13 @@
     <module>
         <name> frequencyVisualisation </name>
         <parameters> --name /allocentricAudioVisualiser </parameters>
-        <node> dio </node>
+        <node> icub </node>
     </module>
 
     <module>
         <name> yarpview </name>
         <parameters> --x 100 --y 100 --h 320 --w 240 --r 33 --name /allocentricAudioView </parameters>
-        <node> dio </node>
+        <node> icub </node>
     </module>
 
 
