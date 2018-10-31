@@ -46,6 +46,7 @@ InterauralCues::InterauralCues(int mics, double dist, double c, int samples, int
 
     setFrontFieldBeamAngles();
     setFrontFieldRealAngles();
+
 }
 
 
@@ -93,7 +94,7 @@ void InterauralCues::getBeamformedAudio(yarp::sig::Matrix& BeamformedAudio, cons
 
 
 void InterauralCues::getBeamformedRmsAudio(yarp::sig::Matrix& BeamformedAudio, const yarp::sig::Matrix& FilterBank) {
-    
+
     //-- Ensure space is allocated for this.
 	BeamformedAudio.resize(numBands, numBeams);
 

@@ -66,6 +66,7 @@ class AudioPreprocessorPeriodicThread : public yarp::os::PeriodicThread {
 	double timeReading;	        //-- time events for
 	double timeProcessing;      //-- clean display at
 	double timeTransmission;    //-- the end of a loop.
+	double timeTotal;
 
 	/* ===========================================================================
 	 *  Yarp Ports for Sending and Receiving Data from this Periodic Thread.

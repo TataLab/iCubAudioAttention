@@ -93,37 +93,6 @@ bool AudioPreprocessorPeriodicThread::configure(yarp::os::ResourceFinder &rf) {
 	numFullFieldAngles  = _baseAngles * angleRes * 2;
 
 
-	/* =========================================================================== 
-	 *  Print the resulting variables to the console.
-	 * =========================================================================== */
-	yInfo("\n\t               [ROBOT SPECIFIC]               "                                );
-	yInfo(  "\t ============================================ "                                );
-	yInfo(  "\t Index of Pan Joint               : %d",   panAngle                            );
-	yInfo(  "\t Number of Microphones            : %d",   numMics                             );
-	yInfo(  "\t Microphone Distance              : %f",   micDistance                         );
-	yInfo("\n\t                  [SAMPLING]                  "                                );
-	yInfo(  "\t ============================================ "                                );
-	yInfo(  "\t Speed of Sound                   : %f",   speedOfSound                        );
-	yInfo(  "\t Sampling Rate                    : %d",   samplingRate                        );
-	yInfo(  "\t Number of Frames Samples         : %d",   numFrameSamples                     );
-	yInfo("\n\t                 [PROCESSING]                 "                                );
-	yInfo(  "\t ============================================ "                                );
-	yInfo(  "\t Number of Frequency Bands        : %d",   numBands                            );
-	yInfo(  "\t Lowest Center Frequency          : %d",   lowCf                               );
-	yInfo(  "\t Highest Center Frequency         : %d",   highCf                              );
-	yInfo(  "\t Half-Wave Rectifying             : %s",   halfRec   ? "ENABLED"  : "DISABLED" );
-	yInfo(  "\t Center Frequency Spacing         : %s",   erbSpaced ? "ERB-Rate" :  "Linear"  );
-	yInfo(  "\t Number of Beams Per Hemifield    : %d",   numBeamsPerHemifield                );
-	yInfo(  "\t Number of Front Field Beams      : %d",   numBeams                            );
-	yInfo(  "\t Number of Front Field Angles     : %d",   numFrontFieldAngles                 );
-	yInfo(  "\t Number of Full Field Angles      : %d",   numFullFieldAngles                  );
-	#ifdef WITH_OMP
-	omp_set_num_threads(numOmpThreads);
-	yInfo(  "\t Number of OpenMP Threads SET/MAX : %d/%d", numOmpThreads, omp_get_max_threads());
-	#endif
-	yInfo( " " );
-
-
 	/* ===========================================================================
 	 *  Initialize the matrices used for data processing.
 	 * =========================================================================== */
@@ -154,6 +123,42 @@ bool AudioPreprocessorPeriodicThread::configure(yarp::os::ResourceFinder &rf) {
 	 * =========================================================================== */
 	gammatoneFilterBank = new GammatoneFilterBank(numMics, samplingRate, numFrameSamples, numBands, lowCf, highCf, halfRec, erbSpaced);
 	interauralCues      = new InterauralCues(numMics, micDistance, speedOfSound, samplingRate, numFrameSamples, numBands, numBeamsPerHemifield, angleRes);
+
+
+	/* =========================================================================== 
+	 *  Print the resulting variables to the console.
+	 * =========================================================================== */
+	yInfo( " " );
+	yInfo( "\t               [ROBOT SPECIFIC]               "                                );
+	yInfo( "\t ============================================ "                                );
+	yInfo( "\t Index of Pan Joint               : %d",   panAngle                            );
+	yInfo( "\t Number of Microphones            : %d",   numMics                             );
+	yInfo( "\t Microphone Distance              : %f",   micDistance                         );
+	yInfo( " " );
+	yInfo( "\t                  [SAMPLING]                  "                                );
+	yInfo( "\t ============================================ "                                );
+	yInfo( "\t Speed of Sound                   : %f",   speedOfSound                        );
+	yInfo( "\t Sampling Rate                    : %d",   samplingRate                        );
+	yInfo( "\t Number of Frames Samples         : %d",   numFrameSamples                     );
+	yInfo( " " );
+	yInfo( "\t                 [PROCESSING]                 "                                );
+	yInfo( "\t ============================================ "                                );
+	yInfo( "\t Number of Frequency Bands        : %d",   numBands                            );
+	yInfo( "\t Lowest Center Frequency          : %d",   lowCf                               );
+	yInfo( "\t Highest Center Frequency         : %d",   highCf                              );
+	yInfo( "\t Half-Wave Rectifying             : %s",   halfRec   ? "ENABLED"  : "DISABLED" );
+	yInfo( "\t Center Frequency Spacing         : %s",   erbSpaced ? "ERB-Rate" :  "Linear"  );
+	yInfo( "\t Number of Beams Per Hemifield    : %d",   numBeamsPerHemifield                );
+	yInfo( "\t Number of Front Field Beams      : %d",   numBeams                            );
+	yInfo( "\t Number of Front Field Angles     : %d",   numFrontFieldAngles                 );
+	yInfo( "\t Number of Full Field Angles      : %d",   numFullFieldAngles                  );
+	#ifdef WITH_OMP
+	yInfo( "\t Number of OpenMP Threads         : %d",   numOmpThreads                       );
+	#else
+	yInfo( "\t Number of OpenMP Threads         : DISABLED"                                  );
+	#endif
+	yInfo( " " );
+
 
 	return true;
 }
@@ -203,7 +208,7 @@ bool AudioPreprocessorPeriodicThread::threadInit() {
 
 
 	stopTime = yarp::os::Time::now();
-	yInfo("Initialization of the processing thread correctly ended. Time: %f.", stopTime - startTime);
+	yInfo("Initialization of the processing thread correctly ended. Elapsed Time: %f.", stopTime - startTime);
 	startTime = stopTime;
 
 	return true;
@@ -253,6 +258,7 @@ void AudioPreprocessorPeriodicThread::run() {
 	
 	if (inRawAudioPort.getInputCount()) {
 
+		//-- Grab the time time difference of waiting between loops.
 		stopTime  = yarp::os::Time::now();
 		timeDelay = stopTime - startTime;
 		startTime = stopTime;
@@ -261,6 +267,7 @@ void AudioPreprocessorPeriodicThread::run() {
 		inputSound = inRawAudioPort.read(true);
 		inRawAudioPort.getEnvelope(timeStamp);
 
+		//-- Grab the time difference of reading input.
 		stopTime    = yarp::os::Time::now();
 		timeReading = stopTime - startTime;
 		startTime   = stopTime;
@@ -268,6 +275,7 @@ void AudioPreprocessorPeriodicThread::run() {
 		//-- Main Loop.
 		result = processing();
 
+		//-- Grab the time difference of processing the input.
 		stopTime       = yarp::os::Time::now();
 		timeProcessing = stopTime - startTime;
 		startTime      = stopTime;
@@ -309,15 +317,23 @@ void AudioPreprocessorPeriodicThread::run() {
 			outAllocentricAudioPort.write();
 		}
 		
+		//-- Grab the time delay of publishing on ports.
 		stopTime = yarp::os::Time::now();
 		timeTransmission = stopTime - startTime;
 		startTime = stopTime;
-	
+
+		//-- Give time stats to the user.
+		timeTotal = timeDelay + timeReading + timeProcessing + timeTransmission;
+		yInfo("End of Loop %d:  Delay  %f  |  Reading  %f  |  Processing  %f  |  Transmission  %f  |  Total  %f  |", timeStamp.getCount(), timeDelay, timeReading, timeProcessing, timeTransmission, timeTotal);
 	}
 }
 
 
 bool AudioPreprocessorPeriodicThread::processing() {
+
+	#ifdef WITH_OMP
+	omp_set_num_threads(numOmpThreads);
+	#endif
 	
 	//-- Separate the sound into left and right channels.	
 	for (int sample = 0; sample < numFrameSamples; sample++) {

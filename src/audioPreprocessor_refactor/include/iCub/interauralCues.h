@@ -93,7 +93,7 @@ class InterauralCues {
 	 *  Destructor.
 	 * =========================================================================== */
 	~InterauralCues();
-
+	
 
     /* ===========================================================================
 	 *  Generate the Interaural Time Difference by applying simple
