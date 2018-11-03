@@ -32,7 +32,7 @@ bool AudioBayesianMapModule::configure(yarp::os::ResourceFinder &rf) {
 	 *  Next set the module name before getting any other parameters, 
 	 *  specifically the port names which are dependent on the module name.
 	 * =========================================================================== */
-	moduleName = rf.check("name", yarp::os::Value("/AudioBayesianMap"), "module name (string)").asString();
+	moduleName = rf.check("name", yarp::os::Value("/audioBayesianMap"), "module name (string)").asString();
 	setName(moduleName.c_str());
 
 	/* ===========================================================================

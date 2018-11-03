@@ -64,11 +64,13 @@ class AudioPreprocessorPeriodicThread : public yarp::os::PeriodicThread {
 	double startTime;           //-- Used for keeping time and reporting temporal
     double stopTime;            //-- events to the user via command line.
 	
-	double timeDelay;           //-- Hold on to and store 
-	double timeReading;	        //-- time events for
-	double timeProcessing;      //-- clean display at
-	double timeTransmission;    //-- the end of a loop.
-	double timeTotal;
+	double timeDelay,        totalDelay;        //-- Hold on to and store time
+	double timeReading,      totalReading;	    //-- events for clean display
+	double timeProcessing,   totalProcessing;   //-- at the end of a loop.
+	double timeTransmission, totalTransmission; //-- Include stats on the average execution
+	double timeTotal,        totalTime;         //-- when the RFModule is closed.
+
+	int    totalIterations;
 
 	/* ===========================================================================
 	 *  Yarp Ports for Sending and Receiving Data from this Periodic Thread.
@@ -222,6 +224,20 @@ class AudioPreprocessorPeriodicThread : public yarp::os::PeriodicThread {
 	 *  Method for the processing in the PeriodicThread.
 	 * =========================================================================== */
 	bool processing();
+
+
+  private:
+	
+	/* ===========================================================================
+	 *  Write data to out going ports if something is connected.
+	 * =========================================================================== */
+	void publishOutPorts();
+
+
+	/* ===========================================================================
+	 *  Produce execution stats when the thread is interrupted.
+	 * =========================================================================== */
+	void endOfProcessingStats();
 };
 
 #endif  //_AUDIO_PREPROCESSOR_PERIODICTHREAD_H_

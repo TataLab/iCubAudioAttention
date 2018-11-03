@@ -69,13 +69,14 @@ bool AudioBayesianMapPeriodicThread::configure(yarp::os::ResourceFinder &rf) {
 	numBands = rf.findGroup("processing").check("numBands", yarp::os::Value(128), "number of frequency bands (int)"            ).asInt();
 	angleRes = rf.findGroup("processing").check("angleRes", yarp::os::Value(1),   "degree resolution for single position (int)").asInt();
 
-	bufferSize    = rf.findGroup("bayesianmap").check("bufferSize",    yarp::os::Value(100), "number of audio maps to remember (int)"     ).asInt();
-	numOmpThreads = rf.findGroup("bayesianmap").check("numOmpThreads", yarp::os::Value(4),   "if enabled, the number of omp threads (int)").asInt();
+	bufferSize = rf.findGroup("bayesianmap").check("bufferSize", yarp::os::Value(100), "number of audio maps to remember (int)").asInt();
 	
+
 	/* ===========================================================================
 	 *  Derive additional variables given the ones above.
 	 * =========================================================================== */
 	numFullFieldAngles = _baseAngles * angleRes * 2;
+
 
 	/* ===========================================================================
 	 *  Initialize the matrices used for data processing.
@@ -92,26 +93,32 @@ bool AudioBayesianMapPeriodicThread::configure(yarp::os::ResourceFinder &rf) {
 	clearProbabilities();
 
 
+	/* ===========================================================================
+	 *  Initialize time counters to zero.
+	 * =========================================================================== */
+	totalDelay        = 0.0;
+	totalReading      = 0.0;
+	totalProcessing   = 0.0;
+	totalTransmission = 0.0;
+	totalTime         = 0.0;
+	totalIterations   = 0;
+
+
 	/* =========================================================================== 
 	 *  Print the resulting variables to the console.
 	 * =========================================================================== */
 	yInfo( " " );
-	yInfo( "\t                 [PROCESSING]                 "                                );
-	yInfo( "\t ============================================ "                                );
-	yInfo( "\t Number of Frequency Bands        : %d",   numBands                            );
-	yInfo( "\t Number of Full Field Angles      : %d",   numFullFieldAngles                  );
+	yInfo( "\t                 [PROCESSING]                 "               );
+	yInfo( "\t ============================================ "               );
+	yInfo( "\t Number of Frequency Bands        : %d",   numBands           );
+	yInfo( "\t Number of Full Field Angles      : %d",   numFullFieldAngles );
 	yInfo( " " );
-	yInfo( "\t                [Bayesian Map]                "                                );
-	yInfo( "\t ============================================ "                                );
-	yInfo( "\t Number of Frequency Bands        : %d",   numBands                            );
-	yInfo( "\t Number of Full Field Angles      : %d",   numFullFieldAngles                  );
-	#ifdef WITH_OMP
-	yInfo( "\t Number of OpenMP Threads         : %d",   numOmpThreads                       );
-	#else
-	yInfo( "\t Number of OpenMP Threads         : DISABLED"                                  );
-	#endif
+	yInfo( "\t                [Bayesian Map]                "               );
+	yInfo( "\t ============================================ "               );
+	yInfo( "\t Number of Audio Maps Stored      : %d",   bufferSize         );
 	yInfo( " " );
 
+	
 	return true;
 }
 
@@ -128,12 +135,12 @@ bool AudioBayesianMapPeriodicThread::threadInit() {
 		return false;
 	}
 
-	if (!outProbabilityMapPort.open(getName("/probabilityMap:o").c_str())) {
+	if (!outProbabilityMapPort.open(getName("/bayesianProbabilityMap:o").c_str())) {
 		yError("Unable to open port for sending the probability of the location of each frequency band.");
 		return false;
 	}
 
-	if (!outProbabilityAnglePort.open(getName("/probabilityAngle:o").c_str())) {
+	if (!outProbabilityAnglePort.open(getName("/bayesianProbabilityAngle:o").c_str())) {
 		yError("Unable to open port for sending the probability of overall sound source at corresponding angle.");
 		return false;
 	}
@@ -157,6 +164,9 @@ void AudioBayesianMapPeriodicThread::threadRelease() {
 	inAllocentricAudioPort.close();
 	outProbabilityMapPort.close();
 	outProbabilityAnglePort.close();
+
+	//-- Print thread stats.
+	endOfProcessingStats();	
 }
 
 
@@ -182,64 +192,81 @@ void AudioBayesianMapPeriodicThread::run() {
 	if (inAllocentricAudioPort.getInputCount()) {
 
 		//-- Grab the time time difference of waiting between loops.
-		stopTime  = yarp::os::Time::now();
-		timeDelay = stopTime - startTime;
-		startTime = stopTime;
+		stopTime    = yarp::os::Time::now();
+		timeDelay   = stopTime - startTime;
+		totalDelay += timeDelay;
+		startTime   = stopTime;
+
 
 		//-- Get Input.
 		AllocentricAudioMatrix = *inAllocentricAudioPort.read(true);
 		inAllocentricAudioPort.getEnvelope(timeStamp);
 
+
 		//-- Grab the time difference of reading input.
-		stopTime    = yarp::os::Time::now();
-		timeReading = stopTime - startTime;
-		startTime   = stopTime;
+		stopTime      = yarp::os::Time::now();
+		timeReading   = stopTime - startTime;
+		totalReading += timeReading;
+		startTime     = stopTime;
+
 
 		//-- Main Loop.
 		result = processing();
 
+
 		//-- Grab the time difference of processing the input.
-		stopTime       = yarp::os::Time::now();
-		timeProcessing = stopTime - startTime;
-		startTime      = stopTime;
+		stopTime         = yarp::os::Time::now();
+		timeProcessing   = stopTime - startTime;
+		totalProcessing += timeProcessing;
+		startTime        = stopTime;
 
-		//-- Write to Active Ports.
-		if (outProbabilityMapPort.getOutputCount()) {
-			outProbabilityMapPort.prepare() = ProbabilityMapMatrix;
-			outProbabilityMapPort.setEnvelope(timeStamp);
-			outProbabilityMapPort.write();
-		}
 
-		if (outProbabilityAnglePort.getOutputCount()) {
-			outProbabilityAnglePort.prepare() = ProbabilityAngleMatrix;
-			outProbabilityAnglePort.setEnvelope(timeStamp);
-			outProbabilityAnglePort.write();
-		}
+		//-- Write data to outgoing ports.
+		publishOutPorts();
+
 
 		//-- Grab the time delay of publishing on ports.
-		stopTime = yarp::os::Time::now();
-		timeTransmission = stopTime - startTime;
-		startTime = stopTime;
+		stopTime           = yarp::os::Time::now();
+		timeTransmission   = stopTime - startTime;
+		totalTransmission += timeTransmission;
+		startTime          = stopTime;
+
 
 		//-- Give time stats to the user.
-		timeTotal = timeDelay + timeReading + timeProcessing + timeTransmission;
+		timeTotal  = timeDelay + timeReading + timeProcessing + timeTransmission;
+		totalTime += timeTotal;
+		totalIterations++;
 		yInfo("End of Loop %d:  Delay  %f  |  Reading  %f  |  Processing  %f  |  Transmission  %f  |  Total  %f  |", timeStamp.getCount(), timeDelay, timeReading, timeProcessing, timeTransmission, timeTotal);
 	}
 }
 
 
-bool AudioBayesianMapPeriodicThread::processing(){
+bool AudioBayesianMapPeriodicThread::processing() {
 
-	#ifdef WITH_OMP
-	omp_set_num_threads(numOmpThreads);
-	#endif
-
+	/* ===========================================================================
+	 *  Update the knowledge state given the new information from the received 
+	 *   map. Store this map in the buffer, so that later this map can be
+	 *   ``forgotten`` from the knowledge. If the specified buffer limit has
+	 *   met, the oldest information will be removed.
+	 * =========================================================================== */
 	updateBayesianProbabilities (
 		/* Target = */ ProbabilityMapMatrix, 
 		/* Buffer = */ bufferedAudioMatrix,
 		/* Length = */ bufferSize,
 		/* Source = */ AllocentricAudioMatrix
 	);
+
+
+	/* ===========================================================================
+	 *  If someone is connected to this port, collapse probability map along
+	 *   the bands, so that at the end of processing it can be published.
+	 * =========================================================================== */
+	if (outProbabilityAnglePort.getOutputCount()) {
+		collapseProbabilityMap (
+			/* Target = */ ProbabilityAngleMatrix,
+			/* Source = */ ProbabilityMapMatrix
+		);
+	}
 
 
 	return true;
@@ -271,17 +298,11 @@ void AudioBayesianMapPeriodicThread::updateBayesianProbabilities(yarp::sig::Matr
 
 void AudioBayesianMapPeriodicThread::addAudioMap(yarp::sig::Matrix& ProbabilityMap, const yarp::sig::Matrix& CurrentAudio) {
 
-	int band, column;
+	//-- Add the new audio to the knowledge state.
 	int columnLength = ProbabilityMap.cols();
 
-	#ifdef WITH_OMP
-	#pragma omp parallel      \
-	 shared  (ProbabilityMap, CurrentAudio, numBands, columnLength) \
-	 private (band, column)
-	#pragma omp for schedule(guided)
-	#endif
-	for (band = 0; band < numBands; band++) {
-		for (column = 0; column < columnLength; column++) {
+	for (int band = 0; band < numBands; band++) {
+		for (int column = 0; column < columnLength; column++) {
 			ProbabilityMap[band][column] *= CurrentAudio[band][column];
 		}
 	}
@@ -290,17 +311,11 @@ void AudioBayesianMapPeriodicThread::addAudioMap(yarp::sig::Matrix& ProbabilityM
 
 void AudioBayesianMapPeriodicThread::removeAudioMap(yarp::sig::Matrix& ProbabilityMap, const yarp::sig::Matrix& AntiquatedAudio) {
 
-	int band, column;
+	//-- Remove the old audio from the knowledge state.
 	int columnLength = ProbabilityMap.cols();
 
-	#ifdef WITH_OMP
-	#pragma omp parallel      \
-	 shared  (ProbabilityMap, AntiquatedAudio, numBands, columnLength) \
-	 private (band, column)
-	#pragma omp for schedule(guided)
-	#endif
-	for (band = 0; band < numBands; band++) {
-		for (column = 0; column < columnLength; column++) {
+	for (int band = 0; band < numBands; band++) {
+		for (int column = 0; column < columnLength; column++) {
 			ProbabilityMap[band][column] /= AntiquatedAudio[band][column];
 		}
 	}
@@ -309,11 +324,11 @@ void AudioBayesianMapPeriodicThread::removeAudioMap(yarp::sig::Matrix& Probabili
 
 void AudioBayesianMapPeriodicThread::normaliseMatrix(yarp::sig::Matrix& matrix) {
 
-	int RowLength, ColumnLength, row;
-	RowLength    = matrix.rows();
-	ColumnLength = matrix.cols();
+	//-- Normalise each row of a yarp matrix.
+	int RowLength    = matrix.rows();
+	int ColumnLength = matrix.cols();
 
-	for (row = 0; row < RowLength; row++) {
+	for (int row = 0; row < RowLength; row++) {
 		normaliseRow(matrix[row], ColumnLength);
 	}
 }
@@ -321,6 +336,8 @@ void AudioBayesianMapPeriodicThread::normaliseMatrix(yarp::sig::Matrix& matrix) 
 
 void AudioBayesianMapPeriodicThread::normaliseRow(double *MatrixRow, const int Length) {
 
+	//-- Take the sum of an entire row, then divide each element
+	//-- by it. This producees a row that sums to one.
 	double sum = 0.0;
 	for (int index = 0; index < Length; index++) {
 		sum += MatrixRow[index];
@@ -331,14 +348,70 @@ void AudioBayesianMapPeriodicThread::normaliseRow(double *MatrixRow, const int L
 	}
 }
 
+
+void AudioBayesianMapPeriodicThread::collapseProbabilityMap(yarp::sig::Matrix& ProbabilityAngles, const yarp::sig::Matrix& ProbabilityMap) {
+	
+	//-- Collapse the knowledge state across the frequency bands.
+	ProbabilityAngles.resize(1, numFullFieldAngles);
+	ProbabilityAngles.zero();
+
+	for (int band = 0; band < numBands; band++) {
+		for (int angle = 0; angle < numFullFieldAngles; angle++) {
+			ProbabilityAngles[0][angle] += ProbabilityMap[band][angle];
+		}
+	}
+
+	//-- Normalise the matrix.
+	normaliseMatrix(ProbabilityAngles);
+}
+
+
 void AudioBayesianMapPeriodicThread::clearProbabilities() {
 
 	//-- Reset running probabilities.
-	ProbabilityMapMatrix.zero();
+	ProbabilityMapMatrix.resize(numBands, numFullFieldAngles);
 	ones(ProbabilityMapMatrix);   //-- Set all positions to one.
 	
 	//-- Clear out the buffer.
 	while (!bufferedAudioMatrix.empty()) {
 		bufferedAudioMatrix.pop();
 	}
+}
+
+
+
+void AudioBayesianMapPeriodicThread::publishOutPorts() {
+	
+	//-- Write to Active Ports.
+	if (outProbabilityMapPort.getOutputCount()) {
+		outProbabilityMapPort.prepare() = ProbabilityMapMatrix;
+		outProbabilityMapPort.setEnvelope(timeStamp);
+		outProbabilityMapPort.write();
+	}
+
+	if (outProbabilityAnglePort.getOutputCount()) {
+		outProbabilityAnglePort.prepare() = ProbabilityAngleMatrix;
+		outProbabilityAnglePort.setEnvelope(timeStamp);
+		outProbabilityAnglePort.write();
+	}
+}
+
+
+void AudioBayesianMapPeriodicThread::endOfProcessingStats() {
+
+	//-- Display Execution stats.
+	yInfo(" ");
+	yInfo("End of Thread . . . ");
+	yInfo(" ");
+	yInfo("\t Total Iterations : %d", totalIterations);
+	yInfo("\t Total Time       : %.2f", totalTime);
+	yInfo(" ");
+	yInfo("Average Stats . . . ");
+	yInfo(" ");
+	yInfo("\t Delay        : %f", totalDelay        / (double) totalIterations );
+	yInfo("\t Reading      : %f", totalReading      / (double) totalIterations );
+	yInfo("\t Processing   : %f", totalProcessing   / (double) totalIterations );
+	yInfo("\t Transmission : %f", totalTransmission / (double) totalIterations );
+	yInfo("\t Loop Time    : %f", totalTime         / (double) totalIterations );
+	yInfo(" ");
 }

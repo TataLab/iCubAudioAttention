@@ -64,10 +64,10 @@ void InterauralCues::getBeamformedAudio(yarp::sig::Matrix& BeamformedAudio, cons
     int band, beam, sample;
 
     #ifdef WITH_OMP
-    # pragma omp parallel \
-      shared  (BeamformedAudio, FilterBank, numBands, numBeams, numBeamsPerHemifield, numFrameSamples) \
-      private (band, beam, sample)
-    # pragma omp for schedule(guided)
+    #pragma omp parallel \
+     shared  (BeamformedAudio, FilterBank, numBands, numBeams, numBeamsPerHemifield, numFrameSamples) \
+     private (band, beam, sample)
+    #pragma omp for schedule(guided)
     #endif
     for (band = 0; band < numBands; band++) {
 
@@ -101,10 +101,10 @@ void InterauralCues::getBeamformedRmsAudio(yarp::sig::Matrix& BeamformedAudio, c
     int band, beam, sample;
 
     #ifdef WITH_OMP
-    # pragma omp parallel \
-      shared  (BeamformedAudio, FilterBank, numBands, numBeams, numBeamsPerHemifield, numFrameSamples) \
-      private (band, beam, sample)
-    # pragma omp for schedule(guided)
+    #pragma omp parallel \
+     shared  (BeamformedAudio, FilterBank, numBands, numBeams, numBeamsPerHemifield, numFrameSamples) \
+     private (band, beam, sample)
+    #pragma omp for schedule(guided)
     #endif
     for (band = 0; band < numBands; band++) {
 
@@ -192,7 +192,6 @@ void InterauralCues::interpolateFrontFieldBeamsRms(yarp::sig::Matrix& FrontField
     #pragma omp parallel \
      shared  (FrontFieldAudio, BeamformedRmsAudio, frontFieldRealAngles, frontFieldBeamAngles, numBands, numFrontFieldAngles) \
      private (band, beam, realAngle)
-
     #pragma omp for schedule(guided)
     #endif
     for (band = 0; band < numBands; band++) {

@@ -23,19 +23,31 @@
         <node> icub </node>
     </module>
 
+    <module>
+        <name> audioBayesianMap_refactor </name>
+        <parameters></parameters>
+        <node> icub </node>
+    </module>
+
 
     <!-->  
     CONNECTIONS.
     <!-->
     <connection>
         <from> /audioGrabber/sender          </from>
-        <to>   /AudioPreprocessor/rawAudio:i </to>
+        <to>   /audioPreprocessor/rawAudio:i </to>
         <protocol> tcp </protocol>
     </connection>
 
     <connection>
         <from> /icub/head/state:o             </from>
-        <to>   /AudioPreprocessor/headAngle:i </to>
+        <to>   /audioPreprocessor/headAngle:i </to>
+        <protocol> tcp </protocol>
+    </connection>
+
+    <connection>
+        <from> /audioPreprocessor/allocentricAudio:o </from>
+        <to>   /audioBayesianMap/allocentricAudio:i  </to>
         <protocol> tcp </protocol>
     </connection>
 

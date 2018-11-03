@@ -65,11 +65,10 @@ void GammatoneFilterBank::getGammatoneFilteredAudio(yarp::sig::Matrix& FilterBan
 	int mic, band, sample;
 
 	#ifdef WITH_OMP
-	# pragma omp parallel	  	\
-  	 shared (FilterBank, RawAudio, numMics, numBands, numFrameSamples)	 \
+	#pragma omp parallel	  	\
+  	 shared  (FilterBank, RawAudio, numMics, numBands, numFrameSamples)	 \
   	 private (mic, band, sample)
-	
-	# pragma omp for schedule(guided)
+	#pragma omp for schedule(guided)
 	#endif
 	for (band = 0; band < numBands; band++) {
 		for (mic = 0; mic < numMics; mic++) {

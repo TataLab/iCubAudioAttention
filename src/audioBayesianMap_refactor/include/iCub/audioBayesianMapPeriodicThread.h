@@ -28,10 +28,11 @@
 #define _AUDIO_BAYESIAN_MAP_PERIODICTHREAD_H_
 
 #include <iostream>
-#include <queue>
 #include <fstream>
 #include <cstring>
 #include <time.h>
+
+#include <queue>
 
 #include <yarp/math/Math.h>
 #include <yarp/sig/all.h>
@@ -39,10 +40,6 @@
 #include <yarp/dev/all.h>
 #include <yarp/os/PeriodicThread.h>
 #include <yarp/os/Log.h>
-
-#ifdef WITH_OMP
-#include <omp.h>
-#endif
 
 class AudioBayesianMapPeriodicThread : public yarp::os::PeriodicThread {
 
@@ -60,11 +57,13 @@ class AudioBayesianMapPeriodicThread : public yarp::os::PeriodicThread {
 	double startTime;           //-- Used for keeping time and reporting temporal
     double stopTime;            //-- events to the user via command line.
 	
-	double timeDelay;           //-- Hold on to and store 
-	double timeReading;	        //-- time events for
-	double timeProcessing;      //-- clean display at
-	double timeTransmission;    //-- the end of a loop.
-	double timeTotal;
+	double timeDelay,        totalDelay;        //-- Hold on to and store time
+	double timeReading,      totalReading;	    //-- events for clean display
+	double timeProcessing,   totalProcessing;   //-- at the end of a loop.
+	double timeTransmission, totalTransmission; //-- Include stats on the average execution
+	double timeTotal,        totalTime;         //-- when the RFModule is closed.
+
+	int    totalIterations;
 
 	/* ===========================================================================
 	 *  Yarp Ports for Sending and Receiving Data from this Periodic Thread.
@@ -192,56 +191,81 @@ class AudioBayesianMapPeriodicThread : public yarp::os::PeriodicThread {
   private:
 
 	/* ===========================================================================
-	 *  Desc.
+	 *  Does it all. Performs a bayesian update on the probability map using
+	 *   the new audio map provided. Afterwards the new map will be inserted 
+	 *   into the audio buffer. If the buffer is at it's specified capacity
+	 *   the oldest item will be removed from the knowledge state, and
+	 *   discarded from the buffer.
 	 * 
-	 * @param ProbabilityMap : 
-	 * @param BufferedAudio  :
-	 * @param BufferLength   :
-	 * @param CurrentAudio   : 
+	 * @param ProbabilityMap : The target, and source for updating the knowledge state (Number of Bands, Number of Full Field Angles).
+	 * @param BufferedAudio  : A buffer containing recent audio maps. Oldest maps are used against the knowledge state.
+	 * @param BufferLength   : Used to ensure the number of samples kept is consistent.
+	 * @param CurrentAudio   : An allocentric audio map freshly recieved from the audio preprocessor (Number of Bands, Number of Full Field Angles).
 	 * =========================================================================== */
 	void updateBayesianProbabilities(yarp::sig::Matrix& ProbabilityMap, std::queue< yarp::sig::Matrix >& BufferedAudio, const int BufferLength, const yarp::sig::Matrix& CurrentAudio);
 
 
 	/* ===========================================================================
-	 *  Desc.
+	 *  Multiplies the Current Audio with the Probability Map.
 	 * 
-	 * @param ProbabilityMap : 
-	 * @param CurrentAudio   : 
+	 * @param ProbabilityMap : Knowledge state of the auditory environment.
+	 * @param CurrentAudio   : New information of the auditory environment.
 	 * =========================================================================== */
 	void addAudioMap(yarp::sig::Matrix& ProbabilityMap, const yarp::sig::Matrix& CurrentAudio);
 
 
 	/* ===========================================================================
-	 *  Desc.
+	 *  Divides the Antiquated Audio from the Probability Map.
 	 * 
-	 * @param ProbabilityMap  : 
-	 * @param AntiquatedAudio : 
+	 * @param ProbabilityMap  : Knowledge state of the auditory environment.
+	 * @param AntiquatedAudio : Old information of the auditory environment.
 	 * =========================================================================== */
 	void removeAudioMap(yarp::sig::Matrix& ProbabilityMap, const yarp::sig::Matrix& AntiquatedAudio);
 	
 
 	/* ===========================================================================
-	 *  Desc.
+	 *  Normalises each row of the matrix to sum to one.
 	 * 
-	 * @param ProbabilityMap : 
+	 * @param ProbabilityMap : Knowledge state of the auditory environment.
 	 * =========================================================================== */
 	void normaliseMatrix(yarp::sig::Matrix& ProbabilityMap);
 
 
 	/* ===========================================================================
-	 *  Desc.
+	 *  Normalises a single row of a matrix to sum to one.
 	 * 
-	 * @param MatrixRow : 
-	 * @param Length    :
+	 * @param MatrixRow : Specified Row.
+	 * @param Length    : Length of the row.
 	 * =========================================================================== */
 	void normaliseRow(double *MatrixRow, const int Length);
 
 
 	/* ===========================================================================
-	 *  Desc.
+	 *  Collapse a Probability Map across the bands to get the overall 
+	 *   probability at each angle of the knowledge state.
+	 * 
+	 * @param ProbabilityAngles : Angles of Probability.
+	 * @param ProbabilityMap    : Knowledge state of the auditory environment.
+	 * =========================================================================== */
+	void collapseProbabilityMap(yarp::sig::Matrix& ProbabilityAngles, const yarp::sig::Matrix& ProbabilityMap);
+
+
+	/* ===========================================================================
+	 *  Flush the buffer and reset the Knowledge state to its initial values.
 	 * =========================================================================== */
 	void clearProbabilities();
-  
+
+
+	/* ===========================================================================
+	 *  Write data to out going ports if something is connected.
+	 * =========================================================================== */
+	void publishOutPorts();
+
+
+	/* ===========================================================================
+	 *  Produce execution stats when the thread is interrupted.
+	 * =========================================================================== */
+	void endOfProcessingStats();
 };
 
 #endif  //_AUDIO_BAYESIAN_MAP_PERIODICTHREAD_H_

@@ -82,6 +82,7 @@ bool AudioPreprocessorPeriodicThread::configure(yarp::os::ResourceFinder &rf) {
 	angleRes      = rf.findGroup("processing").check("angleRes",      yarp::os::Value(1),     "degree resolution for a single position (int)").asInt();
 	numOmpThreads = rf.findGroup("processing").check("numOmpThreads", yarp::os::Value(4),     "if enabled, the number of omp threads (int)"  ).asInt();
 
+
 	/* ===========================================================================
 	 *  Derive additional variables given the ones above.
 	 * =========================================================================== */
@@ -134,6 +135,17 @@ bool AudioPreprocessorPeriodicThread::configure(yarp::os::ResourceFinder &rf) {
 	interauralCues      = new InterauralCues(numMics, micDistance, speedOfSound, samplingRate, numFrameSamples, numBands, numBeamsPerHemifield, angleRes);
 
 
+	/* ===========================================================================
+	 *  Initialize time counters to zero.
+	 * =========================================================================== */
+	totalDelay        = 0.0;
+	totalReading      = 0.0;
+	totalProcessing   = 0.0;
+	totalTransmission = 0.0;
+	totalTime         = 0.0;
+	totalIterations   = 0;
+
+
 	/* =========================================================================== 
 	 *  Print the resulting variables to the console.
 	 * =========================================================================== */
@@ -148,7 +160,7 @@ bool AudioPreprocessorPeriodicThread::configure(yarp::os::ResourceFinder &rf) {
 	yInfo( "\t ============================================ "                                );
 	yInfo( "\t Speed of Sound                   : %f",   speedOfSound                        );
 	yInfo( "\t Sampling Rate                    : %d",   samplingRate                        );
-	yInfo( "\t Number of Frames Samples         : %d",   numFrameSamples                     );
+	yInfo( "\t Number Samples per Frame         : %d",   numFrameSamples                     );
 	yInfo( " " );
 	yInfo( "\t                 [PROCESSING]                 "                                );
 	yInfo( "\t ============================================ "                                );
@@ -184,6 +196,11 @@ bool AudioPreprocessorPeriodicThread::threadInit() {
 		return false;
 	}
 
+	if (!inHeadAnglePort.open(getName("/headAngle:i").c_str())) { //-- TODO: REWORK THIS. TEMPORARY.
+		yError("Unable to open port for receiving robot head angle.");
+		return false;
+	}
+
 	if (!outGammatoneFilteredAudioPort.open(getName("/gammatoneFilteredAudio:o").c_str())) {
 		yError("Unable to open port for sending the output of the gammatone filter bank.");
 		return false;
@@ -214,11 +231,6 @@ bool AudioPreprocessorPeriodicThread::threadInit() {
 		return false;
 	}
 
-	if (!inHeadAnglePort.open(getName("/headAngle:i").c_str())) { //-- TODO: REWORK THIS. TEMPORARY.
-		yError("Unable to open port for receiving robot head angle.");
-		return false;
-	}
-
 	stopTime = yarp::os::Time::now();
 	yInfo("Initialization of the processing thread correctly ended. Elapsed Time: %f.", stopTime - startTime);
 	startTime = stopTime;
@@ -231,24 +243,26 @@ void AudioPreprocessorPeriodicThread::threadRelease() {
 
 	//-- Stop all threads.
 	inRawAudioPort.interrupt();
+	inHeadAnglePort.interrupt();
 	outGammatoneFilteredAudioPort.interrupt();
 	outGammatoneFilteredPowerPort.interrupt();
 	outBeamformedAudioPort.interrupt();
 	outBeamformedRmsAudioPort.interrupt();
 	outBeamformedRmsPowerPort.interrupt();
 	outAllocentricAudioPort.interrupt();
-
+	
 	//-- Close the threads.
 	inRawAudioPort.close();
+	inHeadAnglePort.close();
 	outGammatoneFilteredAudioPort.close();
 	outGammatoneFilteredPowerPort.close();
 	outBeamformedAudioPort.close();
 	outBeamformedRmsAudioPort.close();
 	outBeamformedRmsPowerPort.close();
 	outAllocentricAudioPort.close();
-
-	inHeadAnglePort.interrupt();
-	inHeadAnglePort.close();
+	
+	//-- Print thread stats.
+	endOfProcessingStats();	
 }
 
 
@@ -274,13 +288,16 @@ void AudioPreprocessorPeriodicThread::run() {
 	if (inRawAudioPort.getInputCount()) {
 
 		//-- Grab the time time difference of waiting between loops.
-		stopTime  = yarp::os::Time::now();
-		timeDelay = stopTime - startTime;
-		startTime = stopTime;
+		stopTime    = yarp::os::Time::now();
+		timeDelay   = stopTime - startTime;
+		totalDelay += timeDelay;
+		startTime   = stopTime;
+		
 		
 		//-- Get Input.
 		inputSound = inRawAudioPort.read(true);
 		inRawAudioPort.getEnvelope(timeStamp);
+
 
 		//-- Get head position.
 		headOffset = 0.0;
@@ -289,63 +306,40 @@ void AudioPreprocessorPeriodicThread::run() {
 			headOffset += headAngleBottle->get(panAngle).asDouble();
 		}
 
+
 		//-- Grab the time difference of reading input.
-		stopTime    = yarp::os::Time::now();
-		timeReading = stopTime - startTime;
-		startTime   = stopTime;
+		stopTime      = yarp::os::Time::now();
+		timeReading   = stopTime - startTime;
+		totalReading += timeReading;
+		startTime     = stopTime;
+
 
 		//-- Main Loop.
 		result = processing();
 
+
 		//-- Grab the time difference of processing the input.
-		stopTime       = yarp::os::Time::now();
-		timeProcessing = stopTime - startTime;
-		startTime      = stopTime;
+		stopTime         = yarp::os::Time::now();
+		timeProcessing   = stopTime - startTime;
+		totalProcessing += timeProcessing;
+		startTime        = stopTime;
 
-		//-- Write to Active Ports.
-		if (outGammatoneFilteredAudioPort.getOutputCount()) {
-			outGammatoneFilteredAudioPort.prepare() = GammatoneFilteredAudioMatrix;
-			outGammatoneFilteredAudioPort.setEnvelope(timeStamp);
-			outGammatoneFilteredAudioPort.write();
-		}
 
-		if (outGammatoneFilteredPowerPort.getOutputCount()) {
-			outGammatoneFilteredPowerPort.prepare() = GammatoneFilteredPowerMatrix;
-			outGammatoneFilteredPowerPort.setEnvelope(timeStamp);
-			outGammatoneFilteredPowerPort.write();
-		}
-
-		if (outBeamformedAudioPort.getOutputCount()) {
-			outBeamformedAudioPort.prepare() = BeamformedAudioMatrix;
-			outBeamformedAudioPort.setEnvelope(timeStamp);
-			outBeamformedAudioPort.write();
-		}
-
-		if (outBeamformedRmsAudioPort.getOutputCount()) {
-			outBeamformedRmsAudioPort.prepare() = BeamformedRmsAudioMatrix;
-			outBeamformedRmsAudioPort.setEnvelope(timeStamp);
-			outBeamformedRmsAudioPort.write();
-		}
-
-		if (outBeamformedRmsPowerPort.getOutputCount()) {
-			outBeamformedRmsPowerPort.prepare() = BeamformedRmsPowerMatrix;
-			outBeamformedRmsPowerPort.setEnvelope(timeStamp);
-			outBeamformedRmsPowerPort.write();
-		}
-
-		if (outAllocentricAudioPort.getOutputCount()) {
-			outAllocentricAudioPort.prepare() = AllocentricAudioMatrix;
-			outAllocentricAudioPort.setEnvelope(timeStamp);
-			outAllocentricAudioPort.write();
-		}
+		//-- Write data to outgoing ports.
+		publishOutPorts();	
 		
+
 		//-- Grab the time delay of publishing on ports.
-		stopTime = yarp::os::Time::now();
-		timeTransmission = stopTime - startTime;
-		startTime = stopTime;
+		stopTime           = yarp::os::Time::now();
+		timeTransmission   = stopTime - startTime;
+		totalTransmission += timeTransmission;
+		startTime          = stopTime;
+
 
 		//-- Give time stats to the user.
-		timeTotal = timeDelay + timeReading + timeProcessing + timeTransmission;
+		timeTotal  = timeDelay + timeReading + timeProcessing + timeTransmission;
+		totalTime += timeTotal;
+		totalIterations++;
 		yInfo("End of Loop %d:  Offset  %.2f  |  Delay  %f  |  Reading  %f  |  Processing  %f  |  Transmission  %f  |  Total  %f  |", timeStamp.getCount(), headOffset, timeDelay, timeReading, timeProcessing, timeTransmission, timeTotal);
 	}
 }
@@ -357,6 +351,7 @@ bool AudioPreprocessorPeriodicThread::processing() {
 	omp_set_num_threads(numOmpThreads);
 	#endif
 	
+
 	//-- Separate the sound into left and right channels.	
 	for (int sample = 0; sample < numFrameSamples; sample++) {
 		for (int channel = 0; channel < numMics; channel++) {
@@ -423,3 +418,62 @@ bool AudioPreprocessorPeriodicThread::processing() {
 }
 
 
+void AudioPreprocessorPeriodicThread::publishOutPorts() {
+	
+	//-- Write to Active Ports.
+	if (outGammatoneFilteredAudioPort.getOutputCount()) {
+		outGammatoneFilteredAudioPort.prepare() = GammatoneFilteredAudioMatrix;
+		outGammatoneFilteredAudioPort.setEnvelope(timeStamp);
+		outGammatoneFilteredAudioPort.write();
+	}
+
+	if (outGammatoneFilteredPowerPort.getOutputCount()) {
+		outGammatoneFilteredPowerPort.prepare() = GammatoneFilteredPowerMatrix;
+		outGammatoneFilteredPowerPort.setEnvelope(timeStamp);
+		outGammatoneFilteredPowerPort.write();
+	}
+
+	if (outBeamformedAudioPort.getOutputCount()) {
+		outBeamformedAudioPort.prepare() = BeamformedAudioMatrix;
+		outBeamformedAudioPort.setEnvelope(timeStamp);
+		outBeamformedAudioPort.write();
+	}
+
+	if (outBeamformedRmsAudioPort.getOutputCount()) {
+		outBeamformedRmsAudioPort.prepare() = BeamformedRmsAudioMatrix;
+		outBeamformedRmsAudioPort.setEnvelope(timeStamp);
+		outBeamformedRmsAudioPort.write();
+	}
+
+	if (outBeamformedRmsPowerPort.getOutputCount()) {
+		outBeamformedRmsPowerPort.prepare() = BeamformedRmsPowerMatrix;
+		outBeamformedRmsPowerPort.setEnvelope(timeStamp);
+		outBeamformedRmsPowerPort.write();
+	}
+
+	if (outAllocentricAudioPort.getOutputCount()) {
+		outAllocentricAudioPort.prepare() = AllocentricAudioMatrix;
+		outAllocentricAudioPort.setEnvelope(timeStamp);
+		outAllocentricAudioPort.write();
+	}
+}
+
+
+void AudioPreprocessorPeriodicThread::endOfProcessingStats() {
+
+	//-- Display Execution stats.
+	yInfo(" ");
+	yInfo("End of Thread . . . ");
+	yInfo(" ");
+	yInfo("\t Total Iterations : %d", totalIterations);
+	yInfo("\t Total Time       : %.2f", totalTime);
+	yInfo(" ");
+	yInfo("Average Stats . . . ");
+	yInfo(" ");
+	yInfo("\t Delay        : %f", totalDelay        / (double) totalIterations );
+	yInfo("\t Reading      : %f", totalReading      / (double) totalIterations );
+	yInfo("\t Processing   : %f", totalProcessing   / (double) totalIterations );
+	yInfo("\t Transmission : %f", totalTransmission / (double) totalIterations );
+	yInfo("\t Loop Time    : %f", totalTime         / (double) totalIterations );
+	yInfo(" ");
+}

@@ -101,6 +101,38 @@
 
 
     <!-->  
+    Bayesian Probability Map.
+    <!-->
+    <module>
+        <name> frequencyVisualisation </name>
+        <parameters> --name /bayesianProbabilityMapVisualiser </parameters>
+        <node> icub </node>
+    </module>
+
+    <module>
+        <name> yarpview </name>
+        <parameters> --x 100 --y 100 --h 320 --w 240 --r 33 --name /bayesianProbabilityMapView </parameters>
+        <node> icub </node>
+    </module>
+
+
+    <!-->  
+    Bayesian Probability Angle.
+    <!-->
+    <module>
+        <name> frequencyVisualisation </name>
+        <parameters> --name /bayesianProbabilityAngleVisualiser </parameters>
+        <node> icub </node>
+    </module>
+
+    <module>
+        <name> yarpview </name>
+        <parameters> --x 100 --y 100 --h 320 --w 240 --r 33 --name /bayesianProbabilityAngleView </parameters>
+        <node> icub </node>
+    </module>
+
+
+    <!-->  
 
         Connections for Ports. 
 
@@ -127,7 +159,7 @@
 
     <connection>
         <from> /gammatoneFilteredAudioVisualiser/img:o  </from>
-        <to>   /gammatoneFilteredAudioVisualiserView    </to>
+        <to>   /gammatoneFilteredAudioView              </to>
         <protocol> tcp </protocol>
     </connection>
 
@@ -140,7 +172,7 @@
 
     <connection>
         <from> /gammatoneFilteredPowerVisualiser/img:o  </from>
-        <to>   /gammatoneFilteredPowerVisualiserView    </to>
+        <to>   /gammatoneFilteredPowerView              </to>
         <protocol> tcp </protocol>
     </connection>
 
@@ -153,7 +185,7 @@
 
     <connection>
         <from> /beamformedRmsAudioVisualiser/img:o  </from>
-        <to>   /beamformedRmsAudioVisualiserView    </to>
+        <to>   /beamformedRmsAudioView              </to>
         <protocol> tcp </protocol>
     </connection>
 
@@ -166,7 +198,7 @@
 
     <connection>
         <from> /beamformedRmsPowerVisualiser/img:o  </from>
-        <to>   /beamformedRmsPowerVisualiserView    </to>
+        <to>   /beamformedRmsPowerView              </to>
         <protocol> tcp </protocol>
     </connection>
 
@@ -179,7 +211,33 @@
 
     <connection>
         <from> /allocentricAudioVisualiser/img:o  </from>
-        <to>   /allocentricAudioVisualiserView    </to>
+        <to>   /allocentricAudioView              </to>
+        <protocol> tcp </protocol>
+    </connection>
+
+
+    <connection>
+        <from> /audioBayesianMap/bayesianProbabilityMap:o </from>
+        <to>   /bayesianProbabilityMapVisualiser/map:i    </to>
+        <protocol> tcp </protocol>
+    </connection> 
+
+    <connection>
+        <from> /bayesianProbabilityMapVisualiser/img:o  </from>
+        <to>   /bayesianProbabilityMapView              </to>
+        <protocol> tcp </protocol>
+    </connection>
+
+
+    <connection>
+        <from> /audioBayesianMap/bayesianProbabilityAngle:o </from>
+        <to>   /bayesianProbabilityAngleVisualiser/map:i    </to>
+        <protocol> tcp </protocol>
+    </connection> 
+
+    <connection>
+        <from> /bayesianProbabilityAngleVisualiser/img:o  </from>
+        <to>   /bayesianProbabilityAngleView              </to>
         <protocol> tcp </protocol>
     </connection>
 
