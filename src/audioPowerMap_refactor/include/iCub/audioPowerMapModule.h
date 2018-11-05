@@ -19,13 +19,13 @@
 */
 
 /* ===========================================================================
- * @file  audioPreprocessorModule.h
- * @brief Module for preprocessing raw audio data. 
- *          Processing is done view periodic thread.
+ * @file  audioPowerMapModule.h
+ * @brief Module for building an allocentric combining bayesian probability
+ *          with overall power probability of the auditory environment.
  * =========================================================================== */
 
-#ifndef _AUDIO_PREPROCESSOR_MODULE_H_
-#define _AUDIO_PREPROCESSOR_MODULE_H_
+#ifndef _AUDIO_POWER_MAP_MODULE_H_
+#define _AUDIO_POWER_MAP_MODULE_H_
 
 #include <iostream>
 #include <string>
@@ -37,9 +37,9 @@
 #include <yarp/os/Thread.h>
 #include <yarp/os/Log.h>
 
-#include <iCub/audioPreprocessorPeriodicThread.h>
+#include <iCub/audioPowerMapPeriodicThread.h>
 
-class AudioPreprocessorModule : public yarp::os::RFModule { 
+class AudioPowerMapModule : public yarp::os::RFModule { 
 
   private:
   
@@ -55,7 +55,7 @@ class AudioPreprocessorModule : public yarp::os::RFModule {
 	
 	//-- Pointer to a new thread to be created and 
 	//-- started in configure() and stopped in close().
-	AudioPreprocessorPeriodicThread *periodicThread; 
+	AudioPowerMapPeriodicThread *periodicThread; 
 
 
   public:
@@ -105,6 +105,6 @@ class AudioPreprocessorModule : public yarp::os::RFModule {
 	bool updateModule();
 };
 
-#endif // _AUDIO_PREPROCESSOR_MODULE_H_
+#endif // _AUDIO_POWER_MAP_MODULE_H_
 
 //----- end-of-file --- ( next line intentionally left blank ) ------------------

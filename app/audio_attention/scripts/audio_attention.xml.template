@@ -29,6 +29,12 @@
         <node> icub </node>
     </module>
 
+    <module>
+        <name> audioPowerMap_refactor </name>
+        <parameters></parameters>
+        <node> icub </node>
+    </module>
+
 
     <!-->  
     CONNECTIONS.
@@ -52,6 +58,27 @@
     </connection>
 
     <connection>
+        <from> /audioPreprocessor/beamformedRmsPower:o </from>
+        <to>   /audioPowerMap/bandPower:i              </to>
+        <protocol> tcp </protocol>
+    </connection>
+
+    <connection>
+        <from> /audioBayesianMap/bayesianProbabilityMap:o </from>
+        <to>   /audioPowerMap/probabilityMap:i            </to>
+        <protocol> tcp </protocol>
+    </connection>
+
+
+    <connection>
+        <!-->   Remove this later.  <!-->
+        <from> /audioPreprocessor/gammatoneFilteredPower:o </from>
+        <to>   /audioPowerMap/bandPower:i                  </to>
+        <protocol> tcp </protocol>
+    </connection>
+
+    <connection>
+        <!-->   Remove this later.  <!-->
         <from> /audioGrabber/sender </from>
         <to>   /yarphear            </to>
         <protocol> tcp </protocol>

@@ -21,7 +21,7 @@
 /* ===========================================================================
  * @file  interauralCues.h
  * @brief Object for processing filtered audio into various 
- *         different interaural cues (ITD, ILD, IPD, etc.).
+ *          different interaural cues (ITD, ILD, IPD, etc.).
  * =========================================================================== */
 
 #ifndef _INTERAURAL_CUES_H_
@@ -97,7 +97,7 @@ class InterauralCues {
 
     /* ===========================================================================
 	 *  Generate the Interaural Time Difference by applying simple
-	 *   delay and sum beamforming onto the provided filter bank.
+	 *    delay and sum beamforming onto the provided filter bank.
 	 * 
 	 * @param BeamformedAudio : Target for the beamformed audio (number of bands * number of beams, numFrameSamples)
      * @param FilterBank      : The filtered audio (number of mics * number of bands, number of samples).
@@ -107,8 +107,8 @@ class InterauralCues {
 
 	/* ===========================================================================
 	 *  Generate the Interaural Time Difference by applying simple 
-	 *   delay and sum beamforming with RMS applied across frames 
-	 *   onto the provided filter bank.
+	 *    delay and sum beamforming with RMS applied across frames 
+	 *    onto the provided filter bank.
 	 * 
 	 * @param BeamformedAudio : Target for the beamformed audio (number of bands, number of beams).
      * @param FilterBank      : The filtered audio (number of mics * number of bands, number of samples).
@@ -141,8 +141,8 @@ class InterauralCues {
 	
 	/* ===========================================================================
 	 *  Given the Rms of the front field beams, for each frequency band 
-	 *   interpolate over the beams to produce degree normal audio map
-	 *   of the front field auditory scene.
+	 *    interpolate over the beams to produce degree normal audio map
+	 *    of the front field auditory scene.
 	 * 
 	 * @param FrontFieldAudio    : Target for angle normal audio map (number of bands, number of angle positions).
 	 * @param BeamformedRmsAudio : The RMS of beamformed audio (number of bands, number of beams).
@@ -152,7 +152,7 @@ class InterauralCues {
 
 	/* ===========================================================================
 	 *  Given a front field auditory map, mirror it onto the back field.
-	 *   the map will be offsetted by the provided int.
+	 *    the map will be offsetted by the provided int.
 	 * 
 	 * @param FullFieldAudio  : Target for full field (360 degree) audio map (number of bands, total angle positions).
 	 * @param FrontFieldAudio : The angle normal audio map of the front field auditory scene (number of bands, number of angle positions).
@@ -163,7 +163,7 @@ class InterauralCues {
 
 	/* ===========================================================================
 	 *  Fills the vector frontFieldBeamAngles with the left to right 
-	 *   angles (in radians), each beam is pointed.
+	 *    angles (in radians), each beam is pointed.
 	 * =========================================================================== */
 	void setFrontFieldBeamAngles();
 

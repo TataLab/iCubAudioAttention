@@ -21,7 +21,7 @@
 /* ===========================================================================
  * @file  audioBayesianMapModule.h
  * @brief Module for building an allocentric Bayesian map 
- *         of sound sources in an environment.
+ *          of sound sources in an environment.
  * =========================================================================== */
 
 #ifndef _AUDIO_BAYESIAN_MAP_MODULE_H_

@@ -21,7 +21,7 @@
 /* ===========================================================================
  * @file  audioBayesianMapPeriodicThread.h
  * @brief Definition of a periodic thread that receives an allocentric map
- *         of the auditory environment, and builds a Bayesian map over time.
+ *          of the auditory environment, and builds a Bayesian map over time.
  * =========================================================================== */
 
 #ifndef _AUDIO_BAYESIAN_MAP_PERIODICTHREAD_H_
@@ -74,7 +74,7 @@ class AudioBayesianMapPeriodicThread : public yarp::os::PeriodicThread {
 
 	/* ===========================================================================
 	 *  Yarp Matrices used for Modules Computation. 
-	 *   Objects passed around to encapsulated objects.
+	 *    Objects passed around to encapsulated objects.
 	 * =========================================================================== */
 	yarp::sig::Matrix AllocentricAudioMatrix;
 	yarp::sig::Matrix ProbabilityMapMatrix;
@@ -90,9 +90,7 @@ class AudioBayesianMapPeriodicThread : public yarp::os::PeriodicThread {
 	 * =========================================================================== */
 	int numBands;
 	int angleRes;
-
 	int bufferSize;
-	int numOmpThreads;
 
 	/* ===========================================================================
 	 *  Derive variables from resource finders variables.
@@ -152,7 +150,7 @@ class AudioBayesianMapPeriodicThread : public yarp::os::PeriodicThread {
 
 	/* ===========================================================================
 	 *  Function that sets the rootname of all the ports 
-	 *   that are going to be created by the thread.
+	 *    that are going to be created by the thread.
 	 * 
 	 * @param str : rootname.
 	 * =========================================================================== */
@@ -161,7 +159,7 @@ class AudioBayesianMapPeriodicThread : public yarp::os::PeriodicThread {
 
 	/* ===========================================================================
 	 *  Function that returns the original root name and 
-	 *   appends another string iff passed as parameter.
+	 *    appends another string iff passed as parameter.
 	 * 
 	 * @param p : pointer to the string that has to be added.
 	 * 
@@ -192,10 +190,10 @@ class AudioBayesianMapPeriodicThread : public yarp::os::PeriodicThread {
 
 	/* ===========================================================================
 	 *  Does it all. Performs a bayesian update on the probability map using
-	 *   the new audio map provided. Afterwards the new map will be inserted 
-	 *   into the audio buffer. If the buffer is at it's specified capacity
-	 *   the oldest item will be removed from the knowledge state, and
-	 *   discarded from the buffer.
+	 *    the new audio map provided. Afterwards the new map will be inserted 
+	 *    into the audio buffer. If the buffer is at it's specified capacity
+	 *    the oldest item will be removed from the knowledge state, and
+	 *    discarded from the buffer.
 	 * 
 	 * @param ProbabilityMap : The target, and source for updating the knowledge state (Number of Bands, Number of Full Field Angles).
 	 * @param BufferedAudio  : A buffer containing recent audio maps. Oldest maps are used against the knowledge state.
@@ -226,9 +224,9 @@ class AudioBayesianMapPeriodicThread : public yarp::os::PeriodicThread {
 	/* ===========================================================================
 	 *  Normalises each row of the matrix to sum to one.
 	 * 
-	 * @param ProbabilityMap : Knowledge state of the auditory environment.
+	 * @param matrix : matrix to be normalised.
 	 * =========================================================================== */
-	void normaliseMatrix(yarp::sig::Matrix& ProbabilityMap);
+	void normaliseMatrix(yarp::sig::Matrix& matrix);
 
 
 	/* ===========================================================================
@@ -242,7 +240,7 @@ class AudioBayesianMapPeriodicThread : public yarp::os::PeriodicThread {
 
 	/* ===========================================================================
 	 *  Collapse a Probability Map across the bands to get the overall 
-	 *   probability at each angle of the knowledge state.
+	 *    probability at each angle of the knowledge state.
 	 * 
 	 * @param ProbabilityAngles : Angles of Probability.
 	 * @param ProbabilityMap    : Knowledge state of the auditory environment.

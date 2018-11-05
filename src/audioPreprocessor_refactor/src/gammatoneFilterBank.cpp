@@ -37,9 +37,9 @@ GammatoneFilterBank::GammatoneFilterBank(int mics, int samples, int frames, int 
 
 	/* ===========================================================================
 	 *  Create a table with spaced center frequencies ranging from 
-	 *   the lowest to highest. 
-	 *   - The length of this table is specified by numBands. 
-	 *   - The type of spacing is specified by erbSpaced.
+	 *    the lowest to highest. 
+	 *    - The length of this table is specified by numBands. 
+	 *    - The type of spacing is specified by erbSpaced.
 	 * =========================================================================== */
 	if (erbSpaced) {
 		makeErbCFs();
@@ -75,9 +75,9 @@ void GammatoneFilterBank::getGammatoneFilteredAudio(yarp::sig::Matrix& FilterBan
 			
 			/* ===================================================================
 			 *  Store a constant iterating position,
-			 *   to avoid unnecessary computation.
+			 *    to avoid unnecessary computation.
 			 *  Initialize all variables in this scope so
-			 *   that they are not shared amongst threads.
+			 *    that they are not shared amongst threads.
 			 * =================================================================== */
 			const int itrband  = band + (mic * numBands);
 			double    oldphase = 0.0;
@@ -106,7 +106,7 @@ void GammatoneFilterBank::getGammatoneFilteredAudio(yarp::sig::Matrix& FilterBan
 			/* ===================================================================
 			 *  Begin running the single filter on the provided raw audio.
 			 *  The resulting basilar membrane displacement is stored in
-			 *   the provided filter bank matrix.
+			 *    the provided filter bank matrix.
 			 * =================================================================== */
 
 			for (sample = 0; sample < numFrameSamples; sample++) {

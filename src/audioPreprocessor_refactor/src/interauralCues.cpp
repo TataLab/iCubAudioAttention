@@ -137,7 +137,7 @@ void InterauralCues::getBeamformedRmsAudio(yarp::sig::Matrix& BeamformedAudio, c
 void InterauralCues::getBeamformedRmsPower(yarp::sig::Matrix& BeamPower, const yarp::sig::Matrix& BeamformedAudio) {
 
     //-- Ensure space is allocated for the powermap.
-	BeamPower.resize(numBands, 2);
+	BeamPower.resize(numBands, numMics);
 
     //-- Iterate through and take the rms of all beams for a particular band.
 	for (int band = 0; band < numBands; band++) {
@@ -151,7 +151,12 @@ void InterauralCues::getBeamformedRmsPower(yarp::sig::Matrix& BeamPower, const y
 		}
 
 		//-- Take the root of the mean.
-		BeamPower[band][0] = BeamPower[band][1] = sqrt( bandSum / (double) numBeams );
+		BeamPower[band][0] = sqrt( bandSum / (double) numBeams );
+
+        //-- Fill the rest of the columns.
+        for (int mic = 1; mic < numMics; mic++) {
+            BeamPower[band][mic] = BeamPower[band][0];
+        }
 	}
 }
 
@@ -160,7 +165,7 @@ void InterauralCues::getAngleNormalAudioMap(yarp::sig::Matrix& AngleNormalAudio,
 
     /* ===========================================================================
      *  Step 1) Interpolate the rms of the beamformed audio to get 
-     *           angle normal audio map of the front field.
+     *            angle normal audio map of the front field.
      * =========================================================================== */
     interpolateFrontFieldBeamsRms (
         /* Target = */ frontFieldAudioMap,
@@ -169,8 +174,8 @@ void InterauralCues::getAngleNormalAudioMap(yarp::sig::Matrix& AngleNormalAudio,
 
     /* ===========================================================================
      *  Step 2) Mirror the front field onto the back field. To produce an
-     *           Egocentric audio map, the offset should be zero always.
-     *           For Allocentric the offset should be relative to the head angle.
+     *            Egocentric audio map, the offset should be zero always.
+     *            For Allocentric the offset should be relative to the head angle.
      * =========================================================================== */
     mirrorFrontField (
         /* Target = */ AngleNormalAudio,

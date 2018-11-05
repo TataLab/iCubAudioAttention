@@ -19,18 +19,22 @@
 */
 
 /* ===========================================================================
- * @file  audioPreprocessorPeriodicThread.h
- * @brief Definition of a periodic thread that receives raw audio data 
- *          from an input port and applies various signal processing to it.
+ * @file  audioPowerMapPeriodicThread.h
+ * @brief Definition of a periodic thread that receives an allocentric map
+ *          of the auditory probability, and the instantanious power of the 
+ *          environment to build a probability of power over time. These 
+ *          two maps are compined.
  * =========================================================================== */
 
-#ifndef _AUDIO_PREPROCESSOR_PERIODICTHREAD_H_
-#define _AUDIO_PREPROCESSOR_PERIODICTHREAD_H_
+#ifndef _AUDIO_POWER_MAP_PERIODICTHREAD_H_
+#define _AUDIO_POWER_MAP_PERIODICTHREAD_H_
 
 #include <iostream>
 #include <fstream>
 #include <cstring>
 #include <time.h>
+
+#include <queue>
 
 #include <yarp/math/Math.h>
 #include <yarp/sig/all.h>
@@ -39,14 +43,7 @@
 #include <yarp/os/PeriodicThread.h>
 #include <yarp/os/Log.h>
 
-#ifdef WITH_OMP
-#include <omp.h>
-#endif
-
-#include <iCub/gammatoneFilterBank.h>
-#include <iCub/interauralCues.h>
-
-class AudioPreprocessorPeriodicThread : public yarp::os::PeriodicThread {
+class AudioPowerMapPeriodicThread : public yarp::os::PeriodicThread {
 
   private:
 
@@ -59,8 +56,6 @@ class AudioPreprocessorPeriodicThread : public yarp::os::PeriodicThread {
 
 	yarp::os::Stamp timeStamp;  //-- Time stamp updated by yarp network.
 
-	double headOffset;          //-- Head angle of the robot.
-
 	double startTime;           //-- Used for keeping time and reporting temporal
     double stopTime;            //-- events to the user via command line.
 	
@@ -71,76 +66,53 @@ class AudioPreprocessorPeriodicThread : public yarp::os::PeriodicThread {
 	double timeTotal,        totalTime;         //-- when the RFModule is closed.
 
 	int    totalIterations;
-
+	
 	/* ===========================================================================
 	 *  Yarp Ports for Sending and Receiving Data from this Periodic Thread.
 	 * =========================================================================== */
-	yarp::os::BufferedPort< yarp::sig::Sound  > inRawAudioPort;
-	yarp::os::BufferedPort< yarp::sig::Matrix > outGammatoneFilteredAudioPort;
-	yarp::os::BufferedPort< yarp::sig::Matrix > outGammatoneFilteredPowerPort;
-	yarp::os::BufferedPort< yarp::sig::Matrix > outBeamformedAudioPort;
-	yarp::os::BufferedPort< yarp::sig::Matrix > outBeamformedRmsAudioPort;
-	yarp::os::BufferedPort< yarp::sig::Matrix > outBeamformedRmsPowerPort;
-	yarp::os::BufferedPort< yarp::sig::Matrix > outAllocentricAudioPort;
+	yarp::os::BufferedPort< yarp::sig::Matrix > inBandPowerPort;
+	yarp::os::BufferedPort< yarp::sig::Matrix > inProbabilityMapPort;
+	yarp::os::BufferedPort< yarp::sig::Matrix > outProbabilityPowerPort;
+	yarp::os::BufferedPort< yarp::sig::Matrix > outProbabilityPowerMapPort;
+	yarp::os::BufferedPort< yarp::sig::Matrix > outProbabilityPowerAnglePort;
+	yarp::os::BufferedPort< yarp::sig::Matrix > outInstantaneousPowerProbabilityMapPort;
+	yarp::os::BufferedPort< yarp::sig::Matrix > outInstantaneousPowerProbabilityAnglePort;
 
 	/* ===========================================================================
 	 *  Yarp Matrices used for Modules Computation. 
 	 *    Objects passed around to encapsulated objects.
 	 * =========================================================================== */
-	yarp::sig::Sound* inputSound;
-	yarp::sig::Matrix RawAudioMatrix;
-	yarp::sig::Matrix GammatoneFilteredAudioMatrix;
-	yarp::sig::Matrix GammatoneFilteredPowerMatrix;
-	yarp::sig::Matrix BeamformedAudioMatrix;
-	yarp::sig::Matrix BeamformedRmsAudioMatrix;
-	yarp::sig::Matrix BeamformedRmsPowerMatrix;
-	yarp::sig::Matrix AllocentricAudioMatrix;
-	
-	/* ===========================================================================
-	 *  Temporary Head Angle.
-	 * =========================================================================== */
-	yarp::os::Bottle* headAngleBottle;
-	yarp::os::BufferedPort< yarp::os::Bottle > inHeadAnglePort;
+	yarp::sig::Matrix inputBandPower;
+	yarp::sig::Matrix BandPowerMatrix;	
+	yarp::sig::Matrix ProbabilityMapMatrix;
+	yarp::sig::Matrix ProbabilityPowerMatrix;
+	yarp::sig::Matrix ProbabilityPowerMapMatrix;
+	yarp::sig::Matrix ProbabilityPowerAngleMatrix;
+	yarp::sig::Matrix InstantaneousPowerProbabilityMapMatrix;
+	yarp::sig::Matrix InstantaneousPowerProbabilityAngleMatrix;
 
 	/* ===========================================================================
-	 *  Encapsulated objects to perform processing.
+	 *  Buffer for ``remembering`` some number of states.
 	 * =========================================================================== */
-	GammatoneFilterBank* gammatoneFilterBank;
-	InterauralCues*      interauralCues;
+	std::queue< yarp::sig::Matrix > bufferedPowerMatrix;	
 
 	/* ===========================================================================
 	 *  Variables received from the resource finder.
 	 * =========================================================================== */
-	int    panAngle;
-	int    numMics;
-	double micDistance;
-
-	double speedOfSound;
-	int    samplingRate;
-	int    numFrameSamples;
-
-	int    numBands;
-	int    lowCf;
-	int    highCf;
-	bool   halfRec;
-	bool   erbSpaced;
-	int    angleRes;
-	int    numOmpThreads;
+	int numMics;
+	int numBands;
+	int angleRes;
+	int bufferSize;
 
 	/* ===========================================================================
 	 *  Derive variables from resource finders variables.
 	 * =========================================================================== */
-	int numBeamsPerHemifield;
-	int numBeams;
-    int numFrontFieldAngles;
-    int numFullFieldAngles;
+	int numFullFieldAngles;
 
 	/* ===========================================================================
 	 *  Constant variables.
 	 * =========================================================================== */
-	const double _norm       = pow(2,15);     //-- Used to convert received int to double.
-	const double _pi         = 2 * acos(0.0); //-- High precision pi.
-	const int    _baseAngles = 180;           //-- Base number of angles in front field.
+	const int _baseAngles = 180;           //-- Base number of angles in front field.
 
 
   public:
@@ -148,7 +120,7 @@ class AudioPreprocessorPeriodicThread : public yarp::os::PeriodicThread {
 	/* ===========================================================================
 	 *  Default Constructor.
 	 * =========================================================================== */
-	AudioPreprocessorPeriodicThread();
+	AudioPowerMapPeriodicThread();
 
 
 	/* ===========================================================================
@@ -157,13 +129,13 @@ class AudioPreprocessorPeriodicThread : public yarp::os::PeriodicThread {
 	 * @param robotname  : Name of the robot.
 	 * @param configFile : Path to the .ini configuration file.
 	 * =========================================================================== */
-	AudioPreprocessorPeriodicThread(std::string robotname, std::string configFile);
+	AudioPowerMapPeriodicThread(std::string robotname, std::string configFile);
 
 
 	/* ===========================================================================
 	 *  Destructor.
 	 * =========================================================================== */
-	~AudioPreprocessorPeriodicThread();
+	~AudioPowerMapPeriodicThread();
 
 
 	/* ===========================================================================
@@ -227,7 +199,91 @@ class AudioPreprocessorPeriodicThread : public yarp::os::PeriodicThread {
 
 
   private:
+
+	/* ===========================================================================
+	 *  Does it all. Performs a bayesian update on the probability power using
+	 *    the new audio power provided. Afterwards the new map will be inserted 
+	 *    into the power buffer. If the buffer is at it's specified capacity
+	 *    the oldest item will be removed from the knowledge state, and
+	 *    discarded from the buffer.
+	 * 
+	 * @param ProbabilityPower : The target, and source for updating the knowledge state (Number of Bands, 1).
+	 * @param BufferedPower    : A buffer containing recent audio power. Oldest power are used against the knowledge state.
+	 * @param BufferLength     : Used to ensure the number of samples kept is consistent.
+	 * @param CurrentPower     : An audio power sample freshly recieved from the audio preprocessor (Number of Bands, 1).
+	 * =========================================================================== */
+	void updateBayesianProbabilities(yarp::sig::Matrix& ProbabilityPower, std::queue< yarp::sig::Matrix >& BufferedPower, const int BufferLength, const yarp::sig::Matrix& CurrentPower);
+
+
+	/* ===========================================================================
+	 *  Multiplies the Current Power with the Probability Power.
+	 * 
+	 * @param ProbabilityPower : Knowledge state of the power environment.
+	 * @param CurrentPower     : New information of the power environment.
+	 * =========================================================================== */
+	void addAudioPower(yarp::sig::Matrix& ProbabilityPower, const yarp::sig::Matrix& CurrentPower);
+
+
+	/* ===========================================================================
+	 *  Divides the Antiquated Power from the Probability Power.
+	 * 
+	 * @param ProbabilityPower : Knowledge state of the power environment.
+	 * @param AntiquatedPower  : Old information of the power environment.
+	 * =========================================================================== */
+	void removeAudioPower(yarp::sig::Matrix& ProbabilityPower, const yarp::sig::Matrix& AntiquatedPower);
 	
+
+	/* ===========================================================================
+	 *  Normalises each row of the matrix to sum to one.
+	 * 
+	 * @param matrix : Matrix to be normalised.
+	 * =========================================================================== */
+	void normaliseMatrix(yarp::sig::Matrix& matrix);
+
+
+	/* ===========================================================================
+	 *  Normalises a single row of a matrix to sum to one.
+	 * 
+	 * @param MatrixRow : Specified Row.
+	 * @param Length    : Length of the row.
+	 * =========================================================================== */
+	void normaliseRow(double *MatrixRow, const int Length);
+
+
+	/* ===========================================================================
+	 *  Normalises based on the sum of the whole matrix.
+	 * 
+	 * @param matrix : Matrix to be normalised.
+	 * =========================================================================== */
+	void normaliseFull(yarp::sig::Matrix& matrix);
+
+
+	/* ===========================================================================
+	 *  Perform an index wise multiplication between the two matracies.
+	 * 
+	 * @param CombinedAudioPower : The Target, Matrix for the result to be stored (Number of Bands, Number of Full Field Angles).
+	 * @param AudioMap           : The Source of the Audio Map (Number of Bands, Number of Full Field Angles).
+	 * @param AudioPower         : The Source of the Audio Power (Number of Bands, 1).
+	 * =========================================================================== */
+	void combineAudioPower(yarp::sig::Matrix& CombinedAudioPower, const yarp::sig::Matrix& AudioMap, const yarp::sig::Matrix& AudioPower);
+
+
+	/* ===========================================================================
+	 *  Collapse a Probability Map across the bands to get the overall 
+	 *    probability at each angle of the knowledge state.
+	 * 
+	 * @param ProbabilityAngles : Angles of Probability.
+	 * @param ProbabilityMap    : Knowledge state of the auditory environment.
+	 * =========================================================================== */
+	void collapseProbabilityMap(yarp::sig::Matrix& ProbabilityAngles, const yarp::sig::Matrix& ProbabilityMap);
+
+
+	/* ===========================================================================
+	 *  Flush the buffer and reset the Knowledge state to its initial values.
+	 * =========================================================================== */
+	void clearProbabilities();
+
+
 	/* ===========================================================================
 	 *  Write data to out going ports if something is connected.
 	 * =========================================================================== */
@@ -240,6 +296,6 @@ class AudioPreprocessorPeriodicThread : public yarp::os::PeriodicThread {
 	void endOfProcessingStats();
 };
 
-#endif  //_AUDIO_PREPROCESSOR_PERIODICTHREAD_H_
+#endif  //_AUDIO_POWER_MAP_PERIODICTHREAD_H_
 
 //----- end-of-file --- ( next line intentionally left blank ) ------------------

@@ -127,7 +127,7 @@ bool AudioBayesianMapPeriodicThread::threadInit() {
 
 	/* ===========================================================================
 	 *  Initialize all ports. If any fail to open, return false to 
-	 *   let RFModule know initialization was unsuccessful.
+	 *    let RFModule know initialization was unsuccessful.
 	 * =========================================================================== */
 
 	if (!inAllocentricAudioPort.open(getName("/allocentricAudio:i").c_str())) {
@@ -245,9 +245,9 @@ bool AudioBayesianMapPeriodicThread::processing() {
 
 	/* ===========================================================================
 	 *  Update the knowledge state given the new information from the received 
-	 *   map. Store this map in the buffer, so that later this map can be
-	 *   ``forgotten`` from the knowledge. If the specified buffer limit has
-	 *   met, the oldest information will be removed.
+	 *    map. Store this map in the buffer, so that later this map can be
+	 *    ``forgotten`` from the knowledge. If the specified buffer limit has
+	 *    met, the oldest information will be removed.
 	 * =========================================================================== */
 	updateBayesianProbabilities (
 		/* Target = */ ProbabilityMapMatrix, 
@@ -259,7 +259,7 @@ bool AudioBayesianMapPeriodicThread::processing() {
 
 	/* ===========================================================================
 	 *  If someone is connected to this port, collapse probability map along
-	 *   the bands, so that at the end of processing it can be published.
+	 *    the bands, so that at the end of processing it can be published.
 	 * =========================================================================== */
 	if (outProbabilityAnglePort.getOutputCount()) {
 		collapseProbabilityMap (
