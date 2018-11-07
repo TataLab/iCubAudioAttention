@@ -55,6 +55,9 @@ class GammatoneFilterBank {
 	bool erbSpaced;
 
 	yarp::sig::Vector cfs;
+	yarp::sig::Matrix _placeHolderBasilarMembrane;
+	yarp::sig::Matrix _placeHolderEnvelope;
+	yarp::sig::Matrix _placeHolderPhase;
 	double            tpt;
 	const double      _pi = 2 * acos(0.0); //-- High precision pi.
 
@@ -89,7 +92,8 @@ class GammatoneFilterBank {
 	 * @param RawAudio   : Raw audio (number of mics, number of samples).
 	 * =========================================================================== */
     void getGammatoneFilteredAudio(yarp::sig::Matrix& FilterBank, const yarp::sig::Matrix& RawAudio);
-
+	void getGammatoneFilteredAudio(yarp::sig::Matrix& FilterBank, yarp::sig::Matrix& EnvelopeBank, const yarp::sig::Matrix& RawAudio);
+	
 
     /* ===========================================================================
 	 *  Find the total RMS power for each band across samples.
@@ -99,9 +103,14 @@ class GammatoneFilterBank {
 	 * =========================================================================== */
     void getGammatoneFilteredPower(yarp::sig::Matrix& BankPower, const yarp::sig::Matrix& FilterBank);
 
+	void getBandPassedAudio(yarp::sig::Matrix& BandPassedBank, const yarp::sig::Matrix& AudioBank, const double BandFreq);
+
 
   private:
 	
+	void singleGammatoneFilter(double* BasilarMembrane, double* Envelope, const double* RawAudio, const double CenterFrequency, const bool IncludeEnvelope);
+	void singleBandPass(double* BandPass, const double* Audio, const double BandFreq);
+
 	/* ===========================================================================
 	 *  Fill the vector cfs with erb spaced center frequencies.
 	 * =========================================================================== */

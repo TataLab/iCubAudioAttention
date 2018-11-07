@@ -25,6 +25,8 @@
 
 #include <iCub/gammatoneFilterBank.h>
 
+#define myMod(x,y)     ( ( x ) - ( y ) * floor ( ( x ) / ( y ) ) )
+
 GammatoneFilterBank::GammatoneFilterBank(int mics, int samples, int frames, int bands, int lcf, int hcf, bool hrec, bool erbs) : 
 	numMics(mics), 
 	samplingRate(samples), 
@@ -47,6 +49,10 @@ GammatoneFilterBank::GammatoneFilterBank(int mics, int samples, int frames, int 
 		makeLinearCFs();
 	}
 	
+	_placeHolderBasilarMembrane.resize(numMics * numBands, numFrameSamples);
+	_placeHolderEnvelope.resize(numMics * numBands, numFrameSamples);
+	_placeHolderPhase.resize(numMics * numBands, numFrameSamples);
+
 	tpt = (_pi + _pi) / samplingRate;
 }
 
@@ -60,91 +66,57 @@ void GammatoneFilterBank::getGammatoneFilteredAudio(yarp::sig::Matrix& FilterBan
 
 	//-- Ensure space is allocated for the filtered audio.
 	FilterBank.resize(numMics * numBands, numFrameSamples);
+	_placeHolderEnvelope.resize(numMics * numBands, numFrameSamples);
 
 	//-- Loop variabes.
-	int mic, band, sample;
-
+	int itrBandMic;
+	int numBandMic = numMics * numBands;
+	
 	#ifdef WITH_OMP
-	#pragma omp parallel	  	\
-  	 shared  (FilterBank, RawAudio, numMics, numBands, numFrameSamples)	 \
-  	 private (mic, band, sample)
+	#pragma omp parallel \
+  	 shared  (FilterBank, _placeHolderEnvelope, RawAudio) \
+  	 private (itrBandMic)
 	#pragma omp for schedule(guided)
 	#endif
-	for (band = 0; band < numBands; band++) {
-		for (mic = 0; mic < numMics; mic++) {
-			
-			/* ===================================================================
-			 *  Store a constant iterating position,
-			 *    to avoid unnecessary computation.
-			 *  Initialize all variables in this scope so
-			 *    that they are not shared amongst threads.
-			 * =================================================================== */
-			const int itrband  = band + (mic * numBands);
-			double    oldphase = 0.0;
-			double    tptbw    = tpt * HzToErb(cfs[band]) * BW_CORRECTION;
-			
-			//-- Based on integral of impulse response.
-			double gain = (tptbw*tptbw*tptbw*tptbw) / 3;
-			double a    = exp(-tptbw);
+	for (itrBandMic = 0; itrBandMic < numBandMic; itrBandMic++) {
 
-			//-- Update filter coefficients.
-			double a1 =  4.0 * a; 
-			double a2 = -6.0 * a * a; 
-			double a3 =  4.0 * a * a * a; 
-			double a4 = -a   * a * a * a; 
-			double a5 =  a   * a;
+		singleGammatoneFilter (
+			/* Basilar Membrane = */ FilterBank           [itrBandMic],
+			/* Hilbert Envelope = */ _placeHolderEnvelope [itrBandMic],
+			/* Channel of Audio = */ RawAudio             [itrBandMic / numBands],
+			/* Center Frequency = */ cfs                  [itrBandMic % numBands],
+			/* Include Envelope = */ false
+		);
+	}	
+}
 
-			double p0r = 0.0, p1r = 0.0, p2r = 0.0, p3r = 0.0, p4r = 0.0, u0r = 0.0;
-			double p0i = 0.0, p1i = 0.0, p2i = 0.0, p3i = 0.0, p4i = 0.0, u0i = 0.0;
 
-			double coscf = cos(tpt * cfs[band]);
-			double sincf = sin(tpt * cfs[band]);
-			double qcos  = 1; 
-			double oldcs = 0;
-			double qsin  = 0;
-			
-			/* ===================================================================
-			 *  Begin running the single filter on the provided raw audio.
-			 *  The resulting basilar membrane displacement is stored in
-			 *    the provided filter bank matrix.
-			 * =================================================================== */
+void GammatoneFilterBank::getGammatoneFilteredAudio(yarp::sig::Matrix& FilterBank, yarp::sig::Matrix& EnvelopeBank, const yarp::sig::Matrix& RawAudio) {
 
-			for (sample = 0; sample < numFrameSamples; sample++) {
-				
-				//-- Filter part 1 & shift down to d.c.
-				p0r = qcos*RawAudio[mic][sample] + a1*p1r + a2*p2r + a3*p3r + a4*p4r;
-				p0i = qsin*RawAudio[mic][sample] + a1*p1i + a2*p2i + a3*p3i + a4*p4i;
+	//-- Ensure space is allocated for the filtered audio.
+	FilterBank.resize(numMics * numBands, numFrameSamples);
+	EnvelopeBank.resize(numMics * numBands, numFrameSamples);
 
-				//-- Clip coefficients to stop them from becoming too close to zero.
-				if (fabs(p0r) < VERY_SMALL_NUMBER) {
-					p0r = 0.0F;
-				}
-				if (fabs(p0i) < VERY_SMALL_NUMBER) {
-					p0i = 0.0F;
-				}
+	//-- Loop variabes.
+	int itrBandMic;
+	int numBandMic = numMics * numBands;
+	
+	#ifdef WITH_OMP
+	#pragma omp parallel \
+  	 shared  (FilterBank, EnvelopeBank, _placeHolderPhase, RawAudio) \
+  	 private (itrBandMic)
+	#pragma omp for schedule(guided)
+	#endif
+	for (itrBandMic = 0; itrBandMic < numBandMic; itrBandMic++) {
 
-				//-- Filter part 2.
-				u0r = p0r + a1*p1r + a5*p2r;
-				u0i = p0i + a1*p1i + a5*p2i;
-
-				//-- Update filter results.
-				p4r = p3r; p3r = p2r; p2r = p1r; p1r = p0r;
-				p4i = p3i; p3i = p2i; p2i = p1i; p1i = p0i;
-
-				//-- Find the Basilar Membrane Response.
-				FilterBank[itrband][sample] = (u0r * qcos + u0i * qsin) * gain;
-				
-				//-- Apply Half-Wave Rectifying if enabled.
-				if (halfRec && FilterBank[itrband][sample] < 0.0) {
-					FilterBank[itrband][sample] = 0.0;
-				}
-
-				//-- Update coefficients.
-				qcos = coscf * (oldcs = qcos) + sincf * qsin;
-				qsin = coscf * qsin - sincf * oldcs;
-			}
-		}
-	}
+		singleGammatoneFilter (
+			/* Basilar Membrane = */ FilterBank   [itrBandMic],
+			/* Hilbert Envelope = */ EnvelopeBank [itrBandMic],
+			/* Channel of Audio = */ RawAudio     [itrBandMic / numBands],
+			/* Center Frequency = */ cfs          [itrBandMic % numBands],
+			/* Include Envelope = */ true
+		);
+	}	
 }
 
 
@@ -171,6 +143,205 @@ void GammatoneFilterBank::getGammatoneFilteredPower(yarp::sig::Matrix& BankPower
 			//-- Take the root of the mean.
 			BankPower[band][mic] = sqrt( bandSum / (double) numFrameSamples );
 		}
+	}
+}
+
+
+void GammatoneFilterBank::getBandPassedAudio(yarp::sig::Matrix& BandPassedBank, const yarp::sig::Matrix& AudioBank, const double BandFreq) {
+
+	//-- Ensure space is allocated for the band passed audio.
+	BandPassedBank.resize(numMics * numBands, numFrameSamples);
+
+	//-- Loop variables.
+	int itrBandMic;
+	int numBandMic = numMics * numBands;
+
+	#ifdef WITH_OMP
+	#pragma omp parallel \
+	 shared  (BandPassedBank, AudioBank) \
+	 private (itrBandMic)
+	#pragma omp for schedule(guided)
+	#endif
+	for (itrBandMic = 0; itrBandMic < numBandMic; itrBandMic++) {
+
+		singleBandPass (
+			/* Target    = */ BandPassedBank[itrBandMic],
+			/* Source    = */ AudioBank[itrBandMic],
+			/* Band Pass = */ BandFreq
+		);
+	}
+	
+}
+
+
+void GammatoneFilterBank::singleGammatoneFilter(double* BasilarMembrane, double* Envelope, const double* RawAudio, const double CenterFrequency, const bool IncludeEnvelope) {
+
+	/* ===================================================================
+	*  Initialize all variables in this scope so
+	*    that they are not shared amongst threads.
+	* =================================================================== */
+	const double tptbw    = tpt * HzToErb(CenterFrequency) * BW_CORRECTION;
+
+	//-- Based on integral of impulse response.
+	const double gain = (tptbw*tptbw*tptbw*tptbw) / 3;
+	const double a    = exp(-tptbw);
+
+	//-- Update filter coefficients.
+	const double a1 =  4.0 * a; 
+	const double a2 = -6.0 * a * a; 
+	const double a3 =  4.0 * a * a * a; 
+	const double a4 = -a   * a * a * a; 
+	const double a5 =  a   * a;
+
+	double p0r = 0.0, p1r = 0.0, p2r = 0.0, p3r = 0.0, p4r = 0.0, u0r = 0.0;
+	double p0i = 0.0, p1i = 0.0, p2i = 0.0, p3i = 0.0, p4i = 0.0, u0i = 0.0;
+
+	double coscf  = cos(tpt * CenterFrequency);
+	double sincf  = sin(tpt * CenterFrequency);
+	double qcos   = 1.0; 
+	double oldcs  = 0.0;
+	double qsin   = 0.0;
+	double pPhase = 0.0;
+	double dp     = 0.0;
+	double dps    = 0.0;
+
+	/* ===================================================================
+	 *  Begin running the single filter on the provided raw audio.
+	 *  The resulting basilar membrane displacement is stored in
+	 *    the provided filter bank matrix.
+	 * =================================================================== */
+
+	for (int sample = 0; sample < numFrameSamples; sample++) {
+		
+		//-- Filter part 1 & shift down to d.c.
+		p0r = qcos*RawAudio[sample] + a1*p1r + a2*p2r + a3*p3r + a4*p4r;
+		p0i = qsin*RawAudio[sample] + a1*p1i + a2*p2i + a3*p3i + a4*p4i;
+
+		//-- Clip coefficients to stop them from becoming too close to zero.
+		if (fabs(p0r) < VERY_SMALL_NUMBER) {
+			p0r = 0.0F;
+		}
+		if (fabs(p0i) < VERY_SMALL_NUMBER) {
+			p0i = 0.0F;
+		}
+
+		//-- Filter part 2.
+		u0r = p0r + a1*p1r + a5*p2r;
+		u0i = p0i + a1*p1i + a5*p2i;
+
+		//-- Update filter results.
+		p4r = p3r; p3r = p2r; p2r = p1r; p1r = p0r;
+		p4i = p3i; p3i = p2i; p2i = p1i; p1i = p0i;
+
+
+		/* ===============================================================
+		 *  Calculate the Basilar Membrane Response.
+		 * =============================================================== */
+		BasilarMembrane[sample] = (u0r * qcos + u0i * qsin) * gain;
+		
+		//-- Apply Half-Wave Rectifying if enabled.
+		if (halfRec && BasilarMembrane[sample] < 0.0) {
+			BasilarMembrane[sample] = 0.0;
+		}
+
+
+		/* ===============================================================
+		 *  Calculate the Instantaneous Hilbert Envelope.
+		 *    env = abs(u) * gain
+		 * =============================================================== */
+		if (IncludeEnvelope) {
+			Envelope[sample] = sqrt( u0r*u0r + u0i*u0i ) * gain;
+		}
+
+
+		/* ===============================================================
+		 *  Calculate the Instantaneous Phase.
+		 *    ph = unwrap(angle(u))
+		 * =============================================================== */
+		//if (IncludePhase) {
+		//	
+		//	//-- This opperation is very slow. Revisit this later.
+		//	Phase[sample] = atan2(u0i, u0r);
+		//	
+		//  //*
+		//	// Unwrap Version 1
+		//	dp = Phase[sample] - pPhase;
+		//	if (fabs(dp) > _pi) {
+		//		dps = myMod(dp + _pi, 2 * _pi) - _pi;
+		//		if (dps == -_pi && dp > 0) {
+		//			dps = _pi;
+		//		}
+		//		Phase[sample] = Phase[sample] + dps - dp;
+		//	}
+		//	pPhase = Phase[sample];
+		//	//*/
+		//
+		//  /*
+		//	// Unwrap Version 2
+		//	dp = Phase[sample] - pPhase;
+		//	dp = dp > _pi ? dp - 2.0 * _pi : (dp < -_pi ? dp + 2.0 * _pi : dp);
+		//	Phase[sample] = pPhase + dp;
+		//	pPhase = Phase[sample];
+		//	*/
+		//}
+		
+		//-- Update coefficients.
+		qcos = coscf * (oldcs = qcos) + sincf * qsin;
+		qsin = coscf * qsin - sincf * oldcs;
+	}
+}
+
+
+void GammatoneFilterBank::singleBandPass(double* BandPass, const double* Audio, const double BandFreq)  {
+
+	/* ===================================================================
+	*  Initialize all variables in this scope so
+	*    that they are not shared amongst threads.
+	* =================================================================== */
+	const double fr    = tpt * BandFreq;
+	const double tptbw = fr  * BW_CORRECTION;
+	const double gain  = (tptbw*tptbw*tptbw*tptbw) / 3;
+
+	const double f = tan( fr / (2.0 * (fr / ((fr + tptbw) - (fr - tptbw)))) );
+	const double b = 0.5 * (1.0 - f) / (1.0 + f);
+	const double y = (0.5 * b) * cos(fr);
+
+	//-- Update filter coefficients.
+	const double a0 =  0.5 - b;
+	const double a1 =  0.0;
+	const double a2 = -1.0 * a0;
+	const double b1 = -2.0 * y;
+	const double b2 =  2.0 * b;
+
+	double p0i = 0.0, p1i = 0.0, p2i = 0.0;
+	double p0o = 0.0, p1o = 0.0, p2o = 0.0;
+
+	/* ===================================================================
+	 *  Begin running the single band pass on the provided input audio.
+	 *  The resulting band passed audio is stored in the 
+	 *    provided band pass matrix.
+	 * =================================================================== */
+
+	for (int sample = 0; sample < numFrameSamples; sample++) {
+		
+		//-- Filter out all except the specified frequency band.
+		p0i = gain * Audio[sample];
+		p0o = (a0*p0i + a1*p1i + a2*p2i) - (b2*p2o + b1*p1o);
+
+		//-- Clip coefficients to stop them from becoming too close to zero.
+		if (fabs(p0o) < VERY_SMALL_NUMBER) {
+			p0o = 0.0F;
+		}
+		if (fabs(p0i) < VERY_SMALL_NUMBER) {
+			p0i = 0.0F;
+		}
+
+		//-- Update filter results.
+		p2i = p1i; p1i = p0i;
+		p2o = p1o; p1o = p0o;
+
+		//-- Store the results.
+		BandPass[sample] = p0o;
 	}
 }
 
