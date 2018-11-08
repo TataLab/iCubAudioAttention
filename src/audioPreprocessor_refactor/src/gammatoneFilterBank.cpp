@@ -322,28 +322,27 @@ void GammatoneFilterBank::singleBandPass(const double* Audio, double* BandPass, 
 	*  Initialize all variables in this scope so
 	*    that they are not shared amongst threads.
 	* =================================================================== */
-	const double fr    = tpt * BandFreq;
-	const double tptbw = fr  * BW_CORRECTION;
-	const double gain  = (tptbw*tptbw*tptbw*tptbw) / 3;
 
-	const double f = tan( fr / (2.0 * (fr / ((fr + tptbw) - (fr - tptbw)))) );
-	const double b = 0.5 * (1.0 - f) / (1.0 + f);
-	const double y = (0.5 * b) * cos(fr);
+	const double gain = 100000.0;
+	const double Q  = 82.0;
+	const double BW = BandFreq * BW_CORRECTION / Q;
+	const double f0 = samplingRate / 2.0;
+	const double C  = 1.0 / tan( _pi * (BW / samplingRate) );
+	const double D  = 2.0 * cos( tpt * f0 );
 
-	//-- Update filter coefficients.
-	const double a0 =  0.5 - b;
+	//-- Update Filter coefficients.
+	const double a0 =  1.0 / (1.0 + C);
 	const double a1 =  0.0;
-	const double a2 = -1.0 * a0;
-	const double b1 = -2.0 * y;
-	const double b2 =  2.0 * b;
+	const double a2 = -a0;
+	const double b1 = -a0 * C * D;
+	const double b2 =  a0 * (C - 1.0);
 
 	double p0i = 0.0, p1i = 0.0, p2i = 0.0;
 	double p0o = 0.0, p1o = 0.0, p2o = 0.0;
 
 	/* ===================================================================
-	 *  Begin running the single band pass on the provided input audio.
-	 *  The resulting band passed audio is stored in the 
-	 *    provided band pass matrix.
+	 *  Begin running the single butterworth band pass on the provided input audio.
+	 *  The resulting band passed audio is stored in the provided band pass matrix.
 	 * =================================================================== */
 
 	for (int sample = 0; sample < numFrameSamples; sample++) {
@@ -353,12 +352,12 @@ void GammatoneFilterBank::singleBandPass(const double* Audio, double* BandPass, 
 		p0o = (a0*p0i + a1*p1i + a2*p2i) - (b2*p2o + b1*p1o);
 
 		//-- Clip coefficients to stop them from becoming too close to zero.
-		//if (fabs(p0o) < VERY_SMALL_NUMBER) {
-		//	p0o = 0.0F;
-		//}
-		//if (fabs(p0i) < VERY_SMALL_NUMBER) {
-		//	p0i = 0.0F;
-		//}
+		if (fabs(p0o) < VERY_SMALL_NUMBER) {
+			p0o = 0.0F;
+		}
+		if (fabs(p0i) < VERY_SMALL_NUMBER) {
+			p0i = 0.0F;
+		}
 
 		//-- Update filter results.
 		p2i = p1i; p1i = p0i;
