@@ -37,6 +37,14 @@ inline void ones(yarp::sig::Matrix& mat) {
 }
 
 
+inline void makeTimeStamp(double& totalStat, double& timeStat, double& startTime, double& stopTime) {
+	stopTime   = yarp::os::Time::now();
+	timeStat   = stopTime - startTime;
+	totalStat += timeStat;
+	startTime  = stopTime;
+}
+
+
 AudioBayesianMapPeriodicThread::AudioBayesianMapPeriodicThread() : 
 	PeriodicThread(THPERIOD) {
 
@@ -191,46 +199,23 @@ void AudioBayesianMapPeriodicThread::run() {
 	
 	if (inAllocentricAudioPort.getInputCount()) {
 
-		//-- Grab the time time difference of waiting between loops.
-		stopTime    = yarp::os::Time::now();
-		timeDelay   = stopTime - startTime;
-		totalDelay += timeDelay;
-		startTime   = stopTime;
-
-
+		makeTimeStamp(totalDelay, timeDelay, startTime, stopTime);
+		
 		//-- Get Input.
 		AllocentricAudioMatrix = *inAllocentricAudioPort.read(true);
 		inAllocentricAudioPort.getEnvelope(timeStamp);
 
-
-		//-- Grab the time difference of reading input.
-		stopTime      = yarp::os::Time::now();
-		timeReading   = stopTime - startTime;
-		totalReading += timeReading;
-		startTime     = stopTime;
-
+		makeTimeStamp(totalReading, timeReading, startTime, stopTime);
 
 		//-- Main Loop.
 		result = processing();
 
-
-		//-- Grab the time difference of processing the input.
-		stopTime         = yarp::os::Time::now();
-		timeProcessing   = stopTime - startTime;
-		totalProcessing += timeProcessing;
-		startTime        = stopTime;
-
+		makeTimeStamp(totalProcessing, timeProcessing, startTime, stopTime);
 
 		//-- Write data to outgoing ports.
 		publishOutPorts();
 
-
-		//-- Grab the time delay of publishing on ports.
-		stopTime           = yarp::os::Time::now();
-		timeTransmission   = stopTime - startTime;
-		totalTransmission += timeTransmission;
-		startTime          = stopTime;
-
+		makeTimeStamp(totalTransmission, timeTransmission, startTime, stopTime);
 
 		//-- Give time stats to the user.
 		timeTotal  = timeDelay + timeReading + timeProcessing + timeTransmission;
@@ -250,10 +235,10 @@ bool AudioBayesianMapPeriodicThread::processing() {
 	 *    met, the oldest information will be removed.
 	 * =========================================================================== */
 	updateBayesianProbabilities (
+		/* Source = */ AllocentricAudioMatrix,
 		/* Target = */ ProbabilityMapMatrix, 
 		/* Buffer = */ bufferedAudioMatrix,
-		/* Length = */ bufferSize,
-		/* Source = */ AllocentricAudioMatrix
+		/* Length = */ bufferSize
 	);
 
 
@@ -263,29 +248,28 @@ bool AudioBayesianMapPeriodicThread::processing() {
 	 * =========================================================================== */
 	if (outProbabilityAnglePort.getOutputCount()) {
 		collapseProbabilityMap (
-			/* Target = */ ProbabilityAngleMatrix,
-			/* Source = */ ProbabilityMapMatrix
+			/* Source = */ ProbabilityMapMatrix,
+			/* Target = */ ProbabilityAngleMatrix
 		);
 	}
-
 
 	return true;
 }
 
 
-void AudioBayesianMapPeriodicThread::updateBayesianProbabilities(yarp::sig::Matrix& ProbabilityMap, std::queue< yarp::sig::Matrix >& BufferedAudio, const int BufferLength, const yarp::sig::Matrix& CurrentAudio) {
+void AudioBayesianMapPeriodicThread::updateBayesianProbabilities(const yarp::sig::Matrix& CurrentAudio, yarp::sig::Matrix& ProbabilityMap, std::queue< yarp::sig::Matrix >& BufferedAudio, const int BufferLength) {
 	
 	//-- Add the current audio map to the buffer.
 	BufferedAudio.push(CurrentAudio);
 
 	//-- Add the current audio map to the state knowledge.
-	addAudioMap(ProbabilityMap, CurrentAudio);
+	addAudioMap(CurrentAudio, ProbabilityMap);
 
 	//-- If the buffer is full, begin to remove audio maps.
 	if (BufferedAudio.size() >= BufferLength) {
 
 		//-- Remove an Audio Event.
-		removeAudioMap(ProbabilityMap, BufferedAudio.front());
+		removeAudioMap(BufferedAudio.front(), ProbabilityMap);
 
 		//-- Get rid of it.
 		BufferedAudio.pop();
@@ -296,7 +280,7 @@ void AudioBayesianMapPeriodicThread::updateBayesianProbabilities(yarp::sig::Matr
 }
 
 
-void AudioBayesianMapPeriodicThread::addAudioMap(yarp::sig::Matrix& ProbabilityMap, const yarp::sig::Matrix& CurrentAudio) {
+void AudioBayesianMapPeriodicThread::addAudioMap(const yarp::sig::Matrix& CurrentAudio, yarp::sig::Matrix& ProbabilityMap) {
 
 	//-- Add the new audio to the knowledge state.
 	int columnLength = ProbabilityMap.cols();
@@ -309,7 +293,7 @@ void AudioBayesianMapPeriodicThread::addAudioMap(yarp::sig::Matrix& ProbabilityM
 }
 
 
-void AudioBayesianMapPeriodicThread::removeAudioMap(yarp::sig::Matrix& ProbabilityMap, const yarp::sig::Matrix& AntiquatedAudio) {
+void AudioBayesianMapPeriodicThread::removeAudioMap(const yarp::sig::Matrix& AntiquatedAudio, yarp::sig::Matrix& ProbabilityMap) {
 
 	//-- Remove the old audio from the knowledge state.
 	int columnLength = ProbabilityMap.cols();
@@ -349,7 +333,7 @@ void AudioBayesianMapPeriodicThread::normaliseRow(double *MatrixRow, const int L
 }
 
 
-void AudioBayesianMapPeriodicThread::collapseProbabilityMap(yarp::sig::Matrix& ProbabilityAngles, const yarp::sig::Matrix& ProbabilityMap) {
+void AudioBayesianMapPeriodicThread::collapseProbabilityMap(const yarp::sig::Matrix& ProbabilityMap, yarp::sig::Matrix& ProbabilityAngles) {
 	
 	//-- Collapse the knowledge state across the frequency bands.
 	ProbabilityAngles.resize(1, numFullFieldAngles);

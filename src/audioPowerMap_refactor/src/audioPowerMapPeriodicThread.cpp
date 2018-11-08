@@ -37,6 +37,14 @@ inline void ones(yarp::sig::Matrix& mat) {
 }
 
 
+inline void makeTimeStamp(double& totalStat, double& timeStat, double& startTime, double& stopTime) {
+	stopTime   = yarp::os::Time::now();
+	timeStat   = stopTime - startTime;
+	totalStat += timeStat;
+	startTime  = stopTime;
+}
+
+
 AudioPowerMapPeriodicThread::AudioPowerMapPeriodicThread() : 
 	PeriodicThread(THPERIOD) {
 
@@ -240,12 +248,7 @@ void AudioPowerMapPeriodicThread::run() {
 	
 	if (inBandPowerPort.getInputCount()) {
 
-		//-- Grab the time time difference of waiting between loops.
-		stopTime    = yarp::os::Time::now();
-		timeDelay   = stopTime - startTime;
-		totalDelay += timeDelay;
-		startTime   = stopTime;
-
+		makeTimeStamp(totalDelay, timeDelay, startTime, stopTime);
 
 		//-- Get Input.
 		inputBandPower = *inBandPowerPort.read(true);
@@ -256,35 +259,17 @@ void AudioPowerMapPeriodicThread::run() {
 			inProbabilityMapPort.getEnvelope(timeStamp);
 		}
 
-
-		//-- Grab the time difference of reading input.
-		stopTime      = yarp::os::Time::now();
-		timeReading   = stopTime - startTime;
-		totalReading += timeReading;
-		startTime     = stopTime;
-
+		makeTimeStamp(totalReading, timeReading, startTime, stopTime);
 
 		//-- Main Loop.
 		result = processing();
 
-
-		//-- Grab the time difference of processing the input.
-		stopTime         = yarp::os::Time::now();
-		timeProcessing   = stopTime - startTime;
-		totalProcessing += timeProcessing;
-		startTime        = stopTime;
-
+		makeTimeStamp(totalProcessing, timeProcessing, startTime, stopTime);
 
 		//-- Write data to outgoing ports.
 		publishOutPorts();
 
-
-		//-- Grab the time delay of publishing on ports.
-		stopTime           = yarp::os::Time::now();
-		timeTransmission   = stopTime - startTime;
-		totalTransmission += timeTransmission;
-		startTime          = stopTime;
-
+		makeTimeStamp(totalTransmission, timeTransmission, startTime, stopTime);
 
 		//-- Give time stats to the user.
 		timeTotal  = timeDelay + timeReading + timeProcessing + timeTransmission;
@@ -320,10 +305,10 @@ bool AudioPowerMapPeriodicThread::processing() {
 	 *    met, the oldest information will be removed.
 	 * =========================================================================== */
 	updateBayesianProbabilities (
+		/* Source = */ BandPowerMatrix,
 		/* Target = */ ProbabilityPowerMatrix,
 		/* Buffer = */ bufferedPowerMatrix,
-		/* Length = */ bufferSize,
-		/* Source = */ BandPowerMatrix
+		/* Length = */ bufferSize
 	);
 
 
@@ -336,15 +321,15 @@ bool AudioPowerMapPeriodicThread::processing() {
 		if (outProbabilityPowerMapPort.getOutputCount() || outProbabilityPowerAnglePort.getOutputCount()) {
 		
 			combineAudioPower (
-				/* Combined   = */ ProbabilityPowerMapMatrix,
 				/* AudioMap   = */ ProbabilityMapMatrix,
-				/* AudioPower = */ ProbabilityPowerMatrix
+				/* AudioPower = */ ProbabilityPowerMatrix,
+				/* Combined   = */ ProbabilityPowerMapMatrix
 			);
 
 			if (outProbabilityPowerAnglePort.getOutputCount()) {
 				collapseProbabilityMap (
-					/* Target = */ ProbabilityPowerAngleMatrix,
-					/* Source = */ ProbabilityPowerMapMatrix
+					/* Source = */ ProbabilityPowerMapMatrix,
+					/* Target = */ ProbabilityPowerAngleMatrix
 				);
 			}
 		}
@@ -357,15 +342,15 @@ bool AudioPowerMapPeriodicThread::processing() {
 		if (outInstantaneousPowerProbabilityMapPort.getOutputCount() || outInstantaneousPowerProbabilityAnglePort.getOutputCount()) {
 
 			combineAudioPower (
-				/* Combined   = */ InstantaneousPowerProbabilityMapMatrix,
 				/* AudioMap   = */ ProbabilityMapMatrix,
-				/* AudioPower = */ BandPowerMatrix
+				/* AudioPower = */ BandPowerMatrix,
+				/* Combined   = */ InstantaneousPowerProbabilityMapMatrix
 			);
 
 			if (outInstantaneousPowerProbabilityAnglePort.getOutputCount()) {
 				collapseProbabilityMap (
-					/* Target = */ InstantaneousPowerProbabilityAngleMatrix,
-					/* Source = */ InstantaneousPowerProbabilityMapMatrix
+					/* Source = */ InstantaneousPowerProbabilityMapMatrix,
+					/* Target = */ InstantaneousPowerProbabilityAngleMatrix
 				);
 			}
 		}
@@ -375,19 +360,19 @@ bool AudioPowerMapPeriodicThread::processing() {
 }
 
 
-void AudioPowerMapPeriodicThread::updateBayesianProbabilities(yarp::sig::Matrix& ProbabilityPower, std::queue< yarp::sig::Matrix >& BufferedPower, const int BufferLength, const yarp::sig::Matrix& CurrentPower) {
+void AudioPowerMapPeriodicThread::updateBayesianProbabilities(const yarp::sig::Matrix& CurrentPower, yarp::sig::Matrix& ProbabilityPower, std::queue< yarp::sig::Matrix >& BufferedPower, const int BufferLength) {
 	
 	//-- Add the current power map to the buffer.
 	BufferedPower.push(CurrentPower);
 
 	//-- Add the current power map to the state knowledge.
-	addAudioPower(ProbabilityPower, CurrentPower);
+	addAudioPower(CurrentPower, ProbabilityPower);
 
 	//-- If the buffer is full, begin to remove power maps.
 	if (BufferedPower.size() >= BufferLength) {
 
 		//-- Remove a Power Event.
-		removeAudioPower(ProbabilityPower, BufferedPower.front());
+		removeAudioPower(BufferedPower.front(), ProbabilityPower);
 
 		//-- Get rid of it.
 		BufferedPower.pop();
@@ -398,7 +383,7 @@ void AudioPowerMapPeriodicThread::updateBayesianProbabilities(yarp::sig::Matrix&
 }
 
 
-void AudioPowerMapPeriodicThread::addAudioPower(yarp::sig::Matrix& ProbabilityPower, const yarp::sig::Matrix& CurrentPower) {
+void AudioPowerMapPeriodicThread::addAudioPower(const yarp::sig::Matrix& CurrentPower, yarp::sig::Matrix& ProbabilityPower) {
 
 	//-- Add the new power to the knowledge state.
 	int columnLength = ProbabilityPower.cols();
@@ -411,7 +396,7 @@ void AudioPowerMapPeriodicThread::addAudioPower(yarp::sig::Matrix& ProbabilityPo
 }
 
 
-void AudioPowerMapPeriodicThread::removeAudioPower(yarp::sig::Matrix& ProbabilityPower, const yarp::sig::Matrix& AntiquatedPower) {
+void AudioPowerMapPeriodicThread::removeAudioPower(const yarp::sig::Matrix& AntiquatedPower, yarp::sig::Matrix& ProbabilityPower) {
 
 	//-- Remove the old audio from the knowledge state.
 	int columnLength = ProbabilityPower.cols();
@@ -472,7 +457,7 @@ void AudioPowerMapPeriodicThread::normaliseFull(yarp::sig::Matrix& matrix) {
 }
 
 
-void AudioPowerMapPeriodicThread::combineAudioPower(yarp::sig::Matrix& CombinedAudioPower, const yarp::sig::Matrix& AudioMap, const yarp::sig::Matrix& AudioPower) {
+void AudioPowerMapPeriodicThread::combineAudioPower(const yarp::sig::Matrix& AudioMap, const yarp::sig::Matrix& AudioPower, yarp::sig::Matrix& CombinedAudioPower) {
 
 	//-- Multiply the band power by positions in the audio map.
 	CombinedAudioPower.resize(numBands, numFullFieldAngles);
@@ -491,7 +476,7 @@ void AudioPowerMapPeriodicThread::combineAudioPower(yarp::sig::Matrix& CombinedA
 	//normaliseMatrix(CombinedAudioPower);
 }
 
-void AudioPowerMapPeriodicThread::collapseProbabilityMap(yarp::sig::Matrix& ProbabilityAngles, const yarp::sig::Matrix& ProbabilityMap) {
+void AudioPowerMapPeriodicThread::collapseProbabilityMap(const yarp::sig::Matrix& ProbabilityMap, yarp::sig::Matrix& ProbabilityAngles) {
 	
 	//-- Collapse the knowledge state across the frequency bands.
 	ProbabilityAngles.resize(1, numFullFieldAngles);

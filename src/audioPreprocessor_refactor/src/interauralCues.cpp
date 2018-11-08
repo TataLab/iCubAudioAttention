@@ -46,7 +46,6 @@ InterauralCues::InterauralCues(int mics, double dist, double c, int samples, int
 
     setFrontFieldBeamAngles();
     setFrontFieldRealAngles();
-
 }
 
 
@@ -55,7 +54,7 @@ InterauralCues::~InterauralCues() {
 }
 
 
-void InterauralCues::getBeamformedAudio(yarp::sig::Matrix& BeamformedAudio, const yarp::sig::Matrix& FilterBank) {
+void InterauralCues::getBeamformedAudio(const yarp::sig::Matrix& FilterBank, yarp::sig::Matrix& BeamformedAudio) {
 
     //-- Ensure space is allocated for this.
 	BeamformedAudio.resize(numBands * numBeams, numFrameSamples);
@@ -65,7 +64,7 @@ void InterauralCues::getBeamformedAudio(yarp::sig::Matrix& BeamformedAudio, cons
 
     #ifdef WITH_OMP
     #pragma omp parallel \
-     shared  (BeamformedAudio, FilterBank, numBands, numBeams, numBeamsPerHemifield, numFrameSamples) \
+     shared  (FilterBank, BeamformedAudio) \
      private (band, beam, sample)
     #pragma omp for schedule(guided)
     #endif
@@ -92,7 +91,7 @@ void InterauralCues::getBeamformedAudio(yarp::sig::Matrix& BeamformedAudio, cons
 }
 
 
-void InterauralCues::getBeamformedRmsAudio(yarp::sig::Matrix& BeamformedAudio, const yarp::sig::Matrix& FilterBank) {
+void InterauralCues::getBeamformedRmsAudio(const yarp::sig::Matrix& FilterBank, yarp::sig::Matrix& BeamformedAudio) {
 
     //-- Ensure space is allocated for this.
 	BeamformedAudio.resize(numBands, numBeams);
@@ -102,7 +101,7 @@ void InterauralCues::getBeamformedRmsAudio(yarp::sig::Matrix& BeamformedAudio, c
 
     #ifdef WITH_OMP
     #pragma omp parallel \
-     shared  (BeamformedAudio, FilterBank, numBands, numBeams, numBeamsPerHemifield, numFrameSamples) \
+     shared  (FilterBank, BeamformedAudio) \
      private (band, beam, sample)
     #pragma omp for schedule(guided)
     #endif
@@ -134,7 +133,7 @@ void InterauralCues::getBeamformedRmsAudio(yarp::sig::Matrix& BeamformedAudio, c
 }
 
 
-void InterauralCues::getBeamformedRmsPower(yarp::sig::Matrix& BeamPower, const yarp::sig::Matrix& BeamformedAudio) {
+void InterauralCues::getBeamformedRmsPower(const yarp::sig::Matrix& BeamformedAudio, yarp::sig::Matrix& BeamPower) {
 
     //-- Ensure space is allocated for the powermap.
 	BeamPower.resize(numBands, numMics);
@@ -161,15 +160,15 @@ void InterauralCues::getBeamformedRmsPower(yarp::sig::Matrix& BeamPower, const y
 }
 
 
-void InterauralCues::getAngleNormalAudioMap(yarp::sig::Matrix& AngleNormalAudio, const yarp::sig::Matrix& BeamformedRmsAudio, const int Offset) {
+void InterauralCues::getAngleNormalAudioMap(const yarp::sig::Matrix& BeamformedRmsAudio, yarp::sig::Matrix& AngleNormalAudio, const int Offset) {
 
     /* ===========================================================================
      *  Step 1) Interpolate the rms of the beamformed audio to get 
      *            angle normal audio map of the front field.
      * =========================================================================== */
     interpolateFrontFieldBeamsRms (
-        /* Target = */ frontFieldAudioMap,
-        /* Source = */ BeamformedRmsAudio
+        /* Source = */ BeamformedRmsAudio,
+        /* Target = */ frontFieldAudioMap
     );
 
     /* ===========================================================================
@@ -178,14 +177,14 @@ void InterauralCues::getAngleNormalAudioMap(yarp::sig::Matrix& AngleNormalAudio,
      *            For Allocentric the offset should be relative to the head angle.
      * =========================================================================== */
     mirrorFrontField (
-        /* Target = */ AngleNormalAudio,
         /* Source = */ frontFieldAudioMap,
+        /* Target = */ AngleNormalAudio,
         /* Offset = */ Offset * angleResolution
     );
 }
 
 
-void InterauralCues::interpolateFrontFieldBeamsRms(yarp::sig::Matrix& FrontFieldAudio, const yarp::sig::Matrix& BeamformedRmsAudio) {
+void InterauralCues::interpolateFrontFieldBeamsRms(const yarp::sig::Matrix& BeamformedRmsAudio, yarp::sig::Matrix& FrontFieldAudio) {
 
     //-- Ensure space is allocated for the audio map.
     FrontFieldAudio.resize(numBands, numFrontFieldAngles);
@@ -195,7 +194,7 @@ void InterauralCues::interpolateFrontFieldBeamsRms(yarp::sig::Matrix& FrontField
     
     #ifdef WITH_OMP
     #pragma omp parallel \
-     shared  (FrontFieldAudio, BeamformedRmsAudio, frontFieldRealAngles, frontFieldBeamAngles, numBands, numFrontFieldAngles) \
+     shared  (BeamformedRmsAudio, FrontFieldAudio, frontFieldRealAngles, frontFieldBeamAngles) \
      private (band, beam, realAngle)
     #pragma omp for schedule(guided)
     #endif
@@ -221,7 +220,7 @@ void InterauralCues::interpolateFrontFieldBeamsRms(yarp::sig::Matrix& FrontField
 }
 
 
-void InterauralCues::mirrorFrontField(yarp::sig::Matrix& FullFieldAudio, const yarp::sig::Matrix& FrontFieldAudio, const int offset) {
+void InterauralCues::mirrorFrontField(const yarp::sig::Matrix& FrontFieldAudio, yarp::sig::Matrix& FullFieldAudio, const int offset) {
 
     //-- Get the number of rows for the front field audio.
     const int numRow = FrontFieldAudio.rows();
@@ -249,6 +248,7 @@ void InterauralCues::mirrorFrontField(yarp::sig::Matrix& FullFieldAudio, const y
 
         for (index = half_length+1; index < full_length; index++) {
 
+            //-- Start at middle and far right. Move towards eachother.
             idx0 = myMod(half_length  + index + offset, numFullFieldAngles);
             idx1 = myMod(two_and_half - index + offset, numFullFieldAngles);
 

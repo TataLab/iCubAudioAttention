@@ -207,30 +207,30 @@ class AudioPowerMapPeriodicThread : public yarp::os::PeriodicThread {
 	 *    the oldest item will be removed from the knowledge state, and
 	 *    discarded from the buffer.
 	 * 
+	 * @param CurrentPower     : An audio power sample freshly recieved from the audio preprocessor (Number of Bands, 1).
 	 * @param ProbabilityPower : The target, and source for updating the knowledge state (Number of Bands, 1).
 	 * @param BufferedPower    : A buffer containing recent audio power. Oldest power are used against the knowledge state.
 	 * @param BufferLength     : Used to ensure the number of samples kept is consistent.
-	 * @param CurrentPower     : An audio power sample freshly recieved from the audio preprocessor (Number of Bands, 1).
 	 * =========================================================================== */
-	void updateBayesianProbabilities(yarp::sig::Matrix& ProbabilityPower, std::queue< yarp::sig::Matrix >& BufferedPower, const int BufferLength, const yarp::sig::Matrix& CurrentPower);
+	void updateBayesianProbabilities(const yarp::sig::Matrix& CurrentPower, yarp::sig::Matrix& ProbabilityPower, std::queue< yarp::sig::Matrix >& BufferedPower, const int BufferLength);
 
 
 	/* ===========================================================================
 	 *  Multiplies the Current Power with the Probability Power.
 	 * 
-	 * @param ProbabilityPower : Knowledge state of the power environment.
 	 * @param CurrentPower     : New information of the power environment.
+	 * @param ProbabilityPower : Knowledge state of the power environment.
 	 * =========================================================================== */
-	void addAudioPower(yarp::sig::Matrix& ProbabilityPower, const yarp::sig::Matrix& CurrentPower);
+	void addAudioPower(const yarp::sig::Matrix& CurrentPower, yarp::sig::Matrix& ProbabilityPower);
 
 
 	/* ===========================================================================
 	 *  Divides the Antiquated Power from the Probability Power.
 	 * 
-	 * @param ProbabilityPower : Knowledge state of the power environment.
 	 * @param AntiquatedPower  : Old information of the power environment.
+	 * @param ProbabilityPower : Knowledge state of the power environment.
 	 * =========================================================================== */
-	void removeAudioPower(yarp::sig::Matrix& ProbabilityPower, const yarp::sig::Matrix& AntiquatedPower);
+	void removeAudioPower(const yarp::sig::Matrix& AntiquatedPower, yarp::sig::Matrix& ProbabilityPower);
 	
 
 	/* ===========================================================================
@@ -261,21 +261,21 @@ class AudioPowerMapPeriodicThread : public yarp::os::PeriodicThread {
 	/* ===========================================================================
 	 *  Perform an index wise multiplication between the two matracies.
 	 * 
-	 * @param CombinedAudioPower : The Target, Matrix for the result to be stored (Number of Bands, Number of Full Field Angles).
 	 * @param AudioMap           : The Source of the Audio Map (Number of Bands, Number of Full Field Angles).
 	 * @param AudioPower         : The Source of the Audio Power (Number of Bands, 1).
+	 * @param CombinedAudioPower : The Target, Matrix for the result to be stored (Number of Bands, Number of Full Field Angles).
 	 * =========================================================================== */
-	void combineAudioPower(yarp::sig::Matrix& CombinedAudioPower, const yarp::sig::Matrix& AudioMap, const yarp::sig::Matrix& AudioPower);
+	void combineAudioPower(const yarp::sig::Matrix& AudioMap, const yarp::sig::Matrix& AudioPower, yarp::sig::Matrix& CombinedAudioPower);
 
 
 	/* ===========================================================================
 	 *  Collapse a Probability Map across the bands to get the overall 
 	 *    probability at each angle of the knowledge state.
 	 * 
-	 * @param ProbabilityAngles : Angles of Probability.
 	 * @param ProbabilityMap    : Knowledge state of the auditory environment.
+	 * @param ProbabilityAngles : Angles of Probability.
 	 * =========================================================================== */
-	void collapseProbabilityMap(yarp::sig::Matrix& ProbabilityAngles, const yarp::sig::Matrix& ProbabilityMap);
+	void collapseProbabilityMap(const yarp::sig::Matrix& ProbabilityMap, yarp::sig::Matrix& ProbabilityAngles);
 
 
 	/* ===========================================================================

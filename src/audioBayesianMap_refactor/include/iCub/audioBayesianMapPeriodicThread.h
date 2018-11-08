@@ -195,30 +195,30 @@ class AudioBayesianMapPeriodicThread : public yarp::os::PeriodicThread {
 	 *    the oldest item will be removed from the knowledge state, and
 	 *    discarded from the buffer.
 	 * 
+	 * @param CurrentAudio   : An allocentric audio map freshly recieved from the audio preprocessor (Number of Bands, Number of Full Field Angles).
 	 * @param ProbabilityMap : The target, and source for updating the knowledge state (Number of Bands, Number of Full Field Angles).
 	 * @param BufferedAudio  : A buffer containing recent audio maps. Oldest maps are used against the knowledge state.
 	 * @param BufferLength   : Used to ensure the number of samples kept is consistent.
-	 * @param CurrentAudio   : An allocentric audio map freshly recieved from the audio preprocessor (Number of Bands, Number of Full Field Angles).
 	 * =========================================================================== */
-	void updateBayesianProbabilities(yarp::sig::Matrix& ProbabilityMap, std::queue< yarp::sig::Matrix >& BufferedAudio, const int BufferLength, const yarp::sig::Matrix& CurrentAudio);
+	void updateBayesianProbabilities(const yarp::sig::Matrix& CurrentAudio, yarp::sig::Matrix& ProbabilityMap, std::queue< yarp::sig::Matrix >& BufferedAudio, const int BufferLength);
 
 
 	/* ===========================================================================
 	 *  Multiplies the Current Audio with the Probability Map.
 	 * 
-	 * @param ProbabilityMap : Knowledge state of the auditory environment.
 	 * @param CurrentAudio   : New information of the auditory environment.
+	 * @param ProbabilityMap : Knowledge state of the auditory environment.
 	 * =========================================================================== */
-	void addAudioMap(yarp::sig::Matrix& ProbabilityMap, const yarp::sig::Matrix& CurrentAudio);
+	void addAudioMap(const yarp::sig::Matrix& CurrentAudio, yarp::sig::Matrix& ProbabilityMap);
 
 
 	/* ===========================================================================
 	 *  Divides the Antiquated Audio from the Probability Map.
 	 * 
-	 * @param ProbabilityMap  : Knowledge state of the auditory environment.
 	 * @param AntiquatedAudio : Old information of the auditory environment.
+	 * @param ProbabilityMap  : Knowledge state of the auditory environment.
 	 * =========================================================================== */
-	void removeAudioMap(yarp::sig::Matrix& ProbabilityMap, const yarp::sig::Matrix& AntiquatedAudio);
+	void removeAudioMap(const yarp::sig::Matrix& AntiquatedAudio, yarp::sig::Matrix& ProbabilityMap);
 	
 
 	/* ===========================================================================
@@ -242,10 +242,10 @@ class AudioBayesianMapPeriodicThread : public yarp::os::PeriodicThread {
 	 *  Collapse a Probability Map across the bands to get the overall 
 	 *    probability at each angle of the knowledge state.
 	 * 
-	 * @param ProbabilityAngles : Angles of Probability.
 	 * @param ProbabilityMap    : Knowledge state of the auditory environment.
+	 * @param ProbabilityAngles : Angles of Probability.
 	 * =========================================================================== */
-	void collapseProbabilityMap(yarp::sig::Matrix& ProbabilityAngles, const yarp::sig::Matrix& ProbabilityMap);
+	void collapseProbabilityMap(const yarp::sig::Matrix& ProbabilityMap, yarp::sig::Matrix& ProbabilityAngles);
 
 
 	/* ===========================================================================

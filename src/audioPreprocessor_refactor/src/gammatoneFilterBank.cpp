@@ -62,7 +62,7 @@ GammatoneFilterBank::~GammatoneFilterBank() {
 }
 
 
-void GammatoneFilterBank::getGammatoneFilteredAudio(yarp::sig::Matrix& FilterBank, const yarp::sig::Matrix& RawAudio) {
+void GammatoneFilterBank::getGammatoneFilteredAudio(const yarp::sig::Matrix& RawAudio, yarp::sig::Matrix& FilterBank) {
 
 	//-- Ensure space is allocated for the filtered audio.
 	FilterBank.resize(numMics * numBands, numFrameSamples);
@@ -74,16 +74,16 @@ void GammatoneFilterBank::getGammatoneFilteredAudio(yarp::sig::Matrix& FilterBan
 	
 	#ifdef WITH_OMP
 	#pragma omp parallel \
-  	 shared  (FilterBank, _proxyEnvelope, RawAudio) \
+  	 shared  (RawAudio, FilterBank, _proxyEnvelope) \
   	 private (itrBandMic)
 	#pragma omp for schedule(guided)
 	#endif
 	for (itrBandMic = 0; itrBandMic < numBandMic; itrBandMic++) {
 
 		singleGammatoneFilter (
+			/* Channel of Audio = */ RawAudio       [itrBandMic / numBands],
 			/* Basilar Membrane = */ FilterBank     [itrBandMic],
 			/* Hilbert Envelope = */ _proxyEnvelope [itrBandMic],
-			/* Channel of Audio = */ RawAudio       [itrBandMic / numBands],
 			/* Center Frequency = */ cfs            [itrBandMic % numBands],
 			/* Include Envelope = */ false
 		);
@@ -91,7 +91,7 @@ void GammatoneFilterBank::getGammatoneFilteredAudio(yarp::sig::Matrix& FilterBan
 }
 
 
-void GammatoneFilterBank::getGammatoneFilteredAudio(yarp::sig::Matrix& FilterBank, yarp::sig::Matrix& EnvelopeBank, const yarp::sig::Matrix& RawAudio) {
+void GammatoneFilterBank::getGammatoneFilteredAudio(const yarp::sig::Matrix& RawAudio, yarp::sig::Matrix& FilterBank, yarp::sig::Matrix& EnvelopeBank) {
 
 	//-- Ensure space is allocated for the filtered audio.
 	FilterBank.resize(numMics * numBands, numFrameSamples);
@@ -103,16 +103,16 @@ void GammatoneFilterBank::getGammatoneFilteredAudio(yarp::sig::Matrix& FilterBan
 	
 	#ifdef WITH_OMP
 	#pragma omp parallel \
-  	 shared  (FilterBank, EnvelopeBank, RawAudio) \
+  	 shared  (RawAudio, FilterBank, EnvelopeBank) \
   	 private (itrBandMic)
 	#pragma omp for schedule(guided)
 	#endif
 	for (itrBandMic = 0; itrBandMic < numBandMic; itrBandMic++) {
 
 		singleGammatoneFilter (
+			/* Channel of Audio = */ RawAudio     [itrBandMic / numBands],
 			/* Basilar Membrane = */ FilterBank   [itrBandMic],
 			/* Hilbert Envelope = */ EnvelopeBank [itrBandMic],
-			/* Channel of Audio = */ RawAudio     [itrBandMic / numBands],
 			/* Center Frequency = */ cfs          [itrBandMic % numBands],
 			/* Include Envelope = */ true
 		);
@@ -120,7 +120,7 @@ void GammatoneFilterBank::getGammatoneFilteredAudio(yarp::sig::Matrix& FilterBan
 }
 
 
-void GammatoneFilterBank::getGammatoneFilteredPower(yarp::sig::Matrix& BankPower, const yarp::sig::Matrix& FilterBank) {
+void GammatoneFilterBank::getGammatoneFilteredPower(const yarp::sig::Matrix& FilterBank, yarp::sig::Matrix& BankPower) {
 
 	//-- Ensure space is allocated for the powermap.
 	BankPower.resize(numBands, numMics);
@@ -147,7 +147,7 @@ void GammatoneFilterBank::getGammatoneFilteredPower(yarp::sig::Matrix& BankPower
 }
 
 #include <iostream>
-void GammatoneFilterBank::getBandPassedAudio(yarp::sig::Matrix& BandPassedBank, const yarp::sig::Matrix& AudioBank, const double BandFreq) {
+void GammatoneFilterBank::getBandPassedAudio(const yarp::sig::Matrix& AudioBank, yarp::sig::Matrix& BandPassedBank, const double BandFreq) {
 
 	//-- Ensure space is allocated for the band passed audio.
 	BandPassedBank.resize(numMics * numBands, numFrameSamples);
@@ -158,15 +158,15 @@ void GammatoneFilterBank::getBandPassedAudio(yarp::sig::Matrix& BandPassedBank, 
 
 	#ifdef WITH_OMP
 	#pragma omp parallel \
-	 shared  (BandPassedBank, AudioBank) \
+	 shared  (AudioBank, BandPassedBank) \
 	 private (itrBandMic)
 	#pragma omp for schedule(guided)
 	#endif
 	for (itrBandMic = 0; itrBandMic < numBandMic; itrBandMic++) {
 
 		singleBandPass (
-			/* Target    = */ BandPassedBank[itrBandMic],
 			/* Source    = */ AudioBank[itrBandMic],
+			/* Target    = */ BandPassedBank[itrBandMic],
 			/* Band Pass = */ BandFreq
 		);
 	}
@@ -192,17 +192,16 @@ void GammatoneFilterBank::getBandPassedAudio(yarp::sig::Matrix& BandPassedBank, 
 
 	std::cerr << "Min: " << min << " Max: " << max << std::endl;
 
-	//\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-	\\\\\\ REMOVE \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-	\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\/
-
+	//\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\/
+	//\\\\ REMOVE \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\/
+	//\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\/
 }
 
 
-void GammatoneFilterBank::singleGammatoneFilter(double* BasilarMembrane, double* Envelope, const double* RawAudio, const double CenterFrequency, const bool IncludeEnvelope) {
+void GammatoneFilterBank::singleGammatoneFilter(const double* RawAudio, double* BasilarMembrane, double* Envelope, const double CenterFrequency, const bool IncludeEnvelope) {
 
 	/* ===================================================================
-	*  Initialize all variables in this scope so
+	*  Initialize all variables in this scope so 
 	*    that they are not shared amongst threads.
 	* =================================================================== */
 	const double tptbw    = tpt * HzToErb(CenterFrequency) * BW_CORRECTION;
@@ -317,7 +316,7 @@ void GammatoneFilterBank::singleGammatoneFilter(double* BasilarMembrane, double*
 }
 
 
-void GammatoneFilterBank::singleBandPass(double* BandPass, const double* Audio, const double BandFreq)  {
+void GammatoneFilterBank::singleBandPass(const double* Audio, double* BandPass, const double BandFreq)  {
 
 	/* ===================================================================
 	*  Initialize all variables in this scope so
@@ -354,12 +353,12 @@ void GammatoneFilterBank::singleBandPass(double* BandPass, const double* Audio, 
 		p0o = (a0*p0i + a1*p1i + a2*p2i) - (b2*p2o + b1*p1o);
 
 		//-- Clip coefficients to stop them from becoming too close to zero.
-		if (fabs(p0o) < VERY_SMALL_NUMBER) {
-			p0o = 0.0F;
-		}
-		if (fabs(p0i) < VERY_SMALL_NUMBER) {
-			p0i = 0.0F;
-		}
+		//if (fabs(p0o) < VERY_SMALL_NUMBER) {
+		//	p0o = 0.0F;
+		//}
+		//if (fabs(p0i) < VERY_SMALL_NUMBER) {
+		//	p0i = 0.0F;
+		//}
 
 		//-- Update filter results.
 		p2i = p1i; p1i = p0i;

@@ -91,33 +91,33 @@ class GammatoneFilterBank {
 	 *    implimentations to return the Envelope, as well as the Phase
 	 *    for each band in the bank.
 	 * 
+	 * @param RawAudio     : Raw audio (number of mics, number of samples).
      * @param FilterBank   : Target for the filtered audio (number of mics * number of bands, number of samples).
 	 * @param EnvelopeBank : [OPTIONAL] Target for a Hilbert Envelope of each band (number of mics * number of bands, number of samples).
 	 * @param PhaseBank    : [OPTIONAL] Target for the phase of each band (number of mics * number of bands, number of samples).
-	 * @param RawAudio     : Raw audio (number of mics, number of samples).
 	 * =========================================================================== */
-    void getGammatoneFilteredAudio(yarp::sig::Matrix& FilterBank, const yarp::sig::Matrix& RawAudio);
-	void getGammatoneFilteredAudio(yarp::sig::Matrix& FilterBank, yarp::sig::Matrix& EnvelopeBank, const yarp::sig::Matrix& RawAudio);
-	void getGammatoneFilteredAudio(yarp::sig::Matrix& FilterBank, yarp::sig::Matrix& EnvelopeBank, yarp::sig::Matrix& PhaseBank, const yarp::sig::Matrix& RawAudio);
+    void getGammatoneFilteredAudio(const yarp::sig::Matrix& RawAudio, yarp::sig::Matrix& FilterBank);
+	void getGammatoneFilteredAudio(const yarp::sig::Matrix& RawAudio, yarp::sig::Matrix& FilterBank, yarp::sig::Matrix& EnvelopeBank);
+	void getGammatoneFilteredAudio(const yarp::sig::Matrix& RawAudio, yarp::sig::Matrix& FilterBank, yarp::sig::Matrix& EnvelopeBank, yarp::sig::Matrix& PhaseBank);
 
 
     /* ===========================================================================
 	 *  Find the total RMS power for each band across samples.
 	 * 
+	 * @param FilterBank : The filtered audio (number of mics * number of bands, number of samples).
 	 * @param BankPower  : Target for the power of each band (number of bands, number of mics).
-     * @param FilterBank : The filtered audio (number of mics * number of bands, number of samples).
 	 * =========================================================================== */
-    void getGammatoneFilteredPower(yarp::sig::Matrix& BankPower, const yarp::sig::Matrix& FilterBank);
+    void getGammatoneFilteredPower(const yarp::sig::Matrix& FilterBank, yarp::sig::Matrix& BankPower);
 
 
 	/* ===========================================================================
 	 *  Apply a band pass on a bank of audio, for some specified frequency band.
 	 * 
-	 * @param BandPassedBank : Target for the band pass (number of mics * number of bands, number of samples).
 	 * @param AudioBank      : Source for the audio to be filtered (number of mics * number of bands, number of samples).
+	 * @param BandPassedBank : Target for the band pass (number of mics * number of bands, number of samples).
 	 * @param BandFreq       : The desired frequency band to be isolated.
 	 * =========================================================================== */
-	void getBandPassedAudio(yarp::sig::Matrix& BandPassedBank, const yarp::sig::Matrix& AudioBank, const double BandFreq);
+	void getBandPassedAudio(const yarp::sig::Matrix& AudioBank, yarp::sig::Matrix& BandPassedBank, const double BandFreq);
 
 
   private:
@@ -127,26 +127,26 @@ class GammatoneFilterBank {
 	 *    specified center frequency. If enabled will also return the 
 	 *    Hilbert Envelope, and the Instantaneous Phase of the band.
 	 * 
+	 * @param RawAudio        : Source for the input audio (number of samples).
 	 * @param BasilarMembrane : Target for the Basilar Membrane Response (number of samples).
 	 * @param Envelope        : Target for the Hilbert Envelope (number of samples).
 	 * @param Phase           : Target for the Instantaneous Phase (number of samples).
-	 * @param RawAudio        : Source for the input audio (number of samples).
 	 * @param CenterFrequency : The Frequency that will be filtered for.
 	 * @param IncludeEnvelope : Boolean value for if the envelope should be calculated.
 	 * @param IncludePhase    : Boolean value for if the phase should be calculated.
 	 * =========================================================================== */
-	void singleGammatoneFilter(double* BasilarMembrane, double* Envelope, const double* RawAudio, const double CenterFrequency, const bool IncludeEnvelope);
+	void singleGammatoneFilter(const double* RawAudio, double* BasilarMembrane, double* Envelope, const double CenterFrequency, const bool IncludeEnvelope);
 	
 
 	/* ===========================================================================
 	 *  Apply a single band pass filter onto the provided audio for the
 	 *    specified band frequency.
 	 * 
-	 * @param BandPass : Target for the Band Passed audio (number of samples).
 	 * @param Audio    : Source for the input audio (number of samples).
+	 * @param BandPass : Target for the Band Passed audio (number of samples).
 	 * @param BandFreq : The desired frequency band to be isolated.
 	 * =========================================================================== */
-	void singleBandPass(double* BandPass, const double* Audio, const double BandFreq);
+	void singleBandPass(const double* Audio, double* BandPass, const double BandFreq);
 
 
 	/* ===========================================================================

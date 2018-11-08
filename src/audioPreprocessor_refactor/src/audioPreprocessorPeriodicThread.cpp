@@ -36,7 +36,7 @@ inline int myRound(T a) {
 }
 
 
-inline void downSampVis(const yarp::sig::Matrix& source, yarp::sig::Matrix& target, const int downSamp) {
+inline void downSampleMatrix(const yarp::sig::Matrix& source, yarp::sig::Matrix& target, const int downSamp) {
 	
 	//-- Don't do any down sampling. Standard Copy.
 	if (downSamp == 1) { target = source; return; }
@@ -348,7 +348,6 @@ void AudioPreprocessorPeriodicThread::run() {
 	
 	if (inRawAudioPort.getInputCount()) {
 
-		//-- Grab the time time difference of waiting between loops.
 		makeTimeStamp(totalDelay, timeDelay, startTime, stopTime);
 		
 		//-- Get Input.
@@ -362,19 +361,16 @@ void AudioPreprocessorPeriodicThread::run() {
 			headOffset += headAngleBottle->get(panAngle).asDouble();
 		}
 
-		//-- Grab the time difference of reading input.
 		makeTimeStamp(totalReading, timeReading, startTime, stopTime);
 
 		//-- Main Loop.
 		result = processing();
 
-		//-- Grab the time difference of processing the input.
 		makeTimeStamp(totalProcessing, timeProcessing, startTime, stopTime);
 
 		//-- Write data to outgoing ports.
 		publishOutPorts();	
 
-		//-- Grab the time delay of publishing on ports.
 		makeTimeStamp(totalTransmission, timeTransmission, startTime, stopTime);
 
 		//-- Give time stats to the user.
@@ -389,13 +385,14 @@ void AudioPreprocessorPeriodicThread::run() {
 bool AudioPreprocessorPeriodicThread::processing() {
 
 	#ifdef WITH_OMP
+	//-- Ensure we are always using the 
+	//-- specified number of threads.
 	omp_set_num_threads(numOmpThreads);
 	#endif
-	
 
 	//-- Separate the sound into left and right channels.	
-	for (int sample = 0; sample < numFrameSamples; sample++) {
-		for (int channel = 0; channel < numMics; channel++) {
+	for (int channel = 0; channel < numMics; channel++) {
+		for (int sample = 0; sample < numFrameSamples; sample++) {
 			RawAudioMatrix[channel][sample] = inputSound->get(sample, channel) / _norm;
 		}
 	}
@@ -406,9 +403,9 @@ bool AudioPreprocessorPeriodicThread::processing() {
 	 *    specified number of bands. Also returns a bank of envelopes.
 	 * =========================================================================== */
 	gammatoneFilterBank->getGammatoneFilteredAudio (
+		/* Raw Audio Source = */ RawAudioMatrix,
 		/* Basilar Memb Res = */ GammatoneFilteredAudioMatrix,
-		/* Hilbert Envelope = */ HilbertEnvelopeMatrix,
-		/* Raw Audio Source = */ RawAudioMatrix
+		/* Hilbert Envelope = */ HilbertEnvelopeMatrix
 	);
 
 
@@ -416,8 +413,8 @@ bool AudioPreprocessorPeriodicThread::processing() {
 	 *  Filter the Envelopes looking for specifically the envelope of human voices.
 	 * =========================================================================== */
 	gammatoneFilterBank->getBandPassedAudio (
-		/* Band Passed Bank   = */ BandPassedAudioMatrix,
 		/* Audio Bank Source  = */ HilbertEnvelopeMatrix,
+		/* Band Passed Bank   = */ BandPassedAudioMatrix,
 		/* Desired Audio Band = */ bandPassFreq
 	);
 
@@ -428,8 +425,8 @@ bool AudioPreprocessorPeriodicThread::processing() {
 	 * =========================================================================== */
 	if (outGammatoneFilteredPowerPort.getOutputCount()) {
 		gammatoneFilterBank->getGammatoneFilteredPower (
-			/* Power of the Bank = */ GammatoneFilteredPowerMatrix,
-			/* Basilar Memb Res  = */ GammatoneFilteredAudioMatrix
+			/* Basilar Memb Res  = */ GammatoneFilteredAudioMatrix,
+			/* Power of the Bank = */ GammatoneFilteredPowerMatrix
 		);
 	}
 
@@ -439,8 +436,8 @@ bool AudioPreprocessorPeriodicThread::processing() {
 	 *    across the frame onto the filtered left and right channel. 
 	 * =========================================================================== */
 	interauralCues->getBeamformedRmsAudio (
-		/* RMS Beamformer   = */ BeamformedRmsAudioMatrix,
-		/* Basilar Memb Res = */ GammatoneFilteredAudioMatrix
+		/* Basilar Memb Res = */ GammatoneFilteredAudioMatrix,
+		/* RMS Beamformer   = */ BeamformedRmsAudioMatrix
 	);
 
 
@@ -450,8 +447,8 @@ bool AudioPreprocessorPeriodicThread::processing() {
 	 * =========================================================================== */
 	if (outBeamformedRmsPowerPort.getOutputCount()) {
 		interauralCues->getBeamformedRmsPower (
-			/* Target = */ BeamformedRmsPowerMatrix,
-			/* Source = */ BeamformedRmsAudioMatrix
+			/* RMS Beamformer = */ BeamformedRmsAudioMatrix,
+			/* Power of Beams = */ BeamformedRmsPowerMatrix
 		);
 	}
 
@@ -460,11 +457,10 @@ bool AudioPreprocessorPeriodicThread::processing() {
 	 *  Interpolate over, and mirror the front field auditory scene
 	 * =========================================================================== */
 	interauralCues->getAngleNormalAudioMap (
-		/* Target = */ AllocentricAudioMatrix,
 		/* Source = */ BeamformedRmsAudioMatrix,
+		/* Target = */ AllocentricAudioMatrix,
 		/* Offset = */ myRound(headOffset)
 	);
-
 
 	return true;
 }
@@ -474,64 +470,71 @@ void AudioPreprocessorPeriodicThread::publishOutPorts() {
 	
 	//-- Write to Active Ports.
 	if (outGammatoneFilteredAudioPort.getOutputCount()) {
-		downSampVis (
-			/* Source = */ GammatoneFilteredAudioMatrix, 
-			/* Target = */ outGammatoneFilteredAudioPort.prepare(), 
-			/* Reduce = */ downSamp
-		);
+
+		//-- This Matrix can be very big. Down sample if enabled.
+		downSampleMatrix(GammatoneFilteredAudioMatrix, outGammatoneFilteredAudioPort.prepare(), downSamp);
 		outGammatoneFilteredAudioPort.setEnvelope(timeStamp);
 		outGammatoneFilteredAudioPort.write();
+
 	}
 
 	if (outGammatoneFilteredPowerPort.getOutputCount()) {
+
 		outGammatoneFilteredPowerPort.prepare() = GammatoneFilteredPowerMatrix;
 		outGammatoneFilteredPowerPort.setEnvelope(timeStamp);
 		outGammatoneFilteredPowerPort.write();
+
 	}
 
 	if (outHilbertEnvelopePort.getOutputCount()) {
-		downSampVis (
-			/* Source = */ HilbertEnvelopeMatrix,
-			/* Target = */ outHilbertEnvelopePort.prepare(),
-			/* Reduce = */ downSamp
-		);
+
+		//-- This Matrix can be very big. Down sample if enabled.
+		downSampleMatrix(HilbertEnvelopeMatrix, outHilbertEnvelopePort.prepare(), downSamp);
 		outHilbertEnvelopePort.setEnvelope(timeStamp);
 		outHilbertEnvelopePort.write();
+
 	}
 
 	if (outBandPassedAudioPort.getOutputCount()) {
-		downSampVis (
-			/* Source = */ BandPassedAudioMatrix,
-			/* Target = */ outBandPassedAudioPort.prepare(),
-			/* Reduce = */ downSamp
-		);
+
+		//-- This Matrix can be very big. Down sample if enabled.
+		downSampleMatrix(BandPassedAudioMatrix, outBandPassedAudioPort.prepare(), downSamp);
 		outBandPassedAudioPort.setEnvelope(timeStamp);
 		outBandPassedAudioPort.write();
+
 	}
 
 
 	if (outBeamformedAudioPort.getOutputCount()) {
+
 		outBeamformedAudioPort.prepare() = BeamformedAudioMatrix;
 		outBeamformedAudioPort.setEnvelope(timeStamp);
 		outBeamformedAudioPort.write();
+
 	}
 
 	if (outBeamformedRmsAudioPort.getOutputCount()) {
+
 		outBeamformedRmsAudioPort.prepare() = BeamformedRmsAudioMatrix;
 		outBeamformedRmsAudioPort.setEnvelope(timeStamp);
 		outBeamformedRmsAudioPort.write();
+
 	}
 
 	if (outBeamformedRmsPowerPort.getOutputCount()) {
+
 		outBeamformedRmsPowerPort.prepare() = BeamformedRmsPowerMatrix;
 		outBeamformedRmsPowerPort.setEnvelope(timeStamp);
 		outBeamformedRmsPowerPort.write();
+
 	}
 
 	if (outAllocentricAudioPort.getOutputCount()) {
+
 		outAllocentricAudioPort.prepare() = AllocentricAudioMatrix;
 		outAllocentricAudioPort.setEnvelope(timeStamp);
 		outAllocentricAudioPort.write();
+		
 	}
 }
 
