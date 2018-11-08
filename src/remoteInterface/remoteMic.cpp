@@ -35,18 +35,13 @@ int main(int argc, char *argv[]) {
     // initialization
     ResourceFinder rf;
     rf.setVerbose(true);
-    rf.setDefaultConfigFile("audioConfig.ini");    //overridden by --from parameter
-    rf.setDefaultContext("Audio_Preprocessor");    //overridden by --context parameter
+    rf.setDefaultConfigFile("Audio_Attention_Config.ini"); //overridden by --from parameter
+    rf.setDefaultContext("audio_attention");               //overridden by --context parameter
     rf.configure(argc, argv);  
 
 
-    int fixedNSample        =  rf.check("frameSamples",
-                    Value(4096),
-                    "frame samples (int)").asInt();
-
-    int rate        =  rf.check("samplingRate",
-                    Value(48000),
-                    "sampling rate of mics (int)").asInt();
+    int rate          =  rf.findGroup("sampling").check("samplingRate",    Value(4096),  "frame samples (int)"        ).asInt();
+    int fixedNSample  =  rf.findGroup("sampling").check("numFrameSamples", Value(48000), "sampling rate of mics (int)").asInt();
 
 
     //BufferedPort<Sound> p;

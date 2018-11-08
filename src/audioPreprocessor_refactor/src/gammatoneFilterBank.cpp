@@ -146,7 +146,7 @@ void GammatoneFilterBank::getGammatoneFilteredPower(yarp::sig::Matrix& BankPower
 	}
 }
 
-
+#include <iostream>
 void GammatoneFilterBank::getBandPassedAudio(yarp::sig::Matrix& BandPassedBank, const yarp::sig::Matrix& AudioBank, const double BandFreq) {
 
 	//-- Ensure space is allocated for the band passed audio.
@@ -171,6 +171,23 @@ void GammatoneFilterBank::getBandPassedAudio(yarp::sig::Matrix& BandPassedBank, 
 		);
 	}
 	
+
+	double min =  999;
+	double max = -999;
+
+	for (itrBandMic = 0; itrBandMic < numBandMic; itrBandMic++) {
+
+		for (int i = 0; i < numFrameSamples; i++) {
+			if (BandPassedBank[itrBandMic][i] > max) {
+				max = BandPassedBank[itrBandMic][i];
+			}
+			if (BandPassedBank[itrBandMic][i] < min) {
+				min = BandPassedBank[itrBandMic][i];
+			}
+		}
+	}
+
+	std::cerr << "Min: " << min << " Max: " << max << std::endl;
 }
 
 
