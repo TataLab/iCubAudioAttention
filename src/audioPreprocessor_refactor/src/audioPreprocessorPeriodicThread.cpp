@@ -36,6 +36,14 @@ inline int myRound(T a) {
 }
 
 
+inline void makeTimeStamp(double& totalStat, double& timeStat, double& startTime, double& stopTime) {
+	stopTime   = yarp::os::Time::now();
+	timeStat   = stopTime - startTime;
+	totalStat += timeStat;
+	startTime  = stopTime;
+}
+
+
 AudioPreprocessorPeriodicThread::AudioPreprocessorPeriodicThread() : 
 	PeriodicThread(THPERIOD) {
 
@@ -74,13 +82,14 @@ bool AudioPreprocessorPeriodicThread::configure(yarp::os::ResourceFinder &rf) {
 	samplingRate    = rf.findGroup("sampling").check("samplingRate",    yarp::os::Value(48000),   "sampling rate of mics (int)"           ).asInt();
 	numFrameSamples = rf.findGroup("sampling").check("numFrameSamples", yarp::os::Value(4096),    "number of frame samples received (int)").asInt();
 
-	numBands      = rf.findGroup("processing").check("numBands",      yarp::os::Value(128),   "number of frequency bands (int)"              ).asInt();
-	lowCf         = rf.findGroup("processing").check("lowCf",         yarp::os::Value(380),   "lowest center frequency (int)"                ).asInt();
-	highCf        = rf.findGroup("processing").check("highCf",        yarp::os::Value(2800),  "highest center frequency (int)"               ).asInt();
-	halfRec       = rf.findGroup("processing").check("halfRec",       yarp::os::Value(false), "half wave rectifying (boolean)"               ).asBool();
-	erbSpaced     = rf.findGroup("processing").check("erbSpaced",     yarp::os::Value(true),  "ERB spaced centre frequencies (boolean)"      ).asBool();
-	angleRes      = rf.findGroup("processing").check("angleRes",      yarp::os::Value(1),     "degree resolution for a single position (int)").asInt();
-	numOmpThreads = rf.findGroup("processing").check("numOmpThreads", yarp::os::Value(4),     "if enabled, the number of omp threads (int)"  ).asInt();
+	numBands      = rf.findGroup("processing").check("numBands",      yarp::os::Value(128),    "number of frequency bands (int)"              ).asInt();
+	lowCf         = rf.findGroup("processing").check("lowCf",         yarp::os::Value(380.0),  "lowest center frequency (double)"             ).asDouble();
+	highCf        = rf.findGroup("processing").check("highCf",        yarp::os::Value(2800.0), "highest center frequency (double)"            ).asDouble();
+	halfRec       = rf.findGroup("processing").check("halfRec",       yarp::os::Value(false),  "half wave rectifying (boolean)"               ).asBool();
+	erbSpaced     = rf.findGroup("processing").check("erbSpaced",     yarp::os::Value(true),   "ERB spaced centre frequencies (boolean)"      ).asBool();
+	bandPassFreq  = rf.findGroup("processing").check("bandPassFreq",  yarp::os::Value(5.0),    "frequency to use in band pass filter (double)").asDouble();
+	angleRes      = rf.findGroup("processing").check("angleRes",      yarp::os::Value(1),      "degree resolution for a single position (int)").asInt();
+	numOmpThreads = rf.findGroup("processing").check("numOmpThreads", yarp::os::Value(4),      "if enabled, the number of omp threads (int)"  ).asInt();
 
 
 	/* ===========================================================================
@@ -114,6 +123,12 @@ bool AudioPreprocessorPeriodicThread::configure(yarp::os::ResourceFinder &rf) {
 
 	GammatoneFilteredPowerMatrix.resize(numBands, numMics);
 	GammatoneFilteredPowerMatrix.zero();
+
+	HilbertEnvelopeMatrix.resize(numMics * numBands, numFrameSamples);
+	HilbertEnvelopeMatrix.zero();
+
+	BandPassedAudioMatrix.resize(numMics * numBands, numFrameSamples);
+	BandPassedAudioMatrix.zero();
 
 	BeamformedAudioMatrix.resize(numBands * numBeams, numFrameSamples);
 	BeamformedAudioMatrix.zero();
@@ -150,33 +165,34 @@ bool AudioPreprocessorPeriodicThread::configure(yarp::os::ResourceFinder &rf) {
 	 *  Print the resulting variables to the console.
 	 * =========================================================================== */
 	yInfo( " " );
-	yInfo( "\t               [ROBOT SPECIFIC]               "                                );
-	yInfo( "\t ============================================ "                                );
-	yInfo( "\t Index of Pan Joint               : %d",   panAngle                            );
-	yInfo( "\t Number of Microphones            : %d",   numMics                             );
-	yInfo( "\t Microphone Distance              : %f",   micDistance                         );
+	yInfo( "\t               [ROBOT SPECIFIC]               "                                    );
+	yInfo( "\t ============================================ "                                    );
+	yInfo( "\t Index of Pan Joint               : %d",       panAngle                            );
+	yInfo( "\t Number of Microphones            : %d",       numMics                             );
+	yInfo( "\t Microphone Distance              : %.3f m",   micDistance                         );
 	yInfo( " " );
-	yInfo( "\t                  [SAMPLING]                  "                                );
-	yInfo( "\t ============================================ "                                );
-	yInfo( "\t Speed of Sound                   : %f",   speedOfSound                        );
-	yInfo( "\t Sampling Rate                    : %d",   samplingRate                        );
-	yInfo( "\t Number Samples per Frame         : %d",   numFrameSamples                     );
+	yInfo( "\t                  [SAMPLING]                  "                                    );
+	yInfo( "\t ============================================ "                                    );
+	yInfo( "\t Speed of Sound                   : %.2f m/s", speedOfSound                        );
+	yInfo( "\t Sampling Rate                    : %d Hz",    samplingRate                        );
+	yInfo( "\t Number Samples per Frame         : %d",       numFrameSamples                     );
 	yInfo( " " );
-	yInfo( "\t                 [PROCESSING]                 "                                );
-	yInfo( "\t ============================================ "                                );
-	yInfo( "\t Number of Frequency Bands        : %d",   numBands                            );
-	yInfo( "\t Lowest Center Frequency          : %d",   lowCf                               );
-	yInfo( "\t Highest Center Frequency         : %d",   highCf                              );
-	yInfo( "\t Half-Wave Rectifying             : %s",   halfRec   ? "ENABLED"  : "DISABLED" );
-	yInfo( "\t Center Frequency Spacing         : %s",   erbSpaced ? "ERB-Rate" :  "Linear"  );
-	yInfo( "\t Number of Beams Per Hemifield    : %d",   numBeamsPerHemifield                );
-	yInfo( "\t Number of Front Field Beams      : %d",   numBeams                            );
-	yInfo( "\t Number of Front Field Angles     : %d",   numFrontFieldAngles                 );
-	yInfo( "\t Number of Full Field Angles      : %d",   numFullFieldAngles                  );
+	yInfo( "\t                 [PROCESSING]                 "                                    );
+	yInfo( "\t ============================================ "                                    );
+	yInfo( "\t Number of Frequency Bands        : %d",       numBands                            );
+	yInfo( "\t Lowest Center Frequency          : %.2f Hz",  lowCf                               );
+	yInfo( "\t Highest Center Frequency         : %.2f Hz",  highCf                              );
+	yInfo( "\t Half-Wave Rectifying             : %s",       halfRec   ? "ENABLED"  : "DISABLED" );
+	yInfo( "\t Center Frequency Spacing         : %s",       erbSpaced ? "ERB-Rate" :  "Linear"  );
+	yInfo( "\t Band Pass Frequency              : %.2f Hz",  bandPassFreq                        );
+	yInfo( "\t Number of Beams Per Hemifield    : %d",       numBeamsPerHemifield                );
+	yInfo( "\t Number of Front Field Beams      : %d",       numBeams                            );
+	yInfo( "\t Number of Front Field Angles     : %d",       numFrontFieldAngles                 );
+	yInfo( "\t Number of Full Field Angles      : %d",       numFullFieldAngles                  );
 	#ifdef WITH_OMP
-	yInfo( "\t Number of OpenMP Threads         : %d",   numOmpThreads                       );
+	yInfo( "\t Number of OpenMP Threads         : %d",       numOmpThreads                       );
 	#else
-	yInfo( "\t Number of OpenMP Threads         : DISABLED"                                  );
+	yInfo( "\t Number of OpenMP Threads         : DISABLED"                                      );
 	#endif
 	yInfo( " " );
 
@@ -196,7 +212,7 @@ bool AudioPreprocessorPeriodicThread::threadInit() {
 		return false;
 	}
 
-	if (!inHeadAnglePort.open(getName("/headAngle:i").c_str())) { //-- TODO: REWORK THIS. TEMPORARY.
+	if (!inHeadAnglePort.open(getName("/headAngle:i").c_str())) {
 		yError("Unable to open port for receiving robot head angle.");
 		return false;
 	}
@@ -208,6 +224,16 @@ bool AudioPreprocessorPeriodicThread::threadInit() {
 
 	if (!outGammatoneFilteredPowerPort.open(getName("/gammatoneFilteredPower:o").c_str())) {
 		yError("Unable to open port for sending the power of bands of the gammatone filter bank.");
+		return false;
+	}
+
+	if (!outHilbertEnvelopePort.open(getName("/hilbertEnvelope:o").c_str())) {
+		yError("Unable to open port for sending the Hilbert Envelope of the Filter bank.");
+		return false;
+	}
+
+	if (!outBandPassedAudioPort.open(getName("/bandPassedAudio:o").c_str())) {
+		yError("Unable to open port for sending the band passed Hilbert Envelope.");
 		return false;
 	}
 
@@ -246,6 +272,8 @@ void AudioPreprocessorPeriodicThread::threadRelease() {
 	inHeadAnglePort.interrupt();
 	outGammatoneFilteredAudioPort.interrupt();
 	outGammatoneFilteredPowerPort.interrupt();
+	outHilbertEnvelopePort.interrupt();
+	outBandPassedAudioPort.interrupt();
 	outBeamformedAudioPort.interrupt();
 	outBeamformedRmsAudioPort.interrupt();
 	outBeamformedRmsPowerPort.interrupt();
@@ -256,6 +284,8 @@ void AudioPreprocessorPeriodicThread::threadRelease() {
 	inHeadAnglePort.close();
 	outGammatoneFilteredAudioPort.close();
 	outGammatoneFilteredPowerPort.close();
+	outHilbertEnvelopePort.close();
+	outBandPassedAudioPort.close();
 	outBeamformedAudioPort.close();
 	outBeamformedRmsAudioPort.close();
 	outBeamformedRmsPowerPort.close();
@@ -288,16 +318,11 @@ void AudioPreprocessorPeriodicThread::run() {
 	if (inRawAudioPort.getInputCount()) {
 
 		//-- Grab the time time difference of waiting between loops.
-		stopTime    = yarp::os::Time::now();
-		timeDelay   = stopTime - startTime;
-		totalDelay += timeDelay;
-		startTime   = stopTime;
-		
+		makeTimeStamp(totalDelay, timeDelay, startTime, stopTime);
 		
 		//-- Get Input.
 		inputSound = inRawAudioPort.read(true);
 		inRawAudioPort.getEnvelope(timeStamp);
-
 
 		//-- Get head position.
 		headOffset = 0.0;
@@ -306,35 +331,20 @@ void AudioPreprocessorPeriodicThread::run() {
 			headOffset += headAngleBottle->get(panAngle).asDouble();
 		}
 
-
 		//-- Grab the time difference of reading input.
-		stopTime      = yarp::os::Time::now();
-		timeReading   = stopTime - startTime;
-		totalReading += timeReading;
-		startTime     = stopTime;
-
+		makeTimeStamp(totalReading, timeReading, startTime, stopTime);
 
 		//-- Main Loop.
 		result = processing();
 
-
 		//-- Grab the time difference of processing the input.
-		stopTime         = yarp::os::Time::now();
-		timeProcessing   = stopTime - startTime;
-		totalProcessing += timeProcessing;
-		startTime        = stopTime;
-
+		makeTimeStamp(totalProcessing, timeProcessing, startTime, stopTime);
 
 		//-- Write data to outgoing ports.
 		publishOutPorts();	
-		
 
 		//-- Grab the time delay of publishing on ports.
-		stopTime           = yarp::os::Time::now();
-		timeTransmission   = stopTime - startTime;
-		totalTransmission += timeTransmission;
-		startTime          = stopTime;
-
+		makeTimeStamp(totalTransmission, timeTransmission, startTime, stopTime);
 
 		//-- Give time stats to the user.
 		timeTotal  = timeDelay + timeReading + timeProcessing + timeTransmission;
@@ -361,12 +371,23 @@ bool AudioPreprocessorPeriodicThread::processing() {
 
 
 	/* ===========================================================================
-	 *  Apply a 4th order gammatone filter onto the
-	 *    raw audio for the specified number of bands.
+	 *  Apply a 4th order gammatone filter onto the raw audio for the 
+	 *    specified number of bands. Also returns a bank of envelopes.
 	 * =========================================================================== */
 	gammatoneFilterBank->getGammatoneFilteredAudio (
-		/* Target = */ GammatoneFilteredAudioMatrix,
-		/* Source = */ RawAudioMatrix
+		/* Basilar Memb Res = */ GammatoneFilteredAudioMatrix,
+		/* Hilbert Envelope = */ HilbertEnvelopeMatrix,
+		/* Raw Audio Source = */ RawAudioMatrix
+	);
+
+
+	/* ===========================================================================
+	 *  Filter the Envelopes looking for specifically the envelope of human voices.
+	 * =========================================================================== */
+	gammatoneFilterBank->getBandPassedAudio (
+		/* Band Passed Bank   = */ BandPassedAudioMatrix,
+		/* Audio Bank Source  = */ HilbertEnvelopeMatrix,
+		/* Desired Audio Band = */ bandPassFreq
 	);
 
 
@@ -376,8 +397,8 @@ bool AudioPreprocessorPeriodicThread::processing() {
 	 * =========================================================================== */
 	if (outGammatoneFilteredPowerPort.getOutputCount()) {
 		gammatoneFilterBank->getGammatoneFilteredPower (
-			/* Target = */ GammatoneFilteredPowerMatrix,
-			/* Source = */ GammatoneFilteredAudioMatrix
+			/* Power of the Bank = */ GammatoneFilteredPowerMatrix,
+			/* Basilar Memb Res  = */ GammatoneFilteredAudioMatrix
 		);
 	}
 
@@ -387,8 +408,8 @@ bool AudioPreprocessorPeriodicThread::processing() {
 	 *    across the frame onto the filtered left and right channel. 
 	 * =========================================================================== */
 	interauralCues->getBeamformedRmsAudio (
-		/* Target = */ BeamformedRmsAudioMatrix,
-		/* Source = */ GammatoneFilteredAudioMatrix
+		/* RMS Beamformer   = */ BeamformedRmsAudioMatrix,
+		/* Basilar Memb Res = */ GammatoneFilteredAudioMatrix
 	);
 
 
@@ -432,6 +453,19 @@ void AudioPreprocessorPeriodicThread::publishOutPorts() {
 		outGammatoneFilteredPowerPort.setEnvelope(timeStamp);
 		outGammatoneFilteredPowerPort.write();
 	}
+
+	if (outHilbertEnvelopePort.getOutputCount()) {
+		outHilbertEnvelopePort.prepare() = HilbertEnvelopeMatrix;
+		outHilbertEnvelopePort.setEnvelope(timeStamp);
+		outHilbertEnvelopePort.write();
+	}
+
+	if (outBandPassedAudioPort.getOutputCount()) {
+		outBandPassedAudioPort.prepare() = BandPassedAudioMatrix;
+		outBandPassedAudioPort.setEnvelope(timeStamp);
+		outBandPassedAudioPort.write();
+	}
+
 
 	if (outBeamformedAudioPort.getOutputCount()) {
 		outBeamformedAudioPort.prepare() = BeamformedAudioMatrix;

@@ -71,6 +71,50 @@
 
 
     <!-->  
+    Hilbert Envelope.
+    <!-->
+    <module>
+        <name> frequencyVisualisation </name>
+        <parameters> --name /hilbertEnvelopeVisualiser </parameters>
+        <node> icub </node>
+    </module>
+
+    <module>
+        <name> yarpview </name>
+        <parameters> --x 100 --y 100 --h 320 --w 240 --r 33 --name /hilbertEnvelopeView </parameters>
+        <node> icub </node>
+    </module>
+	
+	<module>
+		<name> . </name>
+		<parameters> </parameters>
+		<node> localhost </node>
+	</module>
+
+
+    <!-->  
+    Band Passed Audio.
+    <!-->
+    <module>
+        <name> frequencyVisualisation </name>
+        <parameters> --name /bandPassedAudioVisualiser </parameters>
+        <node> icub </node>
+    </module>
+
+    <module>
+        <name> yarpview </name>
+        <parameters> --x 100 --y 100 --h 320 --w 240 --r 33 --name /bandPassedAudioView </parameters>
+        <node> icub </node>
+    </module>
+	
+	<module>
+		<name> . </name>
+		<parameters> </parameters>
+		<node> localhost </node>
+	</module>
+
+
+    <!-->  
     RMS of Beamformed Audio.
     <!-->
     <module>
@@ -308,6 +352,7 @@
         <protocol> tcp </protocol>
     </connection>
 
+    <!--> #################################################### <!-->
 
     <connection>
         <from> /audioPreprocessor/gammatoneFilteredAudio:o </from>
@@ -321,6 +366,7 @@
         <protocol> tcp </protocol>
     </connection>
 
+    <!--> #################################################### <!-->
 
     <connection>
         <from> /audioPreprocessor/gammatoneFilteredPower:o </from>
@@ -334,6 +380,35 @@
         <protocol> tcp </protocol>
     </connection>
 
+    <!--> #################################################### <!-->
+
+    <connection>
+        <from> /audioPreprocessor/hilbertEnvelope:o </from>
+        <to>   /hilbertEnvelopeVisualiser/map:i     </to>
+        <protocol> tcp </protocol>
+    </connection> 
+
+    <connection>
+        <from> /hilbertEnvelopeVisualiser/img:o  </from>
+        <to>   /hilbertEnvelopeView              </to>
+        <protocol> tcp </protocol>
+    </connection>
+
+    <!--> #################################################### <!-->
+
+    <connection>
+        <from> /audioPreprocessor/bandPassedAudio:o </from>
+        <to>   /bandPassedAudioVisualiser/map:i     </to>
+        <protocol> tcp </protocol>
+    </connection> 
+
+    <connection>
+        <from> /bandPassedAudioVisualiser/img:o  </from>
+        <to>   /bandPassedAudioView              </to>
+        <protocol> tcp </protocol>
+    </connection>
+
+    <!--> #################################################### <!-->
 
     <connection>
         <from> /audioPreprocessor/beamformedRmsAudio:o </from>
@@ -347,6 +422,7 @@
         <protocol> tcp </protocol>
     </connection>
 
+    <!--> #################################################### <!-->
 
     <connection>
         <from> /audioPreprocessor/beamformedRmsPower:o </from>
@@ -360,6 +436,7 @@
         <protocol> tcp </protocol>
     </connection>
 
+    <!--> #################################################### <!-->
 
     <connection>
         <from> /audioPreprocessor/allocentricAudio:o </from>
@@ -373,6 +450,7 @@
         <protocol> tcp </protocol>
     </connection>
 
+    <!--> #################################################### <!-->
 
     <connection>
         <from> /audioBayesianMap/bayesianProbabilityMap:o </from>
@@ -386,6 +464,7 @@
         <protocol> tcp </protocol>
     </connection>
 
+    <!--> #################################################### <!-->
 
     <connection>
         <from> /audioBayesianMap/bayesianProbabilityAngle:o </from>
@@ -399,6 +478,7 @@
         <protocol> tcp </protocol>
     </connection>
 
+    <!--> #################################################### <!-->
 
     <connection>
         <from> /audioPowerMap/probabilityPower:o </from>
@@ -412,6 +492,7 @@
         <protocol> tcp </protocol>
     </connection>
 
+    <!--> #################################################### <!-->
 
     <connection>
         <from> /audioPowerMap/probabilityPowerMap:o </from>
@@ -425,6 +506,7 @@
         <protocol> tcp </protocol>
     </connection>
 
+    <!--> #################################################### <!-->
 
     <connection>
         <from> /audioPowerMap/probabilityPowerAngle:o </from>
@@ -438,6 +520,7 @@
         <protocol> tcp </protocol>
     </connection>
 
+    <!--> #################################################### <!-->
     
     <connection>
         <from> /audioPowerMap/instantaneousPowerProbabilityMap:o </from>
@@ -451,6 +534,7 @@
         <protocol> tcp </protocol>
     </connection>
     
+    <!--> #################################################### <!-->
     
     <connection>
         <from> /audioPowerMap/instantaneousPowerProbabilityAngle:o </from>

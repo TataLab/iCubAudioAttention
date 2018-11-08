@@ -78,6 +78,8 @@ class AudioPreprocessorPeriodicThread : public yarp::os::PeriodicThread {
 	yarp::os::BufferedPort< yarp::sig::Sound  > inRawAudioPort;
 	yarp::os::BufferedPort< yarp::sig::Matrix > outGammatoneFilteredAudioPort;
 	yarp::os::BufferedPort< yarp::sig::Matrix > outGammatoneFilteredPowerPort;
+	yarp::os::BufferedPort< yarp::sig::Matrix > outHilbertEnvelopePort;
+	yarp::os::BufferedPort< yarp::sig::Matrix > outBandPassedAudioPort;
 	yarp::os::BufferedPort< yarp::sig::Matrix > outBeamformedAudioPort;
 	yarp::os::BufferedPort< yarp::sig::Matrix > outBeamformedRmsAudioPort;
 	yarp::os::BufferedPort< yarp::sig::Matrix > outBeamformedRmsPowerPort;
@@ -91,6 +93,8 @@ class AudioPreprocessorPeriodicThread : public yarp::os::PeriodicThread {
 	yarp::sig::Matrix RawAudioMatrix;
 	yarp::sig::Matrix GammatoneFilteredAudioMatrix;
 	yarp::sig::Matrix GammatoneFilteredPowerMatrix;
+	yarp::sig::Matrix HilbertEnvelopeMatrix;
+	yarp::sig::Matrix BandPassedAudioMatrix;
 	yarp::sig::Matrix BeamformedAudioMatrix;
 	yarp::sig::Matrix BeamformedRmsAudioMatrix;
 	yarp::sig::Matrix BeamformedRmsPowerMatrix;
@@ -120,10 +124,11 @@ class AudioPreprocessorPeriodicThread : public yarp::os::PeriodicThread {
 	int    numFrameSamples;
 
 	int    numBands;
-	int    lowCf;
-	int    highCf;
+	double lowCf;
+	double highCf;
 	bool   halfRec;
 	bool   erbSpaced;
+	double bandPassFreq;
 	int    angleRes;
 	int    numOmpThreads;
 

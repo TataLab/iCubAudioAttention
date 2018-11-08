@@ -45,20 +45,20 @@ class GammatoneFilterBank {
 	/* ===========================================================================
 	 *  Variables set in the constructor. Should not be changed for life of object.
 	 * =========================================================================== */
-    int  numMics;
-	int  samplingRate;
-	int  numFrameSamples;
-	int  numBands;
-	int  lowCf;
-	int  highCf;
-	bool halfRec;
-	bool erbSpaced;
+    int    numMics;
+	int    samplingRate;
+	int    numFrameSamples;
+	int    numBands;
+	double lowCf;
+	double highCf;
+	bool   halfRec;
+	bool   erbSpaced;
 
 	yarp::sig::Vector cfs;
-	yarp::sig::Matrix _placeHolderBasilarMembrane;
-	yarp::sig::Matrix _placeHolderEnvelope;
-	yarp::sig::Matrix _placeHolderPhase;
-	double            tpt;
+	yarp::sig::Matrix _proxyBasilarMembrane;
+	yarp::sig::Matrix _proxyEnvelope;
+	yarp::sig::Matrix _proxyPhase;
+	double            tpt;                 //-- 2 pi / samp rate.
 	const double      _pi = 2 * acos(0.0); //-- High precision pi.
 
 
@@ -76,7 +76,7 @@ class GammatoneFilterBank {
      * @param hrec    : Enable Half-Wave Rectifying.
      * @param erbs    : Enable ERB Spaced Center Frequencies.
 	 * =========================================================================== */
-	GammatoneFilterBank(int mics, int samples, int frames, int bands, int lcf, int hcf, bool hrec, bool erbs);
+	GammatoneFilterBank(int mics, int samples, int frames, int bands, double lcf, double hcf, bool hrec, bool erbs);
 
 
 	/* ===========================================================================

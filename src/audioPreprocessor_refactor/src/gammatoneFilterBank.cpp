@@ -27,7 +27,7 @@
 
 #define myMod(x,y)     ( ( x ) - ( y ) * floor ( ( x ) / ( y ) ) )
 
-GammatoneFilterBank::GammatoneFilterBank(int mics, int samples, int frames, int bands, int lcf, int hcf, bool hrec, bool erbs) : 
+GammatoneFilterBank::GammatoneFilterBank(int mics, int samples, int frames, int bands, double lcf, double hcf, bool hrec, bool erbs) : 
 	numMics(mics), 
 	samplingRate(samples), 
 	numFrameSamples(frames), 
@@ -49,9 +49,9 @@ GammatoneFilterBank::GammatoneFilterBank(int mics, int samples, int frames, int 
 		makeLinearCFs();
 	}
 	
-	_placeHolderBasilarMembrane.resize(numMics * numBands, numFrameSamples);
-	_placeHolderEnvelope.resize(numMics * numBands, numFrameSamples);
-	_placeHolderPhase.resize(numMics * numBands, numFrameSamples);
+	_proxyBasilarMembrane.resize(numMics * numBands, numFrameSamples);
+	_proxyEnvelope.resize(numMics * numBands, numFrameSamples);
+	_proxyPhase.resize(numMics * numBands, numFrameSamples);
 
 	tpt = (_pi + _pi) / samplingRate;
 }
@@ -66,7 +66,7 @@ void GammatoneFilterBank::getGammatoneFilteredAudio(yarp::sig::Matrix& FilterBan
 
 	//-- Ensure space is allocated for the filtered audio.
 	FilterBank.resize(numMics * numBands, numFrameSamples);
-	_placeHolderEnvelope.resize(numMics * numBands, numFrameSamples);
+	_proxyEnvelope.resize(numMics * numBands, numFrameSamples);
 
 	//-- Loop variabes.
 	int itrBandMic;
@@ -74,17 +74,17 @@ void GammatoneFilterBank::getGammatoneFilteredAudio(yarp::sig::Matrix& FilterBan
 	
 	#ifdef WITH_OMP
 	#pragma omp parallel \
-  	 shared  (FilterBank, _placeHolderEnvelope, RawAudio) \
+  	 shared  (FilterBank, _proxyEnvelope, RawAudio) \
   	 private (itrBandMic)
 	#pragma omp for schedule(guided)
 	#endif
 	for (itrBandMic = 0; itrBandMic < numBandMic; itrBandMic++) {
 
 		singleGammatoneFilter (
-			/* Basilar Membrane = */ FilterBank           [itrBandMic],
-			/* Hilbert Envelope = */ _placeHolderEnvelope [itrBandMic],
-			/* Channel of Audio = */ RawAudio             [itrBandMic / numBands],
-			/* Center Frequency = */ cfs                  [itrBandMic % numBands],
+			/* Basilar Membrane = */ FilterBank     [itrBandMic],
+			/* Hilbert Envelope = */ _proxyEnvelope [itrBandMic],
+			/* Channel of Audio = */ RawAudio       [itrBandMic / numBands],
+			/* Center Frequency = */ cfs            [itrBandMic % numBands],
 			/* Include Envelope = */ false
 		);
 	}	
@@ -103,7 +103,7 @@ void GammatoneFilterBank::getGammatoneFilteredAudio(yarp::sig::Matrix& FilterBan
 	
 	#ifdef WITH_OMP
 	#pragma omp parallel \
-  	 shared  (FilterBank, EnvelopeBank, _placeHolderPhase, RawAudio) \
+  	 shared  (FilterBank, EnvelopeBank, RawAudio) \
   	 private (itrBandMic)
 	#pragma omp for schedule(guided)
 	#endif
