@@ -171,6 +171,9 @@ void GammatoneFilterBank::getBandPassedAudio(yarp::sig::Matrix& BandPassedBank, 
 		);
 	}
 	
+	////////////////////////////////////////////////////////
+	////// REMOVE //////////////////////////////////////////
+	////////////////////////////////////////////////////////
 
 	double min =  999;
 	double max = -999;
@@ -188,6 +191,11 @@ void GammatoneFilterBank::getBandPassedAudio(yarp::sig::Matrix& BandPassedBank, 
 	}
 
 	std::cerr << "Min: " << min << " Max: " << max << std::endl;
+
+	//\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+	\\\\\\ REMOVE \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+	\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\/
+
 }
 
 

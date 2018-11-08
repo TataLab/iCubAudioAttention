@@ -130,6 +130,7 @@ class AudioPreprocessorPeriodicThread : public yarp::os::PeriodicThread {
 	bool   erbSpaced;
 	double bandPassFreq;
 	int    angleRes;
+	int    downSamp;
 	int    numOmpThreads;
 
 	/* ===========================================================================

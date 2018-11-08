@@ -36,6 +36,35 @@ inline int myRound(T a) {
 }
 
 
+inline void downSampVis(const yarp::sig::Matrix& source, yarp::sig::Matrix& target, const int downSamp) {
+	
+	//-- Don't do any down sampling. Standard Copy.
+	if (downSamp == 1) { target = source; return; }
+
+	//-- Allocate space for the down sampled matrix.
+	const int RowSize = source.rows();
+	const int ColSize = source.cols() / downSamp;
+	const int offset  = source.cols() % downSamp;
+	target.resize(RowSize, ColSize);
+	
+	//-- Set a pointer to the target.
+	double *t = target.data();
+
+	//-- Set a pointer to the source.
+	const double *s = source.data();
+
+	for (int row = 0; row < RowSize; row++) {
+		for (int col = 0; col < ColSize; col++) {
+			//-- Dereference and copy data.
+			*t = *s;
+			t++; s += downSamp;
+		}
+		//-- Skip any remaining points at the end of the row.
+		s += offset;
+	}
+}
+
+
 inline void makeTimeStamp(double& totalStat, double& timeStat, double& startTime, double& stopTime) {
 	stopTime   = yarp::os::Time::now();
 	timeStat   = stopTime - startTime;
@@ -89,6 +118,7 @@ bool AudioPreprocessorPeriodicThread::configure(yarp::os::ResourceFinder &rf) {
 	erbSpaced     = rf.findGroup("processing").check("erbSpaced",     yarp::os::Value(true),   "ERB spaced centre frequencies (boolean)"      ).asBool();
 	bandPassFreq  = rf.findGroup("processing").check("bandPassFreq",  yarp::os::Value(5.0),    "frequency to use in band pass filter (double)").asDouble();
 	angleRes      = rf.findGroup("processing").check("angleRes",      yarp::os::Value(1),      "degree resolution for a single position (int)").asInt();
+	downSamp      = rf.findGroup("processing").check("downSamp",      yarp::os::Value(1),      "number of frames to down sample by (int)"     ).asInt();
 	numOmpThreads = rf.findGroup("processing").check("numOmpThreads", yarp::os::Value(4),      "if enabled, the number of omp threads (int)"  ).asInt();
 
 
@@ -189,6 +219,7 @@ bool AudioPreprocessorPeriodicThread::configure(yarp::os::ResourceFinder &rf) {
 	yInfo( "\t Number of Front Field Beams      : %d",       numBeams                            );
 	yInfo( "\t Number of Front Field Angles     : %d",       numFrontFieldAngles                 );
 	yInfo( "\t Number of Full Field Angles      : %d",       numFullFieldAngles                  );
+	yInfo( "\t Big Matrix Down Sample           : %d",       downSamp                            );
 	#ifdef WITH_OMP
 	yInfo( "\t Number of OpenMP Threads         : %d",       numOmpThreads                       );
 	#else
@@ -443,7 +474,11 @@ void AudioPreprocessorPeriodicThread::publishOutPorts() {
 	
 	//-- Write to Active Ports.
 	if (outGammatoneFilteredAudioPort.getOutputCount()) {
-		outGammatoneFilteredAudioPort.prepare() = GammatoneFilteredAudioMatrix;
+		downSampVis (
+			/* Source = */ GammatoneFilteredAudioMatrix, 
+			/* Target = */ outGammatoneFilteredAudioPort.prepare(), 
+			/* Reduce = */ downSamp
+		);
 		outGammatoneFilteredAudioPort.setEnvelope(timeStamp);
 		outGammatoneFilteredAudioPort.write();
 	}
@@ -455,13 +490,21 @@ void AudioPreprocessorPeriodicThread::publishOutPorts() {
 	}
 
 	if (outHilbertEnvelopePort.getOutputCount()) {
-		outHilbertEnvelopePort.prepare() = HilbertEnvelopeMatrix;
+		downSampVis (
+			/* Source = */ HilbertEnvelopeMatrix,
+			/* Target = */ outHilbertEnvelopePort.prepare(),
+			/* Reduce = */ downSamp
+		);
 		outHilbertEnvelopePort.setEnvelope(timeStamp);
 		outHilbertEnvelopePort.write();
 	}
 
 	if (outBandPassedAudioPort.getOutputCount()) {
-		outBandPassedAudioPort.prepare() = BandPassedAudioMatrix;
+		downSampVis (
+			/* Source = */ BandPassedAudioMatrix,
+			/* Target = */ outBandPassedAudioPort.prepare(),
+			/* Reduce = */ downSamp
+		);
 		outBandPassedAudioPort.setEnvelope(timeStamp);
 		outBandPassedAudioPort.write();
 	}
