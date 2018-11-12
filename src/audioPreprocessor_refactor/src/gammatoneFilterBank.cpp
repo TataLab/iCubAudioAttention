@@ -301,19 +301,20 @@ void GammatoneFilterBank::singleBandPass(const double* Audio, double* BandPass, 
 	const double gain = 10.0;
 
 	const double omega = 2.0 * _pi * CenterFrequency / samplingRate;
-	const double tsin  = sin(omega);
-	const double tcos  = cos(omega);
-	const double alpha = tsin * sinh( _ln2 / 2.0 * BW_CORRECTION * omega / tsin );
+	const double sincf = sin(omega);
+	const double coscf = cos(omega);
+	const double alpha = sincf * sinh( _ln2 / 2.0 * BW_CORRECTION * omega / sincf );
 
-	const double a  =  1.0 + alpha;
-	const double a1 = ( -2.0 * tcos ) / a;
-	const double a2 = ( 1.0 - alpha ) / a;
-	const double b0 = ( alpha )       / a;
-	const double b1 = ( 0.0 )         / a;
-	const double b2 = ( -alpha )      / a;
+	const double a  = 1.0 + alpha;
+	const double a1 = ( -2.0 * coscf ) / a;
+	const double a2 = (  1.0 - alpha ) / a;
+	const double b0 = (  alpha )       / a;
+	const double b1 = (   0.0  )       / a;
+	const double b2 = ( -alpha )       / a;
 
 	double p0i = 0.0, p1i = 0.0, p2i = 0.0;
 	double p0o = 0.0, p1o = 0.0, p2o = 0.0;
+
 
 	/* ===================================================================
 	 *  Begin running the single butterworth band pass on the provided input audio.
@@ -341,7 +342,6 @@ void GammatoneFilterBank::singleBandPass(const double* Audio, double* BandPass, 
 
 		//-- Store the results.
 		BandPass[sample] = p0o * gain;
-		
 	}
 }
 
