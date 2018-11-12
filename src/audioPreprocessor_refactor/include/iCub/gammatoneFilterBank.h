@@ -58,8 +58,9 @@ class GammatoneFilterBank {
 	yarp::sig::Matrix _proxyBasilarMembrane;
 	yarp::sig::Matrix _proxyEnvelope;
 	yarp::sig::Matrix _proxyPhase;
-	double            tpt;                 //-- 2 pi / samp rate.
-	const double      _pi = 2 * acos(0.0); //-- High precision pi.
+	double            tpt;                  //-- 2 pi / samp rate.
+	const double      _pi  = 2 * acos(0.0); //-- High precision pi.
+	const double      _ln2 = log(2);        //-- High precision natural log of 2.
 
 
   public:
@@ -117,7 +118,7 @@ class GammatoneFilterBank {
 	 * @param BandPassedBank : Target for the band pass (number of mics * number of bands, number of samples).
 	 * @param BandFreq       : The desired frequency band to be isolated.
 	 * =========================================================================== */
-	void getBandPassedAudio(const yarp::sig::Matrix& AudioBank, yarp::sig::Matrix& BandPassedBank, const double BandFreq);
+	void getBandPassedAudio(const yarp::sig::Matrix& AudioBank, yarp::sig::Matrix& BandPassedBank, const double CenterFrequency);
 
 
   private:
@@ -146,7 +147,7 @@ class GammatoneFilterBank {
 	 * @param BandPass : Target for the Band Passed audio (number of samples).
 	 * @param BandFreq : The desired frequency band to be isolated.
 	 * =========================================================================== */
-	void singleBandPass(const double* Audio, double* BandPass, const double BandFreq);
+	void singleBandPass(const double* Audio, double* BandPass, const double CenterFrequency);
 
 
 	/* ===========================================================================

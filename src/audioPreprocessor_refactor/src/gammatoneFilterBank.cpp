@@ -146,8 +146,8 @@ void GammatoneFilterBank::getGammatoneFilteredPower(const yarp::sig::Matrix& Fil
 	}
 }
 
-#include <iostream>
-void GammatoneFilterBank::getBandPassedAudio(const yarp::sig::Matrix& AudioBank, yarp::sig::Matrix& BandPassedBank, const double BandFreq) {
+
+void GammatoneFilterBank::getBandPassedAudio(const yarp::sig::Matrix& AudioBank, yarp::sig::Matrix& BandPassedBank, const double CenterFrequency) {
 
 	//-- Ensure space is allocated for the band passed audio.
 	BandPassedBank.resize(numMics * numBands, numFrameSamples);
@@ -165,36 +165,11 @@ void GammatoneFilterBank::getBandPassedAudio(const yarp::sig::Matrix& AudioBank,
 	for (itrBandMic = 0; itrBandMic < numBandMic; itrBandMic++) {
 
 		singleBandPass (
-			/* Source    = */ AudioBank[itrBandMic],
-			/* Target    = */ BandPassedBank[itrBandMic],
-			/* Band Pass = */ BandFreq
+			/* Source = */ AudioBank[itrBandMic],
+			/* Target = */ BandPassedBank[itrBandMic],
+			/* cf     = */ CenterFrequency
 		);
 	}
-	
-	////////////////////////////////////////////////////////
-	////// REMOVE //////////////////////////////////////////
-	////////////////////////////////////////////////////////
-
-	double min =  999;
-	double max = -999;
-
-	for (itrBandMic = 0; itrBandMic < numBandMic; itrBandMic++) {
-
-		for (int i = 0; i < numFrameSamples; i++) {
-			if (BandPassedBank[itrBandMic][i] > max) {
-				max = BandPassedBank[itrBandMic][i];
-			}
-			if (BandPassedBank[itrBandMic][i] < min) {
-				min = BandPassedBank[itrBandMic][i];
-			}
-		}
-	}
-
-	std::cerr << "Min: " << min << " Max: " << max << std::endl;
-
-	//\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\/
-	//\\\\ REMOVE \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\/
-	//\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\/
 }
 
 
@@ -316,26 +291,26 @@ void GammatoneFilterBank::singleGammatoneFilter(const double* RawAudio, double* 
 }
 
 
-void GammatoneFilterBank::singleBandPass(const double* Audio, double* BandPass, const double BandFreq)  {
+void GammatoneFilterBank::singleBandPass(const double* Audio, double* BandPass, const double CenterFrequency)  {
 
 	/* ===================================================================
 	*  Initialize all variables in this scope so
 	*    that they are not shared amongst threads.
 	* =================================================================== */
 
-	const double gain = 100000.0;
-	const double Q  = 82.0;
-	const double BW = BandFreq * BW_CORRECTION / Q;
-	const double f0 = samplingRate / 2.0;
-	const double C  = 1.0 / tan( _pi * (BW / samplingRate) );
-	const double D  = 2.0 * cos( tpt * f0 );
+	const double gain = 10.0;
 
-	//-- Update Filter coefficients.
-	const double a0 =  1.0 / (1.0 + C);
-	const double a1 =  0.0;
-	const double a2 = -a0;
-	const double b1 = -a0 * C * D;
-	const double b2 =  a0 * (C - 1.0);
+	const double omega = 2.0 * _pi * CenterFrequency / samplingRate;
+	const double tsin  = sin(omega);
+	const double tcos  = cos(omega);
+	const double alpha = tsin * sinh( _ln2 / 2.0 * BW_CORRECTION * omega / tsin );
+
+	const double a  =  1.0 + alpha;
+	const double a1 = ( -2.0 * tcos ) / a;
+	const double a2 = ( 1.0 - alpha ) / a;
+	const double b0 = ( alpha )       / a;
+	const double b1 = ( 0.0 )         / a;
+	const double b2 = ( -alpha )      / a;
 
 	double p0i = 0.0, p1i = 0.0, p2i = 0.0;
 	double p0o = 0.0, p1o = 0.0, p2o = 0.0;
@@ -347,9 +322,10 @@ void GammatoneFilterBank::singleBandPass(const double* Audio, double* BandPass, 
 
 	for (int sample = 0; sample < numFrameSamples; sample++) {
 		
-		//-- Filter out all except the specified frequency band.
-		p0i = gain * Audio[sample];
-		p0o = (a0*p0i + a1*p1i + a2*p2i) - (b2*p2o + b1*p1o);
+		//-- Filter out all except the specified frequency band by performing
+		//-- the biquad transfer function using the coefficients.
+		p0i = Audio[sample];
+		p0o = (b0*p0i + b1*p1i + b2*p2i) - (a1*p1o + a2*p2o);
 
 		//-- Clip coefficients to stop them from becoming too close to zero.
 		if (fabs(p0o) < VERY_SMALL_NUMBER) {
@@ -359,12 +335,13 @@ void GammatoneFilterBank::singleBandPass(const double* Audio, double* BandPass, 
 			p0i = 0.0F;
 		}
 
-		//-- Update filter results.
+		//-- Update in and out buffers.
 		p2i = p1i; p1i = p0i;
 		p2o = p1o; p1o = p0o;
 
 		//-- Store the results.
-		BandPass[sample] = p0o;
+		BandPass[sample] = p0o * gain;
+		
 	}
 }
 

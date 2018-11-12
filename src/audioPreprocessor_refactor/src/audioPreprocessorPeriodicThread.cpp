@@ -425,7 +425,7 @@ bool AudioPreprocessorPeriodicThread::processing() {
 	 * =========================================================================== */
 	if (outGammatoneFilteredPowerPort.getOutputCount()) {
 		gammatoneFilterBank->getGammatoneFilteredPower (
-			/* Basilar Memb Res  = */ GammatoneFilteredAudioMatrix,
+			/* Basilar Memb Res  = */ BandPassedAudioMatrix, //GammatoneFilteredAudioMatrix,
 			/* Power of the Bank = */ GammatoneFilteredPowerMatrix
 		);
 	}
