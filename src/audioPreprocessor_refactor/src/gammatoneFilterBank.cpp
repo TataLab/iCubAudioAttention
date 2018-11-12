@@ -74,7 +74,6 @@ void GammatoneFilterBank::getGammatoneFilteredAudio(const yarp::sig::Matrix& Raw
 	
 	#ifdef WITH_OMP
 	#pragma omp parallel \
-  	 shared  (RawAudio, FilterBank, _proxyEnvelope) \
   	 private (itrBandMic)
 	#pragma omp for schedule(guided)
 	#endif
@@ -103,7 +102,6 @@ void GammatoneFilterBank::getGammatoneFilteredAudio(const yarp::sig::Matrix& Raw
 	
 	#ifdef WITH_OMP
 	#pragma omp parallel \
-  	 shared  (RawAudio, FilterBank, EnvelopeBank) \
   	 private (itrBandMic)
 	#pragma omp for schedule(guided)
 	#endif
@@ -158,7 +156,6 @@ void GammatoneFilterBank::getBandPassedAudio(const yarp::sig::Matrix& AudioBank,
 
 	#ifdef WITH_OMP
 	#pragma omp parallel \
-	 shared  (AudioBank, BandPassedBank) \
 	 private (itrBandMic)
 	#pragma omp for schedule(guided)
 	#endif
@@ -294,9 +291,9 @@ void GammatoneFilterBank::singleGammatoneFilter(const double* RawAudio, double* 
 void GammatoneFilterBank::singleBandPass(const double* Audio, double* BandPass, const double CenterFrequency)  {
 
 	/* ===================================================================
-	*  Initialize all variables in this scope so
-	*    that they are not shared amongst threads.
-	* =================================================================== */
+	 *  Initialize all variables in this scope so
+	 *    that they are not shared amongst threads.
+	 * =================================================================== */
 
 	const double gain = 10.0;
 
