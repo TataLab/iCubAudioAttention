@@ -287,14 +287,19 @@ void GammatoneFilterBank::singleGammatoneFilter(const double* RawAudio, double* 
 	}
 }
 
-
+#include <iostream>
 void GammatoneFilterBank::singleBandPass(const double* Audio, double* BandPass, const double CenterFrequency)  {
 
 	/* ===================================================================
 	 *  Initialize all variables in this scope so
 	 *    that they are not shared amongst threads.
 	 * =================================================================== */
+	/* ===================================================================
+	 *  Begin running the single butterworth band pass on the provided input audio.
+	 *  The resulting band passed audio is stored in the provided band pass matrix.
+	 * =================================================================== */
 
+	/*
 	const double gain = 10.0;
 
 	const double omega = 2.0 * _pi * CenterFrequency / samplingRate;
@@ -311,12 +316,6 @@ void GammatoneFilterBank::singleBandPass(const double* Audio, double* BandPass, 
 
 	double p0i = 0.0, p1i = 0.0, p2i = 0.0;
 	double p0o = 0.0, p1o = 0.0, p2o = 0.0;
-
-
-	/* ===================================================================
-	 *  Begin running the single butterworth band pass on the provided input audio.
-	 *  The resulting band passed audio is stored in the provided band pass matrix.
-	 * =================================================================== */
 
 	for (int sample = 0; sample < numFrameSamples; sample++) {
 		
@@ -339,6 +338,31 @@ void GammatoneFilterBank::singleBandPass(const double* Audio, double* BandPass, 
 
 		//-- Store the results.
 		BandPass[sample] = p0o * gain;
+	}
+	*/
+
+	const double bw = 8 * _pi * BW_CORRECTION;
+	const double C  = 1.0 / tan( _pi * (bw / samplingRate) );
+	const double D  = 2.0 * cos( 2.0 * _pi * (CenterFrequency / samplingRate) );
+
+	const double a0 =  1.0 / (C + 1.0);
+	const double a1 =  0.0;
+	const double a2 = -1.0 * a0;
+	const double b1 = -1.0 * a0 *  C * D;
+	const double b2 =  a0  * (C - 1.0);
+
+	double p0i = 0.0, p1i = 0.0, p2i = 0.0;
+	double p0o = 0.0, p1o = 0.0, p2o = 0.0;
+
+	for (int sample = 0; sample < numFrameSamples; sample++) {
+
+		p0i = Audio[sample];
+		p0o = (a0*p0i + a1*p1i + a2*p2i) - (b2*p2o + b1*p1o);
+
+		p2i = p1i; p1i = p0i;
+		p2o = p1o; p1o = p0o;
+
+		BandPass[sample] = p0o;
 	}
 }
 

@@ -114,12 +114,13 @@ class GammatoneFilterBank {
 	/* ===========================================================================
 	 *  Apply a band pass on a bank of audio, for some specified frequency band.
 	 * 
-	 * @param AudioBank      : Source for the audio to be filtered (number of mics * number of bands, number of samples).
-	 * @param BandPassedBank : Target for the band pass (number of mics * number of bands, number of samples).
-	 * @param BandFreq       : The desired frequency band to be isolated.
+	 * @param AudioBank       : Source for the audio to be filtered (number of mics * number of bands, number of samples).
+	 * @param BandPassedBank  : Target for the band pass (number of mics * number of bands, number of samples).
+	 * @param CenterFrequency : The desired frequency band to be isolated.
 	 * =========================================================================== */
 	void getBandPassedAudio(const yarp::sig::Matrix& AudioBank, yarp::sig::Matrix& BandPassedBank, const double CenterFrequency);
 
+	void singleBandPass(const double* Audio, double* BandPass, const double CenterFrequency);
 
   private:
 	
@@ -143,11 +144,11 @@ class GammatoneFilterBank {
 	 *  Apply a single band pass filter onto the provided audio for the
 	 *    specified band frequency.
 	 * 
-	 * @param Audio    : Source for the input audio (number of samples).
-	 * @param BandPass : Target for the Band Passed audio (number of samples).
-	 * @param BandFreq : The desired frequency band to be isolated.
+	 * @param Audio           : Source for the input audio (number of samples).
+	 * @param BandPass        : Target for the Band Passed audio (number of samples).
+	 * @param CenterFrequency : The desired frequency band to be isolated.
 	 * =========================================================================== */
-	void singleBandPass(const double* Audio, double* BandPass, const double CenterFrequency);
+	//void singleBandPass(const double* Audio, double* BandPass, const double CenterFrequency);
 
 
 	/* ===========================================================================
