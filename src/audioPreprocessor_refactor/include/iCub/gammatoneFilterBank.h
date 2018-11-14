@@ -120,7 +120,6 @@ class GammatoneFilterBank {
 	 * =========================================================================== */
 	void getBandPassedAudio(const yarp::sig::Matrix& AudioBank, yarp::sig::Matrix& BandPassedBank, const double CenterFrequency);
 
-	void singleBandPass(const double* Audio, double* BandPass, const double CenterFrequency);
 
   private:
 	
@@ -137,7 +136,7 @@ class GammatoneFilterBank {
 	 * @param IncludeEnvelope : Boolean value for if the envelope should be calculated.
 	 * @param IncludePhase    : Boolean value for if the phase should be calculated.
 	 * =========================================================================== */
-	void singleGammatoneFilter(const double* RawAudio, double* BasilarMembrane, double* Envelope, const double CenterFrequency, const bool IncludeEnvelope);
+	void singleGammatoneFilter(const double* RawAudio, double* BasilarMembrane, double* Envelope, double* Phase, const double CenterFrequency, const bool IncludeEnvelope, const bool IncludePhase);
 	
 
 	/* ===========================================================================
@@ -148,7 +147,7 @@ class GammatoneFilterBank {
 	 * @param BandPass        : Target for the Band Passed audio (number of samples).
 	 * @param CenterFrequency : The desired frequency band to be isolated.
 	 * =========================================================================== */
-	//void singleBandPass(const double* Audio, double* BandPass, const double CenterFrequency);
+	void singleBandPass(const double* Audio, double* BandPass, const double CenterFrequency);
 
 
 	/* ===========================================================================

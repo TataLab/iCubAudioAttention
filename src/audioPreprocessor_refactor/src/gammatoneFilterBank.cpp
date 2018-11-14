@@ -67,6 +67,7 @@ void GammatoneFilterBank::getGammatoneFilteredAudio(const yarp::sig::Matrix& Raw
 	//-- Ensure space is allocated for the filtered audio.
 	FilterBank.resize(numMics * numBands, numFrameSamples);
 	_proxyEnvelope.resize(numMics * numBands, numFrameSamples);
+	_proxyPhase.resize(numMics * numBands, numFrameSamples);
 
 	//-- Loop variabes.
 	int itrBandMic;
@@ -83,8 +84,10 @@ void GammatoneFilterBank::getGammatoneFilteredAudio(const yarp::sig::Matrix& Raw
 			/* Channel of Audio = */ RawAudio       [itrBandMic / numBands],
 			/* Basilar Membrane = */ FilterBank     [itrBandMic],
 			/* Hilbert Envelope = */ _proxyEnvelope [itrBandMic],
+			/* Filters Phase    = */ _proxyPhase    [itrBandMic],
 			/* Center Frequency = */ cfs            [itrBandMic % numBands],
-			/* Include Envelope = */ false
+			/* Include Envelope = */ false,
+			/* Include Phase    = */ false
 		);
 	}	
 }
@@ -95,6 +98,7 @@ void GammatoneFilterBank::getGammatoneFilteredAudio(const yarp::sig::Matrix& Raw
 	//-- Ensure space is allocated for the filtered audio.
 	FilterBank.resize(numMics * numBands, numFrameSamples);
 	EnvelopeBank.resize(numMics * numBands, numFrameSamples);
+	_proxyPhase.resize(numMics * numBands, numFrameSamples);
 
 	//-- Loop variabes.
 	int itrBandMic;
@@ -111,8 +115,41 @@ void GammatoneFilterBank::getGammatoneFilteredAudio(const yarp::sig::Matrix& Raw
 			/* Channel of Audio = */ RawAudio     [itrBandMic / numBands],
 			/* Basilar Membrane = */ FilterBank   [itrBandMic],
 			/* Hilbert Envelope = */ EnvelopeBank [itrBandMic],
+			/* Filters Phase    = */ _proxyPhase  [itrBandMic],
 			/* Center Frequency = */ cfs          [itrBandMic % numBands],
-			/* Include Envelope = */ true
+			/* Include Envelope = */ true,
+			/* Include Phase    = */ false
+		);
+	}	
+}
+
+
+void GammatoneFilterBank::getGammatoneFilteredAudio(const yarp::sig::Matrix& RawAudio, yarp::sig::Matrix& FilterBank, yarp::sig::Matrix& EnvelopeBank, yarp::sig::Matrix& PhaseBank) {
+
+	//-- Ensure space is allocated for the filtered audio.
+	FilterBank.resize(numMics * numBands, numFrameSamples);
+	EnvelopeBank.resize(numMics * numBands, numFrameSamples);
+	PhaseBank.resize(numMics * numBands, numFrameSamples);
+
+	//-- Loop variabes.
+	int itrBandMic;
+	int numBandMic = numMics * numBands;
+	
+	#ifdef WITH_OMP
+	#pragma omp parallel \
+  	 private (itrBandMic)
+	#pragma omp for schedule(guided)
+	#endif
+	for (itrBandMic = 0; itrBandMic < numBandMic; itrBandMic++) {
+
+		singleGammatoneFilter (
+			/* Channel of Audio = */ RawAudio     [itrBandMic / numBands],
+			/* Basilar Membrane = */ FilterBank   [itrBandMic],
+			/* Hilbert Envelope = */ EnvelopeBank [itrBandMic],
+			/* Filters Phase    = */ PhaseBank    [itrBandMic],
+			/* Center Frequency = */ cfs          [itrBandMic % numBands],
+			/* Include Envelope = */ true,
+			/* Include Phase    = */ true
 		);
 	}	
 }
@@ -170,7 +207,7 @@ void GammatoneFilterBank::getBandPassedAudio(const yarp::sig::Matrix& AudioBank,
 }
 
 
-void GammatoneFilterBank::singleGammatoneFilter(const double* RawAudio, double* BasilarMembrane, double* Envelope, const double CenterFrequency, const bool IncludeEnvelope) {
+void GammatoneFilterBank::singleGammatoneFilter(const double* RawAudio, double* BasilarMembrane, double* Envelope, double* Phase, const double CenterFrequency, const bool IncludeEnvelope, const bool IncludePhase) {
 
 	/* ===================================================================
 	*  Initialize all variables in this scope so 
@@ -246,7 +283,8 @@ void GammatoneFilterBank::singleGammatoneFilter(const double* RawAudio, double* 
 		 *    env = abs(u) * gain
 		 * =============================================================== */
 		if (IncludeEnvelope) {
-			Envelope[sample] = sqrt( u0r*u0r + u0i*u0i ) * gain;
+			//Envelope[sample] = sqrt( u0r*u0r + u0i*u0i ) * gain;
+			Envelope[sample] =  (fabs(u0r) + fabs(u0i)) * gain;
 		}
 
 
@@ -254,32 +292,32 @@ void GammatoneFilterBank::singleGammatoneFilter(const double* RawAudio, double* 
 		 *  Calculate the Instantaneous Phase.
 		 *    ph = unwrap(angle(u))
 		 * =============================================================== */
-		//if (IncludePhase) {
-		//	
-		//	//-- This opperation is very slow. Revisit this later.
-		//	Phase[sample] = atan2(u0i, u0r);
-		//	
-		//  //*
-		//	// Unwrap Version 1
-		//	dp = Phase[sample] - pPhase;
-		//	if (fabs(dp) > _pi) {
-		//		dps = myMod(dp + _pi, 2 * _pi) - _pi;
-		//		if (dps == -_pi && dp > 0) {
-		//			dps = _pi;
-		//		}
-		//		Phase[sample] = Phase[sample] + dps - dp;
-		//	}
-		//	pPhase = Phase[sample];
-		//	//*/
-		//
-		//  /*
-		//	// Unwrap Version 2
-		//	dp = Phase[sample] - pPhase;
-		//	dp = dp > _pi ? dp - 2.0 * _pi : (dp < -_pi ? dp + 2.0 * _pi : dp);
-		//	Phase[sample] = pPhase + dp;
-		//	pPhase = Phase[sample];
-		//	*/
-		//}
+		if (IncludePhase) {
+			
+			//-- This opperation is very slow. Revisit this later.
+			Phase[sample] = atan2(u0i, u0r);
+			
+		  	//*
+			// Unwrap Version 1
+			dp = Phase[sample] - pPhase;
+			if (fabs(dp) > _pi) {
+				dps = myMod(dp + _pi, 2 * _pi) - _pi;
+				if (dps == -_pi && dp > 0) {
+					dps = _pi;
+				}
+				Phase[sample] = Phase[sample] + dps - dp;
+			}
+			pPhase = Phase[sample];
+			//*/
+		
+		  	/*
+			// Unwrap Version 2
+			dp = Phase[sample] - pPhase;
+			dp = dp > _pi ? dp - 2.0 * _pi : (dp < -_pi ? dp + 2.0 * _pi : dp);
+			Phase[sample] = pPhase + dp;
+			pPhase = Phase[sample];
+			*/
+		}
 		
 		//-- Update coefficients.
 		qcos = coscf * (oldcs = qcos) + sincf * qsin;
@@ -287,17 +325,43 @@ void GammatoneFilterBank::singleGammatoneFilter(const double* RawAudio, double* 
 	}
 }
 
-#include <iostream>
+
 void GammatoneFilterBank::singleBandPass(const double* Audio, double* BandPass, const double CenterFrequency)  {
 
 	/* ===================================================================
 	 *  Initialize all variables in this scope so
 	 *    that they are not shared amongst threads.
 	 * =================================================================== */
+
+	const double bw = 12 * _pi * BW_CORRECTION;
+	const double C  = 1.0 / tan( _pi * (bw / samplingRate) );
+	const double D  = 2.0 * cos( 2.0 * _pi * (CenterFrequency / samplingRate) );
+
+	const double a0 =  1.0 / (C + 1.0);
+	const double a1 =  0.0;
+	const double a2 = -1.0 * a0;
+	const double b1 = -1.0 * a0 * C * D;
+	const double b2 =  a0  * (C - 1.0);
+
+	double p0i = 0.0, p1i = 0.0, p2i = 0.0;
+	double p0o = 0.0, p1o = 0.0, p2o = 0.0;
+
 	/* ===================================================================
 	 *  Begin running the single butterworth band pass on the provided input audio.
 	 *  The resulting band passed audio is stored in the provided band pass matrix.
 	 * =================================================================== */
+
+	for (int sample = 0; sample < numFrameSamples; sample++) {
+
+		p0i = Audio[sample];
+		p0o = (a0*p0i + a1*p1i + a2*p2i) - (b2*p2o + b1*p1o);
+
+		p2i = p1i; p1i = p0i;
+		p2o = p1o; p1o = p0o;
+
+		BandPass[sample] = p0o;
+	}
+
 
 	/*
 	const double gain = 10.0;
@@ -340,30 +404,6 @@ void GammatoneFilterBank::singleBandPass(const double* Audio, double* BandPass, 
 		BandPass[sample] = p0o * gain;
 	}
 	*/
-
-	const double bw = 8 * _pi * BW_CORRECTION;
-	const double C  = 1.0 / tan( _pi * (bw / samplingRate) );
-	const double D  = 2.0 * cos( 2.0 * _pi * (CenterFrequency / samplingRate) );
-
-	const double a0 =  1.0 / (C + 1.0);
-	const double a1 =  0.0;
-	const double a2 = -1.0 * a0;
-	const double b1 = -1.0 * a0 *  C * D;
-	const double b2 =  a0  * (C - 1.0);
-
-	double p0i = 0.0, p1i = 0.0, p2i = 0.0;
-	double p0o = 0.0, p1o = 0.0, p2o = 0.0;
-
-	for (int sample = 0; sample < numFrameSamples; sample++) {
-
-		p0i = Audio[sample];
-		p0o = (a0*p0i + a1*p1i + a2*p2i) - (b2*p2o + b1*p1o);
-
-		p2i = p1i; p1i = p0i;
-		p2o = p1o; p1o = p0o;
-
-		BandPass[sample] = p0o;
-	}
 }
 
 
