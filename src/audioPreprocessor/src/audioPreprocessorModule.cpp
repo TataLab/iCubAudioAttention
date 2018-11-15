@@ -19,20 +19,20 @@
 */
 
 /* ===========================================================================
- * @file  audioPowerMapModule.cpp
- * @brief Implementation of the audioPowerMapModule (see header file).
+ * @file  audioPreprocessorModule.cpp
+ * @brief Implementation of the audioPreprocessorModule (see header file).
  * =========================================================================== */
 
-#include <iCub/audioPowerMapModule.h>
+#include <iCub/audioPreprocessorModule.h>
 
-bool AudioPowerMapModule::configure(yarp::os::ResourceFinder &rf) {
+bool AudioPreprocessorModule::configure(yarp::os::ResourceFinder &rf) {
 
 	/* ===========================================================================
 	 *  Get the module name which will form the stem of all module port names.
 	 *  Next set the module name before getting any other parameters, 
 	 *  specifically the port names which are dependent on the module name.
 	 * =========================================================================== */
-	moduleName = rf.check("name", yarp::os::Value("/audioPowerMap"), "module name (string)").asString();
+	moduleName = rf.check("name", yarp::os::Value("/audioPreprocessor"), "module name (string)").asString();
 	setName(moduleName.c_str());
 
 	/* ===========================================================================
@@ -44,8 +44,9 @@ bool AudioPowerMapModule::configure(yarp::os::ResourceFinder &rf) {
 	inputPortName = rf.check("inputPortName", yarp::os::Value(":i"), "Input port name (string)").asString();
 	
 	/* ===========================================================================
-	 *  Attach a port of the same name as the module (prefixed with a /) to the module
-	 *  so that messages received from the port are redirected to the respond method.
+	 *  Attach a port of the same name as the module (prefixed with a /) 
+	 *  to the module so that messages received from the port are 
+	 *  redirected to the respond method.
 	 * =========================================================================== */
 	handlerPortName  = "";
 	handlerPortName += getName();
@@ -68,7 +69,7 @@ bool AudioPowerMapModule::configure(yarp::os::ResourceFinder &rf) {
 	/* =========================================================================== 
 	 *  Create the thread and pass pointers to the module parameters.
 	 * =========================================================================== */
-	periodicThread = new AudioPowerMapPeriodicThread(robotName, configFile);
+	periodicThread = new AudioPreprocessorPeriodicThread(robotName, configFile);
 	periodicThread->setName(getName().c_str());
 	
 	if (!periodicThread->configure(rf)) {
@@ -87,13 +88,13 @@ bool AudioPowerMapModule::configure(yarp::os::ResourceFinder &rf) {
 }
 
 
-bool AudioPowerMapModule::interruptModule() {
+bool AudioPreprocessorModule::interruptModule() {
 	handlerPort.interrupt();
 	return true;
 }
 
 
-bool AudioPowerMapModule::close() {
+bool AudioPreprocessorModule::close() {
 
 	handlerPort.close();
 
@@ -108,7 +109,7 @@ bool AudioPowerMapModule::close() {
 }
 
 
-bool AudioPowerMapModule::respond(const yarp::os::Bottle& command, yarp::os::Bottle& reply) {
+bool AudioPreprocessorModule::respond(const yarp::os::Bottle& command, yarp::os::Bottle& reply) {
 
 	std::string helpMessage = std::string(getName().c_str()) + " commands are: \n" + "help \n" + "quit \n";
 	reply.clear(); 
@@ -125,13 +126,13 @@ bool AudioPowerMapModule::respond(const yarp::os::Bottle& command, yarp::os::Bot
 }
 
 
-double AudioPowerMapModule::getPeriod() {
+double AudioPreprocessorModule::getPeriod() {
 	/* Module periodicity (seconds), called implicitly by myModule. */
 	return 1;
 }
 
 
-bool AudioPowerMapModule::updateModule() {
+bool AudioPreprocessorModule::updateModule() {
 	/* Called periodically every getPeriod() seconds. */
 	return true;
 }

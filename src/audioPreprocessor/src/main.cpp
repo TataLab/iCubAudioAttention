@@ -20,20 +20,20 @@
 	
 /* ===========================================================================
  * @file  main.cpp
- * @brief main code for the Bayesian Map module.
+ * @brief main code for the Preprocessor module.
  * =========================================================================== */
 
-#include <iCub/audioBayesianMapModule.h> 
+#include <iCub/audioPreprocessorModule.h> 
 
 int main(int argc, char * argv[]) {
 	
 	yarp::os::Network yarp;
-	AudioBayesianMapModule module; 
+	AudioPreprocessorModule module; 
 
 	yarp::os::ResourceFinder rf;
 	rf.setVerbose(true);
 	rf.setDefaultConfigFile("Audio_Attention_Config.ini"); // overridden by --from parameter
-	rf.setDefaultContext("audio_attention");        // overridden by --context parameter
+	rf.setDefaultContext("audio_attention");               // overridden by --context parameter
 	rf.configure(argc, argv);  
  
 	module.runModule(rf);

@@ -53,7 +53,6 @@ public:
         spatialSound(int bytesPerSample);             //constructor
         spatialSound(const spatialSound &model);
         bool isValid() const        { return valid; }
-        std::string getType() const { return type;  }
 
         void setNumberOfAngles(int n) {numberOfAngles = n;};
         

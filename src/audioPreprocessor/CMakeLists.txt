@@ -8,7 +8,7 @@ if(COMMAND cmake_policy)
     cmake_policy(SET CMP0003 NEW)
 endif(COMMAND cmake_policy)
 
-SET(KEYWORD "audioPowerMap")
+SET(KEYWORD "audioPreprocessor")
 PROJECT(${KEYWORD})
 
 find_package(YARP REQUIRED)

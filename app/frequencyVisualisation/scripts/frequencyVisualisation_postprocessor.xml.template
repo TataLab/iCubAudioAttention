@@ -1,0 +1,267 @@
+<application>
+
+<name> Frequency Visualisation Postprocessor </name>
+
+    <!-->  
+
+        Visualisation Tool & Windows. 
+
+    <!-->
+
+    <!-->  
+    Bayesian Probability Map.
+    <!-->
+    <module>
+        <name> frequencyVisualisation </name>
+        <parameters> --name /bayesianProbabilityMapVisualiser --grid vert --gain 100 </parameters>
+        <node> icub </node>
+    </module>
+
+    <module>
+        <name> yarpview </name>
+        <parameters> --x 100 --y 100 --h 320 --w 240 --r 33 --name /bayesianProbabilityMapView </parameters>
+        <node> icub </node>
+    </module>
+	
+	<module>
+		<name> . </name>
+		<parameters> </parameters>
+		<node> localhost </node>
+	</module>
+
+
+    <!-->  
+    Bayesian Probability Angle.
+    <!-->
+    <module>
+        <name> frequencyVisualisation </name>
+        <parameters> --name /bayesianProbabilityAngleVisualiser --grid vert --gain 100 </parameters>
+        <node> icub </node>
+    </module>
+
+    <module>
+        <name> yarpview </name>
+        <parameters> --x 100 --y 100 --h 320 --w 240 --r 33 --name /bayesianProbabilityAngleView </parameters>
+        <node> icub </node>
+    </module>
+	
+	<module>
+		<name> . </name>
+		<parameters> </parameters>
+		<node> localhost </node>
+	</module>
+
+
+    <!-->  
+    Power Probability
+    <!-->
+    <module>
+        <name> frequencyVisualisation </name>
+        <parameters> --name /probabilityPowerVisualiser --gain 100 </parameters>
+        <node> icub </node>
+    </module>
+
+    <module>
+        <name> yarpview </name>
+        <parameters> --x 100 --y 100 --h 320 --w 240 --r 33 --name /probabilityPowerView </parameters>
+        <node> icub </node>
+    </module>
+	
+	<module>
+		<name> . </name>
+		<parameters> </parameters>
+		<node> localhost </node>
+	</module>
+
+
+    <!-->  
+    Probability Power Map
+    <!-->
+    <module>
+        <name> frequencyVisualisation </name>
+        <parameters> --name /probabilityPowerMapVisualiser --grid vert --gain 100 </parameters>
+        <node> icub </node>
+    </module>
+
+    <module>
+        <name> yarpview </name>
+        <parameters> --x 100 --y 100 --h 320 --w 240 --r 33 --name /probabilityPowerMapView </parameters>
+        <node> icub </node>
+    </module>
+	
+	<module>
+		<name> . </name>
+		<parameters> </parameters>
+		<node> localhost </node>
+	</module>
+
+
+    <!-->  
+    Probability Power Angle
+    <!-->
+    <module>
+        <name> frequencyVisualisation </name>
+        <parameters> --name /probabilityPowerAngleVisualiser --grid vert --gain 100 </parameters>
+        <node> icub </node>
+    </module>
+
+    <module>
+        <name> yarpview </name>
+        <parameters> --x 100 --y 100 --h 320 --w 240 --r 33 --name /probabilityPowerAngleView </parameters>
+        <node> icub </node>
+    </module>
+	
+	<module>
+		<name> . </name>
+		<parameters> </parameters>
+		<node> localhost </node>
+	</module>
+
+
+    <!-->  
+    Instantaneous Power Map
+    <!-->
+    <module>
+        <name> frequencyVisualisation </name>
+        <parameters> --name /instantaneousPowerProbabilityMapVisualiser --grid vert --gain 100 </parameters>
+        <node> icub </node>
+    </module>
+
+    <module>
+        <name> yarpview </name>
+        <parameters> --x 100 --y 100 --h 320 --w 240 --r 33 --name /instantaneousPowerProbabilityMapView </parameters>
+        <node> icub </node>
+    </module>
+	
+	<module>
+		<name> . </name>
+		<parameters> </parameters>
+		<node> localhost </node>
+	</module>
+
+
+    <!-->  
+    Instantaneous Power Angle
+    <!-->
+    <module>
+        <name> frequencyVisualisation </name>
+        <parameters> --name /instantaneousPowerProbabilityAngleVisualiser --grid vert --gain 100 </parameters>
+        <node> icub </node>
+    </module>
+
+    <module>
+        <name> yarpview </name>
+        <parameters> --x 100 --y 100 --h 320 --w 240 --r 33 --name /instantaneousPowerProbabilityAngleView </parameters>
+        <node> icub </node>
+    </module>
+	
+	<module>
+		<name> . </name>
+		<parameters> </parameters>
+		<node> localhost </node>
+	</module>
+
+
+    <!-->  
+
+        Connections for Ports. 
+
+    <!-->
+
+    <connection>
+        <from> /audioBayesianMap/bayesianProbabilityMap:o </from>
+        <to>   /bayesianProbabilityMapVisualiser/map:i    </to>
+        <protocol> tcp </protocol>
+    </connection> 
+
+    <connection>
+        <from> /bayesianProbabilityMapVisualiser/img:o  </from>
+        <to>   /bayesianProbabilityMapView              </to>
+        <protocol> tcp </protocol>
+    </connection>
+
+    <!--> #################################################### <!-->
+
+    <connection>
+        <from> /audioBayesianMap/bayesianProbabilityAngle:o </from>
+        <to>   /bayesianProbabilityAngleVisualiser/map:i    </to>
+        <protocol> tcp </protocol>
+    </connection> 
+
+    <connection>
+        <from> /bayesianProbabilityAngleVisualiser/img:o  </from>
+        <to>   /bayesianProbabilityAngleView              </to>
+        <protocol> tcp </protocol>
+    </connection>
+
+    <!--> #################################################### <!-->
+
+    <connection>
+        <from> /audioPowerMap/probabilityPower:o </from>
+        <to>   /probabilityPowerVisualiser/map:i </to>
+        <protocol> tcp </protocol>
+    </connection> 
+
+    <connection>
+        <from> /probabilityPowerVisualiser/img:o </from>
+        <to>   /probabilityPowerView             </to>
+        <protocol> tcp </protocol>
+    </connection>
+
+    <!--> #################################################### <!-->
+
+    <connection>
+        <from> /audioPowerMap/probabilityPowerMap:o </from>
+        <to>   /probabilityPowerMapVisualiser/map:i </to>
+        <protocol> tcp </protocol>
+    </connection> 
+
+    <connection>
+        <from> /probabilityPowerMapVisualiser/img:o </from>
+        <to>   /probabilityPowerMapView             </to>
+        <protocol> tcp </protocol>
+    </connection>
+
+    <!--> #################################################### <!-->
+
+    <connection>
+        <from> /audioPowerMap/probabilityPowerAngle:o </from>
+        <to>   /probabilityPowerAngleVisualiser/map:i </to>
+        <protocol> tcp </protocol>
+    </connection> 
+
+    <connection>
+        <from> /probabilityPowerAngleVisualiser/img:o </from>
+        <to>   /probabilityPowerAngleView             </to>
+        <protocol> tcp </protocol>
+    </connection>
+
+    <!--> #################################################### <!-->
+    
+    <connection>
+        <from> /audioPowerMap/instantaneousPowerProbabilityMap:o </from>
+        <to>   /instantaneousPowerProbabilityMapVisualiser/map:i </to>
+        <protocol> tcp </protocol>
+    </connection> 
+
+    <connection>
+        <from> /instantaneousPowerProbabilityMapVisualiser/img:o </from>
+        <to>   /instantaneousPowerProbabilityMapView             </to>
+        <protocol> tcp </protocol>
+    </connection>
+    
+    <!--> #################################################### <!-->
+    
+    <connection>
+        <from> /audioPowerMap/instantaneousPowerProbabilityAngle:o </from>
+        <to>   /instantaneousPowerProbabilityAngleVisualiser/map:i </to>
+        <protocol> tcp </protocol>
+    </connection> 
+
+    <connection>
+        <from> /instantaneousPowerProbabilityAngleVisualiser/img:o </from>
+        <to>   /instantaneousPowerProbabilityAngleView             </to>
+        <protocol> tcp </protocol>
+    </connection>
+
+</application>

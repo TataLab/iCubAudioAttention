@@ -1,0 +1,87 @@
+<application>
+
+    <name> Audio Attention </name>
+
+    <!-->  
+    MODULES.    
+    <!-->
+    <module>
+        <name> audioCaptureInterface </name>
+        <parameters></parameters>
+        <node> pc104 </node>
+    </module>
+
+    <module>
+        <name> remoteInterface </name>
+        <parameters></parameters>
+        <node> pc104 </node>
+    </module>
+
+    <module>
+        <name> audioPreprocessor </name>
+        <parameters></parameters>
+        <node> icub </node>
+    </module>
+
+    <module>
+        <name> audioBayesianMap </name>
+        <parameters></parameters>
+        <node> icub </node>
+    </module>
+
+    <module>
+        <name> audioPowerMap </name>
+        <parameters></parameters>
+        <node> icub </node>
+    </module>
+
+
+    <!-->  
+    CONNECTIONS.
+    <!-->
+    <connection>
+        <from> /audioGrabber/sender          </from>
+        <to>   /audioPreprocessor/rawAudio:i </to>
+        <protocol> tcp </protocol>
+    </connection>
+
+    <connection>
+        <from> /icub/head/state:o             </from>
+        <to>   /audioPreprocessor/headAngle:i </to>
+        <protocol> tcp </protocol>
+    </connection>
+
+    <connection>
+        <from> /audioPreprocessor/allocentricAudio:o </from>
+        <to>   /audioBayesianMap/allocentricAudio:i  </to>
+        <protocol> tcp </protocol>
+    </connection>
+
+    <connection>
+        <from> /audioPreprocessor/beamformedRmsPower:o </from>
+        <to>   /audioPowerMap/bandPower:i              </to>
+        <protocol> tcp </protocol>
+    </connection>
+
+    <connection>
+        <from> /audioBayesianMap/bayesianProbabilityMap:o </from>
+        <to>   /audioPowerMap/probabilityMap:i            </to>
+        <protocol> tcp </protocol>
+    </connection>
+
+
+    <connection>
+        <!-->   Remove this later.  <!-->
+        <from> /audioPreprocessor/gammatoneFilteredPower:o </from>
+        <to>   /audioPowerMap/bandPower:i                  </to>
+        <protocol> tcp </protocol>
+    </connection>
+
+    <connection>
+        <!-->   Remove this later.  <!-->
+        <from> /audioGrabber/sender </from>
+        <to>   /yarphear            </to>
+        <protocol> tcp </protocol>
+    </connection>
+
+</application>

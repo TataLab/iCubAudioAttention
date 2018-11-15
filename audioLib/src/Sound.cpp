@@ -223,15 +223,14 @@ bool Sound::read(ConnectionReader& connection) {
     synchronize();
     return ok;
 }
-
-
-bool Sound::write(ConnectionWriter& connection) {
+ 
+bool Sound::write(ConnectionWriter& connection) const {
     // lousy format - fix soon!
     yarp::sig::FlexImage& img = HELPER(implementation);
     yDebug("write img pixelsize %d", img.getPixelSize());
     Bottle bot;
     bot.addInt(frequency);
-    //bot.addInt(img.getPixelSize());
+    //bot.addInt(img.getPixelSize()); 
     return PortablePair<yarp::sig::FlexImage,Bottle>::writePair(connection,img,bot);
 }
 

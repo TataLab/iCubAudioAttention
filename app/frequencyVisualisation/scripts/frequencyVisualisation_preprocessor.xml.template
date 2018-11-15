@@ -1,0 +1,268 @@
+<application>
+
+<name> Frequency Visualisation Preprocessor </name>
+
+    <!-->  
+
+        Visualisation Tool & Windows. 
+
+    <!-->
+
+    <!-->  
+    Gammatone Filtered Audio.
+    <!-->
+    <module>
+        <name> frequencyVisualisation </name>
+        <parameters> --name /gammatoneFilteredAudioVisualiser </parameters>
+        <node> icub </node>
+    </module>
+
+    <module>
+        <name> yarpview </name>
+        <parameters> --x 100 --y 100 --h 320 --w 240 --r 33 --name /gammatoneFilteredAudioView </parameters>
+        <node> icub </node>
+    </module>
+	
+	<module>
+		<name> . </name>
+		<parameters> </parameters>
+		<node> localhost </node>
+	</module>
+
+
+    <!-->  
+    Gammatone Filtered Power.
+    <!-->
+    <module>
+        <name> frequencyVisualisation </name>
+        <parameters> --name /gammatoneFilteredPowerVisualiser </parameters>
+        <node> icub </node>
+    </module>
+
+    <module>
+        <name> yarpview </name>
+        <parameters> --x 100 --y 100 --h 320 --w 240 --r 33 --name /gammatoneFilteredPowerView </parameters>
+        <node> icub </node>
+    </module>
+	
+	<module>
+		<name> . </name>
+		<parameters> </parameters>
+		<node> localhost </node>
+	</module>
+
+
+    <!-->  
+    Hilbert Envelope.
+    <!-->
+    <module>
+        <name> frequencyVisualisation </name>
+        <parameters> --name /hilbertEnvelopeVisualiser </parameters>
+        <node> icub </node>
+    </module>
+
+    <module>
+        <name> yarpview </name>
+        <parameters> --x 100 --y 100 --h 320 --w 240 --r 33 --name /hilbertEnvelopeView </parameters>
+        <node> icub </node>
+    </module>
+	
+	<module>
+		<name> . </name>
+		<parameters> </parameters>
+		<node> localhost </node>
+	</module>
+
+
+    <!-->  
+    Band Passed Audio.
+    <!-->
+    <module>
+        <name> frequencyVisualisation </name>
+        <parameters> --name /bandPassedAudioVisualiser </parameters>
+        <node> icub </node>
+    </module>
+
+    <module>
+        <name> yarpview </name>
+        <parameters> --x 100 --y 100 --h 320 --w 240 --r 33 --name /bandPassedAudioView </parameters>
+        <node> icub </node>
+    </module>
+	
+	<module>
+		<name> . </name>
+		<parameters> </parameters>
+		<node> localhost </node>
+	</module>
+
+
+    <!-->  
+    RMS of Beamformed Audio.
+    <!-->
+    <module>
+        <name> frequencyVisualisation </name>
+        <parameters> --name /beamformedRmsAudioVisualiser </parameters>
+        <node> icub </node>
+    </module>
+
+    <module>
+        <name> yarpview </name>
+        <parameters> --x 100 --y 100 --h 320 --w 240 --r 33 --name /beamformedRmsAudioView </parameters>
+        <node> icub </node>
+    </module>
+	
+	<module>
+		<name> . </name>
+		<parameters> </parameters>
+		<node> localhost </node>
+	</module>
+
+
+    <!-->  
+    RMS of Beamformed Power.
+    <!-->
+    <module>
+        <name> frequencyVisualisation </name>
+        <parameters> --name /beamformedRmsPowerVisualiser </parameters>
+        <node> icub </node>
+    </module>
+
+    <module>
+        <name> yarpview </name>
+        <parameters> --x 100 --y 100 --h 320 --w 240 --r 33 --name /beamformedRmsPowerView </parameters>
+        <node> icub </node>
+    </module>
+	
+	<module>
+		<name> . </name>
+		<parameters> </parameters>
+		<node> localhost </node>
+	</module>
+
+
+    <!-->  
+    Allocentric Audio Map.
+    <!-->
+    <module>
+        <name> frequencyVisualisation </name>
+        <parameters> --name /allocentricAudioVisualiser --grid vert </parameters>
+        <node> icub </node>
+    </module>
+
+    <module>
+        <name> yarpview </name>
+        <parameters> --x 100 --y 100 --h 320 --w 240 --r 33 --name /allocentricAudioView </parameters>
+        <node> icub </node>
+    </module>
+	
+	<module>
+		<name> . </name>
+		<parameters> </parameters>
+		<node> localhost </node>
+	</module>
+
+
+
+    <!-->  
+
+        Connections for Ports. 
+
+    <!-->
+
+    <connection>
+        <from> /audioPreprocessor/gammatoneFilteredAudio:o </from>
+        <to>   /gammatoneFilteredAudioVisualiser/map:i     </to>
+        <protocol> tcp </protocol>
+    </connection> 
+
+    <connection>
+        <from> /gammatoneFilteredAudioVisualiser/img:o  </from>
+        <to>   /gammatoneFilteredAudioView              </to>
+        <protocol> tcp </protocol>
+    </connection>
+
+    <!--> #################################################### <!-->
+
+    <connection>
+        <from> /audioPreprocessor/gammatoneFilteredPower:o </from>
+        <to>   /gammatoneFilteredPowerVisualiser/map:i     </to>
+        <protocol> tcp </protocol>
+    </connection> 
+
+    <connection>
+        <from> /gammatoneFilteredPowerVisualiser/img:o  </from>
+        <to>   /gammatoneFilteredPowerView              </to>
+        <protocol> tcp </protocol>
+    </connection>
+
+    <!--> #################################################### <!-->
+
+    <connection>
+        <from> /audioPreprocessor/hilbertEnvelope:o </from>
+        <to>   /hilbertEnvelopeVisualiser/map:i     </to>
+        <protocol> tcp </protocol>
+    </connection> 
+
+    <connection>
+        <from> /hilbertEnvelopeVisualiser/img:o  </from>
+        <to>   /hilbertEnvelopeView              </to>
+        <protocol> tcp </protocol>
+    </connection>
+
+    <!--> #################################################### <!-->
+
+    <connection>
+        <from> /audioPreprocessor/bandPassedAudio:o </from>
+        <to>   /bandPassedAudioVisualiser/map:i     </to>
+        <protocol> tcp </protocol>
+    </connection> 
+
+    <connection>
+        <from> /bandPassedAudioVisualiser/img:o  </from>
+        <to>   /bandPassedAudioView              </to>
+        <protocol> tcp </protocol>
+    </connection>
+
+    <!--> #################################################### <!-->
+
+    <connection>
+        <from> /audioPreprocessor/beamformedRmsAudio:o </from>
+        <to>   /beamformedRmsAudioVisualiser/map:i     </to>
+        <protocol> tcp </protocol>
+    </connection> 
+
+    <connection>
+        <from> /beamformedRmsAudioVisualiser/img:o  </from>
+        <to>   /beamformedRmsAudioView              </to>
+        <protocol> tcp </protocol>
+    </connection>
+
+    <!--> #################################################### <!-->
+
+    <connection>
+        <from> /audioPreprocessor/beamformedRmsPower:o </from>
+        <to>   /beamformedRmsPowerVisualiser/map:i     </to>
+        <protocol> tcp </protocol>
+    </connection> 
+
+    <connection>
+        <from> /beamformedRmsPowerVisualiser/img:o  </from>
+        <to>   /beamformedRmsPowerView              </to>
+        <protocol> tcp </protocol>
+    </connection>
+
+    <!--> #################################################### <!-->
+
+    <connection>
+        <from> /audioPreprocessor/allocentricAudio:o </from>
+        <to>   /allocentricAudioVisualiser/map:i     </to>
+        <protocol> tcp </protocol>
+    </connection> 
+
+    <connection>
+        <from> /allocentricAudioVisualiser/img:o  </from>
+        <to>   /allocentricAudioView              </to>
+        <protocol> tcp </protocol>
+    </connection>
+
+</application>

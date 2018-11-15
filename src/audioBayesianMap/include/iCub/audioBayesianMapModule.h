@@ -19,13 +19,13 @@
 */
 
 /* ===========================================================================
- * @file  audioPowerMapModule.h
- * @brief Module for building an allocentric combining bayesian probability
- *          with overall power probability of the auditory environment.
+ * @file  audioBayesianMapModule.h
+ * @brief Module for building an allocentric Bayesian map 
+ *          of sound sources in an environment.
  * =========================================================================== */
 
-#ifndef _AUDIO_POWER_MAP_MODULE_H_
-#define _AUDIO_POWER_MAP_MODULE_H_
+#ifndef _AUDIO_BAYESIAN_MAP_MODULE_H_
+#define _AUDIO_BAYESIAN_MAP_MODULE_H_
 
 #include <iostream>
 #include <string>
@@ -37,9 +37,9 @@
 #include <yarp/os/Thread.h>
 #include <yarp/os/Log.h>
 
-#include <iCub/audioPowerMapPeriodicThread.h>
+#include <iCub/audioBayesianMapPeriodicThread.h>
 
-class AudioPowerMapModule : public yarp::os::RFModule { 
+class AudioBayesianMapModule : public yarp::os::RFModule { 
 
   private:
   
@@ -55,7 +55,7 @@ class AudioPowerMapModule : public yarp::os::RFModule {
 	
 	//-- Pointer to a new thread to be created and 
 	//-- started in configure() and stopped in close().
-	AudioPowerMapPeriodicThread *periodicThread; 
+	AudioBayesianMapPeriodicThread *periodicThread; 
 
 
   public:
@@ -105,6 +105,6 @@ class AudioPowerMapModule : public yarp::os::RFModule {
 	bool updateModule();
 };
 
-#endif // _AUDIO_POWER_MAP_MODULE_H_
+#endif // _AUDIO_BAYESIAN_MAP_MODULE_H_
 
 //----- end-of-file --- ( next line intentionally left blank ) ------------------
