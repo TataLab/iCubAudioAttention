@@ -8,29 +8,29 @@
     <module>
         <name> audioCaptureInterface </name>
         <parameters></parameters>
-        <node> icub </node>
+        <node> pc104 </node>
     </module>
 
     <module>
-        <name> audioCaptureInterface </name>
-        <parameters> --usePrerecorded ~/Documents/pyAudio/freq_780_lag_00.wav </parameters>
-        <node> icub </node>
+        <name> remoteInterface </name>
+        <parameters></parameters>
+        <node> pc104 </node>
     </module>
 
     <module>
-        <name> audioPreprocessor_refactor </name>
+        <name> audioPreprocessor </name>
         <parameters></parameters>
         <node> icub </node>
     </module>
 
     <module>
-        <name> audioBayesianMap_refactor </name>
+        <name> audioBayesianMap </name>
         <parameters></parameters>
         <node> icub </node>
     </module>
 
     <module>
-        <name> audioPowerMap_refactor </name>
+        <name> audioPowerMap </name>
         <parameters></parameters>
         <node> icub </node>
     </module>

@@ -283,8 +283,7 @@ void GammatoneFilterBank::singleGammatoneFilter(const double* RawAudio, double* 
 		 *    env = abs(u) * gain
 		 * =============================================================== */
 		if (IncludeEnvelope) {
-			//Envelope[sample] = sqrt( u0r*u0r + u0i*u0i ) * gain;
-			Envelope[sample] =  (fabs(u0r) + fabs(u0i)) * gain;
+			Envelope[sample] = sqrt( u0r*u0r + u0i*u0i ) * gain;
 		}
 
 
@@ -333,7 +332,7 @@ void GammatoneFilterBank::singleBandPass(const double* Audio, double* BandPass, 
 	 *    that they are not shared amongst threads.
 	 * =================================================================== */
 
-	const double bw = 12 * _pi * BW_CORRECTION;
+	const double bw = 3 * _pi * BW_CORRECTION;
 	const double C  = 1.0 / tan( _pi * (bw / samplingRate) );
 	const double D  = 2.0 * cos( 2.0 * _pi * (CenterFrequency / samplingRate) );
 
@@ -361,49 +360,6 @@ void GammatoneFilterBank::singleBandPass(const double* Audio, double* BandPass, 
 
 		BandPass[sample] = p0o;
 	}
-
-
-	/*
-	const double gain = 10.0;
-
-	const double omega = 2.0 * _pi * CenterFrequency / samplingRate;
-	const double sincf = sin(omega);
-	const double coscf = cos(omega);
-	const double alpha = sincf * sinh( _ln2 / 2.0 * BW_CORRECTION * omega / sincf );
-
-	const double a  = 1.0 + alpha;
-	const double a1 = ( -2.0 * coscf ) / a;
-	const double a2 = (  1.0 - alpha ) / a;
-	const double b0 = (  alpha )       / a;
-	const double b1 = (   0.0  )       / a;
-	const double b2 = ( -alpha )       / a;
-
-	double p0i = 0.0, p1i = 0.0, p2i = 0.0;
-	double p0o = 0.0, p1o = 0.0, p2o = 0.0;
-
-	for (int sample = 0; sample < numFrameSamples; sample++) {
-		
-		//-- Filter out all except the specified frequency band by performing
-		//-- the biquad transfer function using the coefficients.
-		p0i = Audio[sample];
-		p0o = (b0*p0i + b1*p1i + b2*p2i) - (a1*p1o + a2*p2o);
-
-		//-- Clip coefficients to stop them from becoming too close to zero.
-		if (fabs(p0o) < VERY_SMALL_NUMBER) {
-			p0o = 0.0F;
-		}
-		if (fabs(p0i) < VERY_SMALL_NUMBER) {
-			p0i = 0.0F;
-		}
-
-		//-- Update in and out buffers.
-		p2i = p1i; p1i = p0i;
-		p2o = p1o; p1o = p0o;
-
-		//-- Store the results.
-		BandPass[sample] = p0o * gain;
-	}
-	*/
 }
 
 

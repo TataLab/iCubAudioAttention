@@ -5,7 +5,6 @@
 #cmake_minimum_required(VERSION 2.6)
 
 #add_subdirectory ( audioVisualAttention  )
-add_subdirectory ( icubAudioAttention	  )
 add_subdirectory ( memoryMapper			  )
 add_subdirectory ( frequencyVisualisation )
 add_subdirectory ( robotStartUp			  )
