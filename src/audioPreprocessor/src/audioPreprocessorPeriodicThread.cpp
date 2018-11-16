@@ -48,19 +48,42 @@ inline void downSampleMatrix(const yarp::sig::Matrix& source, yarp::sig::Matrix&
 	target.resize(RowSize, ColSize);
 	
 	//-- Set a pointer to the target.
-	double *t = target.data();
+	double *trg = target.data();
 
 	//-- Set a pointer to the source.
-	const double *s = source.data();
+	const double *src = source.data();
 
 	for (int row = 0; row < RowSize; row++) {
 		for (int col = 0; col < ColSize; col++) {
 			//-- Dereference and copy data.
-			*t = *s;
-			t++; s += downSamp;
+			*trg = *src;
+			trg++; src += downSamp;
 		}
 		//-- Skip any remaining points at the end of the row.
-		s += offset;
+		src += offset;
+	}
+}
+
+
+inline void MatrixToImageOfFloat(const yarp::sig::Matrix& source, YarpImageOfFloat& target) {
+
+	//-- Allocate space for the Image.
+	const size_t RowSize = source.rows();
+	const size_t ColSize = source.cols();
+	target.resize(ColSize, RowSize);
+	
+	//-- Set a pointer to the data.
+	const double *src = source.data();
+
+	//-- Iterate through copying the contents
+	//-- from the matrix, into the target image.
+	//-- Matrix holds doubles. Conversion to
+	//-- floats should be ok.
+	for (int row = 0; row < RowSize; row++) {
+		for (int col = 0; col < ColSize; col++) {
+			target(col, row) = *src;
+			src++;
+		}
 	}
 }
 
@@ -472,7 +495,8 @@ void AudioPreprocessorPeriodicThread::publishOutPorts() {
 	if (outGammatoneFilteredAudioPort.getOutputCount()) {
 
 		//-- This Matrix can be very big. Down sample if enabled.
-		downSampleMatrix(GammatoneFilteredAudioMatrix, outGammatoneFilteredAudioPort.prepare(), downSamp);
+		//downSampleMatrix(GammatoneFilteredAudioMatrix, outGammatoneFilteredAudioPort.prepare(), downSamp);
+		MatrixToImageOfFloat(GammatoneFilteredAudioMatrix, outGammatoneFilteredAudioPort.prepare());
 		outGammatoneFilteredAudioPort.setEnvelope(timeStamp);
 		outGammatoneFilteredAudioPort.write();
 
@@ -507,7 +531,8 @@ void AudioPreprocessorPeriodicThread::publishOutPorts() {
 
 	if (outBeamformedAudioPort.getOutputCount()) {
 
-		outBeamformedAudioPort.prepare() = BeamformedAudioMatrix;
+		//outBeamformedAudioPort.prepare() = BeamformedAudioMatrix;
+		MatrixToImageOfFloat(BeamformedAudioMatrix, outBeamformedAudioPort.prepare());
 		outBeamformedAudioPort.setEnvelope(timeStamp);
 		outBeamformedAudioPort.write();
 
@@ -531,7 +556,8 @@ void AudioPreprocessorPeriodicThread::publishOutPorts() {
 
 	if (outAllocentricAudioPort.getOutputCount()) {
 
-		outAllocentricAudioPort.prepare() = AllocentricAudioMatrix;
+		//outAllocentricAudioPort.prepare() = AllocentricAudioMatrix;
+		MatrixToImageOfFloat(AllocentricAudioMatrix, outAllocentricAudioPort.prepare());
 		outAllocentricAudioPort.setEnvelope(timeStamp);
 		outAllocentricAudioPort.write();
 		

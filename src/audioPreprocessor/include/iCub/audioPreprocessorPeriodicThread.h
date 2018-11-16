@@ -46,6 +46,8 @@
 #include <iCub/gammatoneFilterBank.h>
 #include <iCub/interauralCues.h>
 
+typedef yarp::sig::ImageOf< yarp::sig::PixelFloat > YarpImageOfFloat;
+
 class AudioPreprocessorPeriodicThread : public yarp::os::PeriodicThread {
 
   private:
@@ -76,14 +78,14 @@ class AudioPreprocessorPeriodicThread : public yarp::os::PeriodicThread {
 	 *  Yarp Ports for Sending and Receiving Data from this Periodic Thread.
 	 * =========================================================================== */
 	yarp::os::BufferedPort< yarp::sig::Sound  > inRawAudioPort;
-	yarp::os::BufferedPort< yarp::sig::Matrix > outGammatoneFilteredAudioPort;
+	yarp::os::BufferedPort< YarpImageOfFloat > outGammatoneFilteredAudioPort;
 	yarp::os::BufferedPort< yarp::sig::Matrix > outGammatoneFilteredPowerPort;
 	yarp::os::BufferedPort< yarp::sig::Matrix > outHilbertEnvelopePort;
 	yarp::os::BufferedPort< yarp::sig::Matrix > outBandPassedAudioPort;
-	yarp::os::BufferedPort< yarp::sig::Matrix > outBeamformedAudioPort;
+	yarp::os::BufferedPort< YarpImageOfFloat > outBeamformedAudioPort;
 	yarp::os::BufferedPort< yarp::sig::Matrix > outBeamformedRmsAudioPort;
 	yarp::os::BufferedPort< yarp::sig::Matrix > outBeamformedRmsPowerPort;
-	yarp::os::BufferedPort< yarp::sig::Matrix > outAllocentricAudioPort;
+	yarp::os::BufferedPort< YarpImageOfFloat > outAllocentricAudioPort;
 
 	/* ===========================================================================
 	 *  Yarp Matrices used for Modules Computation. 
