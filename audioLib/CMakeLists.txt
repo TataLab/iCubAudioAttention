@@ -15,12 +15,14 @@ SET(folder_source
   ./src/SoundFile.cpp
   ./src/spatialSound.cpp
   ./src/Sound.cpp
+  ./src/butterworth.cpp
 )
 
 SET(folder_header 
   ./include/iCub/audio/spatialSound.h
   ./include/iCub/audio/Sound.h
   ./include/iCub/audio/SoundFile.h
+  ./include/iCub/filters/butterworth.h
 )
 
 MESSAGE("folder_header ${folder_header}")

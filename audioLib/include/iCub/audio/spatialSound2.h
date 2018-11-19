@@ -28,53 +28,49 @@
 #include <string>
 #include <deque>
 
-namespace audio
-{
+namespace audio {
 
-namespace spatialSound
-{
-    class spatialSound:yarp::sig::Sound {
-protected:
-    bool valid;                 // defines the validity of the model
-    std::string type;           // defines the typology of the model
+	namespace spatialSound {
+
+		class spatialSound:yarp::sig::Sound {
+
+		  protected:
+
+			bool valid;                 // defines the validity of the model
+			std::string type;           // defines the typology of the model
    
-    int inputId;                // reference to the input value
-    int rowA,colA;              // dimension of the matrix A
-    double paramA;              // paramA 
-    double paramB;              // paramB
-        double azimuth, elevation; //
-
-public:
-        spatialSound(int bytesPerSample);             //constructor
-        spatialSound(const spatialSound &model);
-        bool isValid() const        { return valid; }
-        std::string getType() const { return type;  }
-        
-        
-        int               getRowA()   const    {return rowA;   };
-        int               getColA()   const    {return colA;   };
-        double            getParamA() const    {return paramA; };
-        double            getParamB() const    {return paramB; };
-
-    
-        /**
-         * @brief function for the initialisation of the kalman filter
-         * @param param1 first parameter ( only one in 1-Dimension space) 
-         * @param param2 second paramter (eventually NULL in 1-Dimension space)
-         */
-        void init(double param1, double param2 = 0);
-        bool write(yarp::os::ConnectionWriter& connection);
-        bool read(yarp::os::ConnectionReader& connection);
-        //virtual bool operator ==  (const predModel &pModel);
-
-};
+			int inputId;                // reference to the input value
+			int rowA,colA;              // dimension of the matrix A
+			double paramA;              // paramA 
+			double paramB;              // paramB
+			double azimuth, elevation;  //
 
 
+		  public:
 
+			spatialSound(int bytesPerSample);             //constructor
+			spatialSound(const spatialSound &model);
+			bool isValid() const        { return valid; }
+			//std::string getType() const { return type;  }
+		
+			int               getRowA()   const    {return rowA;   };
+			int               getColA()   const    {return colA;   };
+			double            getParamA() const    {return paramA; };
+			double            getParamB() const    {return paramB; };
 
-}
+			/**
+			 * @brief function for the initialisation of the kalman filter
+			 * @param param1 first parameter ( only one in 1-Dimension space) 
+			 * @param param2 second paramter (eventually NULL in 1-Dimension space)
+			 */
+			void init(double param1, double param2 = 0);
+			bool write(yarp::os::ConnectionWriter& connection);
+			bool read(yarp::os::ConnectionReader& connection);
+			//virtual bool operator ==  (const predModel &pModel);
 
-}
+		};
+	} // spatialSound
+} // audio
 
 #endif
 

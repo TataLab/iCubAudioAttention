@@ -403,7 +403,7 @@ void GammatoneFilterBank::makeLinearCFs() {
 }
 
 inline double GammatoneFilterBank::HzToErb(double Hz) {
-	return ( 24.7 * ( 0.00437 * ( Hz ) + 1.0 ) );
+	return ( 24.7 * ( 0.00437 * Hz + 1.0 ) );
 }
 
 inline double GammatoneFilterBank::HzToErbRate(double Hz) {

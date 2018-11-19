@@ -46,7 +46,13 @@
 #include <iCub/gammatoneFilterBank.h>
 #include <iCub/interauralCues.h>
 
-typedef yarp::sig::ImageOf< yarp::sig::PixelFloat > YarpImageOfFloat;
+
+typedef yarp::sig::Matrix                           yMatrix;
+typedef yarp::sig::ImageOf< yarp::sig::PixelFloat > yImageOfFloat;
+
+typedef yarp::os::BufferedPort< yarp::sig::Sound  > ySoundBuffer;
+typedef yarp::os::BufferedPort< yMatrix           > yMatrixBuffer;
+typedef yarp::os::BufferedPort< yImageOfFloat     > yImageOfFloatBuffer;
 
 class AudioPreprocessorPeriodicThread : public yarp::os::PeriodicThread {
 
@@ -77,30 +83,36 @@ class AudioPreprocessorPeriodicThread : public yarp::os::PeriodicThread {
 	/* ===========================================================================
 	 *  Yarp Ports for Sending and Receiving Data from this Periodic Thread.
 	 * =========================================================================== */
-	yarp::os::BufferedPort< yarp::sig::Sound  > inRawAudioPort;
-	yarp::os::BufferedPort< YarpImageOfFloat > outGammatoneFilteredAudioPort;
-	yarp::os::BufferedPort< yarp::sig::Matrix > outGammatoneFilteredPowerPort;
-	yarp::os::BufferedPort< yarp::sig::Matrix > outHilbertEnvelopePort;
-	yarp::os::BufferedPort< yarp::sig::Matrix > outBandPassedAudioPort;
-	yarp::os::BufferedPort< YarpImageOfFloat > outBeamformedAudioPort;
-	yarp::os::BufferedPort< yarp::sig::Matrix > outBeamformedRmsAudioPort;
-	yarp::os::BufferedPort< yarp::sig::Matrix > outBeamformedRmsPowerPort;
-	yarp::os::BufferedPort< YarpImageOfFloat > outAllocentricAudioPort;
+	ySoundBuffer  inRawAudioPort;
+
+	//yMatrixBuffer outGammatoneFilteredAudioPort;
+	yMatrixBuffer outGammatoneFilteredPowerPort;
+	yMatrixBuffer outHilbertEnvelopePort;
+	yMatrixBuffer outBandPassedAudioPort;
+	//yMatrixBuffer outBeamformedAudioPort;
+	yMatrixBuffer outBeamformedRmsAudioPort;
+	yMatrixBuffer outBeamformedRmsPowerPort;
+	//yMatrixBuffer outAllocentricAudioPort;
+
+	//-- Temporary. For sending to Python.
+	yImageOfFloatBuffer outGammatoneFilteredAudioPort;
+	yImageOfFloatBuffer outBeamformedAudioPort;
+	yImageOfFloatBuffer outAllocentricAudioPort;
 
 	/* ===========================================================================
 	 *  Yarp Matrices used for Modules Computation. 
 	 *    Objects passed around to encapsulated objects.
 	 * =========================================================================== */
 	yarp::sig::Sound* inputSound;
-	yarp::sig::Matrix RawAudioMatrix;
-	yarp::sig::Matrix GammatoneFilteredAudioMatrix;
-	yarp::sig::Matrix GammatoneFilteredPowerMatrix;
-	yarp::sig::Matrix HilbertEnvelopeMatrix;
-	yarp::sig::Matrix BandPassedAudioMatrix;
-	yarp::sig::Matrix BeamformedAudioMatrix;
-	yarp::sig::Matrix BeamformedRmsAudioMatrix;
-	yarp::sig::Matrix BeamformedRmsPowerMatrix;
-	yarp::sig::Matrix AllocentricAudioMatrix;
+	yMatrix RawAudioMatrix;
+	yMatrix GammatoneFilteredAudioMatrix;
+	yMatrix GammatoneFilteredPowerMatrix;
+	yMatrix HilbertEnvelopeMatrix;
+	yMatrix BandPassedAudioMatrix;
+	yMatrix BeamformedAudioMatrix;
+	yMatrix BeamformedRmsAudioMatrix;
+	yMatrix BeamformedRmsPowerMatrix;
+	yMatrix AllocentricAudioMatrix;
 	
 	/* ===========================================================================
 	 *  Temporary Head Angle.

@@ -36,15 +36,15 @@ inline int myRound(T a) {
 }
 
 
-inline void downSampleMatrix(const yarp::sig::Matrix& source, yarp::sig::Matrix& target, const int downSamp) {
+inline void downSampleMatrix(const yMatrix& source, yMatrix& target, const size_t downSamp) {
 	
 	//-- Don't do any down sampling. Standard Copy.
 	if (downSamp == 1) { target = source; return; }
 
 	//-- Allocate space for the down sampled matrix.
-	const int RowSize = source.rows();
-	const int ColSize = source.cols() / downSamp;
-	const int offset  = source.cols() % downSamp;
+	const size_t RowSize = source.rows();
+	const size_t ColSize = source.cols() / downSamp;
+	const size_t offset  = source.cols() % downSamp;
 	target.resize(RowSize, ColSize);
 	
 	//-- Set a pointer to the target.
@@ -53,8 +53,8 @@ inline void downSampleMatrix(const yarp::sig::Matrix& source, yarp::sig::Matrix&
 	//-- Set a pointer to the source.
 	const double *src = source.data();
 
-	for (int row = 0; row < RowSize; row++) {
-		for (int col = 0; col < ColSize; col++) {
+	for (size_t row = 0; row < RowSize; row++) {
+		for (size_t col = 0; col < ColSize; col++) {
 			//-- Dereference and copy data.
 			*trg = *src;
 			trg++; src += downSamp;
@@ -65,7 +65,7 @@ inline void downSampleMatrix(const yarp::sig::Matrix& source, yarp::sig::Matrix&
 }
 
 
-inline void MatrixToImageOfFloat(const yarp::sig::Matrix& source, YarpImageOfFloat& target) {
+inline void MatrixToImageOfFloat(const yMatrix& source, yImageOfFloat& target) {
 
 	//-- Allocate space for the Image.
 	const size_t RowSize = source.rows();
@@ -79,8 +79,8 @@ inline void MatrixToImageOfFloat(const yarp::sig::Matrix& source, YarpImageOfFlo
 	//-- from the matrix, into the target image.
 	//-- Matrix holds doubles. Conversion to
 	//-- floats should be ok.
-	for (int row = 0; row < RowSize; row++) {
-		for (int col = 0; col < ColSize; col++) {
+	for (size_t row = 0; row < RowSize; row++) {
+		for (size_t col = 0; col < ColSize; col++) {
 			target(col, row) = *src;
 			src++;
 		}
