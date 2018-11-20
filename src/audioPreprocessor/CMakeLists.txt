@@ -46,6 +46,12 @@ INCLUDE_DIRECTORIES(
     ${ATTENTIONLIB_INCLUDE_DIRS}
 )
 
+option(ENABLE_OMP "Do you want to link against OMP?" OFF)
+if (ENABLE_OMP)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp")
+    add_definitions (-DWITH_OMP)
+endif (ENABLE_OMP)
+
 # Search for source code.
 FILE(GLOB folder_source src/*.cpp src/*.cc src/*.c)
 FILE(GLOB folder_header include/iCub/*.h)

@@ -29,7 +29,7 @@ set(CMAKE_MODULE_PATH
   ${YARP_MODULE_PATH} 
   ${ICUB_MODULE_PATH} 
   ${ICUBCONTRIB_MODULE_PATH} # note 10/10/13 aligned to the standard Rea
-  ) 
+) 
 
 
 include(ICUBcontribHelpers)
@@ -46,7 +46,7 @@ if(COMPILER_SUPPORTS_CXX11)
 elseif(COMPILER_SUPPORTS_CXX0X)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -std=c++0x -O3")
 else()
-        message(STATUS "The compiler ${CMAKE_CXX_COMPILER} has no C++11 support. Please use a different C++ compiler.")
+    message(STATUS "The compiler ${CMAKE_CXX_COMPILER} has no C++11 support. Please use a different C++ compiler.")
 endif()
 
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
@@ -59,17 +59,17 @@ find_package(OpenCV)
 find_package(IPOPT)
 
 
-find_package(logpolar QUIET)
-IF (logpolar_FOUND)
-   message("Attention System: logpolar library detected and used.")
-   message ("logpolar_INCLUDE_DIRS : ${logpolar_INCLUDE_DIRS};")
-ELSE ()
-   message("Attention System: logpolar library undetected")
-ENDIF ()
+#find_package(logpolar QUIET)
+#IF (logpolar_FOUND)
+#   message("Attention System: logpolar library detected and used.")
+#   message ("logpolar_INCLUDE_DIRS : ${logpolar_INCLUDE_DIRS};")
+#ELSE ()
+#   message("Attention System: logpolar library undetected")
+#ENDIF ()
 
 
-SET(CUDAVISION_INCLUDE_DIRS   ${CMAKE_CURRENT_SOURCE_DIR}/cudaVision/include)
-SET(AUDIOLIB_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/audioLib/include)
+SET(CUDAVISION_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/cudaVision/include)
+SET(AUDIOLIB_INCLUDE_DIRS   ${CMAKE_CURRENT_SOURCE_DIR}/audioLib/include)
 
 # default prefix for applications
 set(ICUB_APPLICATIONS_PREFIX "$ENV{ICUB_ROOT}" CACHE PATH "Application path prefix")
@@ -90,17 +90,12 @@ option(ENABLE_MATLAB  "Do you want to link against MATLAB?" OFF)
 #    add_subdirectory(cudaVision)
 #endif (ENABLE_CUDA)
 
-option(ENABLE_OMP "Do you want to link against OMP?" OFF)
-if (ENABLE_OMP)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp")
-    add_definitions (-DWITH_OMP)
-endif (ENABLE_OMP)
-
 
 # Go through single folder
 add_subdirectory(src)
 add_subdirectory(app)
 add_subdirectory(audioLib)
+add_subdirectory(Dependencies)
 
 icubcontrib_finalize_export(audioLib)
 icubcontrib_finalize_export(iCubAudioAttention)
