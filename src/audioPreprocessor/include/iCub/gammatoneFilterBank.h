@@ -38,6 +38,8 @@
 #include <omp.h>
 #endif
 
+//#include <iCub/util/util.h>
+
 class GammatoneFilterBank { 
 
   private:
@@ -69,15 +71,15 @@ class GammatoneFilterBank {
 	 *  Main Constructor.
 	 * 
 	 * @param mics    : Number of Microphones.
-	 * @param samples : Number of Samples Recorded per Second.
-	 * @param frames  : Number of Samples in incoming Frame.
+	 * @param rate    : Number of Samples Recorded per Second.
+	 * @param samples : Number of Samples in incoming Frame.
      * @param bands   : Number of Frequency Bands.
      * @param lcf     : Lowest Center Frequency.
      * @param hcf     : Highest Center Frequency.
      * @param hrec    : Enable Half-Wave Rectifying.
      * @param erbs    : Enable ERB Spaced Center Frequencies.
 	 * =========================================================================== */
-	GammatoneFilterBank(int mics, int samples, int frames, int bands, double lcf, double hcf, bool hrec, bool erbs);
+	GammatoneFilterBank(int mics, int rate, int samples, int bands, double lcf, double hcf, bool hrec, bool erbs);
 
 
 	/* ===========================================================================

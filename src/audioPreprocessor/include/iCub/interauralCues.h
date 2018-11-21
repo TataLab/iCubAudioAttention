@@ -35,6 +35,8 @@
 #include <omp.h>
 #endif
 
+//#include <iCub/util/util.h>
+
 class InterauralCues { 
 
   private:
@@ -80,13 +82,13 @@ class InterauralCues {
 	 * @param mics         : Number of Microphones.
 	 * @param dist         : Distance Between Microphones.
 	 * @param c            : Speed of Sound.
-	 * @param samples      : Number of Samples Recorded per Second.
-	 * @param frames       : Number of Samples in incoming Frame.
+	 * @param rate         : Number of Samples Recorded per Second.
+	 * @param samples      : Number of Samples in incoming Frame.
      * @param bands        : Number of Frequency Bands.
      * @param beamsPerHemi : Number of Beams in a single hemi field.
 	 * @param resolution   : Number of positions one degree should cover.
 	 * =========================================================================== */
-	InterauralCues(int mics, double dist, double c, int samples, int frames, int bands, int beamsPerHemi, int resolution);
+	InterauralCues(int mics, double dist, double c, int rate, int samples, int bands, int beamsPerHemi, int resolution);
 
 
 	/* ===========================================================================
@@ -132,9 +134,7 @@ class InterauralCues {
 	 * @param AngleNormalAudio   : Target for the angle normal audio map (number of bands, total angle positions).
 	 * @param Offset             : The Offset of the head realative to zero.
 	 * =========================================================================== */
-	void getAngleNormalAudioMap(const yarp::sig::Matrix& BeamformedRmsAudio, yarp::sig::Matrix& AngleNormalAudio, const int Offset);
-
-
+	void getAngleNormalAudioMap(const yarp::sig::Matrix& BeamformedRmsAudio, yarp::sig::Matrix& AngleNormalAudio, const double Offset);
 
 
   private:

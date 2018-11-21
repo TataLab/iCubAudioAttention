@@ -28,14 +28,6 @@
 #define THPERIOD 0.08 // seconds.
 
 
-template<class T>
-inline int myRound(T a) {
-    int ceilValue  = (int)ceil(a);
-    int floorValue = (int)floor(a);
-    return (a - floorValue <= 0.5) ? floorValue : ceilValue;
-}
-
-
 inline void downSampleMatrix(const yMatrix& source, yMatrix& target, const size_t downSamp) {
 	
 	//-- Don't do any down sampling. Standard Copy.
@@ -63,7 +55,6 @@ inline void downSampleMatrix(const yMatrix& source, yMatrix& target, const size_
 		src += offset;
 	}
 }
-
 
 inline void MatrixToImageOfFloat(const yMatrix& source, yImageOfFloat& target) {
 
@@ -482,7 +473,7 @@ bool AudioPreprocessorPeriodicThread::processing() {
 	interauralCues->getAngleNormalAudioMap (
 		/* Source = */ BeamformedRmsAudioMatrix,
 		/* Target = */ AllocentricAudioMatrix,
-		/* Offset = */ myRound(headOffset)
+		/* Offset = */ headOffset
 	);
 
 	return true;
@@ -495,7 +486,7 @@ void AudioPreprocessorPeriodicThread::publishOutPorts() {
 	if (outGammatoneFilteredAudioPort.getOutputCount()) {
 
 		//-- This Matrix can be very big. Down sample if enabled.
-		//downSampleMatrix(GammatoneFilteredAudioMatrix, outGammatoneFilteredAudioPort.prepare(), downSamp);
+		//Utilities::downSampleMatrix(GammatoneFilteredAudioMatrix, outGammatoneFilteredAudioPort.prepare(), downSamp);
 		MatrixToImageOfFloat(GammatoneFilteredAudioMatrix, outGammatoneFilteredAudioPort.prepare());
 		outGammatoneFilteredAudioPort.setEnvelope(timeStamp);
 		outGammatoneFilteredAudioPort.write();
@@ -530,8 +521,9 @@ void AudioPreprocessorPeriodicThread::publishOutPorts() {
 
 
 	if (outBeamformedAudioPort.getOutputCount()) {
-
-		//outBeamformedAudioPort.prepare() = BeamformedAudioMatrix;
+		
+		//-- This Matrix can be very big. Down sample if enabled.
+		//Utilities::downSampleMatrix(BeamformedAudioMatrix, outBeamformedAudioPort.prepare(), downSamp);
 		MatrixToImageOfFloat(BeamformedAudioMatrix, outBeamformedAudioPort.prepare());
 		outBeamformedAudioPort.setEnvelope(timeStamp);
 		outBeamformedAudioPort.write();

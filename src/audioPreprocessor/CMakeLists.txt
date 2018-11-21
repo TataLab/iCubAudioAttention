@@ -43,6 +43,7 @@ INCLUDE_DIRECTORIES(
     ${YARP_INCLUDE_DIRS} 	
     ${ICUB_INCLUDE_DIRS}	
     ${ICUB_CONTRIB_DIRS}
+    ${audioLib_INCLUDE_DIRS}
     ${ATTENTIONLIB_INCLUDE_DIRS}
 )
 
@@ -66,6 +67,7 @@ IF (folder_source)
     )
 
     TARGET_LINK_LIBRARIES(${KEYWORD}        
+      audioLib
       ${YARP_LIBRARIES}
       )	
 

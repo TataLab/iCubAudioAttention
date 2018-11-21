@@ -25,12 +25,12 @@
 
 #include <iCub/gammatoneFilterBank.h>
 
-#define myMod(x,y)     ( ( x ) - ( y ) * floor ( ( x ) / ( y ) ) )
+#define myMod_double(x,y)     ( ( x ) - ( y ) * floor ( ( x ) / ( y ) ) )
 
-GammatoneFilterBank::GammatoneFilterBank(int mics, int samples, int frames, int bands, double lcf, double hcf, bool hrec, bool erbs) : 
+GammatoneFilterBank::GammatoneFilterBank(int mics, int rate, int samples, int bands, double lcf, double hcf, bool hrec, bool erbs) : 
 	numMics(mics), 
-	samplingRate(samples), 
-	numFrameSamples(frames), 
+	samplingRate(rate), 
+	numFrameSamples(samples), 
 	numBands(bands),
 	lowCf(lcf),
 	highCf(hcf),
@@ -300,7 +300,7 @@ void GammatoneFilterBank::singleGammatoneFilter(const double* RawAudio, double* 
 			// Unwrap Version 1
 			dp = Phase[sample] - pPhase;
 			if (fabs(dp) > _pi) {
-				dps = myMod(dp + _pi, 2 * _pi) - _pi;
+				dps = myMod_double(dp + _pi, 2 * _pi) - _pi;
 				if (dps == -_pi && dp > 0) {
 					dps = _pi;
 				}
