@@ -11,8 +11,9 @@ endif(COMMAND cmake_policy)
 SET(KEYWORD "audioPreprocessor")
 PROJECT(${KEYWORD})
 
-find_package(YARP REQUIRED)
-find_package(ICUB REQUIRED)
+find_package(YARP  REQUIRED)
+find_package(ICUB  REQUIRED)
+
 list(APPEND CMAKE_MODULE_PATH ${YARP_MODULE_PATH})
 list(APPEND CMAKE_MODULE_PATH ${ICUB_MODULE_PATH})
 include(YarpInstallationHelpers)
@@ -45,13 +46,16 @@ INCLUDE_DIRECTORIES(
     ${ICUB_CONTRIB_DIRS}
     ${audioLib_INCLUDE_DIRS}
     ${ATTENTIONLIB_INCLUDE_DIRS}
+    ${fftw_SOURCE_DIR}/api/
 )
 
-option(ENABLE_OMP "Do you want to link against OMP?" OFF)
+option(ENABLE_OMP "Do you want to link against OpenMP?" OFF)
 if (ENABLE_OMP)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp")
     add_definitions (-DWITH_OMP)
 endif (ENABLE_OMP)
+
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
 
 # Search for source code.
 FILE(GLOB folder_source src/*.cpp src/*.cc src/*.c)
@@ -68,6 +72,7 @@ IF (folder_source)
 
     TARGET_LINK_LIBRARIES(${KEYWORD}        
       audioLib
+      fftw3
       ${YARP_LIBRARIES}
       )	
 

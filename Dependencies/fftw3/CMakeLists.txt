@@ -190,34 +190,31 @@ endif ()
 if (HAVE_SSE2 OR HAVE_AVX)
   set (HAVE_SIMD TRUE)
 endif ()
-file(GLOB           fftw_api_SOURCE                 api/*.c             api/*.h)
-file(GLOB           fftw_dft_SOURCE                 dft/*.c             dft/*.h)
-file(GLOB           fftw_dft_scalar_SOURCE          dft/scalar/*.c      dft/scalar/*.h)
-file(GLOB           fftw_dft_scalar_codelets_SOURCE dft/scalar/codelets/*.c     dft/scalar/codelets/*.h)
-file(GLOB           fftw_dft_simd_SOURCE            dft/simd/*.c        dft/simd/*.h)
+file(GLOB           fftw_api_SOURCE                 api/*.c                  api/*.h)
+file(GLOB           fftw_dft_SOURCE                 dft/*.c                  dft/*.h)
+file(GLOB           fftw_dft_scalar_SOURCE          dft/scalar/*.c           dft/scalar/*.h)
+file(GLOB           fftw_dft_scalar_codelets_SOURCE dft/scalar/codelets/*.c  dft/scalar/codelets/*.h)
+file(GLOB           fftw_dft_simd_SOURCE            dft/simd/*.c             dft/simd/*.h)
 
-file(GLOB           fftw_dft_simd_sse2_SOURCE       dft/simd/sse2/*.c   dft/simd/sse2/*.h)
-file(GLOB           fftw_dft_simd_avx_SOURCE        dft/simd/avx/*.c    dft/simd/avx/*.h)
-file(GLOB           fftw_dft_simd_avx2_SOURCE       dft/simd/avx2/*.c   dft/simd/avx2/*.h dft/simd/avx2-128/*.c   dft/simd/avx2-128/*.h)
-file(GLOB           fftw_kernel_SOURCE              kernel/*.c          kernel/*.h)
-file(GLOB           fftw_rdft_SOURCE                rdft/*.c            rdft/*.h)
-file(GLOB           fftw_rdft_scalar_SOURCE         rdft/scalar/*.c     rdft/scalar/*.h)
+file(GLOB           fftw_dft_simd_sse2_SOURCE       dft/simd/sse2/*.c        dft/simd/sse2/*.h)
+file(GLOB           fftw_dft_simd_avx_SOURCE        dft/simd/avx/*.c         dft/simd/avx/*.h)
+file(GLOB           fftw_dft_simd_avx2_SOURCE       dft/simd/avx2/*.c        dft/simd/avx2/*.h dft/simd/avx2-128/*.c   dft/simd/avx2-128/*.h)
+file(GLOB           fftw_kernel_SOURCE              kernel/*.c               kernel/*.h)
+file(GLOB           fftw_rdft_SOURCE                rdft/*.c                 rdft/*.h)
+file(GLOB           fftw_rdft_scalar_SOURCE         rdft/scalar/*.c          rdft/scalar/*.h)
 
-file(GLOB           fftw_rdft_scalar_r2cb_SOURCE    rdft/scalar/r2cb/*.c
-                                                    rdft/scalar/r2cb/*.h)
-file(GLOB           fftw_rdft_scalar_r2cf_SOURCE    rdft/scalar/r2cf/*.c
-                                                    rdft/scalar/r2cf/*.h)
-file(GLOB           fftw_rdft_scalar_r2r_SOURCE     rdft/scalar/r2r/*.c
-                                                    rdft/scalar/r2r/*.h)
+file(GLOB           fftw_rdft_scalar_r2cb_SOURCE    rdft/scalar/r2cb/*.c     rdft/scalar/r2cb/*.h)
+file(GLOB           fftw_rdft_scalar_r2cf_SOURCE    rdft/scalar/r2cf/*.c     rdft/scalar/r2cf/*.h)
+file(GLOB           fftw_rdft_scalar_r2r_SOURCE     rdft/scalar/r2r/*.c      rdft/scalar/r2r/*.h)
 
-file(GLOB           fftw_rdft_simd_SOURCE           rdft/simd/*.c       rdft/simd/*.h)
-file(GLOB           fftw_rdft_simd_sse2_SOURCE      rdft/simd/sse2/*.c  rdft/simd/sse2/*.h)
-file(GLOB           fftw_rdft_simd_avx_SOURCE       rdft/simd/avx/*.c   rdft/simd/avx/*.h)
-file(GLOB           fftw_rdft_simd_avx2_SOURCE      rdft/simd/avx2/*.c  rdft/simd/avx2/*.h rdft/simd/avx2-128/*.c  rdft/simd/avx2-128/*.h)
+file(GLOB           fftw_rdft_simd_SOURCE           rdft/simd/*.c            rdft/simd/*.h)
+file(GLOB           fftw_rdft_simd_sse2_SOURCE      rdft/simd/sse2/*.c       rdft/simd/sse2/*.h)
+file(GLOB           fftw_rdft_simd_avx_SOURCE       rdft/simd/avx/*.c        rdft/simd/avx/*.h)
+file(GLOB           fftw_rdft_simd_avx2_SOURCE      rdft/simd/avx2/*.c       rdft/simd/avx2/*.h rdft/simd/avx2-128/*.c  rdft/simd/avx2-128/*.h)
 
-file(GLOB           fftw_reodft_SOURCE              reodft/*.c          reodft/*.h)
-file(GLOB           fftw_simd_support_SOURCE        simd-support/*.c    simd-support/*.h)
-file(GLOB           fftw_libbench2_SOURCE           libbench2/*.c       libbench2/*.h)
+file(GLOB           fftw_reodft_SOURCE              reodft/*.c               reodft/*.h)
+file(GLOB           fftw_simd_support_SOURCE        simd-support/*.c         simd-support/*.h)
+file(GLOB           fftw_libbench2_SOURCE           libbench2/*.c            libbench2/*.h)
 list (REMOVE_ITEM   fftw_libbench2_SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/libbench2/useropt.c)
 
 set(SOURCEFILES
@@ -419,8 +416,8 @@ configure_file (FFTW3ConfigVersion.cmake.in FFTW3${PREC_SUFFIX}ConfigVersion.cma
 install (FILES
           ${CMAKE_CURRENT_BINARY_DIR}/FFTW3${PREC_SUFFIX}Config.cmake
           ${CMAKE_CURRENT_BINARY_DIR}/FFTW3${PREC_SUFFIX}ConfigVersion.cmake
-	  DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/fftw3${PREC_SUFFIX}
-         COMPONENT Development)
+	        DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/fftw3${PREC_SUFFIX}
+          COMPONENT Development)
 
 export (TARGETS ${fftw3_lib} NAMESPACE FFTW3:: FILE ${PROJECT_BINARY_DIR}/FFTW3LibraryDepends.cmake)
 install(EXPORT FFTW3LibraryDepends
