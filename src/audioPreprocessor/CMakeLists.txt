@@ -45,7 +45,6 @@ INCLUDE_DIRECTORIES(
     ${ICUB_INCLUDE_DIRS}	
     ${ICUB_CONTRIB_DIRS}
     ${audioLib_INCLUDE_DIRS}
-    ${ATTENTIONLIB_INCLUDE_DIRS}
     ${fftw_SOURCE_DIR}/api/
 )
 
@@ -59,7 +58,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
 
 # Search for source code.
 FILE(GLOB folder_source src/*.cpp src/*.cc src/*.c)
-FILE(GLOB folder_header include/iCub/*.h)
+FILE(GLOB folder_header include/iCub/*.h  )
 SOURCE_GROUP("Source Files" FILES ${folder_source})
 SOURCE_GROUP("Header Files" FILES ${folder_header})
 
@@ -74,9 +73,11 @@ IF (folder_source)
       audioLib
       fftw3
       ${YARP_LIBRARIES}
-      )	
+    )	
 
     INSTALL_TARGETS(/bin ${KEYWORD})
+
 ELSE (folder_source)
     MESSAGE(FATAL_ERROR "No source code files found. Please add something")
+
 ENDIF (folder_source)

@@ -7,31 +7,31 @@
     <!-->
     <module>
         <name> audioCaptureInterface </name>
-        <parameters></parameters>
+        <parameters> </parameters>
         <node> pc104 </node>
     </module>
 
     <module>
         <name> remoteInterface </name>
-        <parameters></parameters>
+        <parameters> </parameters>
         <node> pc104 </node>
     </module>
 
     <module>
         <name> audioPreprocessor </name>
-        <parameters></parameters>
+        <parameters> </parameters>
         <node> icub </node>
     </module>
 
     <module>
         <name> audioBayesianMap </name>
-        <parameters></parameters>
+        <parameters> </parameters>
         <node> icub </node>
     </module>
 
     <module>
         <name> audioPowerMap </name>
-        <parameters></parameters>
+        <parameters> </parameters>
         <node> icub </node>
     </module>
 
@@ -58,6 +58,12 @@
     </connection>
 
     <connection>
+        <from> /audioPreprocessor/allocentricEnvelope:o </from>
+        <to>   /audioBayesianMap/allocentricAudio:i  </to>
+        <protocol> tcp </protocol>
+    </connection>
+
+    <connection>
         <from> /audioPreprocessor/beamformedRmsPower:o </from>
         <to>   /audioPowerMap/bandPower:i              </to>
         <protocol> tcp </protocol>
@@ -66,14 +72,6 @@
     <connection>
         <from> /audioBayesianMap/bayesianProbabilityMap:o </from>
         <to>   /audioPowerMap/probabilityMap:i            </to>
-        <protocol> tcp </protocol>
-    </connection>
-
-
-    <connection>
-        <!-->   Remove this later.  <!-->
-        <from> /audioPreprocessor/gammatoneFilteredPower:o </from>
-        <to>   /audioPowerMap/bandPower:i                  </to>
         <protocol> tcp </protocol>
     </connection>
 

@@ -9,9 +9,12 @@ PROJECT(${PROJECTNAME})
 SET(PROJECT_INCLUDE_DIRS
   ${PROJECT_SOURCE_DIR}/include)
 
+
 # Find .cpp and .h files automatically.  This is a bit lazy,
 # and in principle it would be better to list these files manually.
 SET(folder_source 
+  ./src/AudioUtil.cpp
+  ./src/butterworth.cpp
   ./src/SoundFile.cpp
   ./src/spatialSound.cpp
   ./src/Sound.cpp
@@ -21,6 +24,8 @@ SET(folder_header
   ./include/iCub/audio/spatialSound.h
   ./include/iCub/audio/Sound.h
   ./include/iCub/audio/SoundFile.h
+  ./include/iCub/filters/butterworth.h
+  ./include/iCub/util/AudioUtil.h
 )
 
 MESSAGE("folder_header ${folder_header}")
@@ -31,10 +36,11 @@ SOURCE_GROUP("Header Files" FILES ${folder_header})
 
 message ("YARP_INCLUDE_DIRS ${YARP_INCLUDE_DIRS} ")
 message ("PROJECT_SOURCE_DIR ${PROJECT_SOURCE_DIR}")
+
 # Add our include files into our compiler's search path.
 INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/include
 	${YARP_INCLUDE_DIRS}
-        ${ICUB_INCLUDE_DIRS}
+  ${ICUB_INCLUDE_DIRS}
 )
 
 # Create everything needed to build our library
@@ -50,5 +56,5 @@ TARGET_LINK_LIBRARIES(${PROJECTNAME} ${YARP_LIBRARIES})
 
 icubcontrib_export_library(${PROJECTNAME} INTERNAL_INCLUDE_DIRS ${PROJECT_SOURCE_DIR}/include
                                           EXTERNAL_INCLUDE_DIRS ${YARP_INCLUDE_DIRS} ${ICUB_INCLUDE_DIRS}
-                                          DESTINATION include/iCub/audio
-                                          FILES  ${folder_header})
+                                          DESTINATION include/iCub/
+                                          FILES  ${folder_header} )

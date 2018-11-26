@@ -35,7 +35,7 @@
 #include <omp.h>
 #endif
 
-//#include <iCub/util/util.h>
+#include <iCub/util/AudioUtil.h>
 
 class InterauralCues { 
 
@@ -115,7 +115,7 @@ class InterauralCues {
 	 * @param FilterBank      : The filtered audio (number of mics * number of bands, number of samples).
 	 * @param BeamformedAudio : Target for the beamformed audio (number of bands, number of beams).
 	 * =========================================================================== */
-    void getBeamformedRmsAudio(const yarp::sig::Matrix& FilterBank, yarp::sig::Matrix& BeamformedAudio);
+    //void getBeamformedRmsAudio(const yarp::sig::Matrix& FilterBank, yarp::sig::Matrix& BeamformedAudio);
 
 
 	/* ===========================================================================
@@ -139,6 +139,12 @@ class InterauralCues {
 
   private:
 	
+	/* ===========================================================================
+	 *  Approximate some y, for a given x that is between (x1,y1) and (x2,y2).
+	 * =========================================================================== */
+	inline double lininterp(const double x, const double x1, const double y1, const double x2, const double y2);
+
+
 	/* ===========================================================================
 	 *  Given the Rms of the front field beams, for each frequency band 
 	 *    interpolate over the beams to produce degree normal audio map

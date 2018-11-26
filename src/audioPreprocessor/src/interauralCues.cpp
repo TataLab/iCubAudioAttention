@@ -25,15 +25,6 @@
 
 #include <iCub/interauralCues.h>
 
-template<class T>
-inline int    myRound(T a) { 
-    int ceilValue  = (int)ceil(a); 
-    int floorValue = (int)floor(a); 
-    return (a - floorValue <= 0.5) ? floorValue : ceilValue; 
-}
-inline int    myMod_int(int a, int b) { return a >= 0 ? a % b : ((a % b) + b) % b; }
-inline double lininterp(double x, double x1, double y1, double x2, double y2) { return y1 + ((y2 - y1) * (x - x1)) / (x2 - x1); }
-
 InterauralCues::InterauralCues(int mics, double dist, double c, int rate, int samples, int bands, int beamsPerHemi, int resolution) : 
 	numMics(mics), 
     micDistance(dist),
@@ -88,14 +79,14 @@ void InterauralCues::getBeamformedAudio(const yarp::sig::Matrix& FilterBank, yar
             for (sample = 0; sample < numFrameSamples; sample++) {
                 BeamformedAudio[itrBeam][sample] = (
                     FilterBank[ch0][sample] + 
-                    FilterBank[ch1][myMod_int(sample + offset, numFrameSamples)]
+                    FilterBank[ch1][AudioUtil::myMod_int(sample + offset, numFrameSamples)]
                 );
             }
         }
     }
 }
 
-
+/*
 void InterauralCues::getBeamformedRmsAudio(const yarp::sig::Matrix& FilterBank, yarp::sig::Matrix& BeamformedAudio) {
 
     //-- Ensure space is allocated for this.
@@ -125,7 +116,7 @@ void InterauralCues::getBeamformedRmsAudio(const yarp::sig::Matrix& FilterBank, 
             for (sample = 0; sample < numFrameSamples; sample++) {
                 beamSum += pow (
                     FilterBank[ch0][sample] + 
-                    FilterBank[ch1][myMod_int(sample + offset, numFrameSamples)],
+                    FilterBank[ch1][AudioUtil::myMod_int(sample + offset, numFrameSamples)],
                     2.0
                 );
             }
@@ -135,6 +126,7 @@ void InterauralCues::getBeamformedRmsAudio(const yarp::sig::Matrix& FilterBank, 
         }
     }
 }
+*/
 
 
 void InterauralCues::getBeamformedRmsPower(const yarp::sig::Matrix& BeamformedAudio, yarp::sig::Matrix& BeamPower) {
@@ -183,8 +175,13 @@ void InterauralCues::getAngleNormalAudioMap(const yarp::sig::Matrix& BeamformedR
     mirrorFrontField (
         /* Source = */ frontFieldAudioMap,
         /* Target = */ AngleNormalAudio,
-        /* Offset = */ myRound(Offset * angleResolution) 
+        /* Offset = */ AudioUtil::myRound(Offset * angleResolution) 
     );
+}
+
+
+inline double InterauralCues::lininterp(const double x, const double x1, const double y1, const double x2, const double y2) { 
+    return y1 + ((y2 - y1) * (x - x1)) / (x2 - x1); 
 }
 
 
@@ -242,8 +239,8 @@ void InterauralCues::mirrorFrontField(const yarp::sig::Matrix& FrontFieldAudio, 
         for (index = 0; index <= half_length; index++) {
 
             //-- Both start in middle. idx0 moves right, idx1 moves left.
-            idx0 = myMod_int(half_length + index + offset, numFullFieldAngles);
-            idx1 = myMod_int(half_length - index + offset, numFullFieldAngles);
+            idx0 = AudioUtil::myMod_int(half_length + index + offset, numFullFieldAngles);
+            idx1 = AudioUtil::myMod_int(half_length - index + offset, numFullFieldAngles);
 
             FullFieldAudio[row][idx0] = FrontFieldAudio[row][index];
             FullFieldAudio[row][idx1] = FrontFieldAudio[row][index];   
@@ -252,16 +249,14 @@ void InterauralCues::mirrorFrontField(const yarp::sig::Matrix& FrontFieldAudio, 
         for (index = half_length+1; index < full_length; index++) {
 
             //-- Start at middle and far right. Move towards eachother.
-            idx0 = myMod_int(half_length  + index + offset, numFullFieldAngles);
-            idx1 = myMod_int(two_and_half - index + offset, numFullFieldAngles);
+            idx0 = AudioUtil::myMod_int(half_length  + index + offset, numFullFieldAngles);
+            idx1 = AudioUtil::myMod_int(two_and_half - index + offset, numFullFieldAngles);
 
             FullFieldAudio[row][idx0] = FrontFieldAudio[row][index];
             FullFieldAudio[row][idx1] = FrontFieldAudio[row][index];   
         }
     }  
 }
-
-
 
 
 void InterauralCues::setFrontFieldBeamAngles() {

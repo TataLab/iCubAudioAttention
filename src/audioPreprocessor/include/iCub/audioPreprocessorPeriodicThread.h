@@ -43,10 +43,12 @@
 #include <omp.h>
 #endif
 
+#include <iCub/util/AudioUtil.h>
+#include <iCub/filters/butterworth.h>
+
 #include <iCub/gammatoneFilterBank.h>
 #include <iCub/interauralCues.h>
 #include <iCub/hilbertTransform.h>
-//#include <iCub/util/util.h>
 
 typedef yarp::sig::Matrix                           yMatrix;
 typedef yarp::sig::ImageOf< yarp::sig::PixelFloat > yImageOfFloat;
@@ -86,34 +88,40 @@ class AudioPreprocessorPeriodicThread : public yarp::os::PeriodicThread {
 	 * =========================================================================== */
 	ySoundBuffer  inRawAudioPort;
 
-	//yMatrixBuffer outGammatoneFilteredAudioPort;
+	yMatrixBuffer outGammatoneFilteredAudioPort;
 	yMatrixBuffer outGammatoneFilteredPowerPort;
-	yMatrixBuffer outHilbertEnvelopePort;
-	yMatrixBuffer outBandPassedAudioPort;
-	//yMatrixBuffer outBeamformedAudioPort;
+	yMatrixBuffer outBeamformedAudioPort;
 	yMatrixBuffer outBeamformedRmsAudioPort;
 	yMatrixBuffer outBeamformedRmsPowerPort;
-	//yMatrixBuffer outAllocentricAudioPort;
-
-	//-- Temporary. For sending to Python.
-	yImageOfFloatBuffer outGammatoneFilteredAudioPort;
-	yImageOfFloatBuffer outBeamformedAudioPort;
-	yImageOfFloatBuffer outAllocentricAudioPort;
+	yMatrixBuffer outAllocentricAudioPort;
+	yMatrixBuffer outHilbertEnvelopePort;
+	yMatrixBuffer outBandPassedEnvelopePort;
+	yMatrixBuffer outBandPassedRmsEnvelopePort;
+	yMatrixBuffer outAllocentricEnvelopePort;
 
 	/* ===========================================================================
 	 *  Yarp Matrices used for Modules Computation. 
 	 *    Objects passed around to encapsulated objects.
 	 * =========================================================================== */
 	yarp::sig::Sound* inputSound;
+	
 	yMatrix RawAudioMatrix;
+
 	yMatrix GammatoneFilteredAudioMatrix;
 	yMatrix GammatoneFilteredPowerMatrix;
-	yMatrix HilbertEnvelopeMatrix;
-	yMatrix BandPassedAudioMatrix;
+	
 	yMatrix BeamformedAudioMatrix;
 	yMatrix BeamformedRmsAudioMatrix;
 	yMatrix BeamformedRmsPowerMatrix;
+	
 	yMatrix AllocentricAudioMatrix;
+
+	yMatrix HilbertEnvelopeMatrix;
+	yMatrix BandPassedEnvelopeMatrix;
+	yMatrix BandPassedRmsEnvelopeMatrix;
+
+	yMatrix AllocentricEnvelopeMatrix;
+	
 	
 	/* ===========================================================================
 	 *  Temporary Head Angle.
@@ -124,8 +132,11 @@ class AudioPreprocessorPeriodicThread : public yarp::os::PeriodicThread {
 	/* ===========================================================================
 	 *  Encapsulated objects to perform processing.
 	 * =========================================================================== */
-	GammatoneFilterBank* gammatoneFilterBank;
-	InterauralCues*      interauralCues;
+	GammatoneFilterBank*  gammatoneFilterBank;
+	InterauralCues*       interauralCues;
+	HilbertTransform*     hilbertTransform;
+	Filters::Butterworth* butterworthFilter;
+	
 
 	/* ===========================================================================
 	 *  Variables received from the resource finder.

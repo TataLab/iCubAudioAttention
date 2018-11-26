@@ -44,7 +44,6 @@
 
 typedef yarp::sig::Matrix yMatrix;
 
-
 namespace Filters {
     class Butterworth;
 } 
@@ -96,25 +95,45 @@ class Filters::Butterworth {
 
 
     /* ===========================================================================
+     *  Apply a low pass filter on the provided audio source, for some
+     *    specified center frequency.
      * 
+     * @param AudioSource     : Source for the input audio. 
+     * @param AudioTarget     : Target for the low passed audio.
+     * @param CenterFrequency : Center frequency for the low pass.
      * =========================================================================== */
     void getLowPassedAudio(const yMatrix& AudioSource, yMatrix& AudioTarget, const double CenterFrequency);
 
 
     /* ===========================================================================
+     *  Apply a high pass filter on the provided audio source, for some
+     *    specified center frequency.
      * 
+     * @param AudioSource     : Source for the input audio. 
+     * @param AudioTarget     : Target for the high passed audio.
+     * @param CenterFrequency : Center frequency for the high pass.
      * =========================================================================== */
     void getHighPassedAudio(const yMatrix& AudioSource, yMatrix& AudioTarget, const double CenterFrequency);
 
 
     /* ===========================================================================
+     *   Apply a band pass filter on the provided audio source, for some
+     *    specified center frequency.
      * 
+     * @param AudioSource     : Source for the input audio. 
+     * @param AudioTarget     : Target for the band passed audio.
+     * @param CenterFrequency : Center frequency for the band pass.
      * =========================================================================== */
     void getBandPassedAudio(const yMatrix& AudioSource, yMatrix& AudioTarget, const double CenterFrequency);
 
 
     /* ===========================================================================
+     *  Apply a band noch filter on the provided audio source, for some
+     *    specified center frequency.
      * 
+     * @param AudioSource     : Source for the input audio. 
+     * @param AudioTarget     : Target for the band noched audio.
+     * @param CenterFrequency : Center frequency for the band noch.
      * =========================================================================== */
     void getBandNochedAudio(const yMatrix& AudioSource, yMatrix& AudioTarget, const double CenterFrequency);
 
@@ -122,31 +141,42 @@ class Filters::Butterworth {
   private:
 
     /* ===========================================================================
+     *  Perform a generic bilinear transformation on the audio source, the 
+     *    coefficients are provided as input so this function may be generally
+     *    used among low pass, high pass, band pass and band noch filters.
      * 
+     * @param AudioSource        : Source of input audio.
+     * @param AudioTarget        : Target for the filtered audio.
+     * @param numSamples         : Lenght of the source and target.
+     * @param a0, a1, a2, b1, b2 : Filter coefficients of caller filter.
      * =========================================================================== */
     void bilinearTransformation(const double* AudioSource, double* AudioTarget, const size_t numSamples, const double a0, const double a1, const double a2, const double b1, const double b2);
 
 
     /* ===========================================================================
-     * 
+     *  Update the internally stored coefficients for a low pass filter 
+     *    based on the provided center frequency.
      * =========================================================================== */
     void updateLowPassCoefficients(const double CenterFrequency);
 
 
     /* ===========================================================================
-     * 
+     *  Update the internally stored coefficients for a high pass filter 
+     *    based on the provided center frequency.
      * =========================================================================== */
     void updateHighPassCoefficients(const double CenterFrequency);
 
 
     /* ===========================================================================
-     * 
+     *  Update the internally stored coefficients for a band pass filter 
+     *    based on the provided center frequency.
      * =========================================================================== */
     void updateBandPassCoefficients(const double CenterFrequency);
 
 
     /* ===========================================================================
-     * 
+     *  Update the internally stored coefficients for a band noch filter 
+     *    based on the provided center frequency.
      * =========================================================================== */
     void updateBandNochCoefficients(const double CenterFrequency);
 };

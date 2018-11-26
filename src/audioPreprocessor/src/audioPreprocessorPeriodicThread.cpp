@@ -27,66 +27,6 @@
 
 #define THPERIOD 0.08 // seconds.
 
-
-inline void downSampleMatrix(const yMatrix& source, yMatrix& target, const size_t downSamp) {
-	
-	//-- Don't do any down sampling. Standard Copy.
-	if (downSamp == 1) { target = source; return; }
-
-	//-- Allocate space for the down sampled matrix.
-	const size_t RowSize = source.rows();
-	const size_t ColSize = source.cols() / downSamp;
-	const size_t offset  = source.cols() % downSamp;
-	target.resize(RowSize, ColSize);
-	
-	//-- Set a pointer to the target.
-	double *trg = target.data();
-
-	//-- Set a pointer to the source.
-	const double *src = source.data();
-
-	for (size_t row = 0; row < RowSize; row++) {
-		for (size_t col = 0; col < ColSize; col++) {
-			//-- Dereference and copy data.
-			*trg = *src;
-			trg++; src += downSamp;
-		}
-		//-- Skip any remaining points at the end of the row.
-		src += offset;
-	}
-}
-
-inline void MatrixToImageOfFloat(const yMatrix& source, yImageOfFloat& target) {
-
-	//-- Allocate space for the Image.
-	const size_t RowSize = source.rows();
-	const size_t ColSize = source.cols();
-	target.resize(ColSize, RowSize);
-	
-	//-- Set a pointer to the data.
-	const double *src = source.data();
-
-	//-- Iterate through copying the contents
-	//-- from the matrix, into the target image.
-	//-- Matrix holds doubles. Conversion to
-	//-- floats should be ok.
-	for (size_t row = 0; row < RowSize; row++) {
-		for (size_t col = 0; col < ColSize; col++) {
-			target(col, row) = *src;
-			src++;
-		}
-	}
-}
-
-
-inline void makeTimeStamp(double& totalStat, double& timeStat, double& startTime, double& stopTime) {
-	stopTime   = yarp::os::Time::now();
-	timeStat   = stopTime - startTime;
-	totalStat += timeStat;
-	startTime  = stopTime;
-}
-
-
 AudioPreprocessorPeriodicThread::AudioPreprocessorPeriodicThread() : 
 	PeriodicThread(THPERIOD) {
 
@@ -107,6 +47,8 @@ AudioPreprocessorPeriodicThread::AudioPreprocessorPeriodicThread(std::string _ro
 AudioPreprocessorPeriodicThread::~AudioPreprocessorPeriodicThread() {
 	delete gammatoneFilterBank;
 	delete interauralCues;
+	delete hilbertTransform;
+	delete butterworthFilter;
 }
 
 
@@ -168,12 +110,6 @@ bool AudioPreprocessorPeriodicThread::configure(yarp::os::ResourceFinder &rf) {
 	GammatoneFilteredPowerMatrix.resize(numBands, numMics);
 	GammatoneFilteredPowerMatrix.zero();
 
-	HilbertEnvelopeMatrix.resize(numMics * numBands, numFrameSamples);
-	HilbertEnvelopeMatrix.zero();
-
-	BandPassedAudioMatrix.resize(numMics * numBands, numFrameSamples);
-	BandPassedAudioMatrix.zero();
-
 	BeamformedAudioMatrix.resize(numBands * numBeams, numFrameSamples);
 	BeamformedAudioMatrix.zero();
 
@@ -186,12 +122,26 @@ bool AudioPreprocessorPeriodicThread::configure(yarp::os::ResourceFinder &rf) {
 	AllocentricAudioMatrix.resize(numBands, numFullFieldAngles);
 	AllocentricAudioMatrix.zero();
 
+	HilbertEnvelopeMatrix.resize(numBands * numBeams, numFrameSamples);
+	HilbertEnvelopeMatrix.zero();
+
+	BandPassedEnvelopeMatrix.resize(numBands * numBeams, numFrameSamples);
+	BandPassedEnvelopeMatrix.zero();
+
+	BandPassedRmsEnvelopeMatrix.resize(numBands, numBeams);
+	BandPassedRmsEnvelopeMatrix.zero();
+
+	AllocentricEnvelopeMatrix.resize(numBands, numFullFieldAngles);
+	AllocentricEnvelopeMatrix.zero();
+
 
 	/* ===========================================================================
 	 *  Initialize the processing objects.
 	 * =========================================================================== */
 	gammatoneFilterBank = new GammatoneFilterBank(numMics, samplingRate, numFrameSamples, numBands, lowCf, highCf, halfRec, erbSpaced);
 	interauralCues      = new InterauralCues(numMics, micDistance, speedOfSound, samplingRate, numFrameSamples, numBands, numBeamsPerHemifield, angleRes);
+	hilbertTransform    = new HilbertTransform(numBands * numBeams, numFrameSamples);
+	butterworthFilter   = new Filters::Butterworth(samplingRate, 1);
 
 
 	/* ===========================================================================
@@ -272,16 +222,6 @@ bool AudioPreprocessorPeriodicThread::threadInit() {
 		return false;
 	}
 
-	if (!outHilbertEnvelopePort.open(getName("/hilbertEnvelope:o").c_str())) {
-		yError("Unable to open port for sending the Hilbert Envelope of the Filter bank.");
-		return false;
-	}
-
-	if (!outBandPassedAudioPort.open(getName("/bandPassedAudio:o").c_str())) {
-		yError("Unable to open port for sending the band passed Hilbert Envelope.");
-		return false;
-	}
-
 	if (!outBeamformedAudioPort.open(getName("/beamformedAudio:o").c_str())) {
 		yError("Unable to open port for sending the beamformed audio.");
 		return false;
@@ -302,6 +242,26 @@ bool AudioPreprocessorPeriodicThread::threadInit() {
 		return false;
 	}
 
+	if (!outHilbertEnvelopePort.open(getName("/hilbertEnvelope:o").c_str())) {
+		yError("Unable to open port for sending the Hilbert Envelope of the Filter bank.");
+		return false;
+	}
+
+	if (!outBandPassedEnvelopePort.open(getName("/bandPassedEnvelope:o").c_str())) {
+		yError("Unable to open port for sending the band passed Hilbert Envelope.");
+		return false;
+	}
+
+	if (!outBandPassedRmsEnvelopePort.open(getName("/bandPassedRmsEnvelope:o").c_str())) {
+		yError("Unable to open port for sending the root mean square of band passed Hilbert Envelope.");
+		return false;
+	}
+
+	if (!outAllocentricEnvelopePort.open(getName("/allocentricEnvelope:o").c_str())) {
+		yError("Unable to open port for sending the allocentric envelope map.");
+		return false;
+	}
+
 	stopTime = yarp::os::Time::now();
 	yInfo("Initialization of the processing thread correctly ended. Elapsed Time: %f.", stopTime - startTime);
 	startTime = stopTime;
@@ -317,24 +277,28 @@ void AudioPreprocessorPeriodicThread::threadRelease() {
 	inHeadAnglePort.interrupt();
 	outGammatoneFilteredAudioPort.interrupt();
 	outGammatoneFilteredPowerPort.interrupt();
-	outHilbertEnvelopePort.interrupt();
-	outBandPassedAudioPort.interrupt();
 	outBeamformedAudioPort.interrupt();
 	outBeamformedRmsAudioPort.interrupt();
 	outBeamformedRmsPowerPort.interrupt();
 	outAllocentricAudioPort.interrupt();
+	outHilbertEnvelopePort.interrupt();
+	outBandPassedEnvelopePort.interrupt();
+	outBandPassedRmsEnvelopePort.interrupt();
+	outAllocentricEnvelopePort.interrupt();
 	
 	//-- Close the threads.
 	inRawAudioPort.close();
 	inHeadAnglePort.close();
 	outGammatoneFilteredAudioPort.close();
 	outGammatoneFilteredPowerPort.close();
-	outHilbertEnvelopePort.close();
-	outBandPassedAudioPort.close();
 	outBeamformedAudioPort.close();
 	outBeamformedRmsAudioPort.close();
 	outBeamformedRmsPowerPort.close();
 	outAllocentricAudioPort.close();
+	outHilbertEnvelopePort.close();
+	outBandPassedEnvelopePort.close();
+	outBandPassedRmsEnvelopePort.close();
+	outAllocentricEnvelopePort.close();
 	
 	//-- Print thread stats.
 	endOfProcessingStats();	
@@ -362,7 +326,7 @@ void AudioPreprocessorPeriodicThread::run() {
 	
 	if (inRawAudioPort.getInputCount()) {
 
-		makeTimeStamp(totalDelay, timeDelay, startTime, stopTime);
+		AudioUtil::makeTimeStamp(totalDelay, timeDelay, startTime, stopTime);
 		
 		//-- Get Input.
 		inputSound = inRawAudioPort.read(true);
@@ -375,17 +339,17 @@ void AudioPreprocessorPeriodicThread::run() {
 			headOffset += headAngleBottle->get(panAngle).asDouble();
 		}
 
-		makeTimeStamp(totalReading, timeReading, startTime, stopTime);
+		AudioUtil::makeTimeStamp(totalReading, timeReading, startTime, stopTime);
 
 		//-- Main Loop.
 		result = processing();
 
-		makeTimeStamp(totalProcessing, timeProcessing, startTime, stopTime);
+		AudioUtil::makeTimeStamp(totalProcessing, timeProcessing, startTime, stopTime);
 
 		//-- Write data to outgoing ports.
 		publishOutPorts();	
 
-		makeTimeStamp(totalTransmission, timeTransmission, startTime, stopTime);
+		AudioUtil::makeTimeStamp(totalTransmission, timeTransmission, startTime, stopTime);
 
 		//-- Give time stats to the user.
 		timeTotal  = timeDelay + timeReading + timeProcessing + timeTransmission;
@@ -418,18 +382,7 @@ bool AudioPreprocessorPeriodicThread::processing() {
 	 * =========================================================================== */
 	gammatoneFilterBank->getGammatoneFilteredAudio (
 		/* Raw Audio Source = */ RawAudioMatrix,
-		/* Basilar Memb Res = */ GammatoneFilteredAudioMatrix,
-		/* Hilbert Envelope = */ HilbertEnvelopeMatrix
-	);
-
-
-	/* ===========================================================================
-	 *  Filter the Envelopes looking for specifically the envelope of human voices.
-	 * =========================================================================== */
-	gammatoneFilterBank->getBandPassedAudio (
-		/* Audio Bank Source  = */ HilbertEnvelopeMatrix,
-		/* Band Passed Bank   = */ BandPassedAudioMatrix,
-		/* Desired Audio Band = */ bandPassFreq
+		/* Basilar Memb Res = */ GammatoneFilteredAudioMatrix
 	);
 
 
@@ -439,7 +392,7 @@ bool AudioPreprocessorPeriodicThread::processing() {
 	 * =========================================================================== */
 	if (outGammatoneFilteredPowerPort.getOutputCount()) {
 		gammatoneFilterBank->getGammatoneFilteredPower (
-			/* Basilar Memb Res  = */ BandPassedAudioMatrix, //GammatoneFilteredAudioMatrix,
+			/* Basilar Memb Res  = */ GammatoneFilteredAudioMatrix,
 			/* Power of the Bank = */ GammatoneFilteredPowerMatrix
 		);
 	}
@@ -449,9 +402,9 @@ bool AudioPreprocessorPeriodicThread::processing() {
 	 *  Apply a delay and sum beamformer with RMS applied 
 	 *    across the frame onto the filtered left and right channel. 
 	 * =========================================================================== */
-	interauralCues->getBeamformedRmsAudio (
+	interauralCues->getBeamformedAudio (
 		/* Basilar Memb Res = */ GammatoneFilteredAudioMatrix,
-		/* RMS Beamformer   = */ BeamformedRmsAudioMatrix
+		/* Beamformered     = */ BeamformedAudioMatrix
 	);
 
 
@@ -459,20 +412,74 @@ bool AudioPreprocessorPeriodicThread::processing() {
 	 *  OPTIONAL: If a port is connected, compute the 
 	 *    RMS power of the beamformed bands.
 	 * =========================================================================== */
-	if (outBeamformedRmsPowerPort.getOutputCount()) {
-		interauralCues->getBeamformedRmsPower (
-			/* RMS Beamformer = */ BeamformedRmsAudioMatrix,
-			/* Power of Beams = */ BeamformedRmsPowerMatrix
+	if (outBeamformedRmsAudioPort.getOutputCount() || outBeamformedRmsPowerPort.getOutputCount() || outAllocentricAudioPort.getOutputCount()) {
+		
+		AudioUtil::RootMeanSquareMatrix (
+			/* Source = */ BeamformedAudioMatrix,
+			/* Target = */ BeamformedRmsAudioMatrix,
+			/* Dim X  = */ numBands,
+			/* Dim Y  = */ numBeams
 		);
+
+		if (outBeamformedRmsPowerPort.getOutputCount()) {
+			interauralCues->getBeamformedRmsPower (
+				/* RMS Beamformer = */ BeamformedRmsAudioMatrix,
+				/* Power of Beams = */ BeamformedRmsPowerMatrix
+			);
+		}
+
+		if (outAllocentricAudioPort.getOutputCount()) {
+			/* ===========================================================================
+			 *  Interpolate over, and mirror the front field auditory scene
+			 * =========================================================================== */
+			interauralCues->getAngleNormalAudioMap (
+				/* Source = */ BeamformedRmsAudioMatrix,
+				/* Target = */ AllocentricAudioMatrix,
+				/* Offset = */ headOffset
+			);
+		}
 	}
+
+
+	//TODO: Return here if not wanting to find hilbert envelope (shorter frame size because looking for general freq loc).
+
+
+	/* ===========================================================================
+	 *  Compute the hilbert envelope.
+	 * =========================================================================== */
+	hilbertTransform->getHilbertEnvelope (
+		/* Source = */ BeamformedAudioMatrix, //TODO: DownSample? Dont forget to reduce sampling rate for band pass.
+		/* Target = */ HilbertEnvelopeMatrix
+	);
+
+
+	/* ===========================================================================
+	 *  Isolate for the specified envelope (typically 5 Hz).
+	 * =========================================================================== */
+	butterworthFilter->getBandPassedAudio (
+		/* Source = */ HilbertEnvelopeMatrix,
+		/* Target = */ BandPassedEnvelopeMatrix,
+		/* CFreq  = */ bandPassFreq
+	);
+
+
+	/* ===========================================================================
+	 *  Collapse accross the frames.
+	 * =========================================================================== */
+	AudioUtil::RootMeanSquareMatrix (
+		/* Source = */ BandPassedEnvelopeMatrix,
+		/* Target = */ BandPassedRmsEnvelopeMatrix,
+		/* Dim X  = */ numBands,
+		/* Dim Y  = */ numBeams
+	);
 
 
 	/* ===========================================================================
 	 *  Interpolate over, and mirror the front field auditory scene
 	 * =========================================================================== */
 	interauralCues->getAngleNormalAudioMap (
-		/* Source = */ BeamformedRmsAudioMatrix,
-		/* Target = */ AllocentricAudioMatrix,
+		/* Source = */ BandPassedRmsEnvelopeMatrix,
+		/* Target = */ AllocentricEnvelopeMatrix,
 		/* Offset = */ headOffset
 	);
 
@@ -486,8 +493,7 @@ void AudioPreprocessorPeriodicThread::publishOutPorts() {
 	if (outGammatoneFilteredAudioPort.getOutputCount()) {
 
 		//-- This Matrix can be very big. Down sample if enabled.
-		//Utilities::downSampleMatrix(GammatoneFilteredAudioMatrix, outGammatoneFilteredAudioPort.prepare(), downSamp);
-		MatrixToImageOfFloat(GammatoneFilteredAudioMatrix, outGammatoneFilteredAudioPort.prepare());
+		AudioUtil::downSampleMatrix(GammatoneFilteredAudioMatrix, outGammatoneFilteredAudioPort.prepare(), downSamp);
 		outGammatoneFilteredAudioPort.setEnvelope(timeStamp);
 		outGammatoneFilteredAudioPort.write();
 
@@ -501,30 +507,10 @@ void AudioPreprocessorPeriodicThread::publishOutPorts() {
 
 	}
 
-	if (outHilbertEnvelopePort.getOutputCount()) {
-
-		//-- This Matrix can be very big. Down sample if enabled.
-		downSampleMatrix(HilbertEnvelopeMatrix, outHilbertEnvelopePort.prepare(), downSamp);
-		outHilbertEnvelopePort.setEnvelope(timeStamp);
-		outHilbertEnvelopePort.write();
-
-	}
-
-	if (outBandPassedAudioPort.getOutputCount()) {
-
-		//-- This Matrix can be very big. Down sample if enabled.
-		downSampleMatrix(BandPassedAudioMatrix, outBandPassedAudioPort.prepare(), downSamp);
-		outBandPassedAudioPort.setEnvelope(timeStamp);
-		outBandPassedAudioPort.write();
-
-	}
-
-
 	if (outBeamformedAudioPort.getOutputCount()) {
 		
 		//-- This Matrix can be very big. Down sample if enabled.
-		//Utilities::downSampleMatrix(BeamformedAudioMatrix, outBeamformedAudioPort.prepare(), downSamp);
-		MatrixToImageOfFloat(BeamformedAudioMatrix, outBeamformedAudioPort.prepare());
+		AudioUtil::downSampleMatrix(BeamformedAudioMatrix, outBeamformedAudioPort.prepare(), downSamp);
 		outBeamformedAudioPort.setEnvelope(timeStamp);
 		outBeamformedAudioPort.write();
 
@@ -548,10 +534,43 @@ void AudioPreprocessorPeriodicThread::publishOutPorts() {
 
 	if (outAllocentricAudioPort.getOutputCount()) {
 
-		//outAllocentricAudioPort.prepare() = AllocentricAudioMatrix;
-		MatrixToImageOfFloat(AllocentricAudioMatrix, outAllocentricAudioPort.prepare());
+		outAllocentricAudioPort.prepare() = AllocentricAudioMatrix;
 		outAllocentricAudioPort.setEnvelope(timeStamp);
 		outAllocentricAudioPort.write();
+		
+	}
+
+	if (outHilbertEnvelopePort.getOutputCount()) {
+
+		//-- This Matrix can be very big. Down sample if enabled.
+		AudioUtil::downSampleMatrix(HilbertEnvelopeMatrix, outHilbertEnvelopePort.prepare(), downSamp);
+		outHilbertEnvelopePort.setEnvelope(timeStamp);
+		outHilbertEnvelopePort.write();
+
+	}
+
+	if (outBandPassedEnvelopePort.getOutputCount()) {
+
+		//-- This Matrix can be very big. Down sample if enabled.
+		AudioUtil::downSampleMatrix(BandPassedEnvelopeMatrix, outBandPassedEnvelopePort.prepare(), downSamp);
+		outBandPassedEnvelopePort.setEnvelope(timeStamp);
+		outBandPassedEnvelopePort.write();
+
+	}
+
+	if (outBandPassedRmsEnvelopePort.getOutputCount()) {
+
+		outBandPassedRmsEnvelopePort.prepare() = BandPassedRmsEnvelopeMatrix;
+		outBandPassedRmsEnvelopePort.setEnvelope(timeStamp);
+		outBandPassedRmsEnvelopePort.write();
+
+	}
+
+	if (outAllocentricEnvelopePort.getOutputCount()) {
+
+		outAllocentricEnvelopePort.prepare() = AllocentricEnvelopeMatrix;
+		outAllocentricEnvelopePort.setEnvelope(timeStamp);
+		outAllocentricEnvelopePort.write();
 		
 	}
 }

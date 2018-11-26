@@ -22,12 +22,6 @@
         <parameters> --x 100 --y 100 --h 320 --w 240 --r 33 --name /gammatoneFilteredAudioView </parameters>
         <node> icub </node>
     </module>
-	
-	<module>
-		<name> . </name>
-		<parameters> </parameters>
-		<node> localhost </node>
-	</module>
 
 
     <!-->  
@@ -44,56 +38,22 @@
         <parameters> --x 100 --y 100 --h 320 --w 240 --r 33 --name /gammatoneFilteredPowerView </parameters>
         <node> icub </node>
     </module>
-	
-	<module>
-		<name> . </name>
-		<parameters> </parameters>
-		<node> localhost </node>
-	</module>
 
-
+  
     <!-->  
-    Hilbert Envelope.
+    Beamformed Audio.
     <!-->
     <module>
         <name> frequencyVisualisation </name>
-        <parameters> --name /hilbertEnvelopeVisualiser </parameters>
+        <parameters> --name /beamformedAudioVisualiser </parameters>
         <node> icub </node>
     </module>
 
     <module>
         <name> yarpview </name>
-        <parameters> --x 100 --y 100 --h 320 --w 240 --r 33 --name /hilbertEnvelopeView </parameters>
+        <parameters> --x 100 --y 100 --h 320 --w 240 --r 33 --name /beamformedAudioView </parameters>
         <node> icub </node>
     </module>
-	
-	<module>
-		<name> . </name>
-		<parameters> </parameters>
-		<node> localhost </node>
-	</module>
-
-
-    <!-->  
-    Band Passed Audio.
-    <!-->
-    <module>
-        <name> frequencyVisualisation </name>
-        <parameters> --name /bandPassedAudioVisualiser </parameters>
-        <node> icub </node>
-    </module>
-
-    <module>
-        <name> yarpview </name>
-        <parameters> --x 100 --y 100 --h 320 --w 240 --r 33 --name /bandPassedAudioView </parameters>
-        <node> icub </node>
-    </module>
-	
-	<module>
-		<name> . </name>
-		<parameters> </parameters>
-		<node> localhost </node>
-	</module>
 
 
     <!-->  
@@ -111,12 +71,6 @@
         <node> icub </node>
     </module>
 	
-	<module>
-		<name> . </name>
-		<parameters> </parameters>
-		<node> localhost </node>
-	</module>
-
 
     <!-->  
     RMS of Beamformed Power.
@@ -132,12 +86,6 @@
         <parameters> --x 100 --y 100 --h 320 --w 240 --r 33 --name /beamformedRmsPowerView </parameters>
         <node> icub </node>
     </module>
-	
-	<module>
-		<name> . </name>
-		<parameters> </parameters>
-		<node> localhost </node>
-	</module>
 
 
     <!-->  
@@ -154,13 +102,70 @@
         <parameters> --x 100 --y 100 --h 320 --w 240 --r 33 --name /allocentricAudioView </parameters>
         <node> icub </node>
     </module>
-	
-	<module>
-		<name> . </name>
-		<parameters> </parameters>
-		<node> localhost </node>
-	</module>
 
+
+    <!-->  
+    Hilbert Envelope.
+    <!-->
+    <module>
+        <name> frequencyVisualisation </name>
+        <parameters> --name /hilbertEnvelopeVisualiser </parameters>
+        <node> icub </node>
+    </module>
+
+    <module>
+        <name> yarpview </name>
+        <parameters> --x 100 --y 100 --h 320 --w 240 --r 33 --name /hilbertEnvelopeView </parameters>
+        <node> icub </node>
+    </module>
+
+
+    <!-->  
+    Band Passed Envelope.
+    <!-->
+    <module>
+        <name> frequencyVisualisation </name>
+        <parameters> --name /bandPassedEnvelopeVisualiser </parameters>
+        <node> icub </node>
+    </module>
+
+    <module>
+        <name> yarpview </name>
+        <parameters> --x 100 --y 100 --h 320 --w 240 --r 33 --name /bandPassedEnvelopeView </parameters>
+        <node> icub </node>
+    </module>
+
+
+    <!-->  
+    RMS of Band Passed Envelope.
+    <!-->
+    <module>
+        <name> frequencyVisualisation </name>
+        <parameters> --name /bandPassedRmsEnvelopeVisualiser </parameters>
+        <node> icub </node>
+    </module>
+
+    <module>
+        <name> yarpview </name>
+        <parameters> --x 100 --y 100 --h 320 --w 240 --r 33 --name /bandPassedRmsEnvelopeView </parameters>
+        <node> icub </node>
+    </module>
+
+
+    <!-->  
+    Allocentric Envelope Map.
+    <!-->
+    <module>
+        <name> frequencyVisualisation </name>
+        <parameters> --name /allocentricEnvelopeVisualiser --grid vert </parameters>
+        <node> icub </node>
+    </module>
+
+    <module>
+        <name> yarpview </name>
+        <parameters> --x 100 --y 100 --h 320 --w 240 --r 33 --name /allocentricEnvelopeView </parameters>
+        <node> icub </node>
+    </module>
 
 
     <!-->  
@@ -169,6 +174,8 @@
 
     <!-->
 
+
+    <!--> ############# Gammatone Filtered Audio ############# <!-->
     <connection>
         <from> /audioPreprocessor/gammatoneFilteredAudio:o </from>
         <to>   /gammatoneFilteredAudioVisualiser/map:i     </to>
@@ -181,8 +188,8 @@
         <protocol> tcp </protocol>
     </connection>
 
-    <!--> #################################################### <!-->
-
+    
+    <!--> ############# Gammatone Filtered Power ############# <!-->
     <connection>
         <from> /audioPreprocessor/gammatoneFilteredPower:o </from>
         <to>   /gammatoneFilteredPowerVisualiser/map:i     </to>
@@ -195,36 +202,22 @@
         <protocol> tcp </protocol>
     </connection>
 
-    <!--> #################################################### <!-->
 
+    <!--> ################# Beamformed Audio ################# <!-->
     <connection>
-        <from> /audioPreprocessor/hilbertEnvelope:o </from>
-        <to>   /hilbertEnvelopeVisualiser/map:i     </to>
+        <from> /audioPreprocessor/beamformedAudio:o </from>
+        <to>   /beamformedAudioVisualiser/map:i     </to>
         <protocol> tcp </protocol>
     </connection> 
 
     <connection>
-        <from> /hilbertEnvelopeVisualiser/img:o  </from>
-        <to>   /hilbertEnvelopeView              </to>
+        <from> /beamformedAudioVisualiser/img:o  </from>
+        <to>   /beamformedAudioView              </to>
         <protocol> tcp </protocol>
     </connection>
 
-    <!--> #################################################### <!-->
-
-    <connection>
-        <from> /audioPreprocessor/bandPassedAudio:o </from>
-        <to>   /bandPassedAudioVisualiser/map:i     </to>
-        <protocol> tcp </protocol>
-    </connection> 
-
-    <connection>
-        <from> /bandPassedAudioVisualiser/img:o  </from>
-        <to>   /bandPassedAudioView              </to>
-        <protocol> tcp </protocol>
-    </connection>
-
-    <!--> #################################################### <!-->
-
+    
+    <!--> ############# Reduced Beamformed Audio ############# <!-->
     <connection>
         <from> /audioPreprocessor/beamformedRmsAudio:o </from>
         <to>   /beamformedRmsAudioVisualiser/map:i     </to>
@@ -237,8 +230,8 @@
         <protocol> tcp </protocol>
     </connection>
 
-    <!--> #################################################### <!-->
 
+    <!--> ############# Reduced Beamformed Power ############# <!-->
     <connection>
         <from> /audioPreprocessor/beamformedRmsPower:o </from>
         <to>   /beamformedRmsPowerVisualiser/map:i     </to>
@@ -251,8 +244,8 @@
         <protocol> tcp </protocol>
     </connection>
 
-    <!--> #################################################### <!-->
-
+    
+    <!--> ################# Allocentric Audio ################ <!-->
     <connection>
         <from> /audioPreprocessor/allocentricAudio:o </from>
         <to>   /allocentricAudioVisualiser/map:i     </to>
@@ -262,6 +255,62 @@
     <connection>
         <from> /allocentricAudioVisualiser/img:o  </from>
         <to>   /allocentricAudioView              </to>
+        <protocol> tcp </protocol>
+    </connection>
+
+
+    <!--> ################# Hilbert Envelope ################# <!-->
+    <connection>
+        <from> /audioPreprocessor/hilbertEnvelope:o </from>
+        <to>   /hilbertEnvelopeVisualiser/map:i     </to>
+        <protocol> tcp </protocol>
+    </connection> 
+
+    <connection>
+        <from> /hilbertEnvelopeVisualiser/img:o  </from>
+        <to>   /hilbertEnvelopeView              </to>
+        <protocol> tcp </protocol>
+    </connection>
+
+    
+    <!--> ############### Band Passed Envelope ############### <!-->
+    <connection>
+        <from> /audioPreprocessor/bandPassedEnvelope:o </from>
+        <to>   /bandPassedEnvelopeVisualiser/map:i     </to>
+        <protocol> tcp </protocol>
+    </connection> 
+
+    <connection>
+        <from> /bandPassedEnvelopeVisualiser/img:o  </from>
+        <to>   /bandPassedEnvelopeView              </to>
+        <protocol> tcp </protocol>
+    </connection>
+
+
+    <!--> ########### Reduced Band Passed Envelope ########### <!-->
+    <connection>
+        <from> /audioPreprocessor/bandPassedRmsEnvelope:o </from>
+        <to>   /bandPassedRmsEnvelopeVisualiser/map:i     </to>
+        <protocol> tcp </protocol>
+    </connection> 
+
+    <connection>
+        <from> /bandPassedRmsEnvelopeVisualiser/img:o  </from>
+        <to>   /bandPassedRmsEnvelopeView              </to>
+        <protocol> tcp </protocol>
+    </connection>
+
+
+    <!--> ############### Allocentric Envelope ############### <!-->
+    <connection>
+        <from> /audioPreprocessor/allocentricEnvelope:o </from>
+        <to>   /allocentricEnvelopeVisualiser/map:i     </to>
+        <protocol> tcp </protocol>
+    </connection> 
+
+    <connection>
+        <from> /allocentricEnvelopeVisualiser/img:o  </from>
+        <to>   /allocentricEnvelopeView              </to>
         <protocol> tcp </protocol>
     </connection>
 

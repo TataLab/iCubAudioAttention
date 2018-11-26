@@ -25,8 +25,6 @@
 
 #include <iCub/gammatoneFilterBank.h>
 
-#define myMod_double(x,y)     ( ( x ) - ( y ) * floor ( ( x ) / ( y ) ) )
-
 GammatoneFilterBank::GammatoneFilterBank(int mics, int rate, int samples, int bands, double lcf, double hcf, bool hrec, bool erbs) : 
 	numMics(mics), 
 	samplingRate(rate), 
@@ -182,31 +180,6 @@ void GammatoneFilterBank::getGammatoneFilteredPower(const yarp::sig::Matrix& Fil
 }
 
 
-void GammatoneFilterBank::getBandPassedAudio(const yarp::sig::Matrix& AudioBank, yarp::sig::Matrix& BandPassedBank, const double CenterFrequency) {
-
-	//-- Ensure space is allocated for the band passed audio.
-	BandPassedBank.resize(numMics * numBands, numFrameSamples);
-
-	//-- Loop variables.
-	int itrBandMic;
-	int numBandMic = numMics * numBands;
-
-	#ifdef WITH_OMP
-	#pragma omp parallel \
-	 private (itrBandMic)
-	#pragma omp for schedule(guided)
-	#endif
-	for (itrBandMic = 0; itrBandMic < numBandMic; itrBandMic++) {
-
-		singleBandPass (
-			/* Source = */ AudioBank[itrBandMic],
-			/* Target = */ BandPassedBank[itrBandMic],
-			/* cf     = */ CenterFrequency
-		);
-	}
-}
-
-
 void GammatoneFilterBank::singleGammatoneFilter(const double* RawAudio, double* BasilarMembrane, double* Envelope, double* Phase, const double CenterFrequency, const bool IncludeEnvelope, const bool IncludePhase) {
 
 	/* ===================================================================
@@ -300,7 +273,7 @@ void GammatoneFilterBank::singleGammatoneFilter(const double* RawAudio, double* 
 			// Unwrap Version 1
 			dp = Phase[sample] - pPhase;
 			if (fabs(dp) > _pi) {
-				dps = myMod_double(dp + _pi, 2 * _pi) - _pi;
+				dps = AudioUtil::myMod_double(dp + _pi, 2 * _pi) - _pi;
 				if (dps == -_pi && dp > 0) {
 					dps = _pi;
 				}
@@ -321,44 +294,6 @@ void GammatoneFilterBank::singleGammatoneFilter(const double* RawAudio, double* 
 		//-- Update coefficients.
 		qcos = coscf * (oldcs = qcos) + sincf * qsin;
 		qsin = coscf * qsin - sincf * oldcs;
-	}
-}
-
-
-void GammatoneFilterBank::singleBandPass(const double* Audio, double* BandPass, const double CenterFrequency)  {
-
-	/* ===================================================================
-	 *  Initialize all variables in this scope so
-	 *    that they are not shared amongst threads.
-	 * =================================================================== */
-
-	const double bw = 3 * _pi * BW_CORRECTION;
-	const double C  = 1.0 / tan( _pi * (bw / samplingRate) );
-	const double D  = 2.0 * cos( 2.0 * _pi * (CenterFrequency / samplingRate) );
-
-	const double a0 =  1.0 / (C + 1.0);
-	const double a1 =  0.0;
-	const double a2 = -1.0 * a0;
-	const double b1 = -1.0 * a0 * C * D;
-	const double b2 =  a0  * (C - 1.0);
-
-	double p0i = 0.0, p1i = 0.0, p2i = 0.0;
-	double p0o = 0.0, p1o = 0.0, p2o = 0.0;
-
-	/* ===================================================================
-	 *  Begin running the single butterworth band pass on the provided input audio.
-	 *  The resulting band passed audio is stored in the provided band pass matrix.
-	 * =================================================================== */
-
-	for (int sample = 0; sample < numFrameSamples; sample++) {
-
-		p0i = Audio[sample];
-		p0o = (a0*p0i + a1*p1i + a2*p2i) - (b2*p2o + b1*p1o);
-
-		p2i = p1i; p1i = p0i;
-		p2o = p1o; p1o = p0o;
-
-		BandPass[sample] = p0o;
 	}
 }
 

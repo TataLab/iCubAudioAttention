@@ -38,7 +38,7 @@
 #include <fftw3.h>
 #include <vector>
 
-//#include <iCub/util/util.h>
+#include <iCub/util/AudioUtil.h>
 
 class HilbertTransform { 
 
