@@ -3,5 +3,9 @@
 # CopyPolicy: Released under the terms of the GNU GPL v2.0.
 
 cmake_minimum_required(VERSION 2.6)
-add_subdirectory ( portaudio )
-add_subdirectory ( fftw3     )
+if(ENABLE_COMPILEONPC104)
+    add_subdirectory ( portaudio )
+else(ENABLE_COMPILEONPC104)
+    add_subdirectory ( portaudio )
+    add_subdirectory ( fftw3     )
+endif(ENABLE_COMPILEONPC104)

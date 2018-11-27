@@ -74,7 +74,8 @@ bool AudioPreprocessorPeriodicThread::configure(yarp::os::ResourceFinder &rf) {
 	erbSpaced     = rf.findGroup("processing").check("erbSpaced",     yarp::os::Value(true),   "ERB spaced centre frequencies (boolean)"      ).asBool();
 	bandPassFreq  = rf.findGroup("processing").check("bandPassFreq",  yarp::os::Value(5.0),    "frequency to use in band pass filter (double)").asDouble();
 	angleRes      = rf.findGroup("processing").check("angleRes",      yarp::os::Value(1),      "degree resolution for a single position (int)").asInt();
-	downSamp      = rf.findGroup("processing").check("downSamp",      yarp::os::Value(1),      "number of frames to down sample by (int)"     ).asInt();
+	downSampVis   = rf.findGroup("processing").check("downSampVis",   yarp::os::Value(1),      "rate to down sample visualisation by (int)"   ).asInt();
+	downSampEnv   = rf.findGroup("processing").check("downSampEnv",   yarp::os::Value(1),      "rate to down sample pre-envelope mat by (int)").asInt();
 	numOmpThreads = rf.findGroup("processing").check("numOmpThreads", yarp::os::Value(4),      "if enabled, the number of omp threads (int)"  ).asInt();
 
 
@@ -97,6 +98,8 @@ bool AudioPreprocessorPeriodicThread::configure(yarp::os::ResourceFinder &rf) {
 	numFrontFieldAngles = _baseAngles * angleRes + 1;
 	numFullFieldAngles  = _baseAngles * angleRes * 2;
 
+	numFrameDownSamples = numFrameSamples / downSampEnv;
+
 
 	/* ===========================================================================
 	 *  Initialize the matrices used for data processing.
@@ -113,6 +116,9 @@ bool AudioPreprocessorPeriodicThread::configure(yarp::os::ResourceFinder &rf) {
 	BeamformedAudioMatrix.resize(numBands * numBeams, numFrameSamples);
 	BeamformedAudioMatrix.zero();
 
+	BeamformedDownSampAudioMatrix.resize(numBands * numBeams, numFrameDownSamples);
+	BeamformedDownSampAudioMatrix.zero();
+
 	BeamformedRmsAudioMatrix.resize(numBands, numBeams);
 	BeamformedRmsAudioMatrix.zero();
 
@@ -122,10 +128,10 @@ bool AudioPreprocessorPeriodicThread::configure(yarp::os::ResourceFinder &rf) {
 	AllocentricAudioMatrix.resize(numBands, numFullFieldAngles);
 	AllocentricAudioMatrix.zero();
 
-	HilbertEnvelopeMatrix.resize(numBands * numBeams, numFrameSamples);
+	HilbertEnvelopeMatrix.resize(numBands * numBeams, numFrameDownSamples);
 	HilbertEnvelopeMatrix.zero();
 
-	BandPassedEnvelopeMatrix.resize(numBands * numBeams, numFrameSamples);
+	BandPassedEnvelopeMatrix.resize(numBands * numBeams, numFrameDownSamples);
 	BandPassedEnvelopeMatrix.zero();
 
 	BandPassedRmsEnvelopeMatrix.resize(numBands, numBeams);
@@ -140,8 +146,8 @@ bool AudioPreprocessorPeriodicThread::configure(yarp::os::ResourceFinder &rf) {
 	 * =========================================================================== */
 	gammatoneFilterBank = new GammatoneFilterBank(numMics, samplingRate, numFrameSamples, numBands, lowCf, highCf, halfRec, erbSpaced);
 	interauralCues      = new InterauralCues(numMics, micDistance, speedOfSound, samplingRate, numFrameSamples, numBands, numBeamsPerHemifield, angleRes);
-	hilbertTransform    = new HilbertTransform(numBands * numBeams, numFrameSamples);
-	butterworthFilter   = new Filters::Butterworth(samplingRate, 1);
+	hilbertTransform    = new HilbertTransform(numBands * numBeams, numFrameDownSamples);
+	butterworthFilter   = new Filters::Butterworth(samplingRate / downSampEnv, 1);
 
 
 	/* ===========================================================================
@@ -183,7 +189,9 @@ bool AudioPreprocessorPeriodicThread::configure(yarp::os::ResourceFinder &rf) {
 	yInfo( "\t Number of Front Field Beams      : %d",       numBeams                            );
 	yInfo( "\t Number of Front Field Angles     : %d",       numFrontFieldAngles                 );
 	yInfo( "\t Number of Full Field Angles      : %d",       numFullFieldAngles                  );
-	yInfo( "\t Big Matrix Down Sample           : %d",       downSamp                            );
+	yInfo( "\t Matrix Visualisation Down Sample : %d",       downSampVis                         );
+	yInfo( "\t Pre-envelope Matrix Down Sample  : %d",       downSampEnv                         );
+	yInfo( "\t Number Down Samples per Frame    : %d",       numFrameDownSamples                 );
 	#ifdef WITH_OMP
 	yInfo( "\t Number of OpenMP Threads         : %d",       numOmpThreads                       );
 	#else
@@ -440,19 +448,27 @@ bool AudioPreprocessorPeriodicThread::processing() {
 		}
 	}
 
-	
 	//TODO: Return here if not wanting to find hilbert envelope (shorter frame size because looking for general freq loc).
 	//return true;
+
+	/* ===========================================================================
+	 *  Down sample the matrix by some factor to make the computation faster.
+	 * =========================================================================== */
+	AudioUtil::downSampleMatrix(
+		/* Source = */ BeamformedAudioMatrix,
+		/* Target = */ BeamformedDownSampAudioMatrix,
+		/* Reduce = */ downSampEnv
+	);
+
 
 	/* ===========================================================================
 	 *  Compute the hilbert envelope.
 	 * =========================================================================== */
 	hilbertTransform->getHilbertEnvelope (
-		/* Source = */ BeamformedAudioMatrix, //TODO: DownSample? Dont forget to reduce sampling rate for band pass.
+		/* Source = */ BeamformedDownSampAudioMatrix,
 		/* Target = */ HilbertEnvelopeMatrix
 	);
 
-	return true;
 
 	/* ===========================================================================
 	 *  Isolate for the specified envelope (typically 5 Hz).
@@ -494,7 +510,7 @@ void AudioPreprocessorPeriodicThread::publishOutPorts() {
 	if (outGammatoneFilteredAudioPort.getOutputCount()) {
 
 		//-- This Matrix can be very big. Down sample if enabled.
-		AudioUtil::downSampleMatrix(GammatoneFilteredAudioMatrix, outGammatoneFilteredAudioPort.prepare(), downSamp);
+		AudioUtil::downSampleMatrix(GammatoneFilteredAudioMatrix, outGammatoneFilteredAudioPort.prepare(), downSampVis);
 		outGammatoneFilteredAudioPort.setEnvelope(timeStamp);
 		outGammatoneFilteredAudioPort.write();
 
@@ -511,7 +527,7 @@ void AudioPreprocessorPeriodicThread::publishOutPorts() {
 	if (outBeamformedAudioPort.getOutputCount()) {
 		
 		//-- This Matrix can be very big. Down sample if enabled.
-		AudioUtil::downSampleMatrix(BeamformedAudioMatrix.submatrix(0, 8*numBeams, 0, numFrameSamples), outBeamformedAudioPort.prepare(), downSamp);
+		AudioUtil::downSampleMatrix(BeamformedAudioMatrix.submatrix(0, 8*numBeams, 0, numFrameSamples), outBeamformedAudioPort.prepare(), downSampVis);
 		outBeamformedAudioPort.setEnvelope(timeStamp);
 		outBeamformedAudioPort.write();
 
@@ -544,7 +560,7 @@ void AudioPreprocessorPeriodicThread::publishOutPorts() {
 	if (outHilbertEnvelopePort.getOutputCount()) {
 
 		//-- This Matrix can be very big. Down sample if enabled.
-		AudioUtil::downSampleMatrix(HilbertEnvelopeMatrix.submatrix(0, 8*numBeams, 0, numFrameSamples), outHilbertEnvelopePort.prepare(), downSamp);
+		AudioUtil::downSampleMatrix(HilbertEnvelopeMatrix.submatrix(0, 8*numBeams, 0, numFrameSamples), outHilbertEnvelopePort.prepare(), downSampVis);
 		outHilbertEnvelopePort.setEnvelope(timeStamp);
 		outHilbertEnvelopePort.write();
 
@@ -553,7 +569,7 @@ void AudioPreprocessorPeriodicThread::publishOutPorts() {
 	if (outBandPassedEnvelopePort.getOutputCount()) {
 
 		//-- This Matrix can be very big. Down sample if enabled.
-		AudioUtil::downSampleMatrix(BandPassedEnvelopeMatrix, outBandPassedEnvelopePort.prepare(), downSamp);
+		AudioUtil::downSampleMatrix(BandPassedEnvelopeMatrix.submatrix(0, 8*numBeams, 0, numFrameSamples), outBandPassedEnvelopePort.prepare(), downSampVis);
 		outBandPassedEnvelopePort.setEnvelope(timeStamp);
 		outBandPassedEnvelopePort.write();
 

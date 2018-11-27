@@ -108,6 +108,7 @@ class AudioPreprocessorPeriodicThread : public yarp::os::PeriodicThread {
 	yMatrix GammatoneFilteredAudioMatrix;
 	yMatrix GammatoneFilteredPowerMatrix;
 	yMatrix BeamformedAudioMatrix;
+	yMatrix BeamformedDownSampAudioMatrix;
 	yMatrix BeamformedRmsAudioMatrix;
 	yMatrix BeamformedRmsPowerMatrix;
 	yMatrix AllocentricAudioMatrix;
@@ -150,7 +151,8 @@ class AudioPreprocessorPeriodicThread : public yarp::os::PeriodicThread {
 	bool   erbSpaced;
 	double bandPassFreq;
 	int    angleRes;
-	int    downSamp;
+	int    downSampVis;
+	int    downSampEnv;
 	int    numOmpThreads;
 
 	/* ===========================================================================
@@ -160,6 +162,7 @@ class AudioPreprocessorPeriodicThread : public yarp::os::PeriodicThread {
 	int numBeams;
     int numFrontFieldAngles;
     int numFullFieldAngles;
+	int numFrameDownSamples;
 
 	/* ===========================================================================
 	 *  Constant variables.
