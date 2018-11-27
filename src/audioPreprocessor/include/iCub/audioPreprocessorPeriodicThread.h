@@ -87,7 +87,6 @@ class AudioPreprocessorPeriodicThread : public yarp::os::PeriodicThread {
 	 *  Yarp Ports for Sending and Receiving Data from this Periodic Thread.
 	 * =========================================================================== */
 	ySoundBuffer  inRawAudioPort;
-
 	yMatrixBuffer outGammatoneFilteredAudioPort;
 	yMatrixBuffer outGammatoneFilteredPowerPort;
 	yMatrixBuffer outBeamformedAudioPort;
@@ -106,20 +105,15 @@ class AudioPreprocessorPeriodicThread : public yarp::os::PeriodicThread {
 	yarp::sig::Sound* inputSound;
 	
 	yMatrix RawAudioMatrix;
-
 	yMatrix GammatoneFilteredAudioMatrix;
 	yMatrix GammatoneFilteredPowerMatrix;
-	
 	yMatrix BeamformedAudioMatrix;
 	yMatrix BeamformedRmsAudioMatrix;
 	yMatrix BeamformedRmsPowerMatrix;
-	
 	yMatrix AllocentricAudioMatrix;
-
 	yMatrix HilbertEnvelopeMatrix;
 	yMatrix BandPassedEnvelopeMatrix;
 	yMatrix BandPassedRmsEnvelopeMatrix;
-
 	yMatrix AllocentricEnvelopeMatrix;
 	
 	

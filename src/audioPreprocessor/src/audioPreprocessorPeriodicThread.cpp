@@ -25,7 +25,7 @@
 
 #include <iCub/audioPreprocessorPeriodicThread.h>
 
-#define THPERIOD 0.08 // seconds.
+#define THPERIOD 0.01 // seconds.
 
 AudioPreprocessorPeriodicThread::AudioPreprocessorPeriodicThread() : 
 	PeriodicThread(THPERIOD) {
@@ -440,9 +440,9 @@ bool AudioPreprocessorPeriodicThread::processing() {
 		}
 	}
 
-
+	
 	//TODO: Return here if not wanting to find hilbert envelope (shorter frame size because looking for general freq loc).
-
+	//return true;
 
 	/* ===========================================================================
 	 *  Compute the hilbert envelope.
@@ -452,6 +452,7 @@ bool AudioPreprocessorPeriodicThread::processing() {
 		/* Target = */ HilbertEnvelopeMatrix
 	);
 
+	return true;
 
 	/* ===========================================================================
 	 *  Isolate for the specified envelope (typically 5 Hz).
@@ -510,7 +511,7 @@ void AudioPreprocessorPeriodicThread::publishOutPorts() {
 	if (outBeamformedAudioPort.getOutputCount()) {
 		
 		//-- This Matrix can be very big. Down sample if enabled.
-		AudioUtil::downSampleMatrix(BeamformedAudioMatrix, outBeamformedAudioPort.prepare(), downSamp);
+		AudioUtil::downSampleMatrix(BeamformedAudioMatrix.submatrix(0, 8*numBeams, 0, numFrameSamples), outBeamformedAudioPort.prepare(), downSamp);
 		outBeamformedAudioPort.setEnvelope(timeStamp);
 		outBeamformedAudioPort.write();
 
@@ -543,7 +544,7 @@ void AudioPreprocessorPeriodicThread::publishOutPorts() {
 	if (outHilbertEnvelopePort.getOutputCount()) {
 
 		//-- This Matrix can be very big. Down sample if enabled.
-		AudioUtil::downSampleMatrix(HilbertEnvelopeMatrix, outHilbertEnvelopePort.prepare(), downSamp);
+		AudioUtil::downSampleMatrix(HilbertEnvelopeMatrix.submatrix(0, 8*numBeams, 0, numFrameSamples), outHilbertEnvelopePort.prepare(), downSamp);
 		outHilbertEnvelopePort.setEnvelope(timeStamp);
 		outHilbertEnvelopePort.write();
 

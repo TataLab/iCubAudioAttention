@@ -127,11 +127,11 @@ void AudioUtil::RootMeanSquareMatrix(const yMatrix& source, yMatrix& target, con
     size_t row, col;
 
     //TODO: Enable Threading.
-    //#ifdef WITH_OMP
-    //#pragma omp parallel \
-    // private (row, col)
-    //#pragma omp for schedule(guided)
-    //#endif
+    #ifdef WITH_OMP
+    #pragma omp parallel \
+     private (row, col)
+    #pragma omp for schedule(guided)
+    #endif
     for (row = 0; row < RowSize; row++) {
         
         double rowSum = 0.0;

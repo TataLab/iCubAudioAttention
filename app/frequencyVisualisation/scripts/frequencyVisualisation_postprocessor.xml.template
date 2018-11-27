@@ -22,12 +22,7 @@
         <parameters> --x 100 --y 100 --h 320 --w 240 --r 33 --name /bayesianProbabilityMapView </parameters>
         <node> icub </node>
     </module>
-	
-	<module>
-		<name> . </name>
-		<parameters> </parameters>
-		<node> localhost </node>
-	</module>
+
 
 
     <!-->  
@@ -44,12 +39,7 @@
         <parameters> --x 100 --y 100 --h 320 --w 240 --r 33 --name /bayesianProbabilityAngleView </parameters>
         <node> icub </node>
     </module>
-	
-	<module>
-		<name> . </name>
-		<parameters> </parameters>
-		<node> localhost </node>
-	</module>
+
 
 
     <!-->  
@@ -66,12 +56,7 @@
         <parameters> --x 100 --y 100 --h 320 --w 240 --r 33 --name /probabilityPowerView </parameters>
         <node> icub </node>
     </module>
-	
-	<module>
-		<name> . </name>
-		<parameters> </parameters>
-		<node> localhost </node>
-	</module>
+
 
 
     <!-->  
@@ -88,12 +73,7 @@
         <parameters> --x 100 --y 100 --h 320 --w 240 --r 33 --name /probabilityPowerMapView </parameters>
         <node> icub </node>
     </module>
-	
-	<module>
-		<name> . </name>
-		<parameters> </parameters>
-		<node> localhost </node>
-	</module>
+
 
 
     <!-->  
@@ -110,12 +90,7 @@
         <parameters> --x 100 --y 100 --h 320 --w 240 --r 33 --name /probabilityPowerAngleView </parameters>
         <node> icub </node>
     </module>
-	
-	<module>
-		<name> . </name>
-		<parameters> </parameters>
-		<node> localhost </node>
-	</module>
+
 
 
     <!-->  
@@ -132,12 +107,7 @@
         <parameters> --x 100 --y 100 --h 320 --w 240 --r 33 --name /instantaneousPowerProbabilityMapView </parameters>
         <node> icub </node>
     </module>
-	
-	<module>
-		<name> . </name>
-		<parameters> </parameters>
-		<node> localhost </node>
-	</module>
+
 
 
     <!-->  
@@ -154,12 +124,7 @@
         <parameters> --x 100 --y 100 --h 320 --w 240 --r 33 --name /instantaneousPowerProbabilityAngleView </parameters>
         <node> icub </node>
     </module>
-	
-	<module>
-		<name> . </name>
-		<parameters> </parameters>
-		<node> localhost </node>
-	</module>
+
 
 
     <!-->  

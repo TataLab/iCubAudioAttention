@@ -38,6 +38,10 @@
 #include <yarp/dev/all.h>
 #include <yarp/os/Log.h>
 
+#ifdef WITH_OMP
+#include <omp.h>
+#endif
+
 typedef yarp::sig::Matrix yMatrix;
 typedef yarp::sig::ImageOf< yarp::sig::PixelFloat > yImageOfFloat;
 
