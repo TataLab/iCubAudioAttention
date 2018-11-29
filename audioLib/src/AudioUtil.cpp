@@ -150,37 +150,26 @@ void AudioUtil::RootMeanSquareMatrix(const yMatrix& source, yMatrix& target, con
     const size_t numChannels    = source->getChannels();
 
     const size_t numBytesTotal  = BytesPerSample * 4;
-    const size_t _normDiv       = (1 << (numBytesTotal));
+    const size_t _normDiv       = (1 << 15);
 
     target.resize(numChannels, numSamples);
 
     const unsigned char* src = source->getRawData();
-    double* trg = target.data();
+    double*              trg = target.data();
 
     for (int ch = 0; ch < numChannels; ch++) {
         for (int samp = 0; samp < numSamples; samp++) {
 
             *trg = 0.0;
-            int count = 0;
-            std::cerr << numBytesTotal << " ";
+
             for (int byte = 0; byte <= numBytesTotal; byte += 8) {
                 *trg += (*src << byte);
-                src++; count++;
-                std::cerr << byte << " ";
+                src++;
             }
-            trg++;
 
-            std::cerr << source->get(samp, ch) << "    " << target[ch][samp] << "   " << count << std::endl;
+            *trg /= _normDiv;
+
+            trg++;
         }
     }
  }
-
-
-// get(sample, channel)
-// FlexImage& img = HELPER(implementation);
-// unsigned char *addr = img.getPixelAddress(location,channel);
-// if (bytesPerSample==2) {
-//     return *(reinterpret_cast<NetUint16*>(addr));
-// }
-// yInfo("sound only implemented for 16 bit samples");
-// return 0;

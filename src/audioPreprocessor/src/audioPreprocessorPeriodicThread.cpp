@@ -386,8 +386,6 @@ bool AudioPreprocessorPeriodicThread::processing() {
 
 	AudioUtil::SoundToMatrix(inputSound, RawAudioMatrix);
 
-	return true;
-
 
 	/* ===========================================================================
 	 *  Apply a 4th order gammatone filter onto the raw audio for the 
@@ -454,7 +452,7 @@ bool AudioPreprocessorPeriodicThread::processing() {
 	}
 
 	//TODO: Return here if not wanting to find hilbert envelope (shorter frame size because looking for general freq loc).
-	//return true;
+	return true;
 
 	/* ===========================================================================
 	 *  Down sample the matrix by some factor to make the computation faster.
