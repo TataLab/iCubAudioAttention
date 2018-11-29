@@ -377,11 +377,16 @@ bool AudioPreprocessorPeriodicThread::processing() {
 	#endif
 
 	//-- Separate the sound into left and right channels.	
-	for (int channel = 0; channel < numMics; channel++) {
-		for (int sample = 0; sample < numFrameSamples; sample++) {
-			RawAudioMatrix[channel][sample] = inputSound->get(sample, channel) / _norm;
-		}
-	}
+	//for (int sample = 0; sample < numFrameSamples; sample++) {
+	//	for (int channel = 0; channel < numMics; channel++) {
+	//		RawAudioMatrix[channel][sample] = inputSound->get(sample, channel) / _norm;
+	//		
+	//	}
+	//}
+
+	AudioUtil::SoundToMatrix(inputSound, RawAudioMatrix);
+
+	return true;
 
 
 	/* ===========================================================================

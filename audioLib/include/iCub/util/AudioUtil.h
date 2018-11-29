@@ -103,6 +103,9 @@ namespace AudioUtil {
      * @param y      : Number of columns for target matrix.
      * ================================================================ */
     void RootMeanSquareMatrix(const yMatrix& source, yMatrix& target, const size_t x, const size_t y);
+
+
+    void SoundToMatrix(const yarp::sig::Sound* source, yMatrix& target);
 }
 
 #endif  //_AUDIO_UTIL_H
