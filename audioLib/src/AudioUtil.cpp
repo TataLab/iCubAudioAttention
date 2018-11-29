@@ -144,32 +144,44 @@ void AudioUtil::RootMeanSquareMatrix(const yMatrix& source, yMatrix& target, con
 
 
  void AudioUtil::SoundToMatrix(const yarp::sig::Sound* source, yMatrix& target) {
-
+    
+    //-- Get information about the audio.
     const size_t BytesPerSample = source->getBytesPerSample();
     const size_t numSamples     = source->getSamples();
     const size_t numChannels    = source->getChannels();
 
-    const size_t numBytesTotal  = BytesPerSample * 4;
-    const size_t _normDiv       = (1 << 15);
+    //-- Derive number of bits, and normalisation values.
+    //const size_t padding        = ((numSamples % 8 == 0) ? 0 : 8 - (numSamples % 8));
+    const size_t numBitsTotal   = BytesPerSample * 8;
+    const double _norm          = (1 << (numBitsTotal-1));
+    
 
+    //-- Ensure appropriate space is allocated. 
     target.resize(numChannels, numSamples);
 
+    //-- Get pointers to data memory.
     const unsigned char* src = source->getRawData();
     double*              trg = target.data();
 
+    //-- Init a var to bit shift on.
+    uint32_t current_sample = 0;
+
     for (int ch = 0; ch < numChannels; ch++) {
         for (int samp = 0; samp < numSamples; samp++) {
+            
+            //-- Reset.
+            current_sample = 0;
 
-            *trg = 0.0;
-
-            for (int byte = 0; byte <= numBytesTotal; byte += 8) {
-                *trg += (*src << byte);
-                src++;
+            for (int bitshift = 0; bitshift < numBitsTotal; bitshift += 8) {
+                
+                //-- Bit shift the variable at source,
+                //-- bitwise or with the variable.
+                current_sample |= (*src << bitshift); src++;
             }
 
-            *trg /= _normDiv;
-
-            trg++;
+            *trg = current_sample / _norm;
+            trg++;         
         }
+        //src += padding;
     }
  }
