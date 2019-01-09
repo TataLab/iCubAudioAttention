@@ -99,7 +99,7 @@ bool AudioPreprocessorModule::close() {
 	handlerPort.close();
 
 	//-- Stop the thread.
-	yDebug("Stopping the thread . . . \n");
+	yInfo("Stopping the thread . . . \n");
 	periodicThread->stop();
 
 	//-- Release the periodic thread.

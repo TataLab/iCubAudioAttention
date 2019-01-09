@@ -71,7 +71,7 @@ void AudioUtil::downSampleMatrix(const yMatrix& source, yMatrix& target, const s
 }
 
 
-void MatrixToImageOfFloat(const yMatrix& source, yImageOfFloat& target) {
+void AudioUtil::MatrixToImageOfFloat(const yMatrix& source, yImageOfFloat& target) {
 
     //-- Allocate space for the Image.
     const size_t RowSize = source.rows();
