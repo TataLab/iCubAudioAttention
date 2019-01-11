@@ -151,9 +151,9 @@ void AudioUtil::RootMeanSquareMatrix(const yMatrix& source, yMatrix& target, con
     const size_t numChannels    = source->getChannels();
 
     //-- Derive number of bits, and normalisation values.
-    //const size_t padding        = ((numSamples % 8 == 0) ? 0 : 8 - (numSamples % 8));
+    //const size_t padding        = ((numSamples % 8 == 0) ? 0 : 8 - (numSamples % 8)); // TODO: padding might not be needed. Look into.
     const size_t numBitsTotal   = BytesPerSample * 8;
-    const double _norm          = (1 << (numBitsTotal-1));
+    const double _norm          = (1 << numBitsTotal); // 2^numBits
     
 
     //-- Ensure appropriate space is allocated. 

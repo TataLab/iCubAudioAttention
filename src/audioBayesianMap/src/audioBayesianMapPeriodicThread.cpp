@@ -25,7 +25,7 @@
 
 #include <iCub/audioBayesianMapPeriodicThread.h>
 
-#define THPERIOD 0.08 // seconds.
+#define THPERIOD 0.01 // seconds.
 
 
 inline void ones(yarp::sig::Matrix& mat) {

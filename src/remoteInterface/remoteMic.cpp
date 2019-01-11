@@ -40,8 +40,8 @@ int main(int argc, char *argv[]) {
     rf.configure(argc, argv);  
 
 
-    int rate          =  rf.findGroup("sampling").check("samplingRate",    Value(4096),  "frame samples (int)"        ).asInt();
-    int fixedNSample  =  rf.findGroup("sampling").check("numFrameSamples", Value(48000), "sampling rate of mics (int)").asInt();
+    int rate          =  rf.findGroup("sampling").check("samplingRate",    Value(48000),  "frame samples (int)"        ).asInt();
+    int fixedNSample  =  rf.findGroup("sampling").check("numFrameSamples", Value(4096),   "sampling rate of mics (int)").asInt();
 
 
     //BufferedPort<Sound> p;

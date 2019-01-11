@@ -1,0 +1,259 @@
+<application>
+
+    <name> Audio Attention Demo Long Frame </name>
+
+    <!-->  
+    MODULES.    
+    <!-->
+    <module>
+        <name> remoteInterface </name>
+        <parameters> --context audio_attention_demo --from Audio_Attention_Demo_Long_Config.ini </parameters>
+        <node> pc104 </node>
+    </module>
+
+    <module>
+        <name> audioPreprocessor </name>
+        <parameters> --name /audioPreprocessor_Demo_Long --context audio_attention_demo --from Audio_Attention_Demo_Long_Config.ini </parameters>
+        <node> icub </node>
+    </module>
+
+    <module>
+        <name> audioBayesianMap </name>
+        <parameters> --name /audioBayesianMap_Demo_Long --context audio_attention_demo --from Audio_Attention_Demo_Long_Config.ini </parameters>
+        <node> icub </node>
+    </module>
+    
+
+    <!-->  
+    CONNECTIONS.
+    <!-->
+    <connection>
+        <from> /sender                                 </from>
+        <to>   /audioPreprocessor_Demo_Long/rawAudio:i </to>
+        <protocol> tcp </protocol>
+    </connection>
+
+    <connection>
+        <from> /icub/head/state:o                       </from>
+        <to>   /audioPreprocessor_Demo_Long/headAngle:i </to>
+        <protocol> tcp </protocol>
+    </connection>
+
+    <connection>
+        <from> /audioPreprocessor_Demo_Long/allocentricAudio:o </from>
+        <to>   /audioBayesianMap_Demo_Long/allocentricAudio:i  </to>
+        <protocol> tcp </protocol>
+    </connection>
+
+    <connection>
+        <from> /audioPreprocessor_Demo_Long/allocentricEnvelope:o </from>
+        <to>   /audioBayesianMap_Demo_Long/allocentricAudio:i  </to>
+        <protocol> tcp </protocol>
+    </connection>
+
+
+
+
+
+    <!-->  
+    Beamformed Audio.
+    <!-->
+    <module>
+        <name> frequencyVisualisation </name>
+        <parameters> --name /beamformedAudioLongVisualiser </parameters>
+        <node> dio </node>
+    </module>
+
+    <module>
+        <name> yarpview </name>
+        <parameters> --x 0 --y 0 --h 320 --w 1080 --r 33 --name /beamformedAudioLongView --compact </parameters>
+        <node> dio </node>
+    </module>
+
+    <!-->  
+    Hilbert Envelope.
+    <!-->
+    <module>
+        <name> frequencyVisualisation </name>
+        <parameters> --name /hilbertEnvelopeLongVisualiser </parameters>
+        <node> dio </node>
+    </module>
+
+    <module>
+        <name> yarpview </name>
+        <parameters> --x 0 --y 410 --h 320 --w 1080 --r 33 --name /hilbertEnvelopeLongView --compact </parameters>
+        <node> dio </node>
+    </module>
+
+    <!-->  
+    Band Passed Envelope.
+    <!-->
+    <module>
+        <name> frequencyVisualisation </name>
+        <parameters> --name /bandPassedEnvelopeLongVisualiser </parameters>
+        <node> dio </node>
+    </module>
+
+    <module>
+        <name> yarpview </name>
+        <parameters> --x 0 --y 825 --h 320 --w 1080 --r 33 --name /bandPassedEnvelopeLongView --compact </parameters>
+        <node> dio </node>
+    </module>
+
+    <!-->  
+    Allocentric Audio Map.
+    <!-->
+    <module>
+        <name> frequencyVisualisation </name>
+        <parameters> --name /allocentricAudioLongVisualiser --grid vert </parameters>
+        <node> dio </node>
+    </module>
+
+    <module>
+        <name> yarpview </name>
+        <parameters> --x 1080 --y 0 --h 280 --w 840 --r 33 --name /allocentricAudioLongView --compact </parameters>
+        <node> dio </node>
+    </module>
+
+    <!-->  
+    Allocentric Envelope Map.
+    <!-->
+    <module>
+        <name> frequencyVisualisation </name>
+        <parameters> --name /allocentricEnvelopeLongVisualiser --grid vert </parameters>
+        <node> dio </node>
+    </module>
+
+    <module>
+        <name> yarpview </name>
+        <parameters> --x 1080 --y 375 --h 280 --w 840 --r 33 --name /allocentricEnvelopeLongView --compact </parameters>
+        <node> dio </node>
+    </module>
+
+    <!-->  
+    Bayesian Probability Map.
+    <!-->
+    <module>
+        <name> frequencyVisualisation </name>
+        <parameters> --name /bayesianProbabilityMapLongVisualiser --grid vert --gain 100 </parameters>
+        <node> dio </node>
+    </module>
+
+    <module>
+        <name> yarpview </name>
+        <parameters> --x 1080 --y 680 --h 280 --w 840 --r 33 --name /bayesianProbabilityMapLongView --compact </parameters>
+        <node> dio </node>
+    </module>
+
+    <!-->  
+    Bayesian Probability Angle.
+    <!-->
+    <module>
+        <name> frequencyVisualisation </name>
+        <parameters> --name /bayesianProbabilityAngleLongVisualiser --grid vert --gain 100 </parameters>
+        <node> dio </node>
+    </module>
+
+    <module>
+        <name> yarpview </name>
+        <parameters> --x 1080 --y 1000 --h 90 --w 840 --r 33 --name /bayesianProbabilityAngleLongView --compact </parameters>
+        <node> dio </node>
+    </module>
+
+
+
+    <!--> ################# Beamformed Audio ################# <!-->
+    <connection>
+        <from> /audioPreprocessor_Demo_Long/beamformedAudio:o </from>
+        <to>   /beamformedAudioLongVisualiser/map:i     </to>
+        <protocol> tcp </protocol>
+    </connection> 
+
+    <connection>
+        <from> /beamformedAudioLongVisualiser/img:o  </from>
+        <to>   /beamformedAudioLongView              </to>
+        <protocol> tcp </protocol>
+    </connection>
+
+    <!--> ################# Hilbert Envelope ################# <!-->
+    <connection>
+        <from> /audioPreprocessor_Demo_Long/hilbertEnvelope:o </from>
+        <to>   /hilbertEnvelopeLongVisualiser/map:i     </to>
+        <protocol> tcp </protocol>
+    </connection> 
+
+    <connection>
+        <from> /hilbertEnvelopeLongVisualiser/img:o  </from>
+        <to>   /hilbertEnvelopeLongView              </to>
+        <protocol> tcp </protocol>
+    </connection>
+
+    <!--> ############### Band Passed Envelope ############### <!-->
+    <connection>
+        <from> /audioPreprocessor_Demo_Long/bandPassedEnvelope:o </from>
+        <to>   /bandPassedEnvelopeLongVisualiser/map:i     </to>
+        <protocol> tcp </protocol>
+    </connection> 
+
+    <connection>
+        <from> /bandPassedEnvelopeLongVisualiser/img:o  </from>
+        <to>   /bandPassedEnvelopeLongView              </to>
+        <protocol> tcp </protocol>
+    </connection>
+
+    <!--> ################# Allocentric Audio ################ <!-->
+    <connection>
+        <from> /audioPreprocessor_Demo_Long/allocentricAudio:o </from>
+        <to>   /allocentricAudioLongVisualiser/map:i     </to>
+        <protocol> tcp </protocol>
+    </connection> 
+
+    <connection>
+        <from> /allocentricAudioLongVisualiser/img:o  </from>
+        <to>   /allocentricAudioLongView              </to>
+        <protocol> tcp </protocol>
+    </connection>
+
+    <!--> ############### Allocentric Envelope ############### <!-->
+    <connection>
+        <from> /audioPreprocessor_Demo_Long/allocentricEnvelope:o </from>
+        <to>   /allocentricEnvelopeLongVisualiser/map:i     </to>
+        <protocol> tcp </protocol>
+    </connection> 
+
+    <connection>
+        <from> /allocentricEnvelopeLongVisualiser/img:o  </from>
+        <to>   /allocentricEnvelopeLongView              </to>
+        <protocol> tcp </protocol>
+    </connection>
+
+    <!--> #################################################### <!-->
+    
+    <connection>
+        <from> /audioBayesianMap_Demo_Long/bayesianProbabilityMap:o </from>
+        <to>   /bayesianProbabilityMapLongVisualiser/map:i    </to>
+        <protocol> tcp </protocol>
+    </connection> 
+
+    <connection>
+        <from> /bayesianProbabilityMapLongVisualiser/img:o  </from>
+        <to>   /bayesianProbabilityMapLongView              </to>
+        <protocol> tcp </protocol>
+    </connection>
+
+    <!--> #################################################### <!-->
+
+    <connection>
+        <from> /audioBayesianMap_Demo_Long/bayesianProbabilityAngle:o </from>
+        <to>   /bayesianProbabilityAngleLongVisualiser/map:i    </to>
+        <protocol> tcp </protocol>
+    </connection> 
+
+    <connection>
+        <from> /bayesianProbabilityAngleLongVisualiser/img:o  </from>
+        <to>   /bayesianProbabilityAngleLongView              </to>
+        <protocol> tcp </protocol>
+    </connection>
+
+
+</application>
