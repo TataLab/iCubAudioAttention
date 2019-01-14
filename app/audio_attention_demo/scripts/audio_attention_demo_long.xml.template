@@ -61,13 +61,13 @@
     <module>
         <name> frequencyVisualisation </name>
         <parameters> --name /beamformedAudioLongVisualiser </parameters>
-        <node> dio </node>
+        <node> icub </node>
     </module>
 
     <module>
         <name> yarpview </name>
         <parameters> --x 0 --y 0 --h 320 --w 1080 --r 33 --name /beamformedAudioLongView --compact </parameters>
-        <node> dio </node>
+        <node> icub </node>
     </module>
 
     <!-->  
@@ -76,13 +76,13 @@
     <module>
         <name> frequencyVisualisation </name>
         <parameters> --name /hilbertEnvelopeLongVisualiser </parameters>
-        <node> dio </node>
+        <node> icub </node>
     </module>
 
     <module>
         <name> yarpview </name>
         <parameters> --x 0 --y 410 --h 320 --w 1080 --r 33 --name /hilbertEnvelopeLongView --compact </parameters>
-        <node> dio </node>
+        <node> icub </node>
     </module>
 
     <!-->  
@@ -91,13 +91,13 @@
     <module>
         <name> frequencyVisualisation </name>
         <parameters> --name /bandPassedEnvelopeLongVisualiser </parameters>
-        <node> dio </node>
+        <node> icub </node>
     </module>
 
     <module>
         <name> yarpview </name>
         <parameters> --x 0 --y 825 --h 320 --w 1080 --r 33 --name /bandPassedEnvelopeLongView --compact </parameters>
-        <node> dio </node>
+        <node> icub </node>
     </module>
 
     <!-->  
@@ -106,13 +106,13 @@
     <module>
         <name> frequencyVisualisation </name>
         <parameters> --name /allocentricAudioLongVisualiser --grid vert </parameters>
-        <node> dio </node>
+        <node> icub </node>
     </module>
 
     <module>
         <name> yarpview </name>
         <parameters> --x 1080 --y 0 --h 280 --w 840 --r 33 --name /allocentricAudioLongView --compact </parameters>
-        <node> dio </node>
+        <node> icub </node>
     </module>
 
     <!-->  
@@ -121,13 +121,13 @@
     <module>
         <name> frequencyVisualisation </name>
         <parameters> --name /allocentricEnvelopeLongVisualiser --grid vert </parameters>
-        <node> dio </node>
+        <node> icub </node>
     </module>
 
     <module>
         <name> yarpview </name>
         <parameters> --x 1080 --y 375 --h 280 --w 840 --r 33 --name /allocentricEnvelopeLongView --compact </parameters>
-        <node> dio </node>
+        <node> icub </node>
     </module>
 
     <!-->  
@@ -136,13 +136,13 @@
     <module>
         <name> frequencyVisualisation </name>
         <parameters> --name /bayesianProbabilityMapLongVisualiser --grid vert --gain 100 </parameters>
-        <node> dio </node>
+        <node> icub </node>
     </module>
 
     <module>
         <name> yarpview </name>
         <parameters> --x 1080 --y 680 --h 280 --w 840 --r 33 --name /bayesianProbabilityMapLongView --compact </parameters>
-        <node> dio </node>
+        <node> icub </node>
     </module>
 
     <!-->  
@@ -151,13 +151,13 @@
     <module>
         <name> frequencyVisualisation </name>
         <parameters> --name /bayesianProbabilityAngleLongVisualiser --grid vert --gain 100 </parameters>
-        <node> dio </node>
+        <node> icub </node>
     </module>
 
     <module>
         <name> yarpview </name>
         <parameters> --x 1080 --y 1000 --h 90 --w 840 --r 33 --name /bayesianProbabilityAngleLongView --compact </parameters>
-        <node> dio </node>
+        <node> icub </node>
     </module>
 
 

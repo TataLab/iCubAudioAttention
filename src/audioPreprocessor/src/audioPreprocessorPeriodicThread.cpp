@@ -371,7 +371,7 @@ void AudioPreprocessorPeriodicThread::run() {
 		timeTotal  = timeDelay + timeReading + timeProcessing + timeTransmission;
 		totalTime += timeTotal;
 		totalIterations++;
-		yInfo("End of Loop %d:  Offset  %.2f  |  Delay  %f  |  Reading  %f  |  Processing  %f  |  Transmission  %f  |  Total  %f  |", timeStamp.getCount(), headOffset, timeDelay, timeReading, timeProcessing, timeTransmission, timeTotal);
+		yInfo("End of Loop %d, TS %d:  Offset  %.2f  |  Delay  %f  |  Reading  %f  |  Processing  %f  |  Transmission  %f  |  Total  %f  |", totalIterations, timeStamp.getCount(), headOffset, timeDelay, timeReading, timeProcessing, timeTransmission, timeTotal);
 	}
 }
 
