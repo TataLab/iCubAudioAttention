@@ -110,12 +110,15 @@ bool AudioBayesianMapModule::close() {
 
 bool AudioBayesianMapModule::respond(const yarp::os::Bottle& command, yarp::os::Bottle& reply) {
 
-	std::string helpMessage = std::string(getName().c_str()) + " commands are: \n" + "help \n" + "quit \n";
+	std::string helpMessage = std::string(getName().c_str()) + " commands are: \n" + "help \n" + "clear \n" + "quit \n";
 	reply.clear(); 
 
 	if (command.get(0).asString() == "quit") {
 		reply.addString("quitting");
 		return false;
+	} else if (command.get(0).asString() == "clear") {
+		yInfo("Clearing Bayesian Buffer");
+		periodicThread->clearProbabilities();
 	} else if (command.get(0).asString() == "help") {
 		yInfo("%s", helpMessage.c_str());
 		reply.addString("ok");

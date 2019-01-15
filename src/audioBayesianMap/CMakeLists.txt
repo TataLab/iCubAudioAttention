@@ -13,6 +13,7 @@ PROJECT(${KEYWORD})
 
 find_package(YARP REQUIRED)
 find_package(ICUB REQUIRED)
+
 list(APPEND CMAKE_MODULE_PATH ${YARP_MODULE_PATH})
 list(APPEND CMAKE_MODULE_PATH ${ICUB_MODULE_PATH})
 include(YarpInstallationHelpers)
@@ -43,7 +44,7 @@ INCLUDE_DIRECTORIES(
     ${YARP_INCLUDE_DIRS} 	
     ${ICUB_INCLUDE_DIRS}	
     ${ICUB_CONTRIB_DIRS}
-    ${ATTENTIONLIB_INCLUDE_DIRS}
+    ${audioLib_INCLUDE_DIRS}
 )
 
 # Search for source code.
@@ -59,7 +60,8 @@ IF (folder_source)
         ${folder_header}
     )
 
-    TARGET_LINK_LIBRARIES(${KEYWORD}        
+    TARGET_LINK_LIBRARIES(${KEYWORD}  
+      audioLib      
       ${YARP_LIBRARIES}
       )	
 

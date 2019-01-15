@@ -41,6 +41,11 @@
 #include <yarp/os/PeriodicThread.h>
 #include <yarp/os/Log.h>
 
+#include <iCub/util/AudioUtil.h>
+
+typedef yarp::sig::Matrix                 yMatrix;
+typedef yarp::os::BufferedPort< yMatrix > yMatrixBuffer;
+
 class AudioBayesianMapPeriodicThread : public yarp::os::PeriodicThread {
 
   private:
@@ -68,22 +73,22 @@ class AudioBayesianMapPeriodicThread : public yarp::os::PeriodicThread {
 	/* ===========================================================================
 	 *  Yarp Ports for Sending and Receiving Data from this Periodic Thread.
 	 * =========================================================================== */
-	yarp::os::BufferedPort< yarp::sig::Matrix > inAllocentricAudioPort;
-	yarp::os::BufferedPort< yarp::sig::Matrix > outProbabilityMapPort;
-	yarp::os::BufferedPort< yarp::sig::Matrix > outProbabilityAnglePort;
+	yMatrixBuffer inAllocentricAudioPort;
+	yMatrixBuffer outProbabilityMapPort;
+	yMatrixBuffer outProbabilityAnglePort;
 
 	/* ===========================================================================
 	 *  Yarp Matrices used for Modules Computation. 
 	 *    Objects passed around to encapsulated objects.
 	 * =========================================================================== */
-	yarp::sig::Matrix AllocentricAudioMatrix;
-	yarp::sig::Matrix ProbabilityMapMatrix;
-	yarp::sig::Matrix ProbabilityAngleMatrix;
+	yMatrix AllocentricAudioMatrix;
+	yMatrix ProbabilityMapMatrix;
+	yMatrix ProbabilityAngleMatrix;
 
 	/* ===========================================================================
 	 *  Buffer for ``remembering`` some number of states.
 	 * =========================================================================== */
-	std::queue< yarp::sig::Matrix > bufferedAudioMatrix;
+	std::queue< yMatrix > bufferedAudioMatrix;
 
 	/* ===========================================================================
 	 *  Variables received from the resource finder.
@@ -186,6 +191,13 @@ class AudioBayesianMapPeriodicThread : public yarp::os::PeriodicThread {
 	bool processing();
 
 
+	/* ===========================================================================
+	 *  Flush the buffer and reset the Knowledge state to its initial values.
+	 *    For interfacing with RPC port.
+	 * =========================================================================== */
+	void clearProbabilities();
+
+
   private:
 
 	/* ===========================================================================
@@ -200,7 +212,7 @@ class AudioBayesianMapPeriodicThread : public yarp::os::PeriodicThread {
 	 * @param BufferedAudio  : A buffer containing recent audio maps. Oldest maps are used against the knowledge state.
 	 * @param BufferLength   : Used to ensure the number of samples kept is consistent.
 	 * =========================================================================== */
-	void updateBayesianProbabilities(const yarp::sig::Matrix& CurrentAudio, yarp::sig::Matrix& ProbabilityMap, std::queue< yarp::sig::Matrix >& BufferedAudio, const int BufferLength);
+	void updateBayesianProbabilities(const yMatrix& CurrentAudio, yMatrix& ProbabilityMap, std::queue< yMatrix >& BufferedAudio, const int BufferLength);
 
 
 	/* ===========================================================================
@@ -209,7 +221,7 @@ class AudioBayesianMapPeriodicThread : public yarp::os::PeriodicThread {
 	 * @param CurrentAudio   : New information of the auditory environment.
 	 * @param ProbabilityMap : Knowledge state of the auditory environment.
 	 * =========================================================================== */
-	void addAudioMap(const yarp::sig::Matrix& CurrentAudio, yarp::sig::Matrix& ProbabilityMap);
+	void addAudioMap(const yMatrix& CurrentAudio, yMatrix& ProbabilityMap);
 
 
 	/* ===========================================================================
@@ -218,7 +230,7 @@ class AudioBayesianMapPeriodicThread : public yarp::os::PeriodicThread {
 	 * @param AntiquatedAudio : Old information of the auditory environment.
 	 * @param ProbabilityMap  : Knowledge state of the auditory environment.
 	 * =========================================================================== */
-	void removeAudioMap(const yarp::sig::Matrix& AntiquatedAudio, yarp::sig::Matrix& ProbabilityMap);
+	void removeAudioMap(const yMatrix& AntiquatedAudio, yMatrix& ProbabilityMap);
 	
 
 	/* ===========================================================================
@@ -226,7 +238,7 @@ class AudioBayesianMapPeriodicThread : public yarp::os::PeriodicThread {
 	 * 
 	 * @param matrix : matrix to be normalised.
 	 * =========================================================================== */
-	void normaliseMatrix(yarp::sig::Matrix& matrix);
+	void normaliseMatrix(yMatrix& matrix);
 
 
 	/* ===========================================================================
@@ -245,13 +257,7 @@ class AudioBayesianMapPeriodicThread : public yarp::os::PeriodicThread {
 	 * @param ProbabilityMap    : Knowledge state of the auditory environment.
 	 * @param ProbabilityAngles : Angles of Probability.
 	 * =========================================================================== */
-	void collapseProbabilityMap(const yarp::sig::Matrix& ProbabilityMap, yarp::sig::Matrix& ProbabilityAngles);
-
-
-	/* ===========================================================================
-	 *  Flush the buffer and reset the Knowledge state to its initial values.
-	 * =========================================================================== */
-	void clearProbabilities();
+	void collapseProbabilityMap(const yMatrix& ProbabilityMap, yMatrix& ProbabilityAngles);
 
 
 	/* ===========================================================================
