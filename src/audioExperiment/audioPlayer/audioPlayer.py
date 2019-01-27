@@ -15,10 +15,11 @@ yarp.Network.init()
 
 def get_args():
     parser = argparse.ArgumentParser(description='player')
-    parser.add_argument('--name',  default="/audioPlayer",  help='Name for the module.                 (default: {})'.format("audioPlayer"))
-    parser.add_argument('--rate',  default=48000, type=int, help='Sampling rate.                       (default: {})'.format(48000))
-    parser.add_argument('--nchan', default=2,     type=int, help='Number of Audio Channels in Array.   (default: {})'.format(2))
-    
+    parser.add_argument('-n', '--name',    default="/audioPlayer",             help='Name for the module.                          (default: {})'.format("audioPlayer"))
+    parser.add_argument('-r', '--rate',    default=48000, type=int,            help='Sampling rate.                                (default: {})'.format(48000))
+    parser.add_argument('-c', '--chan',    default=2,     type=int,            help='Number of Audio Channels in Array.            (default: {})'.format(2))
+    parser.add_argument('-s', '--special', default=False, action='store_true', help='Use special setting setting for our set up.   (default: {})'.format(False))
+
     args = parser.parse_args()
     return args
 
@@ -35,8 +36,14 @@ class audioPlayer(object):
 
 
         # Init PortAudio Device.
-        self.samplingRate = args.rate
-        self.numChannels  = args.nchan
+        if args.special:
+            self.samplingRate = 48000
+            self.numChannels  = 10
+            self.speakerMap   = list( range(2,10) )
+        else:
+            self.samplingRate = args.rate
+            self.numChannels  = args.chan
+            self.speakerMap   = list( range(args.chan) )
 
         # For paFloat32 sample values must be in range [-1.0, 1.0]
         self.audioDevice = pyaudio.PyAudio()
@@ -47,6 +54,7 @@ class audioPlayer(object):
             output=True
         )
         
+
         # Read in the CSV containing trial information.
         #reader = csv.reader(open(csv_filename, "rb"), delimiter=",")
         #data   = list(reader)
@@ -78,7 +86,7 @@ class audioPlayer(object):
             elif cmd == "help" or cmd == "--help" or cmd == "-h" or cmd == "-H":
                 reply.addString( # Please don't look at this.
                     "Commands: trial <int> | play -1 <string>.wav | play {} | ping | quit ".format(
-                        " ".join(list(" ".join([str(ch), '{}.wav'.format(chr(97+ch))]) for ch in range(self.numChannels)))
+                        " ".join(list(" ".join([str(ch), '{}.wav'.format(chr(97+ch))]) for ch in range(len(self.speakerMap))))
                     )
                 )
             
@@ -160,18 +168,18 @@ class audioPlayer(object):
             
             data, samps = self.open_audio(filename)
             audioSamples = np.zeros((self.numChannels, samps), dtype=np.float32)
-            audioSamples[:] = data
+            audioSamples[self.speakerMap] = data
         
         else:
             if len(channels) > len(set(channels)):
                 return False, "The provided channels should be unique. Was given {}".format(channels)
 
-            maxNumSamps  = 1
+            maxNumSamps  = self.samplingRate
             audioSamples = np.zeros((self.numChannels, maxNumSamps), dtype=np.float32)
 
             for ch, fn in zip(channels, filename):
                 if ch >= self.numChannels or ch < 0:
-                    return False, "Channel {} is out of range [0:{}]".format(ch, self.numChannels)
+                    return False, "Channel {} is out of range [0:{}]".format(ch, len(self.speakerMap))
                 if not os.path.isfile(fn):
                     return False, "Audio File {} does not exist.".format(fn)
                 
@@ -180,11 +188,12 @@ class audioPlayer(object):
                 # Resize the audioSamples if we load a file that is longer.
                 if samps > maxNumSamps: 
                     resize_samples = np.zeros((self.numChannels, samps), dtype=np.float32)
-                    resize_samples[:,:-(samps-maxNumSamps)] = audioSamples
+                    #resize_samples[:,:-(samps-maxNumSamps)] = audioSamples #TODO:REMOVE
+                    resize_samples[:,:maxNumSamps] = audioSamples
                     audioSamples = resize_samples
                     maxNumSamps  = samps
 
-                audioSamples[ch,:samps] = data
+                audioSamples[self.speakerMap[ch],:samps] = data
 
         # Write to stream.
         self.audioStream.write(audioSamples.transpose().tobytes())
@@ -195,6 +204,7 @@ class audioPlayer(object):
         data, rate = sf.read(filename)
         if rate != self.samplingRate:
             data = librosa.resample(data, rate, self.samplingRate)
+        
         return data, data.shape[0]
 
 
