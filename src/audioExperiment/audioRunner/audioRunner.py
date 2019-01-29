@@ -14,6 +14,7 @@ def get_args():
     parser.add_argument('-n', '--name',  default="/audioRunner", help='Name for the module.             (default: {})'.format("/audioRunner"))
     parser.add_argument('-b', '--begin', default=1,   type=int,  help='First Trial to begin at.         (default: {})'.format(1))
     parser.add_argument('-e', '--end',   default=100, type=int,  help='Last Trial to end at.            (default: {})'.format(100))
+    parser.add_argument('-s', '--sleep', default=10,  type=int,  help='Sleep for between trials.        (default: {})'.format(10))
     
     args = parser.parse_args()
     return args
@@ -41,6 +42,10 @@ class audioRunner(object):
         self.matrix_in_port = yarp.Port()
         self.matrix_in_port.open(self.port_name + "/matrix:i")
 
+        # For clearing the Bayesian map.
+        self.clear_out_port = yarp.Port()
+        self.clear_out_port.open(self.port_name + "/bayesClear:o")
+
         # For reading in the encoder position from the robot head.
         self.head_in_port = yarp.Port()
         self.head_in_port.open(self.port_name + "/headAngle:i")
@@ -53,35 +58,41 @@ class audioRunner(object):
         # Get some information from the parser.
         self.trial_begin = args.begin
         self.trial_end   = args.end
+        self.sleep_for   = args.sleep
 
 
     def run(self):
-        
+
+        # Yarp Bottle for sending commands on the network.        
         command = yarp.Bottle()
 
+        # Loop Through the trials range.
         for currentTrial in range(self.trial_begin, self.trial_end):
-
+            
+            #TODO:
+            # At the beginning of every trial:
+            #  1) move the head to pos 0.
+            #  2) clear out the bayes map.
+            #  3) wait for the bayes map to fill.
             command.clear()
 
-            if self.rpc_out_port.getOutputCount():
-                print("Sending [{} {}]".format("trial", currentTrial))
-                command.addString("trial")
-                command.addInt(currentTrial)
 
-                self.rpc_out_port.write(command)
+            # Give some Verbose of the current trial info.
+            print("Sending [{} {}]".format("trial", currentTrial))
+            command.addString("trial")
+            command.addInt(currentTrial)
 
-                t1 = yarp.now()
+            self.rpc_out_port.write(command)
 
-                while True:
+            while True:
 
-                    print("Working . . . ")
+                print("Working . . . ")
 
-                    reply = self.rpc_in_port.read(False)
+                reply = self.rpc_in_port.read(False)
 
-                    if reply != None:
-                        t2 = yarp.now()
-                        print(t2-t1, ":", type(reply), reply.toString(), reply)
-                        break
+                if reply != None:
+                    print(type(reply), reply.toString(), reply)
+                    break
 
                     
         return 
@@ -91,6 +102,7 @@ class audioRunner(object):
         self.rpc_in_port.close()
         self.rpc_out_port.close()
         self.matrix_in_port.close()
+        self.clear_out_port.close()
         self.head_in_port.close()
         self.head_out_port.close()
 
@@ -106,11 +118,14 @@ def main():
     # Initialize the audio runner module.
     runner = audioRunner(args)
 
-    # Loop.
+    # Make some connections relative to the module and begin running.
     try:
         name = args.name
-        assert yarp.Network.connect( name+"/rpc:o",             "/audioPlayer/rpc:i"   ),   "Cannot make connection 1"
-        assert yarp.Network.connect( "/audioPlayer/broadcast:o", name+"/broadcast:i"   ),   "Cannot make connection 2"
+        assert yarp.Network.connect(  name+"/rpc:o",                              "/audioPlayer/rpc:i"   ), "Cannot make connection 1"
+        assert yarp.Network.connect( "/audioPlayer/broadcast:o",                   name+"/broadcast:i"   ), "Cannot make connection 2"
+        assert yarp.Network.connect( "/audioBayesianMap",                          name+"/bayesClear:o"  ), "Cannot make connection 3"
+        assert yarp.Network.connect( "/audioBayesianMap/bayesianProbabilityMap:o", name+"/matrix:i"      ), "Cannot make connection 4"
+
 
         runner.run()
     finally:
