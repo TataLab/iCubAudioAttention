@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 import csv
 import os
 import pyaudio
+import time
 import yarp
 
 import argparse
@@ -33,6 +34,9 @@ class audioPlayer(object):
 
         self.input_port = yarp.RpcServer()
         self.input_port.open(self.port_name + "/rpc:i")
+        
+        self.output_port = yarp.BufferedPortBottle()
+        self.output_port.open(self.port_name + "/broadcast:o")
 
 
         # Init PortAudio Device.
@@ -52,8 +56,7 @@ class audioPlayer(object):
             channels=self.numChannels,
             rate=self.samplingRate,
             output=True
-        )
-        
+        )       
 
         # Read in the CSV containing trial information.
         #reader = csv.reader(open(csv_filename, "rb"), delimiter=",")
@@ -86,7 +89,7 @@ class audioPlayer(object):
             elif cmd == "help" or cmd == "--help" or cmd == "-h" or cmd == "-H":
                 reply.addString( # Please don't look at this.
                     "Commands: trial <int> | play -1 <string>.wav | play {} | ping | quit ".format(
-                        " ".join(list(" ".join([str(ch), '{}.wav'.format(chr(97+ch))]) for ch in range(len(self.speakerMap))))
+                        " ".join(list(" ".join([str(ch), '{}.wav'.format(chr(97+ch))]) for ch in range(self.numChannels)))
                     )
                 )
             
@@ -148,9 +151,15 @@ class audioPlayer(object):
                 reply.addString("Command")
                 reply.append(command)
 
-
             # Reply back on the rpc port.
             self.input_port.reply(reply)
+
+            # Broadcast that reply if someone is connected.
+            if self.output_port.getOutputCount():
+                broadcast = self.output_port.prepare()
+                broadcast.clear()
+                broadcast.fromString(reply.toString())
+                self.output_port.write()
 
 
 
