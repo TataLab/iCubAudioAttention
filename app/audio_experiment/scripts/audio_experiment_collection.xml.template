@@ -1,0 +1,48 @@
+<application>
+
+    <name> Audio Experiment Collection </name>
+
+    <!-->  
+    MODULES.    
+    <!-->
+    <module>
+        <name> audioStreamer </name>
+        <parameters> </parameters>
+        <node> icub </node>
+    </module>
+
+    <module>
+        <name> audioRunner </name>
+        <parameters> </parameters>
+        <node> dio </node>
+    </module>
+
+    <module>
+        <name> audioPlayer.py </name>
+        <parameters> --special --csv filename.csv </parameters>
+        <node> icub-mac </node>
+    </module>
+    
+
+    <!-->  
+    CONNECTIONS.
+    <!-->
+    <connection>
+        <from> /audioStreamer/rawAudio:o   </from>
+        <to>   /audioRunner/rawAudio:i     </to>
+        <protocol> tcp </protocol>
+    </connection>
+
+    <connection>
+        <from> /audioPlayer/broadcast:o   </from>
+        <to>   /audioRunner/broadcast:i   </to>
+        <protocol> tcp </protocol>
+    </connection>
+
+    <connection>
+        <from> /audioRunner/commands:o   </from>
+        <to>   /audioPlayer/rpc:i        </to>
+        <protocol> tcp </protocol>
+    </connection>    
+
+</application>

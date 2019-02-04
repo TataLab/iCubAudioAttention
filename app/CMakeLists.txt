@@ -11,6 +11,7 @@ add_subdirectory ( robotStartUp			  )
 add_subdirectory ( audioMotorControl      )
 add_subdirectory ( audio_attention        )
 add_subdirectory ( audio_attention_demo   )
+add_subdirectory ( audio_experiment       )
 
 ## make all applications show up as single target
 #icub_app_all()

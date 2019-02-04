@@ -166,9 +166,7 @@ class audioPlayer(object):
     def trial(self, num):
         print("Begin Trial {}!".format(num))
 
-        x = 0
-        for i in range(10000000):
-            x += i
+        time.sleep(5)
 
         return
 

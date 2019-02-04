@@ -29,6 +29,7 @@
 
 #include <iostream>
 #include <fstream>
+#include <cstdlib>
 #include <cstring>
 #include <time.h>
 
@@ -52,6 +53,9 @@ namespace AudioUtil {
      *  - Note: The number of rows is same as source.
      * ================================================================ */
     void downSampleMatrix(const yMatrix& source, yMatrix& target, const size_t downSamp);
+
+
+    std::string expandEnvironmentVariables(const std::string filename);
 
 
     /* ================================================================

@@ -97,6 +97,8 @@ class AudioStreamerPeriodicThread : public yarp::os::PeriodicThread {
 	double maxDegree;
 	double motorSpeed;
 	
+	bool   movements;
+	
 	int    samplingRate;
 	int    numFrameSamples;
 

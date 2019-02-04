@@ -31,6 +31,25 @@ int AudioUtil::myRound(const double a) {
     return (a - floorValue <= 0.5) ? floorValue : ceilValue;
 }
 
+std::string AudioUtil::expandEnvironmentVariables(const std::string filename) {
+
+    if( filename.find( "${" ) == std::string::npos ) return filename;
+
+    std::string pre  = filename.substr( 0, filename.find( "${" ) );
+    std::string post = filename.substr( filename.find( "${" ) + 2 );
+
+    if( post.find( '}' ) == std::string::npos ) return filename;
+
+    std::string variable = post.substr( 0, post.find( '}' ) );
+    std::string value    = "";
+
+    post = post.substr( post.find( '}' ) + 1 );
+
+    const char *v = getenv( variable.c_str() );
+    if( v != NULL ) value = std::string( v );
+
+    return AudioUtil::expandEnvironmentVariables( pre + value + post );
+}
 
 double AudioUtil::myMod_double(const double a, const double b) { 
     return ( ( a ) - ( b ) * floor ( ( a ) / ( b ) ) ); 

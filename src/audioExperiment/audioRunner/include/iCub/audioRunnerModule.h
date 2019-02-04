@@ -19,13 +19,13 @@
 */
 
 /* ===========================================================================
- * @file  audioStreamerModule.h
- * @brief Module for streaming audio on a port. Streaming will be paused to 
- *          move the robot and wait until the robot has made it to the target.
+ * @file  audioRunnerModule.h
+ * @brief Module for sending trials to the player module, and saving  
+ *          streamed audio data.
  * =========================================================================== */
 
-#ifndef _AUDIO_STREAMER_MODULE_H_
-#define _AUDIO_STREAMER_MODULE_H_
+#ifndef _AUDIO_RUNNER_MODULE_H_
+#define _AUDIO_RUNNER_MODULE_H_
 
 #include <iostream>
 #include <string>
@@ -37,9 +37,9 @@
 #include <yarp/os/Thread.h>
 #include <yarp/os/Log.h>
 
-#include <iCub/audioStreamerPeriodicThread.h>
+#include <iCub/audioRunnerPeriodicThread.h>
 
-class AudioStreamerModule : public yarp::os::RFModule { 
+class AudioRunnerModule : public yarp::os::RFModule { 
 
   private:
   
@@ -55,7 +55,7 @@ class AudioStreamerModule : public yarp::os::RFModule {
 	
 	//-- Pointer to a new thread to be created and 
 	//-- started in configure() and stopped in close().
-	AudioStreamerPeriodicThread *periodicThread; 
+	AudioRunnerPeriodicThread *periodicThread; 
 
 
   public:
@@ -105,6 +105,6 @@ class AudioStreamerModule : public yarp::os::RFModule {
 	bool updateModule();
 };
 
-#endif // _AUDIO_STREAMER_MODULE_H_
+#endif // _AUDIO_RUNNER_MODULE_H_
 
 //----- end-of-file --- ( next line intentionally left blank ) ------------------

@@ -46,10 +46,12 @@ AudioStreamerPeriodicThread::AudioStreamerPeriodicThread(std::string _robot, std
 
 
 AudioStreamerPeriodicThread::~AudioStreamerPeriodicThread() {
-	delete robotHead;
-	delete robotPos;
-	delete robotVel;
-	delete robotEnc;
+	if (movements) {
+		delete robotHead;
+		delete robotPos;
+		delete robotVel;
+		delete robotEnc;
+	}
 	delete robotMic;
 	delete robotSound;
 }
@@ -67,7 +69,9 @@ bool AudioStreamerPeriodicThread::configure(yarp::os::ResourceFinder &rf) {
 	minDegree  = rf.findGroup("robotspec").check("minDegree",  yarp::os::Value(-40.0), "minimum degree for the robot (double)").asDouble();
 	maxDegree  = rf.findGroup("robotspec").check("maxDegree",  yarp::os::Value( 40.0), "maximum degree for the robot (double)").asDouble();
 	motorSpeed = rf.findGroup("robotspec").check("motorSpeed", yarp::os::Value( 30.0), "speed for the robot motors (double)"  ).asDouble();
-		
+
+	movements  = rf.findGroup("experiment").check("movements", yarp::os::Value(false), "enable robot head movements (boolean)").asBool();
+
 	samplingRate    = rf.findGroup("sampling").check("samplingRate",    yarp::os::Value(48000), "sampling rate of mics (int)"           ).asInt();
 	numFrameSamples = rf.findGroup("sampling").check("numFrameSamples", yarp::os::Value(4096),  "number of frame samples received (int)").asInt();
 	
@@ -75,49 +79,51 @@ bool AudioStreamerPeriodicThread::configure(yarp::os::ResourceFinder &rf) {
 	/* ===========================================================================
 	 *  Initialize Connection to iCub Head.
 	 * =========================================================================== */
-	yarp::os::Property RobotHeadOptions;
-	RobotHeadOptions.put("device", "remote_controlboard");
-  	RobotHeadOptions.put("local",  getName("/local_controlboard"));
-  	RobotHeadOptions.put("remote", "/"+robot+"/head");
+	if (movements) {
+
+		yarp::os::Property RobotHeadOptions;
+		RobotHeadOptions.put("device", "remote_controlboard");
+  		RobotHeadOptions.put("local",  getName("/local_controlboard"));
+  		RobotHeadOptions.put("remote", "/"+robot+"/head");
 	
-	robotHead = new yarp::dev::PolyDriver(RobotHeadOptions);
+		robotHead = new yarp::dev::PolyDriver(RobotHeadOptions);
 
-	if (!robotHead->isValid()) {
-		yInfo("Cannot Connect to Robot Head!");
-		return false;
-	}
+		if (!robotHead->isValid()) {
+			yInfo("Cannot Connect to Robot Head!");
+			return false;
+		}
 
-	robotHead->view(robotPos);
-	robotHead->view(robotVel);
-	robotHead->view(robotEnc);
+		robotHead->view(robotPos);
+		robotHead->view(robotVel);
+		robotHead->view(robotEnc);
 
-	if ( robotPos==NULL || robotVel==NULL || robotEnc==NULL ) {
-		yInfo("Cannot get Interface to Robot Head!");
-		robotHead->close();
-		return false;
-	}
+		if ( robotPos==NULL || robotVel==NULL || robotEnc==NULL ) {
+			yInfo("Cannot get Interface to Robot Head!");
+			robotHead->close();
+			return false;
+		}
 
-
-	//-- Resize the axes.
-	int numJoints = 0;
-	robotPos->getAxes(&numJoints);
+		//-- Resize the axes.
+		int numJoints = 0;
+		robotPos->getAxes(&numJoints);
 	
-	Encoder.resize(numJoints);
-	Position.resize(numJoints);
-	Speed.resize(numJoints);
+		Encoder.resize(numJoints);
+		Position.resize(numJoints);
+		Speed.resize(numJoints);
 
+		//-- Set the Speed of the motors.
+		for (size_t idx = 0; idx < Speed.length(); idx++) {
+			Speed[idx] = motorSpeed;
+		}
 
-	//-- Set the Speed of the motors.
-	for (size_t idx = 0; idx < Speed.length(); idx++) {
-		Speed[idx] = motorSpeed;
+		robotPos->setRefSpeeds(Speed.data());
+
+		//-- Set the initial positions to be the current encoder readings.
+		robotEnc->getEncoders(Position.data());
+		robotEnc->getEncoders(Encoder.data());
+	} else {
+		yInfo("Robot Movements Disabled.");
 	}
-
-	robotPos->setRefSpeeds(Speed.data());
-
-
-	//-- Set the initial positions to be the current encoder readings.
-	robotEnc->getEncoders(Position.data());
-	robotEnc->getEncoders(Encoder.data());
 	
 
 	/* ===========================================================================
@@ -149,11 +155,11 @@ bool AudioStreamerPeriodicThread::configure(yarp::os::ResourceFinder &rf) {
 	/* ===========================================================================
 	 *  Initialize time counters to zero.
 	 * =========================================================================== */
-	totalDelay        = 0.0;
-	totalReading      = 0.0;
-	totalProcessing   = 0.0;
-	totalTransmission = 0.0;
-	totalTime         = 0.0;
+	totalDelay        = 0.0; timeDelay        = 0.0; 
+	totalReading      = 0.0; timeReading      = 0.0;
+	totalProcessing   = 0.0; timeProcessing   = 0.0;
+	totalTransmission = 0.0; timeTransmission = 0.0;
+	totalTime         = 0.0; timeTotal        = 0.0;
 	totalIterations   = 0;
 
 
@@ -165,13 +171,22 @@ bool AudioStreamerPeriodicThread::configure(yarp::os::ResourceFinder &rf) {
 	yInfo( "\t ============================================ "                );
 	yInfo( "\t Index of Pan Joint               : %d",       panAngle        );
 	yInfo( "\t Number of Microphones            : %d",       numMics         );
+	if (movements) {
+		yInfo( "\t Minimum Degree Position          : %.2f", minDegree       );
+		yInfo( "\t Maximum Degree Position          : %.2f", maxDegree       );
+		yInfo( "\t Motor Speed                      : %.2f", motorSpeed      );
+	}
+	yInfo( " " );
+	yInfo( "\t                 [Experiment]                 "                                   );
+	yInfo( "\t ============================================ "                                   );
+	yInfo( "\t Movements                        : %s",       movements ? "ENABLED" : "DISABLED" );
 	yInfo( " " );
 	yInfo( "\t                  [SAMPLING]                  "                );
 	yInfo( "\t ============================================ "                );
 	yInfo( "\t Sampling Rate                    : %d Hz",    samplingRate    );
 	yInfo( "\t Number Samples per Frame         : %d",       numFrameSamples );
 	yInfo( " " );
-	
+
 	return true;
 }
 
@@ -266,37 +281,41 @@ bool AudioStreamerPeriodicThread::processing() {
 
 void AudioStreamerPeriodicThread::moveRobotHead(const double target, std::string& reply) {
 
-	if (target > maxDegree) {
-		reply += ("Max Position set to " + std::to_string(maxDegree) + "!");
-		return;
-	} else if (target < minDegree) {
-		reply += ("Min Position set to " + std::to_string(minDegree) + "!");
-		return;
-	}
-
-	//-- Pause audio streaming.
-	robotSound->stopRecording();
-	stream = false;
-
-	//-- Begin moving the robot to the target.
-	robotPos->positionMove(panAngle, target);
-
-	//-- Wait for the encoder to get close enough to the target position.
-	while (true) {
-
-		//-- Get information on the encoders position
-		robotEnc->getEncoders(Encoder.data());
-
-		//-- If the encoder position is close enough, break.
-		if (std::abs(target - Encoder[panAngle]) < 0.70) {
-			break;
+	if (movements) {
+		if (target > maxDegree) {
+			reply += ("Max Position set to " + std::to_string(maxDegree) + "!");
+			return;
+		} else if (target < minDegree) {
+			reply += ("Min Position set to " + std::to_string(minDegree) + "!");
+			return;
 		}
-	}
 
-	//-- Continue streaming audio.
-	robotSound->startRecording();
-	stream = true;
-}
+		//-- Pause audio streaming.
+		robotSound->stopRecording();
+		stream = false;
+
+		//-- Begin moving the robot to the target.
+		robotPos->positionMove(panAngle, target);
+
+		//-- Wait for the encoder to get close enough to the target position.
+		while (true) {
+
+			//-- Get information on the encoders position
+			robotEnc->getEncoders(Encoder.data());
+
+			//-- If the encoder position is close enough, break.
+			if (std::abs(target - Encoder[panAngle]) < 0.70) {
+				break;
+			}
+		}
+
+		//-- Continue streaming audio.
+		robotSound->startRecording();
+		stream = true;
+	} else {
+		reply += "Movements are disabled for current experiment!";
+	}
+}	
 
 
 void AudioStreamerPeriodicThread::publishOutPorts() {

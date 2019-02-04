@@ -19,18 +19,19 @@
 */
 
 /* ===========================================================================
- * @file  audioPreprocessorPeriodicThread.h
- * @brief Definition of a periodic thread that receives raw audio data 
- *          from an input port and applies various signal processing to it.
+ * @file  audioRunnerPeriodicThread.h
+ * @brief Definition of a periodic thread that sends commands to audio player
+ *          and saves audio recieved from the streamer.
  * =========================================================================== */
 
-#ifndef _AUDIO_PREPROCESSOR_PERIODICTHREAD_H_
-#define _AUDIO_PREPROCESSOR_PERIODICTHREAD_H_
+#ifndef _AUDIO_RUNNER_PERIODICTHREAD_H_
+#define _AUDIO_RUNNER_PERIODICTHREAD_H_
 
 #include <iostream>
 #include <fstream>
 #include <cstring>
 #include <time.h>
+#include <vector>
 
 #include <yarp/math/Math.h>
 #include <yarp/sig/all.h>
@@ -39,25 +40,9 @@
 #include <yarp/os/PeriodicThread.h>
 #include <yarp/os/Log.h>
 
-#ifdef WITH_OMP
-#include <omp.h>
-#endif
-
 #include <iCub/util/AudioUtil.h>
-#include <iCub/filters/butterworth.h>
 
-#include <iCub/gammatoneFilterBank.h>
-#include <iCub/interauralCues.h>
-#include <iCub/hilbertTransform.h>
-
-typedef yarp::sig::Matrix                           yMatrix;
-typedef yarp::sig::ImageOf< yarp::sig::PixelFloat > yImageOfFloat;
-
-typedef yarp::os::BufferedPort< yarp::sig::Sound  > ySoundBuffer;
-typedef yarp::os::BufferedPort< yMatrix           > yMatrixBuffer;
-typedef yarp::os::BufferedPort< yImageOfFloat     > yImageOfFloatBuffer;
-
-class AudioPreprocessorPeriodicThread : public yarp::os::PeriodicThread {
+class AudioRunnerPeriodicThread : public yarp::os::PeriodicThread {
 
   private:
 
@@ -69,8 +54,6 @@ class AudioPreprocessorPeriodicThread : public yarp::os::PeriodicThread {
 	std::string inputPortName;  //-- Name of input port for incoming events, typically from aexGrabber.
 
 	yarp::os::Stamp timeStamp;  //-- Time stamp updated by yarp network.
-
-	double headOffset;          //-- Head angle of the robot.
 
 	double startTime;           //-- Used for keeping time and reporting temporal
     double stopTime;            //-- events to the user via command line.
@@ -86,93 +69,26 @@ class AudioPreprocessorPeriodicThread : public yarp::os::PeriodicThread {
 	/* ===========================================================================
 	 *  Yarp Ports for Sending and Receiving Data from this Periodic Thread.
 	 * =========================================================================== */
-	ySoundBuffer  inRawAudioPort;
-	yMatrixBuffer outGammatoneFilteredAudioPort;
-	yMatrixBuffer outGammatoneFilteredPowerPort;
-	yMatrixBuffer outBeamformedAudioPort;
-	yMatrixBuffer outBeamformedRmsAudioPort;
-	yMatrixBuffer outBeamformedRmsPowerPort;
-	yMatrixBuffer outAllocentricAudioPort;
-	yMatrixBuffer outHilbertEnvelopePort;
-	yMatrixBuffer outBandPassedEnvelopePort;
-	yMatrixBuffer outBandPassedRmsEnvelopePort;
-	yMatrixBuffer outAllocentricEnvelopePort;
-
-	/* ===========================================================================
-	 *  Yarp Matrices used for Modules Computation. 
-	 *    Objects passed around to encapsulated objects.
-	 * =========================================================================== */
-	yarp::sig::Sound* inputSound;
-	
-	yMatrix RawAudioMatrix;
-	yMatrix GammatoneFilteredAudioMatrix;
-	yMatrix GammatoneFilteredPowerMatrix;
-	yMatrix BeamformedAudioMatrix;
-	yMatrix BeamformedDownSampAudioMatrix;
-	yMatrix BeamformedRmsAudioMatrix;
-	yMatrix BeamformedRmsPowerMatrix;
-	yMatrix AllocentricAudioMatrix;
-	yMatrix HilbertEnvelopeMatrix;
-	yMatrix BandPassedEnvelopeMatrix;
-	yMatrix BandPassedRmsEnvelopeMatrix;
-	yMatrix AllocentricEnvelopeMatrix;
-	
-	
-	/* ===========================================================================
-	 *  Temporary Head Angle.
-	 * =========================================================================== */
-	yarp::os::Bottle* headAngleBottle;
-	yarp::os::BufferedPort< yarp::os::Bottle > inHeadAnglePort;
-
-
-	/* ===========================================================================
-	 *  Encapsulated objects to perform processing.
-	 * =========================================================================== */
-	GammatoneFilterBank*  gammatoneFilterBank;
-	InterauralCues*       interauralCues;
-	HilbertTransform*     hilbertTransform;
-	Filters::Butterworth* butterworthFilter;
+	yarp::os::BufferedPort< yarp::os::Bottle > outPlayerCommandsPort;
+	yarp::os::BufferedPort< yarp::os::Bottle > inBroadcastPort;
+	yarp::os::BufferedPort< yarp::sig::Sound > inRawAudioPort;
 	
 
 	/* ===========================================================================
 	 *  Variables received from the resource finder.
 	 * =========================================================================== */
-	int    panAngle;
-	int    numMics;
-	double micDistance;
-
-	double speedOfSound;
-	int    samplingRate;
-	int    numFrameSamples;
-
-	int    numBands;
-	double lowCf;
-	double highCf;
-	bool   halfRec;
-	bool   erbSpaced;
-	bool   exitEarly;
-	double bandPassFreq;
-	double bandPassWidth;
-	int    angleRes;
-	int    downSampVis;
-	int    downSampEnv;
-	int    numOmpThreads;
+	int         numMics;
+	int         beginTrial;
+	int         endTrial;
+	std::string filePath;
+	int         currentTrial;
+	int         numFrameSamples;
 
 	/* ===========================================================================
-	 *  Derive variables from resource finders variables.
+	 *  Container for buffering.
 	 * =========================================================================== */
-	int numBeamsPerHemifield;
-	int numBeams;
-    int numFrontFieldAngles;
-    int numFullFieldAngles;
-	int numFrameDownSamples;
-
-	/* ===========================================================================
-	 *  Constant variables.
-	 * =========================================================================== */
-	const double _norm       = pow(2,15);     //-- Used to convert received int to double.
-	const double _pi         = 2 * acos(0.0); //-- High precision pi.
-	const int    _baseAngles = 180;           //-- Base number of angles in front field.
+	yarp::sig::Sound* inputSound;
+	std::vector< yarp::sig::Sound > AudioBuffer;
 
 
   public:
@@ -180,7 +96,7 @@ class AudioPreprocessorPeriodicThread : public yarp::os::PeriodicThread {
 	/* ===========================================================================
 	 *  Default Constructor.
 	 * =========================================================================== */
-	AudioPreprocessorPeriodicThread();
+	AudioRunnerPeriodicThread();
 
 
 	/* ===========================================================================
@@ -189,13 +105,13 @@ class AudioPreprocessorPeriodicThread : public yarp::os::PeriodicThread {
 	 * @param robotname  : Name of the robot.
 	 * @param configFile : Path to the .ini configuration file.
 	 * =========================================================================== */
-	AudioPreprocessorPeriodicThread(std::string robotname, std::string configFile);
+	AudioRunnerPeriodicThread(std::string robotname, std::string configFile);
 
 
 	/* ===========================================================================
 	 *  Destructor.
 	 * =========================================================================== */
-	~AudioPreprocessorPeriodicThread();
+	~AudioRunnerPeriodicThread();
 
 
 	/* ===========================================================================
@@ -259,11 +175,13 @@ class AudioPreprocessorPeriodicThread : public yarp::os::PeriodicThread {
 
 
   private:
-	
+
 	/* ===========================================================================
-	 *  Write data to out going ports if something is connected.
+	 *  Method for saving the internal buffer of audio to a file.
+	 * 
+	 * @param filename : the name of the file for the audio.
 	 * =========================================================================== */
-	void publishOutPorts();
+	void saveTrial(const std::string filename);
 
 
 	/* ===========================================================================
@@ -272,6 +190,6 @@ class AudioPreprocessorPeriodicThread : public yarp::os::PeriodicThread {
 	void endOfProcessingStats();
 };
 
-#endif  //_AUDIO_PREPROCESSOR_PERIODICTHREAD_H_
+#endif  //_AUDIO_BAYESIAN_MAP_PERIODICTHREAD_H_
 
 //----- end-of-file --- ( next line intentionally left blank ) ------------------
