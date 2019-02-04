@@ -31,6 +31,7 @@ int AudioUtil::myRound(const double a) {
     return (a - floorValue <= 0.5) ? floorValue : ceilValue;
 }
 
+
 std::string AudioUtil::expandEnvironmentVariables(const std::string filename) {
 
     if( filename.find( "${" ) == std::string::npos ) return filename;
@@ -50,6 +51,13 @@ std::string AudioUtil::expandEnvironmentVariables(const std::string filename) {
 
     return AudioUtil::expandEnvironmentVariables( pre + value + post );
 }
+
+
+bool AudioUtil::makeDirectory(const std::string path) {
+    const int dir_err = std::system(("mkdir -p " + path).c_str());
+    return (dir_err == -1) ? false : true;
+}
+
 
 double AudioUtil::myMod_double(const double a, const double b) { 
     return ( ( a ) - ( b ) * floor ( ( a ) / ( b ) ) ); 

@@ -55,7 +55,17 @@ namespace AudioUtil {
     void downSampleMatrix(const yMatrix& source, yMatrix& target, const size_t downSamp);
 
 
+    /* ================================================================
+     *  Take a string with environment variables and return the 
+     *   expanded path.
+     * ================================================================ */
     std::string expandEnvironmentVariables(const std::string filename);
+
+
+    /* ================================================================
+     *  Call a system function for making directories. Returns sucess.
+     * ================================================================ */
+    bool makeDirectory(const std::string path);
 
 
     /* ================================================================
@@ -109,6 +119,9 @@ namespace AudioUtil {
     void RootMeanSquareMatrix(const yMatrix& source, yMatrix& target, const size_t x, const size_t y);
 
 
+    /* ================================================================
+     *  Convert a yarp sound object into a yarp matrix.
+     * ================================================================ */
     void SoundToMatrix(const yarp::sig::Sound* source, yMatrix& target);
 }
 

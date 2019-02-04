@@ -74,8 +74,7 @@ bool AudioRunnerPeriodicThread::configure(yarp::os::ResourceFinder &rf) {
 	filePath = AudioUtil::expandEnvironmentVariables(filePath);
 
 	//-- Create this directory if it does not exist.
-	const int dir_err = std::system(("mkdir -p " + filePath).c_str());
-	if (dir_err == -1) {
+	if (!AudioUtil::makeDirectory(filePath)) {
 		yInfo("Could not create directory %s -- Check Permissions?", filePath.c_str());
 		return false;
 	}
