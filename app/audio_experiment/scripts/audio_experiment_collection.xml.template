@@ -19,7 +19,7 @@
 
     <module>
         <name> audioPlayer.py </name>
-        <parameters> --special --csv filename.csv </parameters>
+        <parameters> --special --csv experiment_01.csv </parameters>
         <node> icub-mac </node>
     </module>
     

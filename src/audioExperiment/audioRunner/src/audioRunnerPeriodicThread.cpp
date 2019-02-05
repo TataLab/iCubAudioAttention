@@ -258,7 +258,7 @@ bool AudioRunnerPeriodicThread::processing() {
 	//-- Give the filename information of the trial.
 	std::string filename = filePath + 
 		"yarpSound_" + 
-		AudioUtil::leadingZeros(currentTrial, 3) + "_" + 
+		AudioUtil::leadingZeros(currentTrial, 4) + "_" + 
 		std::to_string(numFrameSamples)          + "_" + 
 		std::to_string(numMics)                  + "_" +
 		std::to_string(AudioBuffer.size())       + ".data";

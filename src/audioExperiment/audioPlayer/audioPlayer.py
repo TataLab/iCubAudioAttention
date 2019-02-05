@@ -16,11 +16,11 @@ yarp.Network.init()
 
 def get_args():
     parser = argparse.ArgumentParser(description='player')
-    parser.add_argument('-n', '--name',    default="/audioPlayer",             help='Name for the module.                          (default: {})'.format("audioPlayer"))
-    parser.add_argument('-r', '--rate',    default=48000, type=int,            help='Sampling rate.                                (default: {})'.format(48000))
-    parser.add_argument('-c', '--chan',    default=2,     type=int,            help='Number of Audio Channels in Array.            (default: {})'.format(2))
-    parser.add_argument('-s', '--special', default=False, action='store_true', help='Use special setting setting for our set up.   (default: {})'.format(False))
-
+    parser.add_argument('-n', '--name',    default="/audioPlayer",              help='Name for the module.                          (default: {})'.format("audioPlayer"))
+    parser.add_argument('-r', '--rate',    default=48000,  type=int,            help='Sampling rate.                                (default: {})'.format(48000))
+    parser.add_argument('-c', '--chan',    default=2,      type=int,            help='Number of Audio Channels in Array.            (default: {})'.format(2))
+    parser.add_argument('-s', '--special', default=False,  action='store_true', help='Use special setting setting for our set up.   (default: {})'.format(False))
+    parser.add_argument('-v', '--csv',     default='None',                      help='CSV that contains trail information.')
     args = parser.parse_args()
     return args
 
@@ -49,6 +49,7 @@ class audioPlayer(object):
             self.numChannels  = args.chan
             self.speakerMap   = list( range(args.chan) )
 
+
         # For paFloat32 sample values must be in range [-1.0, 1.0]
         self.audioDevice = pyaudio.PyAudio()
         self.audioStream = self.audioDevice.open (
@@ -59,10 +60,15 @@ class audioPlayer(object):
         )       
 
         # Read in the CSV containing trial information.
-        #reader = csv.reader(open(csv_filename, "rb"), delimiter=",")
-        #data   = list(reader)
-        #print(data)
-
+        csv_filename = args.csv
+        if csv_filename == 'NONE':
+            print("No CSV Provided, continuing without.")
+        elif not csv_filename.endswith('.csv'):
+            print("{} is not a valid CSV, continuing without.".format(csv_filename))
+        else:
+            reader = csv.reader(open(csv_filename, "r"), delimiter=",")
+            self.data = list(reader)
+            
 
     def run(self):
 
@@ -166,11 +172,24 @@ class audioPlayer(object):
     def trial(self, num):
         print("Begin Trial {}!".format(num))
 
-        time.sleep(5)
+        currentTrial = self.data[num]
 
-        return
+        play_ch = []
+        play_fn = []
 
-    
+        source = self.data[2:]
+
+        for idx in range(len(source)):
+            if source[idx] == 'NONE':
+                continue
+            
+            play_ch.append(idx)
+            play_fn.append(source[idx])
+
+        self.play(play_ch, play_fn)
+
+
+
     def play(self, channels, filename):
         print("Begin Playing {} on channel {}".format(filename, channels))
 
@@ -212,12 +231,14 @@ class audioPlayer(object):
         return True, ""
 
 
+
     def open_audio(self, filename):
         data, rate = sf.read(filename)
         if rate != self.samplingRate:
             data = librosa.resample(data, rate, self.samplingRate)
         
         return data, data.shape[0]
+
 
 
     def cleanup(self):

@@ -88,7 +88,7 @@ class audioRunner(object):
                 target_name = self.save_name + target_name.replace(".data", ".npy")
                 target = os.path.join(self.target_dir, target_name)
 
-                print("Processing {:03d} : {}  ==>  {}".format(count, name, target_name), end="   ", flush=True)
+                print("Processing {:04d} : {}  ==>  {}".format(count, name, target_name), end="   ", flush=True)
                 
                 # Break into left and right channel for easier slicing.
                 RawData   = np.loadtxt(source, dtype=np.int)
