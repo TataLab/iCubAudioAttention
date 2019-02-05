@@ -63,6 +63,12 @@ namespace AudioUtil {
 
 
     /* ================================================================
+     *  Convert a number to a string prefixed by some num leading zeros.
+     * ================================================================ */
+    std::string leadingZeros(const int value, const unsigned int leading);
+
+
+    /* ================================================================
      *  Call a system function for making directories. Returns sucess.
      * ================================================================ */
     bool makeDirectory(const std::string path);

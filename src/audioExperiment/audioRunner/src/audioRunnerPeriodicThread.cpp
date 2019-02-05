@@ -254,8 +254,14 @@ bool AudioRunnerPeriodicThread::processing() {
 			break;
 		}
 	}
-
-	std::string filename = filePath + "yarpSound_" + std::to_string(numFrameSamples) + "_" + std::to_string(currentTrial) + ".data";
+	
+	//-- Give the filename information of the trial.
+	std::string filename = filePath + 
+		"yarpSound_" + 
+		AudioUtil::leadingZeros(currentTrial, 3) + "_" + 
+		std::to_string(numFrameSamples)          + "_" + 
+		std::to_string(numMics)                  + "_" +
+		std::to_string(AudioBuffer.size())       + ".data";
 
 	//-- Save the buffer to a file.
 	saveTrial(filename);
@@ -276,13 +282,12 @@ void AudioRunnerPeriodicThread::saveTrial(const std::string filename) {
 
 	size_t numFrames = AudioBuffer.size();
 
-	for (size_t frame = 0; frame < numFrames; frame++) {
 
-		for (int mic = 0; mic < numMics; mic++) {
+	for (int mic = 0; mic < numMics; mic++) {
+		for (size_t frame = 0; frame < numFrames; frame++) {
 			for (int sample = 0; sample < numFrameSamples; sample++) {
-				if (sample) writer << " ";
-				writer << AudioBuffer[frame].get(sample, mic);
-			} writer << "\n";
+				writer << AudioBuffer[frame].get(sample, mic) << " ";
+			}
 		} writer << "\n";
 	}
 

@@ -53,6 +53,11 @@ std::string AudioUtil::expandEnvironmentVariables(const std::string filename) {
 }
 
 
+std::string AudioUtil::leadingZeros(const int value, const unsigned int leading) {
+  return std::to_string(value*0.000001).substr(8-leading);
+}
+
+
 bool AudioUtil::makeDirectory(const std::string path) {
     const int dir_err = std::system(("mkdir -p " + path).c_str());
     return (dir_err == -1) ? false : true;
