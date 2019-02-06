@@ -12,12 +12,13 @@ yarp.Network.init()
 
 def get_args():
     parser = argparse.ArgumentParser(description='runner')
-    parser.add_argument('-n', '--name',  default='/audioRunner',           help='Name for the module.                       (default: {})'.format('/audioRunner'))
-    parser.add_argument('-r', '--root',  default='CODE',                   help='Environmental variable to datas root.      (default: {})'.format('CODE'))
-    parser.add_argument('-d', '--data',  default='audio_experiment_16384', help='Which data folder to stream from.          (default: {})'.format('audio_experiment_16384'))
-    parser.add_argument('-s', '--save',  default='env',                    help='Folder to save processed matrix to.        (default: {})'.format('env_16384'))
-    parser.add_argument('-f', '--frame', default=16384, type=int,          help='Length of frames to stream.                (default: {})'.format(16384))
-    parser.add_argument('-R', '--rate',  default=48000, type=int,          help='Sampling rate audio was recorded at        (default: {})'.format(48000))
+    parser.add_argument('-n', '--name',  default='/audioRunner',             help='Name for the module.                                  (default: {})'.format('/audioRunner'))
+    parser.add_argument('-r', '--root',  default='CODE',                     help='Environmental variable to datas root.                 (default: {})'.format('CODE'))
+    parser.add_argument('-d', '--data',  default='audio_experiment_16384',   help='Which data folder to stream from.                     (default: {})'.format('audio_experiment_16384'))
+    parser.add_argument('-s', '--save',  default='env',                      help='Folder to save processed matrix to.                   (default: {})'.format('env_16384'))
+    parser.add_argument('-f', '--frame', default=16384, type=int,            help='Length of frames to stream.                           (default: {})'.format(16384))
+    parser.add_argument('-R', '--rate',  default=48000, type=int,            help='Sampling rate audio was recorded at                   (default: {})'.format(48000))
+    parser.add_argument('-p', '--play',  default=False, action='store_true', help='Playback the audio instead for sending for processing (default: {})'.format(False))
     args = parser.parse_args()
     return args
 
@@ -27,15 +28,16 @@ class audioRunner(object):
     def __init__(self, args):
 
         # Get all vars from args.
-        self.port_name    = args.name
-        self.data_dir     = os.environ.get(args.root) + '/data/'
-        self.data         = args.data
-        self.save_name    = args.save
-        self.frameLength  = args.frame
-        self.samplingRate = args.rate
+        self.port_name     = args.name
+        self.data_dir      = os.environ.get(args.root) + '/data/'
+        self.data          = args.data
+        self.save_name     = args.save
+        self.frame_length  = args.frame
+        self.sampling_rate = args.rate
+        self.play_back     = args.play 
 
         self.source_dir = self.data_dir + self.data
-        self.target_dir = self.data_dir + "processed/" + self.save_name + "_" + str(self.frameLength)
+        self.target_dir = self.data_dir + "processed/" + self.save_name + "_" + str(self.frame_length)
 
         if not os.path.exists(self.target_dir):
             os.makedirs(self.target_dir)
@@ -57,7 +59,13 @@ class audioRunner(object):
 
         while True:
 
-            if self.audio_out_port.getOutputCount() and self.matrix_in_port.getInputCount() and self.bayes_out_port.getOutputCount():
+            if self.play_back:
+                yarp.Network.connect("/audioRunner/rawAudio:o", "/yarphear")
+                self.processing()
+                print("\n\nAll Data Streamed. Good Bye!\n")
+                exit()
+
+            elif self.audio_out_port.getOutputCount() and self.matrix_in_port.getInputCount() and self.bayes_out_port.getOutputCount():
                 self.processing()
                 print("\n\nAll Data Processed. Good Bye!\n")
                 exit()
@@ -92,8 +100,8 @@ class audioRunner(object):
                 
                 # Break into left and right channel for easier slicing.
                 RawData   = np.loadtxt(source, dtype=np.int)
-                L_RawData = RawData[0].reshape(-1, self.frameLength)
-                R_RawData = RawData[1].reshape(-1, self.frameLength)
+                L_RawData = RawData[0].reshape(-1, self.frame_length)
+                R_RawData = RawData[1].reshape(-1, self.frame_length)
                 numFrames = L_RawData.shape[0]
                 
                 # Keep time.
@@ -121,12 +129,16 @@ class audioRunner(object):
                     self.audio_out_port.setEnvelope(timeStamp)
                     self.audio_out_port.write(sound)
 
-                    # Wait for a response.
-                    yarp_matrix = yarp.Matrix()
-                    self.matrix_in_port.read(yarp_matrix) 
+                    if not self.play_back:
+                        # Wait for a response.
+                        yarp_matrix = yarp.Matrix()
+                        self.matrix_in_port.read(yarp_matrix) 
 
-                    # Append this matrix to the buffer.
-                    MatrixBuffer.append(self._matrix_process(yarp_matrix))
+                        # Append this matrix to the buffer.
+                        MatrixBuffer.append(self._matrix_process(yarp_matrix))
+                    else:
+                        # Sleep for a bit for playing back.
+                        time.sleep( (self.frame_length / self.sampling_rate) - 0.08 )
 
                     # Update the time stamp.
                     timeStamp.update()
@@ -147,7 +159,7 @@ class audioRunner(object):
 
         yarp_sound = yarp.Sound()
         yarp_sound.resize(numSamp, numChan)
-        yarp_sound.setFrequency(self.samplingRate)
+        yarp_sound.setFrequency(self.sampling_rate)
 
         for idx in range(numSamp):
             yarp_sound.set(int(Left_Ch[idx]), int(idx), 0)
