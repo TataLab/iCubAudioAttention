@@ -60,6 +60,7 @@ class audioPlayer(object):
         )       
 
         # Read in the CSV containing trial information.
+        self.data = None
         csv_filename = args.csv
         if csv_filename == 'NONE':
             print("No CSV Provided, continuing without.")
@@ -170,6 +171,10 @@ class audioPlayer(object):
 
 
     def trial(self, num):
+        if self.data == None:
+            print("No Trials in Data . . .")
+            return
+
         print("Begin Trial {}!".format(num))
 
         currentTrial = self.data[num]
@@ -177,7 +182,7 @@ class audioPlayer(object):
         play_ch = []
         play_fn = []
 
-        source = self.data[2:]
+        source = self.data[num][2:]
 
         for idx in range(len(source)):
             if source[idx] == 'NONE':
@@ -209,6 +214,7 @@ class audioPlayer(object):
             audioSamples = np.zeros((self.numChannels, maxNumSamps), dtype=np.float32)
 
             for ch, fn in zip(channels, filename):
+
                 if ch >= self.numChannels or ch < 0:
                     return False, "Channel {} is out of range [0:{}]".format(ch, len(self.speakerMap))
                 if not os.path.isfile(fn):
