@@ -116,8 +116,9 @@ class audioPlayer(object):
                     if trial_num == 0:
                         reply.addString("Please ensure the trial number is an integer, not string ``{}``".format(command.get(1).asString()))
                     else:
-                        self.trial(trial_num)
+                        targetAt = self.trial(trial_num)
                         reply.addString("Trial Complete")
+                        reply.addInt(targetAt)
             
             # Play an instance of 
             elif cmd == "play" or cmd == "--play" or cmd == "-p" or cmd == "-P":
@@ -182,7 +183,7 @@ class audioPlayer(object):
         play_ch = []
         play_fn = []
 
-        source = self.data[num][2:]
+        source = currentTrial[2:]
 
         for idx in range(len(source)):
             if source[idx] == 'NONE':
@@ -192,6 +193,8 @@ class audioPlayer(object):
             play_fn.append(source[idx])
 
         self.play(play_ch, play_fn)
+
+        return int(currentTrial[1])
 
 
 

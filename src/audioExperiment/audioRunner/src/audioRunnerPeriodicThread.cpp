@@ -238,6 +238,8 @@ bool AudioRunnerPeriodicThread::processing() {
 	command.addInt(currentTrial);
 	outPlayerCommandsPort.write();
 
+	int targetAt;
+
 	while (true) {
 		
 		//-- Read in Audio.
@@ -251,6 +253,7 @@ bool AudioRunnerPeriodicThread::processing() {
 		yarp::os::Bottle* reply = inBroadcastPort.read(false);
 		if (reply != NULL) {
 			//yInfo("%s", reply->toString().c_str());
+			targetAt = reply->get(1).asInt();
 			break;
 		}
 	}
@@ -259,6 +262,7 @@ bool AudioRunnerPeriodicThread::processing() {
 	std::string filename = filePath + 
 		"yarpSound_" + 
 		AudioUtil::leadingZeros(currentTrial, 4) + "_" + 
+		std::to_string(targetAt)                 + "_" + 
 		std::to_string(numFrameSamples)          + "_" + 
 		std::to_string(numMics)                  + "_" +
 		std::to_string(AudioBuffer.size())       + ".data";

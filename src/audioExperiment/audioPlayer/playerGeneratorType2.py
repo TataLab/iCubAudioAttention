@@ -54,6 +54,9 @@ numNoise    = len(noise_files)
 # Write the output to a csv.
 with open(args.save, 'w') as csvfile:
     writer = csv.writer(csvfile, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL)
+
+    header = [ 'Trial', 'Target' ] + [ str(idx) for idx in range(args.chan) ]
+    writer.writerow(header)
     
     rowCount = 1
     for channel in range(args.chan):
