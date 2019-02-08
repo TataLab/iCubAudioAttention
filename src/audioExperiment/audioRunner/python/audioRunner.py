@@ -12,13 +12,14 @@ yarp.Network.init()
 
 def get_args():
     parser = argparse.ArgumentParser(description='runner')
-    parser.add_argument('-n', '--name',  default='/audioRunner',             help='Name for the module.                                  (default: {})'.format('/audioRunner'))
-    parser.add_argument('-r', '--root',  default='CODE',                     help='Environmental variable to datas root.                 (default: {})'.format('CODE'))
-    parser.add_argument('-d', '--data',  default='audio_experiment_16384',   help='Which data folder to stream from.                     (default: {})'.format('audio_experiment_16384'))
-    parser.add_argument('-s', '--save',  default='env',                      help='Folder to save processed matrix to.                   (default: {})'.format('env_16384'))
-    parser.add_argument('-f', '--frame', default=16384, type=int,            help='Length of frames to stream.                           (default: {})'.format(16384))
-    parser.add_argument('-R', '--rate',  default=48000, type=int,            help='Sampling rate audio was recorded at                   (default: {})'.format(48000))
-    parser.add_argument('-p', '--play',  default=False, action='store_true', help='Playback the audio instead for sending for processing (default: {})'.format(False))
+    parser.add_argument('-n', '--name',  default='/audioRunner',                     help='Name for the module.                                  (default: {})'.format('/audioRunner'))
+    parser.add_argument('-r', '--root',  default='CODE',                             help='Environmental variable to datas root.                 (default: {})'.format('CODE'))
+    parser.add_argument('-d', '--datap', default='data/audio_experiment_01_16384',   help='Which data folder to stream from.                     (default: {})'.format('data/audio_experiment_01_16384'))
+    parser.add_argument('-s', '--savep', default='data/processed/ae_01_env_16384',   help='Folder to save processed matrix to.                   (default: {})'.format('data/processed/ae_01_env_16384'))
+    parser.add_argument('-S', '--saven', default='bayes_env',                        help='Name of the files to be saved.                        (default: {})'.format('bayes_env'))
+    parser.add_argument('-f', '--frame', default=16384, type=int,                    help='Length of frames to stream.                           (default: {})'.format(16384))
+    parser.add_argument('-R', '--rate',  default=48000, type=int,                    help='Sampling rate audio was recorded at                   (default: {})'.format(48000))
+    parser.add_argument('-p', '--play',  default=False, action='store_true',         help='Playback the audio instead for sending for processing (default: {})'.format(False))
     args = parser.parse_args()
     return args
 
@@ -29,15 +30,16 @@ class audioRunner(object):
 
         # Get all vars from args.
         self.port_name     = args.name
-        self.data_dir      = os.environ.get(args.root) + '/data/'
-        self.data          = args.data
-        self.save_name     = args.save
+        self.root_dir      = os.environ.get(args.root)
+        self.data_path     = args.datap
+        self.save_path     = args.savep
+        self.save_name     = args.saven
         self.frame_length  = args.frame
         self.sampling_rate = args.rate
         self.play_back     = args.play 
 
-        self.source_dir = self.data_dir + self.data
-        self.target_dir = self.data_dir + "processed/" + self.save_name + "_" + str(self.frame_length)
+        self.source_dir = os.path.join(self.root_dir, self.data_path)
+        self.target_dir = os.path.join(self.root_dir, self.save_path)
 
         if not os.path.exists(self.target_dir):
             os.makedirs(self.target_dir)
