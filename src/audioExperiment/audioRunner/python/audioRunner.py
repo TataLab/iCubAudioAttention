@@ -63,7 +63,7 @@ class audioRunner(object):
 
             if self.play_back:
                 yarp.Network.connect("/audioRunner/rawAudio:o", "/yarphear")
-                self.processing()
+                self.playback()
                 print("\n\nAll Data Streamed. Good Bye!\n")
                 exit()
 
@@ -131,16 +131,12 @@ class audioRunner(object):
                     self.audio_out_port.setEnvelope(timeStamp)
                     self.audio_out_port.write(sound)
 
-                    if not self.play_back:
-                        # Wait for a response.
-                        yarp_matrix = yarp.Matrix()
-                        self.matrix_in_port.read(yarp_matrix) 
+                    # Wait for a response.
+                    yarp_matrix = yarp.Matrix()
+                    self.matrix_in_port.read(yarp_matrix) 
 
-                        # Append this matrix to the buffer.
-                        MatrixBuffer.append(self._matrix_process(yarp_matrix))
-                    else:
-                        # Sleep for a bit for playing back.
-                        time.sleep( (self.frame_length / self.sampling_rate) - 0.08 )
+                    # Append this matrix to the buffer.
+                    MatrixBuffer.append(self._matrix_process(yarp_matrix))
 
                     # Update the time stamp.
                     timeStamp.update()
@@ -151,6 +147,60 @@ class audioRunner(object):
                 count  += 1
                 endTime = time.time()
                 print("\u0394 : {:.4f}".format(endTime-startTime))
+
+
+
+    def playback(self):
+
+        root  = list(os.walk(self.source_dir))[0][0]
+        files = sorted(list(os.walk(self.source_dir))[0][2])
+
+        print(files)
+
+        while True:
+            
+            idx = int(input("\nPick a Trial in range [{}, {}] : ".format(1, len(files))))
+            
+            if idx < 1 or idx > len(files):
+                print("Index {} out of range.".format(idx))
+                continue
+
+            source = files[idx-1]
+
+            print("Streaming {:20s} ".format(source), end="   ", flush=True)
+
+            source = os.path.join(root, source)
+                
+            # Break into left and right channel for easier slicing.
+            RawData   = np.loadtxt(source, dtype=np.int)
+            L_RawData = RawData[0].reshape(-1, self.frame_length)
+            R_RawData = RawData[1].reshape(-1, self.frame_length)
+            numFrames = L_RawData.shape[0]
+
+            # Keep time.
+            timeStamp = yarp.Stamp()
+            timeStamp.update()
+            startTime = time.time()
+
+            # Send each frame and get a response.
+            for idx in range(numFrames):
+
+                # Convert to yarp sound object.
+                sound = self._sound_process(L_RawData[idx], R_RawData[idx])
+
+                # Publish the audio on the network.
+                self.audio_out_port.setEnvelope(timeStamp)
+                self.audio_out_port.write(sound)
+
+                # Sleep for a bit for playing back.
+                time.sleep( (self.frame_length / self.sampling_rate) - 0.08 )
+
+                # Update the time stamp.
+                timeStamp.update()
+            
+            endTime = time.time()
+            print("\u0394 : {:.4f}".format(endTime-startTime))
+
 
 
     def _sound_process(self, Left_Ch, Right_Ch):
