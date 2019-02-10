@@ -1,6 +1,7 @@
 import numpy as np
 import numpy.random as npr
 import matplotlib.pyplot as plt
+import librosa
 import soundfile as sf
 
 import os
@@ -10,11 +11,12 @@ import argparse
 
 def get_args():
     parser = argparse.ArgumentParser(description='runner')
-    parser.add_argument('-r', '--root',   default='CODE',                         help='Environmental variable to datas root.                 (default: {})'.format('CODE'))
-    parser.add_argument('-d', '--data',   default='data/audio_source',            help='Path from root of the data.                           (default: {})'.format('data/audio_source'))
-    parser.add_argument('-t', '--target', default='noise_samples/pink_noise.wav', help='Source of the audio to scale to.                      (default: {})'.format('noise_samples/pink_noise.wav'))
-    parser.add_argument('-s', '--source', default='target_samples',               help='Directory of files to scale.                          (default: {})'.format('target_samples'))
-    parser.add_argument('-S', '--save',   default='output',                       help='Name of the local directory files will be saved in.   (default: {})'.format('output'))
+    parser.add_argument('-r', '--root',     default='CODE',                         help='Environmental variable to datas root.                 (default: {})'.format('CODE'))
+    parser.add_argument('-d', '--data',     default='data/audio_source',            help='Path from root of the data.                           (default: {})'.format('data/audio_source'))
+    parser.add_argument('-t', '--target',   default='noise_samples/pink_noise.wav', help='Source of the audio to scale to.                      (default: {})'.format('noise_samples/pink_noise.wav'))
+    parser.add_argument('-s', '--source',   default='target_samples',               help='Directory of files to scale.                          (default: {})'.format('target_samples'))
+    parser.add_argument('-S', '--save',     default='output',                       help='Name of the local directory files will be saved in.   (default: {})'.format('output'))
+    parser.add_argument('-R', '--resample', default=-1, type=int,                   help='Resample the audio.                                   (default: {})'.format(-1))
     args = parser.parse_args()
     return args
 
@@ -31,6 +33,9 @@ root = os.path.join(root, args.data)
 
 source_dir  = os.path.join(root, args.source)
 target_file = os.path.join(root, args.target)
+
+if not os.path.exists(args.save):
+    os.makedirs(args.save)
 
 if not os.path.exists(source_dir):
     print("Path to Source Directory does not exist! [{}]".format(source_dir))
@@ -68,11 +73,17 @@ for root, dirs, files in os.walk(source_dir):
         
         source, source_rate = sf.read(current_file)
 
+        resampled = False
+        if args.resample != -1 and args.resample != source_rate:
+            resampled = True
+            source = librosa.resample(source, source_rate, args.resample)
+            source_rate = args.resample
+
         source_rms = rms(source)
 
         source *= ( balance_rms / source_rms )
 
-        print("{}\t : old={:.6f} | new={:.6f}".format(file, source_rms, rms(source)))
+        print("{:20s}\t : old={:.6f} | new={:.6f} \t\t {}".format(file, source_rms, rms(source), "Resampled" if resampled else " "))
 
         sf.write(output_file, source, source_rate)
 
