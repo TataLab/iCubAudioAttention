@@ -203,6 +203,11 @@ bool AudioStreamerPeriodicThread::threadInit() {
 		return false;
 	}
 
+	if (!inHeadAnglePort.open(getName("/headAngle:i").c_str())) {
+		yError("Unable to open port for receiving the position for the head movements.");
+		return false;
+	}
+
 	stopTime = yarp::os::Time::now();
 	yInfo("Initialization of the processing thread correctly ended. Elapsed Time: %f.", stopTime - startTime);
 	startTime = stopTime;
@@ -215,10 +220,12 @@ void AudioStreamerPeriodicThread::threadRelease() {
 
 	//-- Stop all threads.
 	outRawAudioPort.interrupt();
+	inHeadAnglePort.interrupt();
 	robotSound->stopRecording();	
 
 	//-- Close the threads.
 	outRawAudioPort.close();
+	inHeadAnglePort.close();
 	robotHead->close();
 	robotMic->close();
 
@@ -270,6 +277,19 @@ void AudioStreamerPeriodicThread::run() {
 
 bool AudioStreamerPeriodicThread::processing() {
 
+	yarp::os::Bottle* command = inHeadAnglePort.read();
+	if (command != NULL) {
+		if (command->get(0).asString() == "move") {
+			
+			std::string response = "";
+			moveRobotHead(command->get(1).asDouble(), response);
+			if (response != "") { yInfo("%s", response.c_str()); }
+
+		} else {
+			yDebug("Got Command Besides ``move``?");
+		}
+	}
+
 	if(!robotSound->getSound(RawAudio)) {
 		yError("Failed to Capture Audio!?");
 		return false;
@@ -304,7 +324,7 @@ void AudioStreamerPeriodicThread::moveRobotHead(const double target, std::string
 			robotEnc->getEncoders(Encoder.data());
 
 			//-- If the encoder position is close enough, break.
-			if (std::abs(target - Encoder[panAngle]) < 0.70) {
+			if (std::abs(target - Encoder[panAngle]) < 0.50) {
 				break;
 			}
 		}
@@ -312,6 +332,7 @@ void AudioStreamerPeriodicThread::moveRobotHead(const double target, std::string
 		//-- Continue streaming audio.
 		robotSound->startRecording();
 		stream = true;
+
 	} else {
 		reply += "Movements are disabled for current experiment!";
 	}

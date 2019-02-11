@@ -69,6 +69,7 @@ class AudioStreamerPeriodicThread : public yarp::os::PeriodicThread {
 	 *  Yarp Ports for Sending and Receiving Data from this Periodic Thread.
 	 * =========================================================================== */
 	yarp::os::BufferedPort< yarp::sig::Sound > outRawAudioPort;
+	yarp::os::BufferedPort< yarp::os::Bottle > inHeadAnglePort;
 
 	yarp::sig::Sound  RawAudio;
 	yarp::sig::Vector Encoder;
@@ -192,6 +193,8 @@ class AudioStreamerPeriodicThread : public yarp::os::PeriodicThread {
 	bool processing();
 
 
+  private:
+
 	/* ===========================================================================
 	 *  Method for moving the robots head to some degree.
 	 * 
@@ -200,8 +203,6 @@ class AudioStreamerPeriodicThread : public yarp::os::PeriodicThread {
 	 * =========================================================================== */
 	void moveRobotHead(const double target, std::string& reply);
 
-
-  private:
 
 	/* ===========================================================================
 	 *  Write data to out going ports if something is connected.

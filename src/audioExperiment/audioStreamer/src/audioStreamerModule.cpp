@@ -110,24 +110,13 @@ bool AudioStreamerModule::close() {
 
 bool AudioStreamerModule::respond(const yarp::os::Bottle& command, yarp::os::Bottle& reply) {
 
-	std::string helpMessage = std::string(getName().c_str()) + " commands are: \n" + "help \n" + "move (double) \n" + "quit \n";
+	std::string helpMessage = std::string(getName().c_str()) + " commands are: \n" + "help \n" + "quit \n";
 	reply.clear(); 
 
 	if (command.get(0).asString() == "quit") {
 
 		reply.addString("quitting");
 		return false;
-
-	} else if (command.get(0).asString() == "move") {
-		
-		std::string response = "";
-		periodicThread->moveRobotHead(command.get(1).asDouble(), response);
-		
-		if (response == "") {
-			reply.addString("Moved Head!");
-		} else {
-			reply.addString(response);
-		}
 		
 	} else if (command.get(0).asString() == "help") {
 

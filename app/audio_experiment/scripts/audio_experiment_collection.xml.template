@@ -47,7 +47,7 @@
 
     <connection>
         <from> /audioRunner/headAngle:o   </from>
-        <to>   /audioStreamer             </to>
+        <to>   /audioStreamer/headAngle:i </to>
         <protocol> tcp </protocol>
     </connection>    
 
