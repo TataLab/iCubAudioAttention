@@ -8,13 +8,13 @@
     <module>
         <name> audioStreamer </name>
         <parameters> </parameters>
-        <node> icub </node>
+        <node> icub-mac </node>
     </module>
 
     <module>
         <name> audioRunner </name>
         <parameters> </parameters>
-        <node> dio </node>
+        <node> icub </node>
     </module>
 
     <module>
@@ -42,6 +42,18 @@
     <connection>
         <from> /audioRunner/commands:o   </from>
         <to>   /audioPlayer/rpc:i        </to>
+        <protocol> tcp </protocol>
+    </connection>    
+
+    <connection>
+        <from> /audioRunner/headAngle:o   </from>
+        <to>   /audioStreamer             </to>
+        <protocol> tcp </protocol>
+    </connection>    
+
+    <connection>
+        <from> /icub/head/state:o         </from>
+        <to>   /audioRunner/headAngle:i   </to>
         <protocol> tcp </protocol>
     </connection>    
 

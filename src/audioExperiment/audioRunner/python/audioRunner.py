@@ -14,8 +14,8 @@ def get_args():
     parser = argparse.ArgumentParser(description='runner')
     parser.add_argument('-n', '--name',  default='/audioRunner',                     help='Name for the module.                                  (default: {})'.format('/audioRunner'))
     parser.add_argument('-r', '--root',  default='CODE',                             help='Environmental variable to datas root.                 (default: {})'.format('CODE'))
-    parser.add_argument('-d', '--datap', default='data/audio_experiment_01_16384',   help='Which data folder to stream from.                     (default: {})'.format('data/audio_experiment_01_16384'))
-    parser.add_argument('-s', '--savep', default='data/processed/ae_01_env_16384',   help='Folder to save processed matrix to.                   (default: {})'.format('data/processed/ae_01_env_16384'))
+    parser.add_argument('-d', '--datap', default='data/audio_experiment_01a_16384',  help='Which data folder to stream from.                     (default: {})'.format('data/audio_experiment_01a_16384'))
+    parser.add_argument('-s', '--savep', default='data/processed/ae_01a_env_16384',  help='Folder to save processed matrix to.                   (default: {})'.format('data/processed/ae_01a_env_16384'))
     parser.add_argument('-S', '--saven', default='bayes_env',                        help='Name of the files to be saved.                        (default: {})'.format('bayes_env'))
     parser.add_argument('-f', '--frame', default=16384, type=int,                    help='Length of frames to stream.                           (default: {})'.format(16384))
     parser.add_argument('-R', '--rate',  default=48000, type=int,                    help='Sampling rate audio was recorded at                   (default: {})'.format(48000))
@@ -84,7 +84,7 @@ class audioRunner(object):
                 if not self.audio_out_port.getOutputCount(): msg += "audio output; "
                 if not self.matrix_in_port.getInputCount():  msg += "matrix input; "
                 if not self.bayes_out_port.getOutputCount(): msg += "bayes clear; "
-                if self.movements and not self.head_out_port.getOutputCount:
+                if self.movements and not self.head_out_port.getOutputCount():
                     msg += "head angle; "
 
                 msg += ". . ."
@@ -141,10 +141,7 @@ class audioRunner(object):
                 # Increase the number of position readings relative to the scale
                 RawPos = RawPos * scale
                 RawPos = np.asarray(RawPos, dtype=np.float32).reshape(-1,scale,order='F').reshape(-1,order='C')
-
-                print("\n\n", RawPos.shape, L_RawData.shape, R_RawData.shape)
-
-
+                
             # Keep time.
             timeStamp = yarp.Stamp()
             timeStamp.update()
@@ -174,7 +171,7 @@ class audioRunner(object):
                 if self.movements:
                     headPos = yarp.Bottle()
                     headPos.clear()
-                    headPos.addDouble(RawPos[idx])
+                    headPos.addDouble(float(RawPos[idx]))
                     self.head_out_port.write(headPos)
 
                 # Wait for a response.
@@ -193,71 +190,6 @@ class audioRunner(object):
             count  += 1
             endTime = time.time()
             print("\u0394 : {:.4f}".format(endTime-startTime))
-
-
-
-        """
-        for name in sorted(files):
-            
-            if not name.endswith('.data'):
-                continue
-
-            source = os.path.join(root, name)
-
-            target_name = name.replace("yarpSound_", "_")
-            target_name = self.save_name + target_name.replace(".data", ".npy")
-            target = os.path.join(self.target_dir, target_name)
-
-            print("Processing {:04d} : {}  ==>  {}".format(count, name, target_name), end="   ", flush=True)
-            
-            # Break into left and right channel for easier slicing.
-            RawData   = np.loadtxt(source, dtype=np.int)
-            L_RawData = RawData[0].reshape(-1, self.frame_length)
-            R_RawData = RawData[1].reshape(-1, self.frame_length)
-            numFrames = L_RawData.shape[0]
-            
-            # Keep time.
-            timeStamp = yarp.Stamp()
-            timeStamp.update()
-
-            # Clear the Bayesian Map.
-            command = yarp.Bottle()
-            command.clear()
-            command.addString("clear")
-            self.bayes_out_port.write(command)
-
-            # Buffer for returned matrices.
-            MatrixBuffer = []
-
-            startTime = time.time()
-
-            # Send each frame and get a response.
-            for idx in range(numFrames):
-
-                # Convert to yarp sound object.
-                sound = self._sound_process(L_RawData[idx], R_RawData[idx])
-
-                # Publish the audio on the network.
-                self.audio_out_port.setEnvelope(timeStamp)
-                self.audio_out_port.write(sound)
-
-                # Wait for a response.
-                yarp_matrix = yarp.Matrix()
-                self.matrix_in_port.read(yarp_matrix) 
-
-                # Append this matrix to the buffer.
-                MatrixBuffer.append(self._matrix_process(yarp_matrix))
-
-                # Update the time stamp.
-                timeStamp.update()
-
-            # Save the matrix out.
-            np.save(target, np.asarray(MatrixBuffer))
-
-            count  += 1
-            endTime = time.time()
-            print("\u0394 : {:.4f}".format(endTime-startTime))
-        """
 
 
 

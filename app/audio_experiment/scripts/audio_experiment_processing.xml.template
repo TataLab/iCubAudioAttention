@@ -51,4 +51,10 @@
         <protocol> tcp </protocol>
     </connection>
 
+    <connection>
+        <from> /audioRunner/headAngle:o       </from>
+        <to>   /audioPreprocessor/headAngle:i </to>
+        <protocol> tcp </protocol>
+    </connection>
+
 </application>

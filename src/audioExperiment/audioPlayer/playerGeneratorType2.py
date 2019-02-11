@@ -15,7 +15,7 @@ def get_args():
     parser.add_argument('-d', '--data',   default='data/audio_source',           help='Which data folder to stream from.           (default: {})'.format('data/audio_source'))
     parser.add_argument('-t', '--target', default='target_samples',              help='Target samples directory /male and /female. (default: {})'.format('target_samples'))
     parser.add_argument('-n', '--noise',  default='noise_samples',               help='Noise samples directory.                    (default: {})'.format('noise_samples'))
-    parser.add_argument('-s', '--save',   default='experiment_02.csv',           help='Folder to save processed matrix to.         (default: {})'.format('experiment_01.csv'))
+    parser.add_argument('-s', '--save',   default='experiment_02.csv',           help='Folder to save processed matrix to.         (default: {})'.format('experiment_02.csv'))
     parser.add_argument('-c', '--chan',   default=2,   type=int,                 help='Number of Channels to expect.               (default: {})'.format(2))
     parser.add_argument('-x', '--seed',   default=123, type=int,                 help='Seed for Numpy RNG.                         (default: {})'.format(123))
     args = parser.parse_args()
