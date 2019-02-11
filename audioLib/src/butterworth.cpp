@@ -238,7 +238,7 @@ void Butterworth::updateHighPassCoefficients(const double CenterFrequency) {
 void Butterworth::updateBandPassCoefficients(const double CenterFrequency) {
 
     //-- Compute the coeff for the given center frequency.
-    bp_bw =  q_scale * _pi;
+    bp_bw =  q_scale;
     bp_c  =  1.0 / tan( _pi * (bp_bw / samplingRate) );
     bp_d  =  2.0 * cos( 2.0 * _pi * (CenterFrequency / samplingRate) );
     bp_a0 =  1.0 / (bp_c + 1.0);
@@ -256,7 +256,7 @@ void Butterworth::updateBandPassCoefficients(const double CenterFrequency) {
 void Butterworth::updateBandNochCoefficients(const double CenterFrequency) {
 
     //-- Compute the coeff for the given center frequency.
-    bn_bw =  q_scale * _pi;
+    bn_bw =  q_scale;
     bn_c  =  tan( _pi * (bn_bw / samplingRate) );
     bn_d  =  2.0 * cos( 2.0 * _pi * (CenterFrequency / samplingRate) );
     bn_a0 =  1.0 / (1.0 + bn_c);
