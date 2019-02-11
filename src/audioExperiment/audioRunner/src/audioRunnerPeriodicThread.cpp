@@ -56,11 +56,18 @@ bool AudioRunnerPeriodicThread::configure(yarp::os::ResourceFinder &rf) {
 	 * =========================================================================== */
 	yInfo( "Loading Configuration File." );
 
-	numMics    = rf.findGroup("robotspec").check("numMics",  yarp::os::Value( 2),   "number of mics (int)"          ).asInt();
+	panAngle   = rf.findGroup("robotspec").check("panAngle",   yarp::os::Value( 2),    "index of pan joint (int)"                   ).asInt();
+	numMics    = rf.findGroup("robotspec").check("numMics",    yarp::os::Value( 2),    "number of mics (int)"                       ).asInt();
 
-	beginTrial = rf.findGroup("experiment").check("begin",   yarp::os::Value(1),    "first trial to begin  (int)"   ).asInt();
-	endTrial   = rf.findGroup("experiment").check("end",     yarp::os::Value(5),    "last trial to end     (int)"   ).asInt();
-	filePath   = rf.findGroup("experiment").check("saveTo",  yarp::os::Value("./"), "path for saving files (string)").asString();
+	beginTrial = rf.findGroup("experiment").check("begin",     yarp::os::Value(1),     "first trial to begin              (int)"    ).asInt();
+	endTrial   = rf.findGroup("experiment").check("end",       yarp::os::Value(5),     "last trial to end                 (int)"    ).asInt();
+	filePath   = rf.findGroup("experiment").check("saveTo",    yarp::os::Value("./"),  "path for saving files             (string)" ).asString();
+	movements  = rf.findGroup("experiment").check("movements", yarp::os::Value(false), "should movements be used          (bool)"   ).asBool();
+	trialLen   = rf.findGroup("experiment").check("trialLen",  yarp::os::Value(15.0),  "estimated length per trial        (double)" ).asDouble();
+	numMoves   = rf.findGroup("experiment").check("numMoves",  yarp::os::Value(5),     "number of times to move per trial (int)"    ).asInt();
+	startPos   = rf.findGroup("experiment").check("startPos",  yarp::os::Value(-30.0), "position to begin a trial         (double)" ).asDouble();
+	endPos     = rf.findGroup("experiment").check("endPos",    yarp::os::Value(30.0),  "position to end a trial           (double)" ).asDouble();
+
 
 	numFrameSamples = rf.findGroup("sampling").check("numFrameSamples", yarp::os::Value(4096), "number of frame samples received (int)").asInt();
 
@@ -69,6 +76,7 @@ bool AudioRunnerPeriodicThread::configure(yarp::os::ResourceFinder &rf) {
 
 	//-- Ensure the audio buffer is empty.
 	AudioBuffer.clear();
+	PositionBuffer.clear();
 
 	//-- Expand File path if it has environment variables.
 	filePath = AudioUtil::expandEnvironmentVariables(filePath);
@@ -79,6 +87,33 @@ bool AudioRunnerPeriodicThread::configure(yarp::os::ResourceFinder &rf) {
 		return false;
 	}
 
+	if (movements) {
+		
+		//-- Allocate Space for the .
+		HeadPositions.clear(); HeadPositions.resize(numMoves);
+		HeadTimes.clear();     HeadTimes.resize(numMoves);
+
+		double linspace_step, current_step;
+
+		//-- Linearly space the angles each head should go to.
+		linspace_step = ( endPos - startPos ) / ( numMoves - 1.0 );
+		current_step  =  startPos; 
+
+		for (int move = 0; move < numMoves; move++) {
+			HeadPositions[move] = current_step;
+			current_step += linspace_step;
+		}
+
+		//-- Linearly space the time for each angle position.
+		linspace_step = ( trialLen - 0.0 ) / ( numMoves );
+		current_step  =  0.0;
+
+		for (int move = 0; move < numMoves; move++) {
+			HeadTimes[move] = current_step;
+			current_step += linspace_step;
+		}
+
+	}
 
 	/* ===========================================================================
 	 *  Initialize time counters to zero.
@@ -97,6 +132,7 @@ bool AudioRunnerPeriodicThread::configure(yarp::os::ResourceFinder &rf) {
 	yInfo( " " );
 	yInfo( "\t               [ROBOT SPECIFIC]               "                );
 	yInfo( "\t ============================================ "                );
+	yInfo( "\t Index of Pan Joint               : %d",       panAngle        );
 	yInfo( "\t Number of Microphones            : %d",       numMics         );
 	yInfo( " " );
 	yInfo( "\t                 [Experiment]                 "                );
@@ -104,11 +140,33 @@ bool AudioRunnerPeriodicThread::configure(yarp::os::ResourceFinder &rf) {
 	yInfo( "\t Beginning Trial                  : %d",       beginTrial      );
 	yInfo( "\t Ending Trial                     : %d",       endTrial        );
 	yInfo( "\t Trial Data Directory             : %s",       filePath.c_str());
+	yInfo( "\t Robot Movements                  : %s",       movements ? "ENABLED" : "DISABLED");
+	if (movements) {
+	yInfo( "\t trialLen                         : %.3f",     trialLen        );
+	yInfo( "\t numMoves                         : %d",       numMoves        );
+	yInfo( "\t startPos                         : %.3f",     startPos        );
+	yInfo( "\t endPos                           : %.3f",     endPos          );
+	}
 	yInfo( " " );
 	yInfo( "\t                  [SAMPLING]                  "                );
 	yInfo( "\t ============================================ "                );
 	yInfo( "\t Number Samples per Frame         : %d",       numFrameSamples );
 	yInfo( " " );
+
+	if (movements) {
+		yInfo( " " );
+		yInfo( "\t               [MOVEMENT POLICY]              " );
+		yInfo( "\t  Move#     :     Position     :     Time     " );
+		yInfo( "\t ============================================ " );
+		for (int move = 0; move < numMoves; move++) {
+			yInfo( "\t %s         :     %.3f       :     %.3f Sec ", 
+				AudioUtil::leadingZeros(move, 2).c_str(), 
+				HeadPositions[move], 
+				HeadTimes[move] 
+			);
+		}
+		yInfo( " " );
+	}
 	
 	return true;
 }
@@ -136,6 +194,18 @@ bool AudioRunnerPeriodicThread::threadInit() {
 		return false;
 	}
 
+	if (movements) { 
+		if (!inHeadAnglePort.open(getName("/headAngle:i").c_str())) {
+			yError("Unable to open port for receiving head positions.");
+			return false;
+		}
+
+		if (!outHeadMovePort.open(getName("/headAngle:o").c_str())) {
+			yError("Unable to open port for sending head positions.");
+			return false;
+		}
+	}
+
 	stopTime = yarp::os::Time::now();
 	yInfo("Initialization of the processing thread correctly ended. Elapsed Time: %f.", stopTime - startTime);
 	startTime = stopTime;
@@ -150,11 +220,15 @@ void AudioRunnerPeriodicThread::threadRelease() {
 	outPlayerCommandsPort.interrupt();
 	inBroadcastPort.interrupt();
 	inRawAudioPort.interrupt();
+	inHeadAnglePort.interrupt();
+	outHeadMovePort.interrupt();
 
 	//-- Close the threads.
 	outPlayerCommandsPort.close();
 	inBroadcastPort.close();
 	inRawAudioPort.close();
+	inHeadAnglePort.close();
+	outHeadMovePort.close();
 
 	//-- Print thread stats.
 	endOfProcessingStats();	
@@ -181,7 +255,11 @@ void AudioRunnerPeriodicThread::setInputPortName(std::string InpPort) {
 void AudioRunnerPeriodicThread::run() {    
 
 	//-- Don't do any work until everything is connected.
-	if (outPlayerCommandsPort.getOutputCount() && inBroadcastPort.getInputCount() && inRawAudioPort.getInputCount()) {
+	if (outPlayerCommandsPort.getOutputCount()          && 
+		inBroadcastPort.getInputCount()                 && 
+		inRawAudioPort.getInputCount()                  && 
+		(!movements || inHeadAnglePort.getInputCount()) &&
+		(!movements || outHeadMovePort.getOutputCount())) {
 
 		AudioUtil::makeTimeStamp(totalDelay, timeDelay, startTime, stopTime);
 
@@ -202,12 +280,10 @@ void AudioRunnerPeriodicThread::run() {
 		if (!outPlayerCommandsPort.getOutputCount()) {
 			msg += "Player; ";
 		}
-		if (!inBroadcastPort.getInputCount()) {
-			msg += "Broadcast; ";
-		}
-		if (!inRawAudioPort.getInputCount()) {
-			msg += "Audio; ";
-		}
+		if (!inBroadcastPort.getInputCount())               { msg += "Broadcast; ";    }
+		if (!inRawAudioPort.getInputCount())                { msg += "Audio; ";        }
+		if (movements && !inHeadAnglePort.getInputCount())  { msg += "HeadAngle; ";    }
+		if (movements && !outHeadMovePort.getOutputCount()) { msg += "HeadPosition; "; }
 		msg += ". . .";
 		yInfo("%s", msg.c_str());
 	}
@@ -229,6 +305,23 @@ void AudioRunnerPeriodicThread::run() {
 
 bool AudioRunnerPeriodicThread::processing() {
 
+	if (movements) {
+		/* ===========================================================================
+		 *  Init the trial by sending the head to the starting position.
+		 * =========================================================================== */
+		currentMove = 0;
+		yarp::os::Bottle& head_command = outHeadMovePort.prepare();
+		head_command.clear();
+		head_command.addString("move");
+		head_command.addDouble(HeadPositions[currentMove]);
+		outHeadMovePort.write();
+
+		currentMove++;
+
+		//-- Sleep for one second.
+		usleep(1000000);
+	}
+
 	/* ===========================================================================
 	 *  Begin a trial by writing the trial number to the player.
 	 * =========================================================================== */
@@ -239,15 +332,34 @@ bool AudioRunnerPeriodicThread::processing() {
 	outPlayerCommandsPort.write();
 
 	int targetAt;
+	double trialTimeBegin = yarp::os::Time::now();
 
 	while (true) {
 		
+		//-- Move the head if time.
+		if (movements && currentMove < numMoves) {
+			if (trialTimeBegin + HeadTimes[currentMove] < yarp::os::Time::now()) {
+				yarp::os::Bottle& head_command = outHeadMovePort.prepare();
+				head_command.clear();
+				head_command.addString("move");
+				head_command.addDouble(HeadPositions[currentMove]);
+				outHeadMovePort.write();
+				currentMove++;
+			}
+		}
+
 		//-- Read in Audio.
 		inputSound = inRawAudioPort.read(true);
 		inRawAudioPort.getEnvelope(timeStamp);
 
 		//-- Push a copy of the sound into the buffer.
 		AudioBuffer.push_back(*inputSound);
+
+		//-- Read the Head Angle.
+		if (movements) {
+			inputAngles = inHeadAnglePort.read(true);
+			PositionBuffer.push_back(inputAngles->get(panAngle).asDouble());
+		}
 
 		//-- See if Trial has finished.
 		yarp::os::Bottle* reply = inBroadcastPort.read(false);
@@ -273,6 +385,22 @@ bool AudioRunnerPeriodicThread::processing() {
 	//-- Clear the buffer.
 	AudioBuffer.clear();
 
+	if (movements) {
+		filename = filePath + 
+			"yarpPan_" + 
+			AudioUtil::leadingZeros(currentTrial, 4) + "_" + 
+			std::to_string(targetAt)                 + "_" + 
+			std::to_string(numFrameSamples)          + "_" + 
+			std::to_string(numMics)                  + "_" +
+			std::to_string(PositionBuffer.size())    + ".data";
+
+		//-- Save the buffer to a file.
+		savePositions(filename);
+
+		//-- Clear the buffer.
+		PositionBuffer.clear();
+	}
+
 	//-- Increment to the next trial.
 	currentTrial++;
 
@@ -286,7 +414,6 @@ void AudioRunnerPeriodicThread::saveTrial(const std::string filename) {
 
 	size_t numFrames = AudioBuffer.size();
 
-
 	for (int mic = 0; mic < numMics; mic++) {
 		for (size_t frame = 0; frame < numFrames; frame++) {
 			for (int sample = 0; sample < numFrameSamples; sample++) {
@@ -296,6 +423,18 @@ void AudioRunnerPeriodicThread::saveTrial(const std::string filename) {
 	}
 
 	writer.close();
+}
+
+
+void AudioRunnerPeriodicThread::savePositions(const std::string filename) {
+
+	std::ofstream writer(filename);
+
+	size_t numPositions = PositionBuffer.size();
+
+	for (int pos = 0; pos < numPositions; pos++) {
+		writer << PositionBuffer[pos] << " ";
+	}
 }
 
 

@@ -30,6 +30,7 @@
 #include <iostream>
 #include <fstream>
 #include <cstring>
+#include <unistd.h>
 #include <time.h>
 #include <vector>
 
@@ -72,23 +73,37 @@ class AudioRunnerPeriodicThread : public yarp::os::PeriodicThread {
 	yarp::os::BufferedPort< yarp::os::Bottle > outPlayerCommandsPort;
 	yarp::os::BufferedPort< yarp::os::Bottle > inBroadcastPort;
 	yarp::os::BufferedPort< yarp::sig::Sound > inRawAudioPort;
+	yarp::os::BufferedPort< yarp::os::Bottle > inHeadAnglePort;
+	yarp::os::BufferedPort< yarp::os::Bottle > outHeadMovePort;
 	
 
 	/* ===========================================================================
 	 *  Variables received from the resource finder.
 	 * =========================================================================== */
+	int         panAngle;
 	int         numMics;
 	int         beginTrial;
 	int         endTrial;
 	std::string filePath;
+	bool        movements;
+	double      trialLen;
+	int         numMoves;
+	double      startPos;
+	double      endPos;	
 	int         currentTrial;
+	int         currentMove;
 	int         numFrameSamples;
+
 
 	/* ===========================================================================
 	 *  Container for buffering.
 	 * =========================================================================== */
 	yarp::sig::Sound* inputSound;
+	yarp::os::Bottle* inputAngles;
 	std::vector< yarp::sig::Sound > AudioBuffer;
+	std::vector< double           > PositionBuffer;
+	std::vector< double           > HeadPositions;
+	std::vector< double           > HeadTimes;
 
 
   public:
@@ -182,6 +197,14 @@ class AudioRunnerPeriodicThread : public yarp::os::PeriodicThread {
 	 * @param filename : the name of the file for the audio.
 	 * =========================================================================== */
 	void saveTrial(const std::string filename);
+
+
+	/* ===========================================================================
+	 *  Method for saving the internal buffer of pan positions to a file.
+	 * 
+	 * @param filename : the name of the file for the audio.
+	 * =========================================================================== */
+	void savePositions(const std::string filename);
 
 
 	/* ===========================================================================

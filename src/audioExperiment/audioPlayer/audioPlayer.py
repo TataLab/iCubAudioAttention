@@ -199,7 +199,9 @@ class audioPlayer(object):
 
 
     def play(self, channels, filename):
-        print("Begin Playing {} on channel {}".format(filename, channels))
+        print("Begin Playing . . . ")
+        for f, c in zip(filename, channels):
+            print("\t{} : {}".format(c, f))
 
         if channels == -1:
             if not os.path.isfile(filename):
@@ -228,7 +230,6 @@ class audioPlayer(object):
                 # Resize the audioSamples if we load a file that is longer.
                 if samps > maxNumSamps: 
                     resize_samples = np.zeros((self.numChannels, samps), dtype=np.float32)
-                    #resize_samples[:,:-(samps-maxNumSamps)] = audioSamples #TODO:REMOVE
                     resize_samples[:,:maxNumSamps] = audioSamples
                     audioSamples = resize_samples
                     maxNumSamps  = samps
