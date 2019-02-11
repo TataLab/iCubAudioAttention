@@ -156,13 +156,13 @@ bool AudioRunnerPeriodicThread::configure(yarp::os::ResourceFinder &rf) {
 	if (movements) {
 		yInfo( " " );
 		yInfo( "\t               [MOVEMENT POLICY]              " );
-		yInfo( "\t  Move#     :     Position     :     Time     " );
+		yInfo( "\t  Move#     :     Position      :    Time     " );
 		yInfo( "\t ============================================ " );
 		for (int move = 0; move < numMoves; move++) {
-			yInfo( "\t %s         :     %.3f       :     %.3f Sec ", 
-				AudioUtil::leadingZeros(move, 2).c_str(), 
-				HeadPositions[move], 
-				HeadTimes[move] 
+			yInfo( "\t   %s       :\t    %.2f \t:   %.2f s", 
+					AudioUtil::leadingZeros(move, 2).c_str(), 
+					HeadPositions[move], 
+					HeadTimes[move] 
 			);
 		}
 		yInfo( " " );
