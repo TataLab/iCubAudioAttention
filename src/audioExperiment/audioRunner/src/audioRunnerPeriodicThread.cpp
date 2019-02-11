@@ -291,6 +291,15 @@ void AudioRunnerPeriodicThread::run() {
 	//-- Stop this thread when finished.
 	if (currentTrial > endTrial) {
 
+		//-- Move the head back to home at the end of a trial.
+		if (movements) {
+			yarp::os::Bottle& head_command = outHeadMovePort.prepare();
+			head_command.clear();
+			head_command.addString("move");
+			head_command.addDouble(0.0);
+			outHeadMovePort.write();
+		}
+
 		yInfo("Completed All Trials . . . Good Bye!");
 
 		yarp::os::Bottle& command = outPlayerCommandsPort.prepare();
