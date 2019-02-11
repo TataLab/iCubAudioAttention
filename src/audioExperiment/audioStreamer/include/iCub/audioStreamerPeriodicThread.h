@@ -102,12 +102,6 @@ class AudioStreamerPeriodicThread : public yarp::os::PeriodicThread {
 	
 	int    samplingRate;
 	int    numFrameSamples;
-
-
-	/* ===========================================================================
-	 *  Derive variables from resource finders variables.
-	 * =========================================================================== */
-	bool stream;
 	
 
   public:

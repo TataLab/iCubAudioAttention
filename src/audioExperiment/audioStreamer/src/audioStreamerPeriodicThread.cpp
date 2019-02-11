@@ -150,7 +150,6 @@ bool AudioStreamerPeriodicThread::configure(yarp::os::ResourceFinder &rf) {
 		return false;
 	}
 
-	stream = true;
 
 	/* ===========================================================================
 	 *  Initialize time counters to zero.
@@ -253,40 +252,41 @@ void AudioStreamerPeriodicThread::setInputPortName(std::string InpPort) {
 
 void AudioStreamerPeriodicThread::run() {    
 
-	if (stream) {
-		AudioUtil::makeTimeStamp(totalDelay, timeDelay, startTime, stopTime);
+	AudioUtil::makeTimeStamp(totalDelay, timeDelay, startTime, stopTime);
 
-		//-- Main Loop.
-		result = processing();
+	//-- Main Loop.
+	result = processing();
 
-		AudioUtil::makeTimeStamp(totalProcessing, timeProcessing, startTime, stopTime);
+	AudioUtil::makeTimeStamp(totalProcessing, timeProcessing, startTime, stopTime);
 
-		//-- Write data to outgoing ports.
-		publishOutPorts();
+	//-- Write data to outgoing ports.
+	publishOutPorts();
 
-		AudioUtil::makeTimeStamp(totalTransmission, timeTransmission, startTime, stopTime);
+	AudioUtil::makeTimeStamp(totalTransmission, timeTransmission, startTime, stopTime);
 
-		//-- Give time stats to the user.
-		timeTotal  = timeDelay + timeReading + timeProcessing + timeTransmission;
-		totalTime += timeTotal;
-		totalIterations++;
-		yInfo("End of Loop %d, ts %d:  Delay  %f  |  Processing  %f  |  Transmission  %f  |  Total  %f  |", totalIterations, timeStamp.getCount(), timeDelay, timeProcessing, timeTransmission, timeTotal);
-	}
+	//-- Give time stats to the user.
+	timeTotal  = timeDelay + timeReading + timeProcessing + timeTransmission;
+	totalTime += timeTotal;
+	totalIterations++;
+	yInfo("End of Loop %d, ts %d:  Delay  %f  |  Processing  %f  |  Transmission  %f  |  Total  %f  |", totalIterations, timeStamp.getCount(), timeDelay, timeProcessing, timeTransmission, timeTotal);
+	
 }
 
 
 bool AudioStreamerPeriodicThread::processing() {
 
-	yarp::os::Bottle* command = inHeadAnglePort.read();
-	if (command != NULL) {
-		if (command->get(0).asString() == "move") {
-			
-			std::string response = "";
-			moveRobotHead(command->get(1).asDouble(), response);
-			if (response != "") { yInfo("%s", response.c_str()); }
+	if (movements) {
+		yarp::os::Bottle* command = inHeadAnglePort.read(false);
+		if (command != NULL) {
+			if (command->get(0).asString() == "move") {
 
-		} else {
-			yDebug("Got Command Besides ``move``?");
+				std::string response = "";
+				moveRobotHead(command->get(1).asDouble(), response);
+				if (response != "") { yInfo("%s", response.c_str()); }
+
+			} else {
+				yDebug("Got Command Besides ``move``?");
+			}
 		}
 	}
 
@@ -312,7 +312,6 @@ void AudioStreamerPeriodicThread::moveRobotHead(const double target, std::string
 
 		//-- Pause audio streaming.
 		robotSound->stopRecording();
-		stream = false;
 
 		//-- Begin moving the robot to the target.
 		robotPos->positionMove(panAngle, target);
@@ -324,18 +323,15 @@ void AudioStreamerPeriodicThread::moveRobotHead(const double target, std::string
 			robotEnc->getEncoders(Encoder.data());
 
 			//-- If the encoder position is close enough, break.
-			if (std::abs(target - Encoder[panAngle]) < 0.50) {
+			if (std::abs(target - Encoder[panAngle]) < 0.25) {
 				break;
 			}
 		}
 
 		//-- Continue streaming audio.
 		robotSound->startRecording();
-		stream = true;
 
-	} else {
-		reply += "Movements are disabled for current experiment!";
-	}
+	} else { reply += "Movements are disabled for current experiment!";	}
 }	
 
 
