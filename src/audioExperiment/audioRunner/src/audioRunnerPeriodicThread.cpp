@@ -327,8 +327,8 @@ bool AudioRunnerPeriodicThread::processing() {
 
 		currentMove++;
 
-		//-- Sleep for two second.
-		usleep(2000000);
+		//-- Sleep for five second.
+		usleep(5000000);
 	}
 
 	/* ===========================================================================
