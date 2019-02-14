@@ -43,6 +43,8 @@
 #include <yarp/os/PeriodicThread.h>
 #include <yarp/os/Log.h>
 
+#include <iCub/util/AudioUtil.h>
+
 class AudioPowerMapPeriodicThread : public yarp::os::PeriodicThread {
 
   private:
@@ -198,6 +200,13 @@ class AudioPowerMapPeriodicThread : public yarp::os::PeriodicThread {
 	bool processing();
 
 
+	/* ===========================================================================
+	 *  Flush the buffer and reset the Knowledge state to its initial values.
+	 *    For interfacing with RPC port.
+	 * =========================================================================== */
+	void clearProbabilities();
+
+
   private:
 
 	/* ===========================================================================
@@ -276,12 +285,6 @@ class AudioPowerMapPeriodicThread : public yarp::os::PeriodicThread {
 	 * @param ProbabilityAngles : Angles of Probability.
 	 * =========================================================================== */
 	void collapseProbabilityMap(const yarp::sig::Matrix& ProbabilityMap, yarp::sig::Matrix& ProbabilityAngles);
-
-
-	/* ===========================================================================
-	 *  Flush the buffer and reset the Knowledge state to its initial values.
-	 * =========================================================================== */
-	void clearProbabilities();
 
 
 	/* ===========================================================================

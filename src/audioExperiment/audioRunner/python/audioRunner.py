@@ -12,15 +12,14 @@ yarp.Network.init()
 
 def get_args():
     parser = argparse.ArgumentParser(description='runner')
-    parser.add_argument('-n', '--name',  default='/audioRunner',                     help='Name for the module.                                  (default: {})'.format('/audioRunner'))
-    parser.add_argument('-r', '--root',  default='CODE',                             help='Environmental variable to datas root.                 (default: {})'.format('CODE'))
-    parser.add_argument('-d', '--datap', default='data/audio_experiment_01a_16384',  help='Which data folder to stream from.                     (default: {})'.format('data/audio_experiment_01a_16384'))
-    parser.add_argument('-s', '--savep', default='data/processed/ae_01a_env_16384',  help='Folder to save processed matrix to.                   (default: {})'.format('data/processed/ae_01a_env_16384'))
-    parser.add_argument('-S', '--saven', default='bayes_env',                        help='Name of the files to be saved.                        (default: {})'.format('bayes_env'))
-    parser.add_argument('-f', '--frame', default=16384, type=int,                    help='Length of frames to stream.                           (default: {})'.format(16384))
-    parser.add_argument('-R', '--rate',  default=48000, type=int,                    help='Sampling rate audio was recorded at                   (default: {})'.format(48000))
-    parser.add_argument('-m', '--move',  default=False, action='store_true',         help='Enable Movements to be sent to processing             (default: {})'.format(False))
-    parser.add_argument('-p', '--play',  default=False, action='store_true',         help='Playback the audio instead for sending for processing (default: {})'.format(False))
+    parser.add_argument('-n', '--name',  default='/audioRunner',                     help='Name for the module.                                       (default: {})'.format('/audioRunner'))
+    parser.add_argument('-r', '--root',  default='CODE',                             help='Environmental variable to datas root.                      (default: {})'.format('CODE'))
+    parser.add_argument('-d', '--data',  default='data/audio_experiment_01a_16384',  help='Which data folder to stream from.                          (default: {})'.format('data/audio_experiment_01a_16384'))
+    parser.add_argument('-s', '--save',  default='data/processed/ae_01a',            help='Folder to save processed matrix to. Frame Len is appended. (default: {})'.format('data/processed/ae_01a'))
+    parser.add_argument('-f', '--frame', default=16384, type=int,                    help='Length of frames to stream.                                (default: {})'.format(16384))
+    parser.add_argument('-R', '--rate',  default=48000, type=int,                    help='Sampling rate audio was recorded at.                       (default: {})'.format(48000))
+    parser.add_argument('-m', '--move',  default=False, action='store_true',         help='Enable Movements to be sent to processing.                 (default: {})'.format(False))
+    parser.add_argument('-p', '--play',  default=False, action='store_true',         help='Playback the audio instead for sending for processing.     (default: {})'.format(False))
     args = parser.parse_args()
     return args
 
@@ -32,13 +31,15 @@ class audioRunner(object):
         # Get all vars from args.
         self.port_name     = args.name
         self.root_dir      = os.environ.get(args.root)
-        self.data_path     = args.datap
-        self.save_path     = args.savep
-        self.save_name     = args.saven
+        self.data_path     = args.data
+        self.save_path     = args.save + "_{}".format(args.frame)
         self.frame_length  = args.frame
         self.sampling_rate = args.rate
         self.movements     = args.move
-        self.play_back     = args.play 
+        self.play_back     = args.play
+
+        self.save_name_bayes = "BayesMat"
+        self.save_name_power = "PowerMat"
 
         self.source_dir = os.path.join(self.root_dir, self.data_path)
         self.target_dir = os.path.join(self.root_dir, self.save_path)
@@ -51,12 +52,20 @@ class audioRunner(object):
         self.audio_out_port.open(self.port_name + "/rawAudio:o")
 
         # For reading in the Bayesian map.
-        self.matrix_in_port = yarp.Port()
-        self.matrix_in_port.open(self.port_name + "/matrix:i")
+        self.bayes_matrix_in_port = yarp.Port()
+        self.bayes_matrix_in_port.open(self.port_name + "/bayes_matrix:i")
+
+        # For reading in the Bayesian map.
+        self.power_matrix_in_port = yarp.Port()
+        self.power_matrix_in_port.open(self.port_name + "/power_matrix:i")
 
         # For flushing the Bayesian Map.
         self.bayes_out_port = yarp.Port()
         self.bayes_out_port.open(self.port_name + "/bayesClear:o")
+
+        # For flushing the Power Map.
+        self.power_out_port = yarp.Port()
+        self.power_out_port.open(self.port_name + "/powerClear:o")
 
         # For Sending Head Positions.
         if self.movements:
@@ -74,16 +83,23 @@ class audioRunner(object):
                 print("\n\nAll Data Streamed. Good Bye!\n")
                 exit()
 
-            elif self.audio_out_port.getOutputCount() and self.matrix_in_port.getInputCount() and self.bayes_out_port.getOutputCount() and ((not self.movements) or self.head_out_port.getOutputCount()):
+            elif self.audio_out_port.getOutputCount()       and \
+                 self.bayes_matrix_in_port.getInputCount()  and \
+                 self.power_matrix_in_port.getInputCount()  and \
+                 self.bayes_out_port.getOutputCount()       and \
+                 ((not self.movements) or self.head_out_port.getOutputCount()):
+
                 self.processing()
                 print("\n\nAll Data Processed. Good Bye!\n")
                 exit()
             
             else:
                 msg = "Missing Connection to "
-                if not self.audio_out_port.getOutputCount(): msg += "audio output; "
-                if not self.matrix_in_port.getInputCount():  msg += "matrix input; "
-                if not self.bayes_out_port.getOutputCount(): msg += "bayes clear; "
+                if not self.audio_out_port.getOutputCount():       msg += "audio output; "
+                if not self.bayes_matrix_in_port.getInputCount():  msg += "bayes matrix; "
+                if not self.bayes_out_port.getOutputCount():       msg += "bayes clear; "
+                if not self.power_matrix_in_port.getInputCount():  msg += "power matrix; "
+                if not self.power_out_port.getOutputCount():       msg += "power clear; "
                 if self.movements and not self.head_out_port.getOutputCount():
                     msg += "head angle; "
 
@@ -121,10 +137,14 @@ class audioRunner(object):
                 position_source = os.path.join(root, position_name)
 
             target_name = sound_name.replace("yarpSound_", "_")
-            target_name = self.save_name + target_name.replace(".data", ".npy")
-            target = os.path.join(self.target_dir, target_name)            
+            
+            BayesTarget_name = self.save_name_bayes + target_name.replace(".data", ".npy")
+            PowerTarget_name = self.save_name_power + target_name.replace(".data", ".npy")
 
-            print("Processing {:04d} : {}  ==>  {}".format(count, sound_name, target_name), end="   ", flush=True)
+            BayesTarget = os.path.join(self.target_dir, BayesTarget_name)  
+            PowerTarget = os.path.join(self.target_dir, PowerTarget_name)  
+
+            print("Processing {:04d} : {}  ==>  {}, {}".format(count, sound_name, BayesTarget_name, PowerTarget_name), end="   ", flush=True)
 
             # Begin Reading in Data.
             RawData   = np.loadtxt(sound_source, dtype=np.int)
@@ -146,14 +166,16 @@ class audioRunner(object):
             timeStamp = yarp.Stamp()
             timeStamp.update()
 
-            # Clear the Bayesian Map.
+            # Clear the Bayesian & Power Map.
             command = yarp.Bottle()
             command.clear()
             command.addString("clear")
             self.bayes_out_port.write(command)
+            self.power_out_port.write(command)
 
             # Buffer for returned matrices.
-            MatrixBuffer = []
+            BayesMatrixBuffer = []
+            PowerMatrixBuffer = []
 
             startTime = time.time()
             
@@ -175,21 +197,29 @@ class audioRunner(object):
                     self.head_out_port.write(headPos)
 
                 # Wait for a response.
-                yarp_matrix = yarp.Matrix()
-                self.matrix_in_port.read(yarp_matrix) 
+                yarp_bayes_matrix = yarp.Matrix()
+                self.bayes_matrix_in_port.read(yarp_bayes_matrix) 
+
+                yarp_power_matrix = yarp.Matrix()
+                self.power_matrix_in_port.read(yarp_power_matrix) 
 
                 # Append this matrix to the buffer.
-                MatrixBuffer.append(self._matrix_process(yarp_matrix))
+                BayesMatrixBuffer.append(self._matrix_process(yarp_bayes_matrix))
+                PowerMatrixBuffer.append(self._matrix_process(yarp_power_matrix))
 
                 # Update the time stamp.
                 timeStamp.update()
 
             # Save the matrix out.
-            np.save(target, np.asarray(MatrixBuffer))
+            npBayes = np.asarray(BayesMatrixBuffer)
+            npPower = np.asarray(PowerMatrixBuffer)
+
+            np.save(BayesTarget, npBayes)
+            np.save(PowerTarget, npPower)
 
             count  += 1
             endTime = time.time()
-            print("\u0394 : {:.4f}".format(endTime-startTime))
+            print("\u0394 : {:.4f} || {}, {}".format(endTime-startTime, npBayes.shape, npPower.shape))
 
 
 
@@ -261,7 +291,7 @@ class audioRunner(object):
         yarp_sound.setFrequency(self.sampling_rate)
 
         for idx in range(numSamp):
-            yarp_sound.set(int(Left_Ch[idx]), int(idx), 0)
+            yarp_sound.set(int(Left_Ch [idx]), int(idx), 0)
             yarp_sound.set(int(Right_Ch[idx]), int(idx), 1)
 
         return yarp_sound
@@ -282,7 +312,12 @@ class audioRunner(object):
     def cleanup(self):
         print("Closing YARP Ports.")
         self.audio_out_port.close()
-        self.matrix_in_port.close()
+        self.bayes_matrix_in_port.close()
+        self.power_matrix_in_port.close()
+        self.bayes_out_port.close()
+        self.power_out_port.close()
+        if self.movements:
+            self.head_out_port.close()
 
 
 def main():
@@ -303,3 +338,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+

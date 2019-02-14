@@ -22,7 +22,14 @@
         <parameters> --context audio_experiment --from Audio_Experiment_Config.ini </parameters>
         <node> icub </node>
     </module>
-    
+
+    <module>
+        <name> audioPowerMap </name>
+        <parameters> --context audio_experiment --from Audio_Experiment_Config.ini </parameters>
+        <node> icub </node>
+    </module>
+
+      
 
     <!-->  
     CONNECTIONS.
@@ -34,26 +41,50 @@
     </connection>
 
     <connection>
+        <from> /audioRunner/powerClear:o </from>
+        <to>   /audioPowerMap            </to>
+        <protocol> tcp </protocol>
+    </connection>
+
+    <connection>
         <from> /audioRunner/rawAudio:o       </from>
         <to>   /audioPreprocessor/rawAudio:i </to>
         <protocol> tcp </protocol>
     </connection>
 
     <connection>
-        <from> /audioPreprocessor/allocentricEnvelope:o </from>
-        <to>   /audioBayesianMap/allocentricAudio:i  </to>
+        <from> /audioRunner/headAngle:o       </from>
+        <to>   /audioPreprocessor/headAngle:i </to>
+        <protocol> tcp </protocol>
+    </connection>
+
+    <connection>
+        <from> /audioPreprocessor/gammatoneFilteredPower:o </from>
+        <to>   /audioPowerMap/bandPower:i                  </to>
+        <protocol> tcp </protocol>
+    </connection>
+
+    <connection>
+        <from> /audioPreprocessor/allocentricAudio:o </from>
+        <to>   /audioBayesianMap/allocentricAudio:i     </to>
         <protocol> tcp </protocol>
     </connection>
 
     <connection>
         <from> /audioBayesianMap/bayesianProbabilityMap:o </from>
-        <to>   /audioRunner/matrix:i                      </to>
+        <to>   /audioPowerMap/probabilityMap:i    </to>
         <protocol> tcp </protocol>
     </connection>
 
     <connection>
-        <from> /audioRunner/headAngle:o       </from>
-        <to>   /audioPreprocessor/headAngle:i </to>
+        <from> /audioBayesianMap/bayesianProbabilityMap:o </from>
+        <to>   /audioRunner/bayes_matrix:i               </to>
+        <protocol> tcp </protocol>
+    </connection>
+
+    <connection>
+        <from> /audioPowerMap/probabilityPowerMap:o </from>
+        <to>   /audioRunner/power_matrix:i          </to>
         <protocol> tcp </protocol>
     </connection>
 

@@ -116,6 +116,9 @@ bool AudioPowerMapModule::respond(const yarp::os::Bottle& command, yarp::os::Bot
 	if (command.get(0).asString() == "quit") {
 		reply.addString("quitting");
 		return false;
+	} else if (command.get(0).asString() == "clear") {
+		yInfo("Clearing Power Buffer");
+		periodicThread->clearProbabilities();
 	} else if (command.get(0).asString() == "help") {
 		yInfo("%s", helpMessage.c_str());
 		reply.addString("ok");

@@ -25,24 +25,7 @@
 
 #include <iCub/audioPowerMapPeriodicThread.h>
 
-#define THPERIOD 0.08 // seconds.
-
-
-inline void ones(yarp::sig::Matrix& mat) {
-	for (int r = 0; r < mat.rows(); r++) {
-		for (int c = 0; c < mat.cols(); c++) {
-			mat[r][c] = 1.0;
-		}
-	}
-}
-
-
-inline void makeTimeStamp(double& totalStat, double& timeStat, double& startTime, double& stopTime) {
-	stopTime   = yarp::os::Time::now();
-	timeStat   = stopTime - startTime;
-	totalStat += timeStat;
-	startTime  = stopTime;
-}
+#define THPERIOD 0.01 // seconds.
 
 
 AudioPowerMapPeriodicThread::AudioPowerMapPeriodicThread() : 
@@ -248,7 +231,7 @@ void AudioPowerMapPeriodicThread::run() {
 	
 	if (inBandPowerPort.getInputCount()) {
 
-		makeTimeStamp(totalDelay, timeDelay, startTime, stopTime);
+		AudioUtil::makeTimeStamp(totalDelay, timeDelay, startTime, stopTime);
 
 		//-- Get Input.
 		inputBandPower = *inBandPowerPort.read(true);
@@ -259,17 +242,17 @@ void AudioPowerMapPeriodicThread::run() {
 			inProbabilityMapPort.getEnvelope(timeStamp);
 		}
 
-		makeTimeStamp(totalReading, timeReading, startTime, stopTime);
+		AudioUtil::makeTimeStamp(totalReading, timeReading, startTime, stopTime);
 
 		//-- Main Loop.
 		result = processing();
 
-		makeTimeStamp(totalProcessing, timeProcessing, startTime, stopTime);
+		AudioUtil::makeTimeStamp(totalProcessing, timeProcessing, startTime, stopTime);
 
 		//-- Write data to outgoing ports.
 		publishOutPorts();
 
-		makeTimeStamp(totalTransmission, timeTransmission, startTime, stopTime);
+		AudioUtil::makeTimeStamp(totalTransmission, timeTransmission, startTime, stopTime);
 
 		//-- Give time stats to the user.
 		timeTotal  = timeDelay + timeReading + timeProcessing + timeTransmission;
@@ -294,7 +277,17 @@ bool AudioPowerMapPeriodicThread::processing() {
 		for (int mic = 0; mic < numMics; mic++) {
 			BandPowerMatrix[band][0] += inputBandPower[band][mic];
 		}
-		BandPowerMatrix[band][0] /= (double) numMics;
+	}
+
+	//-- Take the sum of an entire column, then divide each element
+	//-- by it. This producees a column that sums to one.
+	double sum = 0.0;
+	for (int band = 0; band < numBands; band++) {
+		sum += BandPowerMatrix[band][0];
+	}
+
+	for (int band = 0; band < numBands; band++) {
+		BandPowerMatrix[band][0] /= sum;
 	}
 
 
@@ -497,14 +490,13 @@ void AudioPowerMapPeriodicThread::clearProbabilities() {
 
 	//-- Reset running probabilities.
 	ProbabilityPowerMatrix.resize(numBands, 1);
-	ones(ProbabilityPowerMatrix);   //-- Set all positions to one.
+	AudioUtil::ones(ProbabilityPowerMatrix);   //-- Set all positions to one.
 	
 	//-- Clear out the buffer.
 	while (!bufferedPowerMatrix.empty()) {
 		bufferedPowerMatrix.pop();
 	}
 }
-
 
 
 void AudioPowerMapPeriodicThread::publishOutPorts() {
