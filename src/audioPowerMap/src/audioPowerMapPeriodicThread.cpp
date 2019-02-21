@@ -64,11 +64,26 @@ bool AudioPowerMapPeriodicThread::configure(yarp::os::ResourceFinder &rf) {
 
 	bufferSize = rf.findGroup("powermap").check("bufferSize", yarp::os::Value(100), "number of audio maps to remember (int)").asInt();
 	
+	saveMatrices = rf.findGroup("other").check("saveMatrices",  yarp::os::Value("NONE"), "if specified, will save all matrices to this dir (string)").asString();
 
 	/* ===========================================================================
 	 *  Derive additional variables given the ones above.
 	 * =========================================================================== */
 	numFullFieldAngles = _baseAngles * angleRes * 2;
+
+	//-- If save matricies was specified set process all flag to true.
+	processAll = (saveMatrices != "NONE");
+	if (processAll) {
+
+		//-- Expand env vars if they are present.
+		saveMatrices = AudioUtil::expandEnvironmentVariables(saveMatrices);
+
+		//-- Create a directory for the matrices.
+		if (!AudioUtil::makeDirectory(saveMatrices)) {
+			yInfo("Failed to create directory %s. -- Check Permissions?", saveMatrices.c_str());
+			return false;
+		}
+	}
 
 
 	/* ===========================================================================
@@ -129,8 +144,11 @@ bool AudioPowerMapPeriodicThread::configure(yarp::os::ResourceFinder &rf) {
 	yInfo( "\t ============================================ "               );
 	yInfo( "\t Number of Power Maps Stored      : %d",   bufferSize         );
 	yInfo( " " );
+	yInfo( "\t                    [OTHER]                   "               );
+	yInfo( "\t ============================================ "               );
+	yInfo( "\t Directory for Matrix Output      : %s",    processAll ? saveMatrices.c_str() : "DISABLED");
+	yInfo( " " );
 
-	
 	return true;
 }
 
@@ -252,13 +270,16 @@ void AudioPowerMapPeriodicThread::run() {
 		//-- Write data to outgoing ports.
 		publishOutPorts();
 
+		//-- If saving output was set, save all matrices.
+		if (processAll) { saveOutPorts(); }
+
 		AudioUtil::makeTimeStamp(totalTransmission, timeTransmission, startTime, stopTime);
 
 		//-- Give time stats to the user.
 		timeTotal  = timeDelay + timeReading + timeProcessing + timeTransmission;
 		totalTime += timeTotal;
 		totalIterations++;
-		yInfo("End of Loop %d:  Delay  %f  |  Reading  %f  |  Processing  %f  |  Transmission  %f  |  Total  %f  |", timeStamp.getCount(), timeDelay, timeReading, timeProcessing, timeTransmission, timeTotal);
+		yInfo("End of Loop %d, TS %d:  Delay  %f  |  Reading  %f  |  Processing  %f  |  Transmission  %f  |  Total  %f  |", totalIterations, timeStamp.getCount(), timeDelay, timeReading, timeProcessing, timeTransmission, timeTotal);
 	}
 }
 
@@ -311,7 +332,7 @@ bool AudioPowerMapPeriodicThread::processing() {
 	 * =========================================================================== */
 	if (inProbabilityMapPort.getInputCount()) {
 		
-		if (outProbabilityPowerMapPort.getOutputCount() || outProbabilityPowerAnglePort.getOutputCount()) {
+		if (processAll || outProbabilityPowerMapPort.getOutputCount() || outProbabilityPowerAnglePort.getOutputCount()) {
 		
 			combineAudioPower (
 				/* AudioMap   = */ ProbabilityMapMatrix,
@@ -319,7 +340,7 @@ bool AudioPowerMapPeriodicThread::processing() {
 				/* Combined   = */ ProbabilityPowerMapMatrix
 			);
 
-			if (outProbabilityPowerAnglePort.getOutputCount()) {
+			if (processAll || outProbabilityPowerAnglePort.getOutputCount()) {
 				collapseProbabilityMap (
 					/* Source = */ ProbabilityPowerMapMatrix,
 					/* Target = */ ProbabilityPowerAngleMatrix
@@ -531,6 +552,14 @@ void AudioPowerMapPeriodicThread::publishOutPorts() {
 		outInstantaneousPowerProbabilityAnglePort.setEnvelope(timeStamp);
 		outInstantaneousPowerProbabilityAnglePort.write();
 	}
+}
+
+
+void AudioPowerMapPeriodicThread::saveOutPorts() {
+
+	AudioUtil::MatrixToFile(ProbabilityPowerMatrix,      saveMatrices + "ProbabilityPower_"      +AudioUtil::leadingZeros(totalIterations,4)+".data");
+	AudioUtil::MatrixToFile(ProbabilityPowerMapMatrix,   saveMatrices + "ProbabilityPowerMap_"   +AudioUtil::leadingZeros(totalIterations,4)+".data");
+	AudioUtil::MatrixToFile(ProbabilityPowerAngleMatrix, saveMatrices + "ProbabilityPowerAngle_" +AudioUtil::leadingZeros(totalIterations,4)+".data");
 }
 
 

@@ -270,7 +270,8 @@ class audioRunner(object):
                 self.audio_out_port.write(sound)
 
                 # Sleep for a bit for playing back.
-                time.sleep( (self.frame_length / self.sampling_rate) - 0.08 )
+                #time.sleep( (self.frame_length / self.sampling_rate) - 0.08 )
+                time.sleep(5)
 
                 # Update the time stamp.
                 timeStamp.update()

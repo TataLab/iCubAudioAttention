@@ -76,10 +76,11 @@ bool AudioPreprocessorPeriodicThread::configure(yarp::os::ResourceFinder &rf) {
 	bandPassFreq  = rf.findGroup("processing").check("bandPassFreq",  yarp::os::Value(5.0),    "frequency to use in band pass filter (double)"         ).asDouble();
 	bandPassWidth = rf.findGroup("processing").check("bandPassWidth", yarp::os::Value(1.0),    "bandwidth allowed for band pass filter (double)"       ).asDouble();
 	angleRes      = rf.findGroup("processing").check("angleRes",      yarp::os::Value(1),      "degree resolution for a single position (int)"         ).asInt();
-	downSampVis   = rf.findGroup("processing").check("downSampVis",   yarp::os::Value(1),      "rate to down sample visualisation by (int)"            ).asInt();
 	downSampEnv   = rf.findGroup("processing").check("downSampEnv",   yarp::os::Value(1),      "rate to down sample pre-envelope mat by (int)"         ).asInt();
 	numOmpThreads = rf.findGroup("processing").check("numOmpThreads", yarp::os::Value(4),      "if enabled, the number of omp threads (int)"           ).asInt();
 
+	downSampVis   = rf.findGroup("other").check("downSampVis",   yarp::os::Value(1),      "rate to down sample visualisation by (int)"               ).asInt();
+	saveMatrices  = rf.findGroup("other").check("saveMatrices",  yarp::os::Value("NONE"), "if specified, will save all matrices to this dir (string)").asString();
 
 	/* ===========================================================================
 	 *  Derive additional variables given the ones above.
@@ -101,6 +102,21 @@ bool AudioPreprocessorPeriodicThread::configure(yarp::os::ResourceFinder &rf) {
 	numFullFieldAngles  = _baseAngles * angleRes * 2;
 
 	numFrameDownSamples = numFrameSamples / downSampEnv;
+
+
+	//-- If save matricies was specified set process all flag to true.
+	processAll = (saveMatrices != "NONE");
+	if (processAll) {
+
+		//-- Expand env vars if they are present.
+		saveMatrices = AudioUtil::expandEnvironmentVariables(saveMatrices);
+
+		//-- Create a directory for the matrices.
+		if (!AudioUtil::makeDirectory(saveMatrices)) {
+			yInfo("Failed to create directory %s. -- Check Permissions?", saveMatrices.c_str());
+			return false;
+		}
+	}
 
 
 	/* ===========================================================================
@@ -193,7 +209,6 @@ bool AudioPreprocessorPeriodicThread::configure(yarp::os::ResourceFinder &rf) {
 	yInfo( "\t Exit Early                       : %s",       exitEarly ? "ENABLED"  : "DISABLED" );
 	yInfo( "\t Band Pass Frequency              : %.2f Hz",  bandPassFreq                        );
 	yInfo( "\t Band Pass Width                  : %.2f",     bandPassWidth                       );
-	yInfo( "\t Matrix Visualisation Down Sample : %d",       downSampVis                         );
 	yInfo( "\t Pre-envelope Matrix Down Sample  : %d",       downSampEnv                         );
 	yInfo( "\t Number Down Samples per Frame    : %d",       numFrameDownSamples                 );
 	#ifdef WITH_OMP
@@ -201,6 +216,11 @@ bool AudioPreprocessorPeriodicThread::configure(yarp::os::ResourceFinder &rf) {
 	#else
 	yInfo( "\t Number of OpenMP Threads         : DISABLED"                                      );
 	#endif
+	yInfo( " " );
+	yInfo( "\t                    [OTHER]                   "                                    );
+	yInfo( "\t ============================================ "                                    );
+	yInfo( "\t Matrix Visualisation Down Sample : %d",       downSampVis                         );
+	yInfo( "\t Directory for Matrix Output      : %s",       processAll ? saveMatrices.c_str() : "DISABLED");
 	yInfo( " " );
 
 	return true;
@@ -363,7 +383,10 @@ void AudioPreprocessorPeriodicThread::run() {
 		AudioUtil::makeTimeStamp(totalProcessing, timeProcessing, startTime, stopTime);
 
 		//-- Write data to outgoing ports.
-		publishOutPorts();	
+		publishOutPorts();
+
+		//-- If saving output was set, save all matrices.
+		if (processAll) { saveOutPorts(); }
 
 		AudioUtil::makeTimeStamp(totalTransmission, timeTransmission, startTime, stopTime);
 
@@ -402,7 +425,7 @@ bool AudioPreprocessorPeriodicThread::processing() {
 	 *  OPTIONAL: If a port is connected, compute the 
 	 *    RMS power of the filter banks bands.
 	 * =========================================================================== */
-	if (outGammatoneFilteredPowerPort.getOutputCount()) {
+	if (processAll || outGammatoneFilteredPowerPort.getOutputCount()) {
 		gammatoneFilterBank->getGammatoneFilteredPower (
 			/* Basilar Memb Res  = */ GammatoneFilteredAudioMatrix,
 			/* Power of the Bank = */ GammatoneFilteredPowerMatrix
@@ -424,7 +447,7 @@ bool AudioPreprocessorPeriodicThread::processing() {
 	 *  OPTIONAL: If a port is connected, compute the 
 	 *    RMS power of the beamformed bands.
 	 * =========================================================================== */
-	if (outBeamformedRmsAudioPort.getOutputCount() || outBeamformedRmsPowerPort.getOutputCount() || outAllocentricAudioPort.getOutputCount()) {
+	if (processAll || outBeamformedRmsAudioPort.getOutputCount() || outBeamformedRmsPowerPort.getOutputCount() || outAllocentricAudioPort.getOutputCount()) {
 		
 		AudioUtil::RootMeanSquareMatrix (
 			/* Source = */ BeamformedAudioMatrix,
@@ -433,14 +456,14 @@ bool AudioPreprocessorPeriodicThread::processing() {
 			/* Dim Y  = */ numBeams
 		);
 
-		if (outBeamformedRmsPowerPort.getOutputCount()) {
+		if (processAll || outBeamformedRmsPowerPort.getOutputCount()) {
 			interauralCues->getBeamformedRmsPower (
 				/* RMS Beamformer = */ BeamformedRmsAudioMatrix,
 				/* Power of Beams = */ BeamformedRmsPowerMatrix
 			);
 		}
 
-		if (outAllocentricAudioPort.getOutputCount()) {
+		if (processAll || outAllocentricAudioPort.getOutputCount()) {
 			/* ===========================================================================
 			 *  Interpolate over, and mirror the front field auditory scene
 			 * =========================================================================== */
@@ -595,6 +618,28 @@ void AudioPreprocessorPeriodicThread::publishOutPorts() {
 		outAllocentricEnvelopePort.setEnvelope(timeStamp);
 		outAllocentricEnvelopePort.write();
 		
+	}
+}
+
+
+void AudioPreprocessorPeriodicThread::saveOutPorts() {
+
+	AudioUtil::MatrixToFile(
+		AudioUtil::downSampleMatrix(GammatoneFilteredAudioMatrix, downSampVis),
+		saveMatrices + "GammatoneFilteredAudio_" +AudioUtil::leadingZeros(totalIterations,4)+".data"
+	);
+	AudioUtil::MatrixToFile(GammatoneFilteredPowerMatrix,    saveMatrices + "GammatoneFilteredPower_" +AudioUtil::leadingZeros(totalIterations,4)+".data");
+	AudioUtil::MatrixToFile(
+		AudioUtil::downSampleMatrix(BeamformedAudioMatrix, downSampVis),           
+		saveMatrices + "BeamformedAudio_"+AudioUtil::leadingZeros(totalIterations,4)+".data"
+	);
+	AudioUtil::MatrixToFile(BeamformedRmsAudioMatrix,        saveMatrices + "BeamformedRmsAudio_"     +AudioUtil::leadingZeros(totalIterations,4)+".data");
+	AudioUtil::MatrixToFile(AllocentricAudioMatrix,          saveMatrices + "AllocentricAudio_"       +AudioUtil::leadingZeros(totalIterations,4)+".data");
+	if (!exitEarly) {
+		AudioUtil::MatrixToFile(HilbertEnvelopeMatrix,       saveMatrices + "HilbertEnvelope_"        +AudioUtil::leadingZeros(totalIterations,4)+".data");
+		AudioUtil::MatrixToFile(BandPassedEnvelopeMatrix,    saveMatrices + "BandPassedEnvelope_"     +AudioUtil::leadingZeros(totalIterations,4)+".data");
+		AudioUtil::MatrixToFile(BandPassedRmsEnvelopeMatrix, saveMatrices + "BandPassedRmsEnvelope_"  +AudioUtil::leadingZeros(totalIterations,4)+".data");
+		AudioUtil::MatrixToFile(AllocentricEnvelopeMatrix,   saveMatrices + "AllocentricEnvelope_"    +AudioUtil::leadingZeros(totalIterations,4)+".data");
 	}
 }
 

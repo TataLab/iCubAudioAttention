@@ -59,7 +59,7 @@ class AudioPowerMapPeriodicThread : public yarp::os::PeriodicThread {
 	yarp::os::Stamp timeStamp;  //-- Time stamp updated by yarp network.
 
 	double startTime;           //-- Used for keeping time and reporting temporal
-    double stopTime;            //-- events to the user via command line.
+  double stopTime;            //-- events to the user via command line.
 	
 	double timeDelay,        totalDelay;        //-- Hold on to and store time
 	double timeReading,      totalReading;	    //-- events for clean display
@@ -106,10 +106,13 @@ class AudioPowerMapPeriodicThread : public yarp::os::PeriodicThread {
 	int angleRes;
 	int bufferSize;
 
+	std::string saveMatrices;
+
 	/* ===========================================================================
 	 *  Derive variables from resource finders variables.
 	 * =========================================================================== */
-	int numFullFieldAngles;
+	int  numFullFieldAngles;
+	bool processAll;
 
 	/* ===========================================================================
 	 *  Constant variables.
@@ -291,6 +294,12 @@ class AudioPowerMapPeriodicThread : public yarp::os::PeriodicThread {
 	 *  Write data to out going ports if something is connected.
 	 * =========================================================================== */
 	void publishOutPorts();
+
+
+	/* ===========================================================================
+	 *  Write data to out going ports if something is connected.
+	 * =========================================================================== */
+	void saveOutPorts();
 
 
 	/* ===========================================================================

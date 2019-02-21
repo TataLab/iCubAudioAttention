@@ -62,11 +62,27 @@ bool AudioBayesianMapPeriodicThread::configure(yarp::os::ResourceFinder &rf) {
 
 	bufferSize = rf.findGroup("bayesianmap").check("bufferSize", yarp::os::Value(100), "number of audio maps to remember (int)").asInt();
 	
+	saveMatrices = rf.findGroup("other").check("saveMatrices",  yarp::os::Value("NONE"), "if specified, will save all matrices to this dir (string)").asString();
 
 	/* ===========================================================================
 	 *  Derive additional variables given the ones above.
 	 * =========================================================================== */
 	numFullFieldAngles = _baseAngles * angleRes * 2;
+
+
+	//-- If save matricies was specified set process all flag to true.
+	processAll = (saveMatrices != "NONE");
+	if (processAll) {
+
+		//-- Expand env vars if they are present.
+		saveMatrices = AudioUtil::expandEnvironmentVariables(saveMatrices);
+
+		//-- Create a directory for the matrices.
+		if (!AudioUtil::makeDirectory(saveMatrices)) {
+			yInfo("Failed to create directory %s. -- Check Permissions?", saveMatrices.c_str());
+			return false;
+		}
+	}
 
 
 	/* ===========================================================================
@@ -108,7 +124,10 @@ bool AudioBayesianMapPeriodicThread::configure(yarp::os::ResourceFinder &rf) {
 	yInfo( "\t ============================================ "               );
 	yInfo( "\t Number of Audio Maps Stored      : %d",   bufferSize         );
 	yInfo( " " );
-
+	yInfo( "\t                    [OTHER]                   "               );
+	yInfo( "\t ============================================ "               );
+	yInfo( "\t Directory for Matrix Output      : %s",    processAll ? saveMatrices.c_str() : "DISABLED");
+	yInfo( " " );
 	
 	return true;
 }
@@ -198,13 +217,16 @@ void AudioBayesianMapPeriodicThread::run() {
 		//-- Write data to outgoing ports.
 		publishOutPorts();
 
+		//-- If saving output was set, save all matrices.
+		if (processAll) { saveOutPorts(); }
+
 		AudioUtil::makeTimeStamp(totalTransmission, timeTransmission, startTime, stopTime);
 
 		//-- Give time stats to the user.
 		timeTotal  = timeDelay + timeReading + timeProcessing + timeTransmission;
 		totalTime += timeTotal;
 		totalIterations++;
-		yInfo("End of Loop %d:  Delay  %f  |  Reading  %f  |  Processing  %f  |  Transmission  %f  |  Total  %f  |", timeStamp.getCount(), timeDelay, timeReading, timeProcessing, timeTransmission, timeTotal);
+		yInfo("End of Loop %d, TS %d:  Delay  %f  |  Reading  %f  |  Processing  %f  |  Transmission  %f  |  Total  %f  |", totalIterations, timeStamp.getCount(), timeDelay, timeReading, timeProcessing, timeTransmission, timeTotal);
 	}
 }
 
@@ -229,7 +251,7 @@ bool AudioBayesianMapPeriodicThread::processing() {
 	 *  If someone is connected to this port, collapse probability map along
 	 *    the bands, so that at the end of processing it can be published.
 	 * =========================================================================== */
-	if (outProbabilityAnglePort.getOutputCount()) {
+	if (processAll || outProbabilityAnglePort.getOutputCount()) {
 		collapseProbabilityMap (
 			/* Source = */ ProbabilityMapMatrix,
 			/* Target = */ ProbabilityAngleMatrix
@@ -361,6 +383,13 @@ void AudioBayesianMapPeriodicThread::publishOutPorts() {
 		outProbabilityAnglePort.setEnvelope(timeStamp);
 		outProbabilityAnglePort.write();
 	}
+}
+
+
+void AudioBayesianMapPeriodicThread::saveOutPorts() {
+
+	AudioUtil::MatrixToFile(ProbabilityMapMatrix,   saveMatrices + "ProbabilityMap_"   +AudioUtil::leadingZeros(totalIterations,4)+".data");
+	AudioUtil::MatrixToFile(ProbabilityAngleMatrix, saveMatrices + "ProbabilityAngle_" +AudioUtil::leadingZeros(totalIterations,4)+".data");
 }
 
 

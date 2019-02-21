@@ -53,6 +53,7 @@ namespace AudioUtil {
      *  - Note: The number of rows is same as source.
      * ================================================================ */
     void downSampleMatrix(const yMatrix& source, yMatrix& target, const size_t downSamp);
+    yMatrix downSampleMatrix(const yMatrix& source, const size_t downSamp);
 
 
     /* ================================================================
@@ -81,11 +82,23 @@ namespace AudioUtil {
 
 
     /* ================================================================
+     *  Save a yarp matrix to a file.
+     * ================================================================ */
+    void MatrixToFile(const yMatrix& source, const std::string fileName);
+
+
+    /* ================================================================
      *  Convert a yarp matrix into an image of floats.
      *  - Note: This was used for easier sending of matrices
      *           to python for prototyping.
      * ================================================================ */
     void MatrixToImageOfFloat(const yMatrix& source, yImageOfFloat& target);
+
+    
+    /* ================================================================
+     *  Convert a yarp matrix to a string. Faster than internal implementation.
+     * ================================================================ */
+    std::string MatrixToString(const yMatrix& source, const int precision, const int width, const char* endRowStr);
 
 
     /* ================================================================ 

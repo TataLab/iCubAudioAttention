@@ -73,7 +73,7 @@ class AudioPreprocessorPeriodicThread : public yarp::os::PeriodicThread {
 	double headOffset;          //-- Head angle of the robot.
 
 	double startTime;           //-- Used for keeping time and reporting temporal
-    double stopTime;            //-- events to the user via command line.
+  double stopTime;            //-- events to the user via command line.
 	
 	double timeDelay,        totalDelay;        //-- Hold on to and store time
 	double timeReading,      totalReading;	    //-- events for clean display
@@ -154,18 +154,21 @@ class AudioPreprocessorPeriodicThread : public yarp::os::PeriodicThread {
 	double bandPassFreq;
 	double bandPassWidth;
 	int    angleRes;
-	int    downSampVis;
 	int    downSampEnv;
 	int    numOmpThreads;
+	
+	int         downSampVis;
+	std::string saveMatrices;
 
 	/* ===========================================================================
 	 *  Derive variables from resource finders variables.
 	 * =========================================================================== */
-	int numBeamsPerHemifield;
-	int numBeams;
-    int numFrontFieldAngles;
-    int numFullFieldAngles;
-	int numFrameDownSamples;
+	int  numBeamsPerHemifield;
+	int  numBeams;
+  int  numFrontFieldAngles;
+  int  numFullFieldAngles;
+	int  numFrameDownSamples;
+	bool processAll;
 
 	/* ===========================================================================
 	 *  Constant variables.
@@ -264,6 +267,12 @@ class AudioPreprocessorPeriodicThread : public yarp::os::PeriodicThread {
 	 *  Write data to out going ports if something is connected.
 	 * =========================================================================== */
 	void publishOutPorts();
+
+
+	/* ===========================================================================
+	 *  Write data to out going ports if something is connected.
+	 * =========================================================================== */
+	void saveOutPorts();
 
 
 	/* ===========================================================================

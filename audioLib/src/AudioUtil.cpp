@@ -103,6 +103,24 @@ void AudioUtil::downSampleMatrix(const yMatrix& source, yMatrix& target, const s
 }
 
 
+yMatrix AudioUtil::downSampleMatrix(const yMatrix& source, const size_t downSamp) {
+    
+    //-- Run the function with a blank matrix as the target.
+    yMatrix temporaryMatrix;
+    AudioUtil::downSampleMatrix(source, temporaryMatrix, downSamp);
+    
+    return temporaryMatrix;
+}
+
+
+ void AudioUtil::MatrixToFile(const yMatrix& source, const std::string fileName) {
+
+    std::ofstream writer(fileName);
+    writer << AudioUtil::MatrixToString(source, 10, 1, "\n");
+    writer.close();
+ }
+
+
 void AudioUtil::MatrixToImageOfFloat(const yMatrix& source, yImageOfFloat& target) {
 
     //-- Allocate space for the Image.
@@ -123,6 +141,38 @@ void AudioUtil::MatrixToImageOfFloat(const yMatrix& source, yImageOfFloat& targe
             src++;
         }
     }
+}
+
+
+std::string AudioUtil::MatrixToString(const yMatrix& source, const int precision, const int width, const char* endRowStr) {
+
+    //-- Get some information of the source.
+    const size_t RowSize = source.rows();
+    const size_t ColSize = source.cols();
+    size_t row, col;
+
+    //-- If the width is less than 1, use tabs, else use width number of spaces.
+    std::string spacer((width<0) ? 1 : width, (width<0) ? '\t' : ' ');
+
+    //-- Buffering.
+    std::string target = "";
+    char buffer[350]; 
+    const double* src = source.data();
+
+    //-- Iterate through copying the contents
+    //-- from the matrix, into a string.
+    //-- Avoid unnecessary string resizes by only
+    //-- adding spacers at the beginning.
+    for (row = 0; row < RowSize; row++) {
+        if (row) { target += endRowStr; }
+        for (col = 0; col < ColSize; col++) {
+            if (col) { target += spacer; }
+            sprintf(buffer, "%.*lf", precision, *src); src++;
+            target += buffer;
+        }
+    }
+
+    return target;
 }
 
 
