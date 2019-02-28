@@ -50,6 +50,7 @@ np.random.seed(args.seed)
 # Pull the path to the noise.
 noise_files = list(os.walk(noise_dir))[0][2]
 numNoise    = len(noise_files)
+useNoise    = np.arange(numNoise)
 
 # Write the output to a csv.
 with open(args.save, 'w') as csvfile:
@@ -81,9 +82,10 @@ with open(args.save, 'w') as csvfile:
                     # Set the current speaker to a random file in our target dir.
                     speakers[channel] = os.path.join(root, files[ npr.randint(numFiles) ])
 
-                    # Set each item in the subset to a random noise.
-                    for item in subset:
-                        speakers[item] = os.path.join(noise_dir, noise_files[ npr.randint(numNoise) ])
+                    # Make sure we don't have duplicates.
+                    npr.shuffle( useNoise )
+                    for idx in range(size):
+                        speakers[subset[idx]] = os.path.join(noise_dir, noise_files[ useNoise[idx] ])
 
                     # Turn this into a row for the CSV.
                     row = [str(rowCount), str(channel)] + speakers
