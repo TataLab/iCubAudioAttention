@@ -153,6 +153,22 @@
 
 
     <!-->  
+    RMS of Band Passed Power.
+    <!-->
+    <module>
+        <name> frequencyVisualisation </name>
+        <parameters> --name /bandPassedRmsPowerVisualiser </parameters>
+        <node> icub </node>
+    </module>
+
+    <module>
+        <name> yarpview </name>
+        <parameters> --x 100 --y 100 --h 320 --w 240 --r 33 --name /bandPassedRmsPowerView </parameters>
+        <node> icub </node>
+    </module>
+
+
+    <!-->  
     Allocentric Envelope Map.
     <!-->
     <module>
@@ -297,6 +313,20 @@
     <connection>
         <from> /bandPassedRmsEnvelopeVisualiser/img:o  </from>
         <to>   /bandPassedRmsEnvelopeView              </to>
+        <protocol> tcp </protocol>
+    </connection>
+
+
+    <!--> ############ Reduced Band Passed Power ############# <!-->
+    <connection>
+        <from> /audioPreprocessor/bandPassedRmsPower:o </from>
+        <to>   /bandPassedRmsPowerVisualiser/map:i     </to>
+        <protocol> tcp </protocol>
+    </connection> 
+
+    <connection>
+        <from> /bandPassedRmsPowerVisualiser/img:o  </from>
+        <to>   /bandPassedRmsPowerView              </to>
         <protocol> tcp </protocol>
     </connection>
 

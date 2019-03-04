@@ -12,14 +12,16 @@ yarp.Network.init()
 
 def get_args():
     parser = argparse.ArgumentParser(description='runner')
-    parser.add_argument('-n', '--name',  default='/audioRunner',                     help='Name for the module.                                       (default: {})'.format('/audioRunner'))
-    parser.add_argument('-r', '--root',  default='CODE',                             help='Environmental variable to datas root.                      (default: {})'.format('CODE'))
-    parser.add_argument('-d', '--data',  default='data/audio_experiment_01a_16384',  help='Which data folder to stream from.                          (default: {})'.format('data/audio_experiment_01a_16384'))
-    parser.add_argument('-s', '--save',  default='data/processed/ae_01a',            help='Folder to save processed matrix to. Frame Len is appended. (default: {})'.format('data/processed/ae_01a'))
-    parser.add_argument('-f', '--frame', default=16384, type=int,                    help='Length of frames to stream.                                (default: {})'.format(16384))
-    parser.add_argument('-R', '--rate',  default=48000, type=int,                    help='Sampling rate audio was recorded at.                       (default: {})'.format(48000))
-    parser.add_argument('-m', '--move',  default=False, action='store_true',         help='Enable Movements to be sent to processing.                 (default: {})'.format(False))
-    parser.add_argument('-p', '--play',  default=False, action='store_true',         help='Playback the audio instead for sending for processing.     (default: {})'.format(False))
+    parser.add_argument('-n', '--name',    default='/audioRunner',                     help='Name for the module.                                       (default: {})'.format('/audioRunner'))
+    parser.add_argument('-r', '--root',    default='CODE',                             help='Environmental variable to datas root.                      (default: {})'.format('CODE'))
+    parser.add_argument('-d', '--data',    default='data/audio_experiment_01a_16384',  help='Which data folder to stream from.                          (default: {})'.format('data/audio_experiment_01a_16384'))
+    parser.add_argument('-s', '--save',    default='data/processed/ae_01a',            help='Folder to save processed matrix to. Frame Len is appended. (default: {})'.format('data/processed/ae_01a'))
+    parser.add_argument('-p', '--prefix',  default='Beam',                             help='Prefix for the save name.                                  (default: {})'.format('Beam'))
+    parser.add_argument('-f', '--frame',   default=16384, type=int,                    help='Length of frames to stream.                                (default: {})'.format(16384))
+    parser.add_argument('-R', '--rate',    default=48000, type=int,                    help='Sampling rate audio was recorded at.                       (default: {})'.format(48000))
+    parser.add_argument('-m', '--move',    default=False, action='store_true',         help='Enable Movements to be sent to processing.                 (default: {})'.format(False))
+    parser.add_argument('-P', '--play',    default=False, action='store_true',         help='Playback the audio instead for sending for processing.     (default: {})'.format(False))
+    parser.add_argument('-c', '--connect', default=False, action='store_true',         help='Automatically connect all ports on construction.           (default: {})'.format(False))
     args = parser.parse_args()
     return args
 
@@ -33,19 +35,25 @@ class audioRunner(object):
         self.root_dir      = os.environ.get(args.root)
         self.data_path     = args.data
         self.save_path     = args.save + "_{}".format(args.frame)
+        self.prefix        = args.prefix
         self.frame_length  = args.frame
         self.sampling_rate = args.rate
         self.movements     = args.move
         self.play_back     = args.play
+        self.connect_all   = args.connect
 
-        self.save_name_bayes = "BayesMat"
-        self.save_name_power = "PowerMat"
+
+        self.save_name_bayes = "{}BayesMat".format(self.prefix)
+        self.save_name_power = "{}PowerMat".format(self.prefix)
 
         self.source_dir = os.path.join(self.root_dir, self.data_path)
         self.target_dir = os.path.join(self.root_dir, self.save_path)
 
         if not os.path.exists(self.target_dir):
             os.makedirs(self.target_dir)
+
+        print("Source Directory : {}".format(self.source_dir))
+        print("Target Directory : {}".format(self.target_dir), "\n\n")
 
         # Send audio to the processor.
         self.audio_out_port = yarp.Port()
@@ -71,6 +79,16 @@ class audioRunner(object):
         if self.movements:
             self.head_out_port = yarp.Port()
             self.head_out_port.open(self.port_name + "/headAngle:o")
+
+        # Connect all ports if enabled.
+        if self.connect_all:
+            if self.movements: yarp.Network.connect(self.port_name + "/headAngle:o", "/audioPreprocessor/headAngle:i")
+            yarp.Network.connect(self.port_name + "/rawAudio:o",     "/audioPreprocessor/rawAudio:i")
+            yarp.Network.connect(self.port_name + "/bayesClear:o",   "/audioBayesianMap")
+            yarp.Network.connect(self.port_name + "/powerClear:o",   "/audioPowerMap")
+            yarp.Network.connect("/audioBayesianMap/bayesianProbabilityMap:o", self.port_name + "/bayes_matrix:i")
+            yarp.Network.connect("/audioPowerMap/probabilityPowerMap:o",       self.port_name + "/power_matrix:i")
+
 
 
     def run(self):
@@ -270,8 +288,8 @@ class audioRunner(object):
                 self.audio_out_port.write(sound)
 
                 # Sleep for a bit for playing back.
-                #time.sleep( (self.frame_length / self.sampling_rate) - 0.08 )
-                time.sleep(5)
+                time.sleep( (self.frame_length / self.sampling_rate) - 0.08 )
+                #time.sleep(5)
 
                 # Update the time stamp.
                 timeStamp.update()

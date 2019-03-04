@@ -155,6 +155,9 @@ bool AudioPreprocessorPeriodicThread::configure(yarp::os::ResourceFinder &rf) {
 	BandPassedRmsEnvelopeMatrix.resize(numBands, numBeams);
 	BandPassedRmsEnvelopeMatrix.zero();
 
+	BandPassedRmsPowerMatrix.resize(numBands, numMics);
+	BandPassedRmsPowerMatrix.zero();
+
 	AllocentricEnvelopeMatrix.resize(numBands, numFullFieldAngles);
 	AllocentricEnvelopeMatrix.zero();
 
@@ -291,6 +294,11 @@ bool AudioPreprocessorPeriodicThread::threadInit() {
 			return false;
 		}
 
+		if (!outBandPassedRmsPowerPort.open(getName("/bandPassedRmsPower:o").c_str())) {
+			yError("Unable to open port for sending the power of bands of the root mean square of band passed envelope.");
+			return false;
+		}
+
 		if (!outAllocentricEnvelopePort.open(getName("/allocentricEnvelope:o").c_str())) {
 			yError("Unable to open port for sending the allocentric envelope map.");
 			return false;
@@ -320,6 +328,7 @@ void AudioPreprocessorPeriodicThread::threadRelease() {
 	outHilbertEnvelopePort.interrupt();
 	outBandPassedEnvelopePort.interrupt();
 	outBandPassedRmsEnvelopePort.interrupt();
+	outBandPassedRmsPowerPort.interrupt();
 	outAllocentricEnvelopePort.interrupt();
 	
 	//-- Close the threads.
@@ -334,6 +343,7 @@ void AudioPreprocessorPeriodicThread::threadRelease() {
 	outHilbertEnvelopePort.close();
 	outBandPassedEnvelopePort.close();
 	outBandPassedRmsEnvelopePort.close();
+	outBandPassedRmsPowerPort.close();
 	outAllocentricEnvelopePort.close();
 	
 	//-- Print thread stats.
@@ -521,6 +531,20 @@ bool AudioPreprocessorPeriodicThread::processing() {
 
 
 	/* ===========================================================================
+	 *  OPTIONAL: If a port is connected, compute the 
+	 *    RMS power of the band-passed beamformed-envelope bands.
+	 *    ( We can reuse the function for getting beamformed rms power,  
+	 *      as these matrices share the same shape ).
+	 * =========================================================================== */
+	if (processAll || outBandPassedRmsPowerPort.getOutputCount()) {
+		interauralCues->getBeamformedRmsPower (
+			/* RMS Envelope = */ BandPassedRmsEnvelopeMatrix,
+			/* Power of Env = */ BandPassedRmsPowerMatrix
+		);
+	}
+
+
+	/* ===========================================================================
 	 *  Interpolate over, and mirror the front field auditory scene
 	 * =========================================================================== */
 	interauralCues->getAngleNormalAudioMap (
@@ -612,6 +636,14 @@ void AudioPreprocessorPeriodicThread::publishOutPorts() {
 
 	}
 
+	if (outBandPassedRmsPowerPort.getOutputCount()) {
+
+		outBandPassedRmsPowerPort.prepare() = BandPassedRmsPowerMatrix;
+		outBandPassedRmsPowerPort.setEnvelope(timeStamp);
+		outBandPassedRmsPowerPort.write();
+
+	}
+
 	if (outAllocentricEnvelopePort.getOutputCount()) {
 
 		outAllocentricEnvelopePort.prepare() = AllocentricEnvelopeMatrix;
@@ -639,6 +671,7 @@ void AudioPreprocessorPeriodicThread::saveOutPorts() {
 		AudioUtil::MatrixToFile(HilbertEnvelopeMatrix,       saveMatrices + "HilbertEnvelope_"        +AudioUtil::leadingZeros(totalIterations,4)+".data");
 		AudioUtil::MatrixToFile(BandPassedEnvelopeMatrix,    saveMatrices + "BandPassedEnvelope_"     +AudioUtil::leadingZeros(totalIterations,4)+".data");
 		AudioUtil::MatrixToFile(BandPassedRmsEnvelopeMatrix, saveMatrices + "BandPassedRmsEnvelope_"  +AudioUtil::leadingZeros(totalIterations,4)+".data");
+		AudioUtil::MatrixToFile(BandPassedRmsPowerMatrix,    saveMatrices + "BandPassedRmsPower_"     +AudioUtil::leadingZeros(totalIterations,4)+".data");
 		AudioUtil::MatrixToFile(AllocentricEnvelopeMatrix,   saveMatrices + "AllocentricEnvelope_"    +AudioUtil::leadingZeros(totalIterations,4)+".data");
 	}
 }

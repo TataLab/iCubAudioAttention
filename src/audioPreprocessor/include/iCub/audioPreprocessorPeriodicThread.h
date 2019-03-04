@@ -59,7 +59,7 @@ typedef yarp::os::BufferedPort< yImageOfFloat     > yImageOfFloatBuffer;
 
 class AudioPreprocessorPeriodicThread : public yarp::os::PeriodicThread {
 
-  private:
+private:
 
 	bool result;                //-- Result of the processing.
 
@@ -73,7 +73,7 @@ class AudioPreprocessorPeriodicThread : public yarp::os::PeriodicThread {
 	double headOffset;          //-- Head angle of the robot.
 
 	double startTime;           //-- Used for keeping time and reporting temporal
-  double stopTime;            //-- events to the user via command line.
+    double stopTime;            //-- events to the user via command line.
 	
 	double timeDelay,        totalDelay;        //-- Hold on to and store time
 	double timeReading,      totalReading;	    //-- events for clean display
@@ -82,6 +82,7 @@ class AudioPreprocessorPeriodicThread : public yarp::os::PeriodicThread {
 	double timeTotal,        totalTime;         //-- when the RFModule is closed.
 
 	int    totalIterations;
+
 
 	/* ===========================================================================
 	 *  Yarp Ports for Sending and Receiving Data from this Periodic Thread.
@@ -96,7 +97,9 @@ class AudioPreprocessorPeriodicThread : public yarp::os::PeriodicThread {
 	yMatrixBuffer outHilbertEnvelopePort;
 	yMatrixBuffer outBandPassedEnvelopePort;
 	yMatrixBuffer outBandPassedRmsEnvelopePort;
+	yMatrixBuffer outBandPassedRmsPowerPort;
 	yMatrixBuffer outAllocentricEnvelopePort;
+
 
 	/* ===========================================================================
 	 *  Yarp Matrices used for Modules Computation. 
@@ -115,6 +118,7 @@ class AudioPreprocessorPeriodicThread : public yarp::os::PeriodicThread {
 	yMatrix HilbertEnvelopeMatrix;
 	yMatrix BandPassedEnvelopeMatrix;
 	yMatrix BandPassedRmsEnvelopeMatrix;
+	yMatrix BandPassedRmsPowerMatrix;
 	yMatrix AllocentricEnvelopeMatrix;
 	
 	
@@ -165,8 +169,8 @@ class AudioPreprocessorPeriodicThread : public yarp::os::PeriodicThread {
 	 * =========================================================================== */
 	int  numBeamsPerHemifield;
 	int  numBeams;
-  int  numFrontFieldAngles;
-  int  numFullFieldAngles;
+    int  numFrontFieldAngles;
+    int  numFullFieldAngles;
 	int  numFrameDownSamples;
 	bool processAll;
 
@@ -178,8 +182,7 @@ class AudioPreprocessorPeriodicThread : public yarp::os::PeriodicThread {
 	const int    _baseAngles = 180;           //-- Base number of angles in front field.
 
 
-  public:
-
+public:
 	/* ===========================================================================
 	 *  Default Constructor.
 	 * =========================================================================== */
@@ -261,7 +264,7 @@ class AudioPreprocessorPeriodicThread : public yarp::os::PeriodicThread {
 	bool processing();
 
 
-  private:
+private:
 	
 	/* ===========================================================================
 	 *  Write data to out going ports if something is connected.
