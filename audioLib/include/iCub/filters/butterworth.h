@@ -51,13 +51,13 @@ namespace Filters {
 
 class Filters::Butterworth {
 
-  private:
+	private:
 	
 	/* ===========================================================================
 	 *  Variables received from the constructor.
 	 * =========================================================================== */
 	int samplingRate;
-    int q_scale;
+    double q_scale;
 	
     double CenterFreq_lp;
     double CenterFreq_hp;
@@ -80,12 +80,12 @@ class Filters::Butterworth {
     double bn_bw, bn_c, bn_d, bn_a0, bn_a1, bn_a2, bn_b1, bn_b2; //-- Band-Noch.
 
 
-  public:
+  	public:
 
 	/* ===========================================================================
 	 *  Default Constructor.
 	 * =========================================================================== */
-	Butterworth(int rate, int q);
+	Butterworth(int rate, double q);
 
 
     /* ===========================================================================
@@ -138,7 +138,15 @@ class Filters::Butterworth {
     void getBandNochedAudio(const yMatrix& AudioSource, yMatrix& AudioTarget, const double CenterFrequency);
 
 
-  private:
+    /* ===========================================================================
+     *  Set a new q value. This will cause all Coefficients to be recalculated .
+     * 
+     * @param new_q : new band width for band-pass and band-notch filters. 
+     * =========================================================================== */
+	void setQscale(const double new_q);
+
+
+  	private:
 
     /* ===========================================================================
      *  Perform a generic bilinear transformation on the audio source, the 

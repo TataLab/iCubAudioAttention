@@ -27,7 +27,7 @@
 
 using namespace Filters;
 
-Butterworth::Butterworth(int rate, int q) :
+Butterworth::Butterworth(int rate, double q) :
     samplingRate(rate),
     q_scale(q) {
 
@@ -174,6 +174,17 @@ void Butterworth::getBandNochedAudio(const yMatrix& AudioSource, yMatrix& AudioT
             bn_b1, bn_b2
         );
     }
+}
+
+
+void Butterworth::setQscale(const double new_q) {
+
+    q_scale = new_q;
+
+    CenterFreq_lp = -1; //-- Ensure we calculate 
+    CenterFreq_hp = -1; //-- coefficients on the 
+    CenterFreq_bp = -1; //-- first call of each
+    CenterFreq_bn = -1; //-- filter type.
 }
 
 

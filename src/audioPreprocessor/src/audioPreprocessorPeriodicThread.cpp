@@ -74,7 +74,7 @@ bool AudioPreprocessorPeriodicThread::configure(yarp::os::ResourceFinder &rf) {
 	erbSpaced     = rf.findGroup("processing").check("erbSpaced",     yarp::os::Value(true),   "ERB spaced centre frequencies (boolean)"               ).asBool();
 	exitEarly     = rf.findGroup("processing").check("exitEarly",     yarp::os::Value(false),  "exit process without computing hilbert trans (boolean)").asBool();
 	bandPassFreq  = rf.findGroup("processing").check("bandPassFreq",  yarp::os::Value(5.0),    "frequency to use in band pass filter (double)"         ).asDouble();
-	bandPassWidth = rf.findGroup("processing").check("bandPassWidth", yarp::os::Value(1.0),    "bandwidth allowed for band pass filter (double)"       ).asDouble();
+	bandPassWidth = rf.findGroup("processing").check("bandPassWidth", yarp::os::Value(0.5),    "bandwidth allowed for band pass filter (double)"       ).asDouble();
 	angleRes      = rf.findGroup("processing").check("angleRes",      yarp::os::Value(1),      "degree resolution for a single position (int)"         ).asInt();
 	downSampEnv   = rf.findGroup("processing").check("downSampEnv",   yarp::os::Value(1),      "rate to down sample pre-envelope mat by (int)"         ).asInt();
 	numOmpThreads = rf.findGroup("processing").check("numOmpThreads", yarp::os::Value(4),      "if enabled, the number of omp threads (int)"           ).asInt();
