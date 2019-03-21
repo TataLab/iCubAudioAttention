@@ -44,7 +44,7 @@ class audioRunner(object):
 
 
         self.save_name_bayes = "{}BayesMat".format(self.prefix)
-        self.save_name_power = "{}PowerMat".format(self.prefix)
+        #self.save_name_power = "{}PowerMat".format(self.prefix)
 
         self.source_dir = os.path.join(self.root_dir, self.data_path)
         self.target_dir = os.path.join(self.root_dir, self.save_path)
@@ -64,16 +64,16 @@ class audioRunner(object):
         self.bayes_matrix_in_port.open(self.port_name + "/bayes_matrix:i")
 
         # For reading in the Bayesian map.
-        self.power_matrix_in_port = yarp.Port()
-        self.power_matrix_in_port.open(self.port_name + "/power_matrix:i")
+        #self.power_matrix_in_port = yarp.Port()
+        #self.power_matrix_in_port.open(self.port_name + "/power_matrix:i")
 
         # For flushing the Bayesian Map.
         self.bayes_out_port = yarp.Port()
         self.bayes_out_port.open(self.port_name + "/bayesClear:o")
 
         # For flushing the Power Map.
-        self.power_out_port = yarp.Port()
-        self.power_out_port.open(self.port_name + "/powerClear:o")
+        #self.power_out_port = yarp.Port()
+        #self.power_out_port.open(self.port_name + "/powerClear:o")
 
         # For Sending Head Positions.
         if self.movements:
@@ -85,9 +85,9 @@ class audioRunner(object):
             if self.movements: yarp.Network.connect(self.port_name + "/headAngle:o", "/audioPreprocessor/headAngle:i")
             yarp.Network.connect(self.port_name + "/rawAudio:o",     "/audioPreprocessor/rawAudio:i")
             yarp.Network.connect(self.port_name + "/bayesClear:o",   "/audioBayesianMap")
-            yarp.Network.connect(self.port_name + "/powerClear:o",   "/audioPowerMap")
+            #yarp.Network.connect(self.port_name + "/powerClear:o",   "/audioPowerMap")
             yarp.Network.connect("/audioBayesianMap/bayesianProbabilityMap:o", self.port_name + "/bayes_matrix:i")
-            yarp.Network.connect("/audioPowerMap/probabilityPowerMap:o",       self.port_name + "/power_matrix:i")
+            #yarp.Network.connect("/audioPowerMap/probabilityPowerMap:o",       self.port_name + "/power_matrix:i")
 
 
 
@@ -103,9 +103,8 @@ class audioRunner(object):
 
             elif self.audio_out_port.getOutputCount()       and \
                  self.bayes_matrix_in_port.getInputCount()  and \
-                 self.power_matrix_in_port.getInputCount()  and \
                  self.bayes_out_port.getOutputCount()       and \
-                 ((not self.movements) or self.head_out_port.getOutputCount()):
+                 ((not self.movements) or self.head_out_port.getOutputCount()):  #self.power_matrix_in_port.getInputCount()  and \
 
                 self.processing()
                 print("\n\nAll Data Processed. Good Bye!\n")
@@ -116,8 +115,8 @@ class audioRunner(object):
                 if not self.audio_out_port.getOutputCount():       msg += "audio output; "
                 if not self.bayes_matrix_in_port.getInputCount():  msg += "bayes matrix; "
                 if not self.bayes_out_port.getOutputCount():       msg += "bayes clear; "
-                if not self.power_matrix_in_port.getInputCount():  msg += "power matrix; "
-                if not self.power_out_port.getOutputCount():       msg += "power clear; "
+                #if not self.power_matrix_in_port.getInputCount():  msg += "power matrix; "
+                #if not self.power_out_port.getOutputCount():       msg += "power clear; "
                 if self.movements and not self.head_out_port.getOutputCount():
                     msg += "head angle; "
 
@@ -157,12 +156,13 @@ class audioRunner(object):
             target_name = sound_name.replace("yarpSound_", "_")
             
             BayesTarget_name = self.save_name_bayes + target_name.replace(".data", ".npy")
-            PowerTarget_name = self.save_name_power + target_name.replace(".data", ".npy")
+            #PowerTarget_name = self.save_name_power + target_name.replace(".data", ".npy")
 
             BayesTarget = os.path.join(self.target_dir, BayesTarget_name)  
-            PowerTarget = os.path.join(self.target_dir, PowerTarget_name)  
+            #PowerTarget = os.path.join(self.target_dir, PowerTarget_name)  
 
-            print("Processing {:04d} : {}  ==>  {}, {}".format(count, sound_name, BayesTarget_name, PowerTarget_name), end="   ", flush=True)
+            print("Processing {:04d} : {}  ==>  {}".format(count, sound_name, BayesTarget_name), end="   ", flush=True)
+            #print("Processing {:04d} : {}  ==>  {}, {}".format(count, sound_name, BayesTarget_name, PowerTarget_name), end="   ", flush=True)
 
             # Begin Reading in Data.
             RawData   = np.loadtxt(sound_source, dtype=np.int)
@@ -189,11 +189,11 @@ class audioRunner(object):
             command.clear()
             command.addString("clear")
             self.bayes_out_port.write(command)
-            self.power_out_port.write(command)
+            #self.power_out_port.write(command)
 
             # Buffer for returned matrices.
             BayesMatrixBuffer = []
-            PowerMatrixBuffer = []
+            #PowerMatrixBuffer = []
 
             startTime = time.time()
             
@@ -218,26 +218,27 @@ class audioRunner(object):
                 yarp_bayes_matrix = yarp.Matrix()
                 self.bayes_matrix_in_port.read(yarp_bayes_matrix) 
 
-                yarp_power_matrix = yarp.Matrix()
-                self.power_matrix_in_port.read(yarp_power_matrix) 
+                #yarp_power_matrix = yarp.Matrix()
+                #self.power_matrix_in_port.read(yarp_power_matrix) 
 
                 # Append this matrix to the buffer.
                 BayesMatrixBuffer.append(self._matrix_process(yarp_bayes_matrix))
-                PowerMatrixBuffer.append(self._matrix_process(yarp_power_matrix))
+                #PowerMatrixBuffer.append(self._matrix_process(yarp_power_matrix))
 
                 # Update the time stamp.
                 timeStamp.update()
 
             # Save the matrix out.
             npBayes = np.asarray(BayesMatrixBuffer)
-            npPower = np.asarray(PowerMatrixBuffer)
+            #npPower = np.asarray(PowerMatrixBuffer)
 
             np.save(BayesTarget, npBayes)
-            np.save(PowerTarget, npPower)
+            #np.save(PowerTarget, npPower)
 
             count  += 1
             endTime = time.time()
-            print("\u0394 : {:.4f} || {}, {}".format(endTime-startTime, npBayes.shape, npPower.shape))
+            #print("\u0394 : {:.4f} || {}, {}".format(endTime-startTime, npBayes.shape, npPower.shape))
+            print("\u0394 : {:.4f} || {}".format(endTime-startTime, npBayes.shape))
 
 
 
@@ -332,9 +333,9 @@ class audioRunner(object):
         print("Closing YARP Ports.")
         self.audio_out_port.close()
         self.bayes_matrix_in_port.close()
-        self.power_matrix_in_port.close()
+        #self.power_matrix_in_port.close()
         self.bayes_out_port.close()
-        self.power_out_port.close()
+        #self.power_out_port.close()
         if self.movements:
             self.head_out_port.close()
 

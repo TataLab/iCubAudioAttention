@@ -113,12 +113,12 @@ yMatrix AudioUtil::downSampleMatrix(const yMatrix& source, const size_t downSamp
 }
 
 
- void AudioUtil::MatrixToFile(const yMatrix& source, const std::string fileName) {
+void AudioUtil::MatrixToFile(const yMatrix& source, const std::string fileName) {
 
     std::ofstream writer(fileName);
     writer << AudioUtil::MatrixToString(source, 10, 1, "\n");
     writer.close();
- }
+}
 
 
 void AudioUtil::MatrixToImageOfFloat(const yMatrix& source, yImageOfFloat& target) {
