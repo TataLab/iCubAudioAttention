@@ -10,13 +10,13 @@ import time
 import argparse
 
 def get_args():
-    parser = argparse.ArgumentParser(description='runner')
-    parser.add_argument('-r', '--root',     default='CODE',                         help='Environmental variable to datas root.                 (default: {})'.format('CODE'))
-    parser.add_argument('-d', '--data',     default='data/audio_source',            help='Path from root of the data.                           (default: {})'.format('data/audio_source'))
-    parser.add_argument('-t', '--target',   default='noise_samples/pink_noise.wav', help='Source of the audio to scale to.                      (default: {})'.format('noise_samples/pink_noise.wav'))
-    parser.add_argument('-s', '--source',   default='target_samples',               help='Directory of files to scale.                          (default: {})'.format('target_samples'))
-    parser.add_argument('-S', '--save',     default='output',                       help='Name of the local directory files will be saved in.   (default: {})'.format('output'))
-    parser.add_argument('-R', '--resample', default=-1, type=int,                   help='Resample the audio.                                   (default: {})'.format(-1))
+    parser = argparse.ArgumentParser(description='balance')
+    parser.add_argument('-r', '--root',     default='CODE',                            help='Environmental variable to datas root.                 (default: {})'.format('CODE'))
+    parser.add_argument('-d', '--data',     default='data/audio_source',               help='Path from root of the data.                           (default: {})'.format('data/audio_source'))
+    parser.add_argument('-t', '--target',   default='noise_samples/pink_noise_01.wav', help='Source of the audio to scale to.                      (default: {})'.format('noise_samples/pink_noise_01.wav'))
+    parser.add_argument('-s', '--source',   default='target_samples',                  help='Directory of files to scale.                          (default: {})'.format('target_samples'))
+    parser.add_argument('-S', '--save',     default='output/',                          help='Name of the local directory files will be saved in.   (default: {})'.format('output/'))
+    parser.add_argument('-R', '--resample', default=-1, type=int,                      help='Resample the audio.                                   (default: {})'.format(-1))
     args = parser.parse_args()
     return args
 
@@ -70,7 +70,7 @@ for root, dirs, files in os.walk(source_dir):
     for file in files:
         current_file = os.path.join(root, file)
         output_file  = current_file.replace(source_dir, args.save)
-        
+   
         source, source_rate = sf.read(current_file)
 
         resampled = False
@@ -83,7 +83,7 @@ for root, dirs, files in os.walk(source_dir):
 
         source *= ( balance_rms / source_rms )
 
-        print("{:20s}\t : old={:.6f} | new={:.6f} \t\t {}".format(file, source_rms, rms(source), "Resampled" if resampled else " "))
+        print("{:40s} : old={:.6f} | new={:.6f} \t\t {}".format(file, source_rms, rms(source), "Resampled" if resampled else " "))
 
         sf.write(output_file, source, source_rate)
 
