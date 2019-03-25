@@ -307,7 +307,7 @@ void AudioRunnerPeriodicThread::run() {
 		command.addString("quit");
 		outPlayerCommandsPort.write();
 
-		this->stop();
+		this->askToStop();
 	}
 }
 
