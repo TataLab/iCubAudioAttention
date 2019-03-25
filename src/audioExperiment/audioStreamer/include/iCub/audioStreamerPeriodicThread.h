@@ -187,8 +187,6 @@ class AudioStreamerPeriodicThread : public yarp::os::PeriodicThread {
 	bool processing();
 
 
-  private:
-
 	/* ===========================================================================
 	 *  Method for moving the robots head to some degree.
 	 * 
@@ -197,6 +195,8 @@ class AudioStreamerPeriodicThread : public yarp::os::PeriodicThread {
 	 * =========================================================================== */
 	void moveRobotHead(const double target, std::string& reply);
 
+
+  private:
 
 	/* ===========================================================================
 	 *  Write data to out going ports if something is connected.

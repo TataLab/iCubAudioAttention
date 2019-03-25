@@ -45,7 +45,7 @@
 
 class AudioRunnerPeriodicThread : public yarp::os::PeriodicThread {
 
-  private:
+  	private:
 
 	bool result;                //-- Result of the processing.
 
@@ -106,7 +106,7 @@ class AudioRunnerPeriodicThread : public yarp::os::PeriodicThread {
 	std::vector< double           > HeadTimes;
 
 
-  public:
+  	public:
 
 	/* ===========================================================================
 	 *  Default Constructor.
@@ -189,7 +189,7 @@ class AudioRunnerPeriodicThread : public yarp::os::PeriodicThread {
 	bool processing();
 
 
-  private:
+  	private:
 
 	/* ===========================================================================
 	 *  Method for saving the internal buffer of audio to a file.
@@ -213,6 +213,6 @@ class AudioRunnerPeriodicThread : public yarp::os::PeriodicThread {
 	void endOfProcessingStats();
 };
 
-#endif  //_AUDIO_BAYESIAN_MAP_PERIODICTHREAD_H_
+#endif  //_AUDIO_RUNNER_PERIODICTHREAD_H_
 
 //----- end-of-file --- ( next line intentionally left blank ) ------------------

@@ -48,12 +48,12 @@ AudioStreamerPeriodicThread::AudioStreamerPeriodicThread(std::string _robot, std
 AudioStreamerPeriodicThread::~AudioStreamerPeriodicThread() {
 	if (movements) {
 		delete robotHead;
-		delete robotPos;
-		delete robotVel;
-		delete robotEnc;
+		//delete robotPos;
+		//delete robotVel;
+		//delete robotEnc;
 	}
 	delete robotMic;
-	delete robotSound;
+	//delete robotSound;
 }
 
 
@@ -220,13 +220,13 @@ void AudioStreamerPeriodicThread::threadRelease() {
 	//-- Stop all threads.
 	outRawAudioPort.interrupt();
 	inHeadAnglePort.interrupt();
-	robotSound->stopRecording();	
+	//robotSound->stopRecording();	
 
 	//-- Close the threads.
 	outRawAudioPort.close();
 	inHeadAnglePort.close();
-	robotHead->close();
-	robotMic->close();
+	//robotHead->close();
+	//robotMic->close(); // called by destructor. TODO: REMOVE LINE.
 
 	//-- Print thread stats.
 	endOfProcessingStats();	
@@ -311,25 +311,25 @@ void AudioStreamerPeriodicThread::moveRobotHead(const double target, std::string
 		}
 
 		//-- Pause audio streaming.
-		robotSound->stopRecording();
+		//robotSound->stopRecording();
 
 		//-- Begin moving the robot to the target.
 		robotPos->positionMove(panAngle, target);
 
 		//-- Wait for the encoder to get close enough to the target position.
-		while (true) {
-
-			//-- Get information on the encoders position
-			robotEnc->getEncoders(Encoder.data());
-
-			//-- If the encoder position is close enough, break.
-			if (std::abs(target - Encoder[panAngle]) < 0.25) {
-				break;
-			}
-		}
+		//while (true) {
+		//
+		//	//-- Get information on the encoders position
+		//	robotEnc->getEncoders(Encoder.data());
+		//
+		//	//-- If the encoder position is close enough, break.
+		//	if (std::abs(target - Encoder[panAngle]) < 0.25) {
+		//		break;
+		//	}
+		//}
 
 		//-- Continue streaming audio.
-		robotSound->startRecording();
+		//robotSound->startRecording();
 
 	} else { reply += "Movements are disabled for current experiment!";	}
 }	
