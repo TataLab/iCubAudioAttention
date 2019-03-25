@@ -14,6 +14,7 @@ def get_args():
     parser.add_argument('-H', '--high',  default=4800.0, type=float,          help='High Center Frequency.                (default: {})'.format(4800.0))
     parser.add_argument('-s', '--space', default=2,      type=int,            help='Frequency Band Spacing Used.          (default: {})'.format(2))
     parser.add_argument('-l', '--lin',   default=False,  action='store_true', help='Make Linear Spaced.                   (default: {})'.format(False))
+    parser.add_argument('-R', '--rms',   default=1.0,    type=float,          help='Value to balance outputs RMS to.      (default: {})'.format(1.0))
     parser.add_argument('-S', '--save',  default='output.wav',                help='Name of the output file.              (default: {})'.format('output.wav'))
     args = parser.parse_args()
     return args
@@ -34,6 +35,9 @@ def ampModulate(source, freq, rate):
     t = 2*np.pi * np.arange(length) / rate
     e = np.sin(freq * t) + 1
     return e * source
+
+def rms(data):
+    return np.sqrt(np.mean(data ** 2))
 
 def HzToErb(Hz):
     return ( 24.7 * ( 0.00437 * Hz + 1.0 ) )
@@ -86,15 +90,21 @@ def makeLinearCFs(numBands, spacing, lowCf, highCf):
     return cfs
 
 
+
 def main():
     args = get_args()
     if args.lin: cFreq = makeLinearCFs(args.band, args.space, args.low, args.high)
     else:        cFreq = makeErbCFs(args.band, args.space, args.low, args.high)
 
-    tone    = genComplex(cFreq, args.rate, args.time)
-    ampTone = ampModulate(tone, args.mod, args.rate)
+    compTone = genComplex(cFreq, args.rate, args.time)
+    ampTone  = ampModulate(compTone, args.mod, args.rate)
 
-    ampTone *= ( 1 / np.max(ampTone) )
+    #  -1 : balance to not go above '1'.
+    # > 0 : balance to the specified value.
+    if args.rms <= 0.0:
+        ampTone *= ( 1 / np.max( np.abs(ampTone) ) )
+    else:
+        ampTone *= (args.rms / rms(ampTone))
 
     sf.write(args.save, ampTone, args.rate)
 
