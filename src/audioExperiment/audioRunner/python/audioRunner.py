@@ -14,15 +14,23 @@ def get_args():
     parser = argparse.ArgumentParser(description='runner')
     parser.add_argument('-n', '--name',    default='/audioRunner',                     help='Name for the module.                                       (default: {})'.format('/audioRunner'))
     parser.add_argument('-r', '--root',    default='CODE',                             help='Environmental variable to datas root.                      (default: {})'.format('CODE'))
-    parser.add_argument('-d', '--data',    default='data/audio_experiment_01a_16384',  help='Which data folder to stream from.                          (default: {})'.format('data/audio_experiment_01a_16384'))
-    parser.add_argument('-s', '--save',    default='data/processed/ae_01a',            help='Folder to save processed matrix to. Frame Len is appended. (default: {})'.format('data/processed/ae_01a'))
-    parser.add_argument('-p', '--prefix',  default='Beam',                             help='Prefix for the save name.                                  (default: {})'.format('Beam'))
+    parser.add_argument('-d', '--data',    default='data/env_exp_01b_2048',            help='Which data folder to stream from.                          (default: {})'.format('data/env_exp_01b_2048'))
+    parser.add_argument('-s', '--save',    default='data/processed/env_01b',           help='Folder to save processed matrix to. Frame Len is appended. (default: {})'.format('data/processed/env_01b'))
+    parser.add_argument('-p', '--prefix',  default='Env',                              help='Prefix for the save name.                                  (default: {})'.format('Env'))
+    parser.add_argument('-o', '--origin',  default=2048,  type=int,                    help='Original length of frames recorded at.                     (default: {})'.format(2018))
     parser.add_argument('-f', '--frame',   default=16384, type=int,                    help='Length of frames to stream.                                (default: {})'.format(16384))
     parser.add_argument('-R', '--rate',    default=48000, type=int,                    help='Sampling rate audio was recorded at.                       (default: {})'.format(48000))
     parser.add_argument('-m', '--move',    default=False, action='store_true',         help='Enable Movements to be sent to processing.                 (default: {})'.format(False))
+    parser.add_argument('-S', '--strat',   default=1,     type=int,                    help='Head movement sending strategy. [1, 2]                     (default: {})'.format(1))
     parser.add_argument('-P', '--play',    default=False, action='store_true',         help='Playback the audio instead for sending for processing.     (default: {})'.format(False))
     parser.add_argument('-c', '--connect', default=False, action='store_true',         help='Automatically connect all ports on construction.           (default: {})'.format(False))
     args = parser.parse_args()
+
+    strategies = [1, 2]
+    if not args.strat in strategies:
+        print("Unknown Strategy Number : {}".format(args.strat))
+        exit()
+
     return args
 
 
@@ -31,20 +39,23 @@ class audioRunner(object):
     def __init__(self, args):
 
         # Get all vars from args.
-        self.port_name     = args.name
-        self.root_dir      = os.environ.get(args.root)
-        self.data_path     = args.data
-        self.save_path     = args.save + "_{}".format(args.frame)
-        self.prefix        = args.prefix
-        self.frame_length  = args.frame
-        self.sampling_rate = args.rate
-        self.movements     = args.move
-        self.play_back     = args.play
-        self.connect_all   = args.connect
+        self.port_name      = args.name
+        self.root_dir       = os.environ.get(args.root)
+        self.data_path      = args.data
+        self.save_path      = args.save + "_{}".format(args.frame)
+        self.prefix         = args.prefix
+        self.original_frame = args.origin
+        self.frame_length   = args.frame
+        self.sampling_rate  = args.rate
+        self.movements      = args.move
+        self.strategy       = args.strat
+        self.play_back      = args.play
+        self.connect_all    = args.connect
 
 
-        self.save_name_bayes = "{}BayesMat".format(self.prefix)
-        #self.save_name_power = "{}PowerMat".format(self.prefix)
+        self.save_name_allo   = "{}AlloMat".format(self.prefix)
+        #self.save_name_bayes = "{}BayesMat".format(self.prefix)
+        #self.save_name_power = "{}PowerMat".format(self.prefix)        
 
         self.source_dir = os.path.join(self.root_dir, self.data_path)
         self.target_dir = os.path.join(self.root_dir, self.save_path)
@@ -59,17 +70,21 @@ class audioRunner(object):
         self.audio_out_port = yarp.Port()
         self.audio_out_port.open(self.port_name + "/rawAudio:o")
 
+        # For reading in the Allocentric Map.
+        self.allo_matrix_in_port = yarp.Port()
+        self.allo_matrix_in_port.open(self.port_name + "/allo_matrix:i")
+
         # For reading in the Bayesian map.
-        self.bayes_matrix_in_port = yarp.Port()
-        self.bayes_matrix_in_port.open(self.port_name + "/bayes_matrix:i")
+        #self.bayes_matrix_in_port = yarp.Port()
+        #self.bayes_matrix_in_port.open(self.port_name + "/bayes_matrix:i")
 
         # For reading in the Bayesian map.
         #self.power_matrix_in_port = yarp.Port()
         #self.power_matrix_in_port.open(self.port_name + "/power_matrix:i")
 
         # For flushing the Bayesian Map.
-        self.bayes_out_port = yarp.Port()
-        self.bayes_out_port.open(self.port_name + "/bayesClear:o")
+        #self.bayes_out_port = yarp.Port()
+        #self.bayes_out_port.open(self.port_name + "/bayesClear:o")
 
         # For flushing the Power Map.
         #self.power_out_port = yarp.Port()
@@ -84,14 +99,17 @@ class audioRunner(object):
         if self.connect_all:
             if self.movements: yarp.Network.connect(self.port_name + "/headAngle:o", "/audioPreprocessor/headAngle:i")
             yarp.Network.connect(self.port_name + "/rawAudio:o",     "/audioPreprocessor/rawAudio:i")
-            yarp.Network.connect(self.port_name + "/bayesClear:o",   "/audioBayesianMap")
+            #yarp.Network.connect(self.port_name + "/bayesClear:o",   "/audioBayesianMap")
             #yarp.Network.connect(self.port_name + "/powerClear:o",   "/audioPowerMap")
-            yarp.Network.connect("/audioBayesianMap/bayesianProbabilityMap:o", self.port_name + "/bayes_matrix:i")
+            yarp.Network.connect("/audioPreprocessor/allocentricEnvelope:o",   self.port_name + "/allo_matrix:i")
+            #yarp.Network.connect("/audioBayesianMap/bayesianProbabilityMap:o", self.port_name + "/bayes_matrix:i")
             #yarp.Network.connect("/audioPowerMap/probabilityPowerMap:o",       self.port_name + "/power_matrix:i")
 
 
 
     def run(self):
+
+        self.processing() # yarpPan_0001_1_2048_2_349.data && yarpSound_0001_1_2048_2_349.data
 
         while True:
 
@@ -102,9 +120,8 @@ class audioRunner(object):
                 exit()
 
             elif self.audio_out_port.getOutputCount()       and \
-                 self.bayes_matrix_in_port.getInputCount()  and \
-                 self.bayes_out_port.getOutputCount()       and \
-                 ((not self.movements) or self.head_out_port.getOutputCount()):  #self.power_matrix_in_port.getInputCount()  and \
+                 self.allo_matrix_in_port.getInputCount()   and \
+                 ((not self.movements) or self.head_out_port.getOutputCount()):  #self.bayes_matrix_in_port.getInputCount()  and \ self.bayes_out_port.getOutputCount()       and \ self.power_matrix_in_port.getInputCount()  and \
 
                 self.processing()
                 print("\n\nAll Data Processed. Good Bye!\n")
@@ -113,8 +130,9 @@ class audioRunner(object):
             else:
                 msg = "Missing Connection to "
                 if not self.audio_out_port.getOutputCount():       msg += "audio output; "
-                if not self.bayes_matrix_in_port.getInputCount():  msg += "bayes matrix; "
-                if not self.bayes_out_port.getOutputCount():       msg += "bayes clear; "
+                if not self.allo_matrix_in_port.getInputCount():   msg += "allo input; "
+                #if not self.bayes_matrix_in_port.getInputCount():  msg += "bayes matrix; "
+                #if not self.bayes_out_port.getOutputCount():       msg += "bayes clear; "
                 #if not self.power_matrix_in_port.getInputCount():  msg += "power matrix; "
                 #if not self.power_out_port.getOutputCount():       msg += "power clear; "
                 if self.movements and not self.head_out_port.getOutputCount():
@@ -155,44 +173,40 @@ class audioRunner(object):
 
             target_name = sound_name.replace("yarpSound_", "_")
             
-            BayesTarget_name = self.save_name_bayes + target_name.replace(".data", ".npy")
+            AlloTarget_name  = self.save_name_allo + target_name.replace(".data", ".npy")
+            #BayesTarget_name = self.save_name_bayes + target_name.replace(".data", ".npy")
             #PowerTarget_name = self.save_name_power + target_name.replace(".data", ".npy")
 
-            BayesTarget = os.path.join(self.target_dir, BayesTarget_name)  
+            AlloTarget = os.path.join(self.target_dir, AlloTarget_name)
+            #BayesTarget = os.path.join(self.target_dir, BayesTarget_name)  
             #PowerTarget = os.path.join(self.target_dir, PowerTarget_name)  
-
-            print("Processing {:04d} : {}  ==>  {}".format(count, sound_name, BayesTarget_name), end="   ", flush=True)
+            
+            print("Processing {:04d} : {}  ==>  {}".format(count, sound_name, AlloTarget_name), end="   ", flush=True)
+            #print("Processing {:04d} : {}  ==>  {}".format(count, sound_name, BayesTarget_name), end="   ", flush=True)
             #print("Processing {:04d} : {}  ==>  {}, {}".format(count, sound_name, BayesTarget_name, PowerTarget_name), end="   ", flush=True)
 
             # Begin Reading in Data.
-            RawData   = np.loadtxt(sound_source, dtype=np.int)
-            L_RawData = RawData[0].reshape(-1, self.frame_length)
-            R_RawData = RawData[1].reshape(-1, self.frame_length)
+            RawData = np.loadtxt(sound_source, dtype=np.int)
+            RawPos  = np.loadtxt(position_source, dtype=np.float32).tolist() if self.movements else None
+
+            # Shape this data.
+            L_RawData, R_RawData, RawPos = self._trial_process(RawData, RawPos)
             numFrames = L_RawData.shape[0]
 
-            if self.movements:
-                # Read in the positions from the file.
-                RawPos = np.loadtxt(position_source, dtype=np.float32).tolist()
-                numPos = len(RawPos)
-                scale  = ( numFrames // numPos )
-                
-                # Increase the number of position readings relative to the scale
-                RawPos = RawPos * scale
-                RawPos = np.asarray(RawPos, dtype=np.float32).reshape(-1,scale,order='F').reshape(-1,order='C')
-                
             # Keep time.
             timeStamp = yarp.Stamp()
             timeStamp.update()
 
             # Clear the Bayesian & Power Map.
-            command = yarp.Bottle()
-            command.clear()
-            command.addString("clear")
-            self.bayes_out_port.write(command)
+            #command = yarp.Bottle()
+            #command.clear()
+            #command.addString("clear")
+            #self.bayes_out_port.write(command)
             #self.power_out_port.write(command)
 
             # Buffer for returned matrices.
-            BayesMatrixBuffer = []
+            AlloMatrixBuffer = []
+            #BayesMatrixBuffer = []
             #PowerMatrixBuffer = []
 
             startTime = time.time()
@@ -215,30 +229,37 @@ class audioRunner(object):
                     self.head_out_port.write(headPos)
 
                 # Wait for a response.
-                yarp_bayes_matrix = yarp.Matrix()
-                self.bayes_matrix_in_port.read(yarp_bayes_matrix) 
+                yarp_allo_matrix = yarp.Matrix()
+                self.allo_matrix_in_port.read(yarp_allo_matrix)
+                
+                #yarp_bayes_matrix = yarp.Matrix()
+                #self.bayes_matrix_in_port.read(yarp_bayes_matrix) 
 
                 #yarp_power_matrix = yarp.Matrix()
                 #self.power_matrix_in_port.read(yarp_power_matrix) 
 
                 # Append this matrix to the buffer.
-                BayesMatrixBuffer.append(self._matrix_process(yarp_bayes_matrix))
+                AlloMatrixBuffer.append(self._matrix_process(yarp_allo_matrix))
+                #BayesMatrixBuffer.append(self._matrix_process(yarp_bayes_matrix))
                 #PowerMatrixBuffer.append(self._matrix_process(yarp_power_matrix))
 
                 # Update the time stamp.
                 timeStamp.update()
 
             # Save the matrix out.
-            npBayes = np.asarray(BayesMatrixBuffer)
+            npAllo = np.asarray(AlloMatrixBuffer)
+            #npBayes = np.asarray(BayesMatrixBuffer)
             #npPower = np.asarray(PowerMatrixBuffer)
 
-            np.save(BayesTarget, npBayes)
+            np.save(AlloTarget, npAllo)
+            #np.save(BayesTarget, npBayes)
             #np.save(PowerTarget, npPower)
 
             count  += 1
             endTime = time.time()
             #print("\u0394 : {:.4f} || {}, {}".format(endTime-startTime, npBayes.shape, npPower.shape))
-            print("\u0394 : {:.4f} || {}".format(endTime-startTime, npBayes.shape))
+            #print("\u0394 : {:.4f} || {}".format(endTime-startTime, npBayes.shape))
+            print("\u0394 : {:.4f} || {}".format(endTime-startTime, npAllo.shape))
 
 
 
@@ -249,9 +270,14 @@ class audioRunner(object):
 
         files_sound = []
         [ files[idx].startswith('yarpSound') and files_sound.append(files[idx]) for idx in range(len(files)) ]
-        files = sorted(files_sound)
+        files_sound = sorted(files_sound)
 
-        print(files)
+        files_pos = []
+        [ files[idx].startswith('yarpPan') and files_pos.append(files[idx]) for idx in range(len(files)) ]
+        files_pos = sorted(files_pos)
+
+
+        print(files_sound)
 
         while True:
             
@@ -261,18 +287,22 @@ class audioRunner(object):
                 print("Index {} out of range.".format(idx))
                 continue
 
-            source = files[idx-1]
+            sound_source = files_sound[idx-1]
+            position_source = files_pos[idx-1]
 
-            print("Streaming {:20s} ".format(source), end="   ", flush=True)
+            print("Streaming {:20s} ".format(sound_source), end="   ", flush=True)
 
-            source = os.path.join(root, source)
-                
-            # Break into left and right channel for easier slicing.
-            RawData   = np.loadtxt(source, dtype=np.int)
-            L_RawData = RawData[0].reshape(-1, self.frame_length)
-            R_RawData = RawData[1].reshape(-1, self.frame_length)
+            sound_source = os.path.join(root, sound_source)
+            position_source = os.path.join(root, position_source)
+
+            # Begin Reading in Data.
+            RawData = np.loadtxt(sound_source, dtype=np.int)
+            RawPos  = np.loadtxt(position_source, dtype=np.float32).tolist() if self.movements else None
+
+            # Shape this data.
+            L_RawData, R_RawData, RawPos = self._trial_process(RawData, RawPos)
             numFrames = L_RawData.shape[0]
-
+                
             # Keep time.
             timeStamp = yarp.Stamp()
             timeStamp.update()
@@ -298,6 +328,56 @@ class audioRunner(object):
             endTime = time.time()
             print("\u0394 : {:.4f}".format(endTime-startTime))
 
+
+    def _trial_process(self, RawData, RawPos):       
+
+        # Strategy 1.
+        #  - Use All data, and pad the last elements for desired frame length.
+        #  - Take Mean of head positions per frame.
+        if self.strategy == 1:
+
+            ogSamples = RawData.shape[1]
+            numFrames = int( np.ceil(ogSamples / self.frame_length) )
+
+            Left_Data  = np.zeros( (numFrames * self.frame_length), dtype=np.int )
+            Right_Data = np.zeros( (numFrames * self.frame_length), dtype=np.int )
+
+            Left_Data[:ogSamples ] = RawData[0]
+            Right_Data[:ogSamples] = RawData[1]
+
+            Left_Data  = Left_Data.reshape(  (numFrames, self.frame_length) )
+            Right_Data = Right_Data.reshape( (numFrames, self.frame_length) )
+
+            Pos_Data = None
+            if self.movements:
+                
+                # Transform the Raw Positions so that each 'sample' 
+                # in the trial has its own head position.
+                # Reshape so they are concurrent.
+                RawPos = RawPos * self.original_frame
+                RawPos = np.asarray(RawPos, dtype=np.float32).reshape(-1,self.original_frame,order='F').reshape(-1,order='C')
+
+                # Reshape so the head position samples are similar in shape to the audio.
+                Pos_Data = np.zeros( (numFrames * self.frame_length), dtype=np.float32 )
+                Pos_Data[:ogSamples] = RawPos
+                
+                # Fill the padding with the last sample instead of zeros.
+                remaining = (numFrames * self.frame_length) - ogSamples
+                if remaining != 0:
+                    Pos_Data[-remaining:] = RawPos[-1]
+
+                # Make the same shape as the audio, and take the mean of each frames samples.
+                Pos_Data = Pos_Data.reshape( (numFrames, self.frame_length) )
+                Pos_Data = np.mean( Pos_Data, axis=1 )
+
+
+
+        elif self.strategy == 2:
+            print("Not Implemented . . .")
+            exit()
+
+
+        return Left_Data, Right_Data, Pos_Data
 
 
     def _sound_process(self, Left_Ch, Right_Ch):
@@ -332,9 +412,10 @@ class audioRunner(object):
     def cleanup(self):
         print("Closing YARP Ports.")
         self.audio_out_port.close()
-        self.bayes_matrix_in_port.close()
+        self.allo_matrix_in_port.close()
+        #self.bayes_matrix_in_port.close()
         #self.power_matrix_in_port.close()
-        self.bayes_out_port.close()
+        #self.bayes_out_port.close()
         #self.power_out_port.close()
         if self.movements:
             self.head_out_port.close()
