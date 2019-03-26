@@ -17,11 +17,13 @@ def get_args():
     parser.add_argument('-d', '--data',    default='data/env_exp_01b_2048',            help='Which data folder to stream from.                          (default: {})'.format('data/env_exp_01b_2048'))
     parser.add_argument('-s', '--save',    default='data/processed/env_01b',           help='Folder to save processed matrix to. Frame Len is appended. (default: {})'.format('data/processed/env_01b'))
     parser.add_argument('-p', '--prefix',  default='Env',                              help='Prefix for the save name.                                  (default: {})'.format('Env'))
-    parser.add_argument('-o', '--origin',  default=2048,  type=int,                    help='Original length of frames recorded at.                     (default: {})'.format(2018))
+    parser.add_argument('-o', '--origin',  default=2048,  type=int,                    help='Original length of frames recorded at.                     (default: {})'.format(2048))
     parser.add_argument('-f', '--frame',   default=16384, type=int,                    help='Length of frames to stream.                                (default: {})'.format(16384))
     parser.add_argument('-R', '--rate',    default=48000, type=int,                    help='Sampling rate audio was recorded at.                       (default: {})'.format(48000))
-    parser.add_argument('-m', '--move',    default=False, action='store_true',         help='Enable Movements to be sent to processing.                 (default: {})'.format(False))
-    parser.add_argument('-S', '--strat',   default=1,     type=int,                    help='Head movement sending strategy. [1, 2]                     (default: {})'.format(1))
+    parser.add_argument('-m', '--move',    default=False, action='store_true',         help='Enable recorded movements to be sent to processing.        (default: {})'.format(False))
+    parser.add_argument('-S', '--strat',   default=2,     type=int,                    help='Head movement sending strategy. [1, 2]                     (default: {})'.format(2))
+    parser.add_argument('-O', '--over',    default=0,     type=int,                    help='Frame overlap for strategy 2.                              (default: {})'.format(0))
+    parser.add_argument('-T', '--thresh',  default=0.5,   type=float,                  help='Threshold of head position differences.                    (default: {})'.format(0.5))
     parser.add_argument('-P', '--play',    default=False, action='store_true',         help='Playback the audio instead for sending for processing.     (default: {})'.format(False))
     parser.add_argument('-c', '--connect', default=False, action='store_true',         help='Automatically connect all ports on construction.           (default: {})'.format(False))
     args = parser.parse_args()
@@ -49,6 +51,8 @@ class audioRunner(object):
         self.sampling_rate  = args.rate
         self.movements      = args.move
         self.strategy       = args.strat
+        self.overlap        = args.over
+        self.threshold      = args.thresh
         self.play_back      = args.play
         self.connect_all    = args.connect
 
@@ -331,6 +335,8 @@ class audioRunner(object):
 
     def _trial_process(self, RawData, RawPos):       
 
+        Pos_Data = None
+
         # Strategy 1.
         #  - Use All data, and pad the last elements for desired frame length.
         #  - Take Mean of head positions per frame.
@@ -348,7 +354,6 @@ class audioRunner(object):
             Left_Data  = Left_Data.reshape(  (numFrames, self.frame_length) )
             Right_Data = Right_Data.reshape( (numFrames, self.frame_length) )
 
-            Pos_Data = None
             if self.movements:
                 
                 # Transform the Raw Positions so that each 'sample' 
@@ -371,10 +376,48 @@ class audioRunner(object):
                 Pos_Data = np.mean( Pos_Data, axis=1 )
 
 
-
+        # Strategy 2.
+        #  - Window over the data.
+        #  - Only use frames where the head difference was below a threshold. 
         elif self.strategy == 2:
-            print("Not Implemented . . .")
-            exit()
+
+            ogSamples = RawData.shape[1]
+            
+            Left_List  = RawData[0].tolist()
+            Right_List = RawData[1].tolist()
+
+            if self.movements:
+                RawPos = RawPos * self.original_frame
+                RawPos = np.asarray(RawPos, dtype=np.float32).reshape(-1,self.original_frame,order='F').reshape(-1,order='C')
+                Pos_List = RawPos.tolist()
+
+            Left_Buffer  = []
+            Right_Buffer = []
+            Pos_Buffer   = []
+            
+            for idx in range(0, ogSamples, self.frame_length-(self.overlap*self.original_frame)):
+                
+                Left_Slice  = Left_List[idx:idx+self.frame_length]
+                Right_Slice = Right_List[idx:idx+self.frame_length]
+                
+                if self.movements:
+                    Pos_Slice = Pos_List[idx:idx+self.frame_length]
+
+                    if np.max(np.diff(Pos_Slice)) < self.threshold and \
+                        len(Left_Slice) == self.frame_length:
+
+                        Left_Buffer.append(Left_Slice)
+                        Right_Buffer.append(Right_Slice)
+                        Pos_Buffer.append(np.mean(Pos_Slice))
+
+                elif len(Left_Slice) == self.frame_length:
+                    Left_Buffer.append(Left_Slice)
+                    Right_Buffer.append(Right_Slice)
+
+            Left_Data  = np.asarray(Left_Buffer,  dtype=np.int)
+            Right_Data = np.asarray(Right_Buffer, dtype=np.int)
+            if self.movements:
+                Pos_Data = np.asarray(Pos_Buffer, dtype=np.float32)
 
 
         return Left_Data, Right_Data, Pos_Data
