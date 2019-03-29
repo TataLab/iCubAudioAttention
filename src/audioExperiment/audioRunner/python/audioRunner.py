@@ -14,15 +14,16 @@ def get_args():
     parser = argparse.ArgumentParser(description='runner')
     parser.add_argument('-n', '--name',    default='/audioRunner',                     help='Name for the module.                                       (default: {})'.format('/audioRunner'))
     parser.add_argument('-r', '--root',    default='CODE',                             help='Environmental variable to datas root.                      (default: {})'.format('CODE'))
-    parser.add_argument('-d', '--data',    default='data/env_exp_01b_2048',            help='Which data folder to stream from.                          (default: {})'.format('data/env_exp_01b_2048'))
+    parser.add_argument('-d', '--data',    default='data/recorded/env_01b_2048',       help='Which data folder to stream from.                          (default: {})'.format('data/recorded/env_01b_2048'))
     parser.add_argument('-s', '--save',    default='data/processed/env_01b',           help='Folder to save processed matrix to. Frame Len is appended. (default: {})'.format('data/processed/env_01b'))
-    parser.add_argument('-p', '--prefix',  default='Env',                              help='Prefix for the save name.                                  (default: {})'.format('Env'))
+    parser.add_argument('-b', '--beamp',   default='Beam',                             help='Prefix for the allo-beams save name.                       (default: {})'.format('Beam'))
+    parser.add_argument('-e', '--envp',    default='Env',                              help='Prefix for the allo-envelops save name.                    (default: {})'.format('Env'))
     parser.add_argument('-o', '--origin',  default=2048,  type=int,                    help='Original length of frames recorded at.                     (default: {})'.format(2048))
     parser.add_argument('-f', '--frame',   default=16384, type=int,                    help='Length of frames to stream.                                (default: {})'.format(16384))
     parser.add_argument('-R', '--rate',    default=48000, type=int,                    help='Sampling rate audio was recorded at.                       (default: {})'.format(48000))
     parser.add_argument('-m', '--move',    default=False, action='store_true',         help='Enable recorded movements to be sent to processing.        (default: {})'.format(False))
     parser.add_argument('-S', '--strat',   default=2,     type=int,                    help='Head movement sending strategy. [1, 2]                     (default: {})'.format(2))
-    parser.add_argument('-O', '--over',    default=0,     type=int,                    help='Frame overlap for strategy 2.                              (default: {})'.format(0))
+    parser.add_argument('-O', '--over',    default=0,     type=int,                    help='Number of samples to overlap for strategy 2.               (default: {})'.format(0))
     parser.add_argument('-T', '--thresh',  default=0.5,   type=float,                  help='Threshold of head position differences.                    (default: {})'.format(0.5))
     parser.add_argument('-P', '--play',    default=False, action='store_true',         help='Playback the audio instead for sending for processing.     (default: {})'.format(False))
     parser.add_argument('-c', '--connect', default=False, action='store_true',         help='Automatically connect all ports on construction.           (default: {})'.format(False))
@@ -45,7 +46,8 @@ class audioRunner(object):
         self.root_dir       = os.environ.get(args.root)
         self.data_path      = args.data
         self.save_path      = args.save + "_{}".format(args.frame)
-        self.prefix         = args.prefix
+        self.beam_prefix    = args.beamp
+        self.env_prefix     = args.envp
         self.original_frame = args.origin
         self.frame_length   = args.frame
         self.sampling_rate  = args.rate
@@ -57,7 +59,8 @@ class audioRunner(object):
         self.connect_all    = args.connect
 
 
-        self.save_name_allo   = "{}AlloMat".format(self.prefix)
+        self.save_name_beam_allo = "{}AlloMat".format(self.beam_prefix)
+        self.save_name_env_allo  = "{}AlloMat".format(self.env_prefix)
         #self.save_name_bayes = "{}BayesMat".format(self.prefix)
         #self.save_name_power = "{}PowerMat".format(self.prefix)        
 
@@ -75,20 +78,24 @@ class audioRunner(object):
         self.audio_out_port.open(self.port_name + "/rawAudio:o")
 
         # For reading in the Allocentric Map.
-        self.allo_matrix_in_port = yarp.Port()
-        self.allo_matrix_in_port.open(self.port_name + "/allo_matrix:i")
+        self.allo_beam_matrix_in_port = yarp.Port()
+        self.allo_beam_matrix_in_port.open(self.port_name + "/allo_beam_matrix:i")
+        
+        self.allo_env_matrix_in_port = yarp.Port()
+        self.allo_env_matrix_in_port.open(self.port_name + "/allo_env_matrix:i")
+
 
         # For reading in the Bayesian map.
         #self.bayes_matrix_in_port = yarp.Port()
         #self.bayes_matrix_in_port.open(self.port_name + "/bayes_matrix:i")
 
-        # For reading in the Bayesian map.
-        #self.power_matrix_in_port = yarp.Port()
-        #self.power_matrix_in_port.open(self.port_name + "/power_matrix:i")
-
         # For flushing the Bayesian Map.
         #self.bayes_out_port = yarp.Port()
         #self.bayes_out_port.open(self.port_name + "/bayesClear:o")
+
+        # For reading in the Bayesian map.
+        #self.power_matrix_in_port = yarp.Port()
+        #self.power_matrix_in_port.open(self.port_name + "/power_matrix:i")
 
         # For flushing the Power Map.
         #self.power_out_port = yarp.Port()
@@ -102,18 +109,19 @@ class audioRunner(object):
         # Connect all ports if enabled.
         if self.connect_all:
             if self.movements: yarp.Network.connect(self.port_name + "/headAngle:o", "/audioPreprocessor/headAngle:i")
-            yarp.Network.connect(self.port_name + "/rawAudio:o",     "/audioPreprocessor/rawAudio:i")
-            #yarp.Network.connect(self.port_name + "/bayesClear:o",   "/audioBayesianMap")
-            #yarp.Network.connect(self.port_name + "/powerClear:o",   "/audioPowerMap")
-            yarp.Network.connect("/audioPreprocessor/allocentricEnvelope:o",   self.port_name + "/allo_matrix:i")
-            #yarp.Network.connect("/audioBayesianMap/bayesianProbabilityMap:o", self.port_name + "/bayes_matrix:i")
-            #yarp.Network.connect("/audioPowerMap/probabilityPowerMap:o",       self.port_name + "/power_matrix:i")
+            yarp.Network.connect(self.port_name + "/rawAudio:o",                     "/audioPreprocessor/rawAudio:i")
+            yarp.Network.connect("/audioPreprocessor/allocentricAudio:o",            self.port_name + "/allo_beam_matrix:i")
+            yarp.Network.connect("/audioPreprocessor/allocentricEnvelope:o",         self.port_name + "/allo_env_matrix:i")
 
+            #yarp.Network.connect("/audioBayesianMap/bayesianProbabilityMap:o", self.port_name + "/bayes_matrix:i")
+            #yarp.Network.connect(self.port_name + "/bayesClear:o",   "/audioBayesianMap")
+            #yarp.Network.connect("/audioPowerMap/probabilityPowerMap:o",       self.port_name + "/power_matrix:i")
+            #yarp.Network.connect(self.port_name + "/powerClear:o",   "/audioPowerMap")
 
 
     def run(self):
 
-        self.processing() # yarpPan_0001_1_2048_2_349.data && yarpSound_0001_1_2048_2_349.data
+        #self.processing() # yarpPan_0001_1_2048_2_349.data && yarpSound_0001_1_2048_2_349.data
 
         while True:
 
@@ -123,9 +131,12 @@ class audioRunner(object):
                 print("\n\nAll Data Streamed. Good Bye!\n")
                 exit()
 
-            elif self.audio_out_port.getOutputCount()       and \
-                 self.allo_matrix_in_port.getInputCount()   and \
-                 ((not self.movements) or self.head_out_port.getOutputCount()):  #self.bayes_matrix_in_port.getInputCount()  and \ self.bayes_out_port.getOutputCount()       and \ self.power_matrix_in_port.getInputCount()  and \
+            #self.bayes_matrix_in_port.getInputCount()  and \
+            #self.bayes_out_port.getOutputCount()       and \
+            elif self.audio_out_port.getOutputCount()            and \
+                 self.allo_beam_matrix_in_port.getInputCount()   and \
+                 self.allo_env_matrix_in_port.getInputCount()    and \
+                 ((not self.movements) or self.head_out_port.getOutputCount()):  
 
                 self.processing()
                 print("\n\nAll Data Processed. Good Bye!\n")
@@ -133,8 +144,9 @@ class audioRunner(object):
             
             else:
                 msg = "Missing Connection to "
-                if not self.audio_out_port.getOutputCount():       msg += "audio output; "
-                if not self.allo_matrix_in_port.getInputCount():   msg += "allo input; "
+                if not self.audio_out_port.getOutputCount():            msg += "audio output; "
+                if not self.allo_beam_matrix_in_port.getInputCount():   msg += "allo beam input; "
+                if not self.allo_env_matrix_in_port.getInputCount():    msg += "allo env input; "
                 #if not self.bayes_matrix_in_port.getInputCount():  msg += "bayes matrix; "
                 #if not self.bayes_out_port.getOutputCount():       msg += "bayes clear; "
                 #if not self.power_matrix_in_port.getInputCount():  msg += "power matrix; "
@@ -177,15 +189,17 @@ class audioRunner(object):
 
             target_name = sound_name.replace("yarpSound_", "_")
             
-            AlloTarget_name  = self.save_name_allo + target_name.replace(".data", ".npy")
+            AlloBeamTarget_name  = self.save_name_beam_allo + target_name.replace(".data", ".npy")
+            AlloEnvTarget_name   = self.save_name_env_allo  + target_name.replace(".data", ".npy")
             #BayesTarget_name = self.save_name_bayes + target_name.replace(".data", ".npy")
             #PowerTarget_name = self.save_name_power + target_name.replace(".data", ".npy")
 
-            AlloTarget = os.path.join(self.target_dir, AlloTarget_name)
+            AlloBeamTarget = os.path.join(self.target_dir, AlloBeamTarget_name)
+            AlloEnvTarget  = os.path.join(self.target_dir, AlloEnvTarget_name)
             #BayesTarget = os.path.join(self.target_dir, BayesTarget_name)  
             #PowerTarget = os.path.join(self.target_dir, PowerTarget_name)  
             
-            print("Processing {:04d} : {}  ==>  {}".format(count, sound_name, AlloTarget_name), end="   ", flush=True)
+            print("Processing {:04d} : {}  ==>  {}, {}".format(count, sound_name, AlloBeamTarget_name, AlloEnvTarget_name), end="   ", flush=True)
             #print("Processing {:04d} : {}  ==>  {}".format(count, sound_name, BayesTarget_name), end="   ", flush=True)
             #print("Processing {:04d} : {}  ==>  {}, {}".format(count, sound_name, BayesTarget_name, PowerTarget_name), end="   ", flush=True)
 
@@ -209,9 +223,13 @@ class audioRunner(object):
             #self.power_out_port.write(command)
 
             # Buffer for returned matrices.
-            AlloMatrixBuffer = []
+            AlloBeamMatrixBuffer = []
+            AlloEnvMatrixBuffer  = []
             #BayesMatrixBuffer = []
             #PowerMatrixBuffer = []
+
+            yarp_allo_beam_matrix = yarp.Matrix()
+            yarp_allo_env_matrix  = yarp.Matrix()
 
             startTime = time.time()
             
@@ -233,8 +251,8 @@ class audioRunner(object):
                     self.head_out_port.write(headPos)
 
                 # Wait for a response.
-                yarp_allo_matrix = yarp.Matrix()
-                self.allo_matrix_in_port.read(yarp_allo_matrix)
+                self.allo_beam_matrix_in_port.read(yarp_allo_beam_matrix)
+                self.allo_env_matrix_in_port.read(yarp_allo_env_matrix)
                 
                 #yarp_bayes_matrix = yarp.Matrix()
                 #self.bayes_matrix_in_port.read(yarp_bayes_matrix) 
@@ -243,19 +261,29 @@ class audioRunner(object):
                 #self.power_matrix_in_port.read(yarp_power_matrix) 
 
                 # Append this matrix to the buffer.
-                AlloMatrixBuffer.append(self._matrix_process(yarp_allo_matrix))
+                #AlloMatrixBuffer.append(self._matrix_process(yarp_allo_matrix))
                 #BayesMatrixBuffer.append(self._matrix_process(yarp_bayes_matrix))
                 #PowerMatrixBuffer.append(self._matrix_process(yarp_power_matrix))
+
+                AlloBeamMatrixBuffer.append(yarp_allo_beam_matrix)
+                AlloEnvMatrixBuffer.append(yarp_allo_env_matrix)
+                #BayesMatrixBuffer.append(yarp_bayes_matrix)
+
 
                 # Update the time stamp.
                 timeStamp.update()
 
             # Save the matrix out.
-            npAllo = np.asarray(AlloMatrixBuffer)
+            #npAllo = np.asarray(AlloMatrixBuffer)
             #npBayes = np.asarray(BayesMatrixBuffer)
             #npPower = np.asarray(PowerMatrixBuffer)
 
-            np.save(AlloTarget, npAllo)
+            npAlloBeam = np.asarray( [ self._matrix_process(ymat) for ymat in AlloBeamMatrixBuffer  ] )
+            npAlloEnv  = np.asarray( [ self._matrix_process(ymat) for ymat in AlloEnvMatrixBuffer   ] )
+            #npBayes = np.asarray( [ self._matrix_process(mat) for mat in BayesMatrixBuffer ] )
+
+            np.save(AlloBeamTarget,  npAlloBeam)
+            np.save(AlloEnvTarget,   npAlloEnv)
             #np.save(BayesTarget, npBayes)
             #np.save(PowerTarget, npPower)
 
@@ -263,7 +291,7 @@ class audioRunner(object):
             endTime = time.time()
             #print("\u0394 : {:.4f} || {}, {}".format(endTime-startTime, npBayes.shape, npPower.shape))
             #print("\u0394 : {:.4f} || {}".format(endTime-startTime, npBayes.shape))
-            print("\u0394 : {:.4f} || {}".format(endTime-startTime, npAllo.shape))
+            print("\u0394 : {:.4f} || {}".format(endTime-startTime, npAlloEnv.shape))
 
 
 
@@ -395,7 +423,7 @@ class audioRunner(object):
             Right_Buffer = []
             Pos_Buffer   = []
             
-            for idx in range(0, ogSamples, self.frame_length-(self.overlap*self.original_frame)):
+            for idx in range(0, ogSamples, self.frame_length-self.overlap):
                 
                 Left_Slice  = Left_List[idx:idx+self.frame_length]
                 Right_Slice = Right_List[idx:idx+self.frame_length]
@@ -455,10 +483,11 @@ class audioRunner(object):
     def cleanup(self):
         print("Closing YARP Ports.")
         self.audio_out_port.close()
-        self.allo_matrix_in_port.close()
+        self.allo_beam_matrix_in_port.close()
+        self.allo_env_matrix_in_port.close()
         #self.bayes_matrix_in_port.close()
-        #self.power_matrix_in_port.close()
         #self.bayes_out_port.close()
+        #self.power_matrix_in_port.close()
         #self.power_out_port.close()
         if self.movements:
             self.head_out_port.close()
