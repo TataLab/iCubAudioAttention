@@ -100,15 +100,15 @@ with open(args.save, 'w') as csvfile:
 
                     # Set all noise distractors.
                     for idx in range(size):
-                        speakers[subset[idx]] = os.path.join(target_dir, target_files[ useTarget[idx+1] ])
+                        speakers[subset[idx]] = os.path.join(target_dir, target_files[ useTarget[idx] ])
                         #speakers[subset[idx]] = target_files[ useTarget[idx+1] ]
                         
                     # Replace one of the distractors with the true target.
-                    speakers[subset[trg]] = os.path.join(target_dir, target_files[ useTarget[0] ])
+                    #speakers[subset[trg]] = os.path.join(target_dir, target_files[ useTarget[0] ])
                     #speakers[subset[trg]] = target_files[ useTarget[0] ]
                     
                     # Turn this into a row for the csv.
-                    row = [ str(rowCount), str(subset[trg]) ] + speakers
+                    row = [ str(rowCount), ''.join(map(str, subset)) ] + speakers
                     writer.writerow(row)
 
                     rowCount += 1
