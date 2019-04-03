@@ -232,6 +232,8 @@ class audioRunner(object):
             yarp_allo_env_matrix  = yarp.Matrix()
 
             startTime = time.time()
+
+            #continue
             
             # Send each frame and get a response.
             for idx in range(numFrames):
@@ -431,8 +433,8 @@ class audioRunner(object):
                 if self.movements:
                     Pos_Slice = Pos_List[idx:idx+self.frame_length]
 
-                    if np.max(np.diff(Pos_Slice)) < self.threshold and \
-                        len(Left_Slice) == self.frame_length:
+                    if np.abs( np.max(Pos_Slice) - np.min(Pos_Slice) ) < self.threshold and \
+                         len(Left_Slice) == self.frame_length:
 
                         Left_Buffer.append(Left_Slice)
                         Right_Buffer.append(Right_Slice)
@@ -446,6 +448,11 @@ class audioRunner(object):
             Right_Data = np.asarray(Right_Buffer, dtype=np.int)
             if self.movements:
                 Pos_Data = np.asarray(Pos_Buffer, dtype=np.float32)
+
+            #print(Pos_Data.shape)
+            #plt.figure()
+            #plt.plot(Pos_Data, 'o')
+            #plt.show()
 
 
         return Left_Data, Right_Data, Pos_Data
