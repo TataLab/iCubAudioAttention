@@ -56,19 +56,16 @@ bool AudioRunnerPeriodicThread::configure(yarp::os::ResourceFinder &rf) {
 	 * =========================================================================== */
 	yInfo( "Loading Configuration File." );
 
-	panAngle   = rf.findGroup("robotspec").check("panAngle",   yarp::os::Value( 2),    "index of pan joint (int)"                   ).asInt();
-	numMics    = rf.findGroup("robotspec").check("numMics",    yarp::os::Value( 2),    "number of mics (int)"                       ).asInt();
+	panAngle   = rf.findGroup("robotspec").check("panAngle",   yarp::os::Value( 2),    "index of pan joint       (int)"    ).asInt();
+	numMics    = rf.findGroup("robotspec").check("numMics",    yarp::os::Value( 2),    "number of mics           (int)"    ).asInt();
 
-	beginTrial = rf.findGroup("experiment").check("begin",     yarp::os::Value(1),     "first trial to begin              (int)"    ).asInt();
-	endTrial   = rf.findGroup("experiment").check("end",       yarp::os::Value(5),     "last trial to end                 (int)"    ).asInt();
-	filePath   = rf.findGroup("experiment").check("saveTo",    yarp::os::Value("./"),  "path for saving files             (string)" ).asString();
-	movements  = rf.findGroup("experiment").check("movements", yarp::os::Value(false), "should movements be used          (bool)"   ).asBool();
-	trialLen   = rf.findGroup("experiment").check("trialLen",  yarp::os::Value(15.0),  "estimated length per trial        (double)" ).asDouble();
-	numMoves   = rf.findGroup("experiment").check("numMoves",  yarp::os::Value(5),     "number of times to move per trial (int)"    ).asInt();
-	startPos   = rf.findGroup("experiment").check("startPos",  yarp::os::Value(-30.0), "position to begin a trial         (double)" ).asDouble();
-	endPos     = rf.findGroup("experiment").check("endPos",    yarp::os::Value(30.0),  "position to end a trial           (double)" ).asDouble();
-
-
+	beginTrial = rf.findGroup("experiment").check("begin",     yarp::os::Value(1),     "first trial to begin     (int)"    ).asInt();
+	endTrial   = rf.findGroup("experiment").check("end",       yarp::os::Value(5),     "last trial to end        (int)"    ).asInt();
+	filePath   = rf.findGroup("experiment").check("saveTo",    yarp::os::Value("./"),  "path for saving files    (string)" ).asString();
+	movements  = rf.findGroup("experiment").check("movements", yarp::os::Value(false), "should movements be used (bool)"   ).asBool();
+	PosBottle  = rf.findGroup("experiment").find( "movePos"                                                                ).asList();
+	TimeBottle = rf.findGroup("experiment").find( "moveTime"                                                               ).asList();
+    
 	numFrameSamples = rf.findGroup("sampling").check("numFrameSamples", yarp::os::Value(4096), "number of frame samples received (int)").asInt();
 
 	//-- Set the first trial.
@@ -88,31 +85,29 @@ bool AudioRunnerPeriodicThread::configure(yarp::os::ResourceFinder &rf) {
 	}
 
 	if (movements) {
+
+		//-- If the key could not be found in the config file, make a fallback bottle.
+		if (PosBottle  == NULL) { PosBottle  = new yarp::os::Bottle(fallback_pos);   }
+		if (TimeBottle == NULL) { TimeBottle = new yarp::os::Bottle(fallback_times); }
+
+		//-- Check that the number of positions and times are equal for the trials.
+		if (PosBottle->size() != TimeBottle->size()) {
+			yError("Number of elements provided to positions and time are not equal!!");
+			yError(" Elements in Position : %s", PosBottle->toString().c_str());
+			yError(" Elements in Time     : %s", TimeBottle->toString().c_str());
+			return false;
+		}
 		
-		//-- Allocate Space for the .
+		//-- Allocate Space for the movements.
+		numMoves = PosBottle->size();
 		HeadPositions.clear(); HeadPositions.resize(numMoves);
 		HeadTimes.clear();     HeadTimes.resize(numMoves);
 
-		double linspace_step, current_step;
-
-		//-- Linearly space the angles each head should go to.
-		linspace_step = ( endPos - startPos ) / ( numMoves - 1.0 );
-		current_step  =  startPos; 
-
+		//-- Set the movements in the vectors.
 		for (int move = 0; move < numMoves; move++) {
-			HeadPositions[move] = current_step;
-			current_step += linspace_step;
+			HeadPositions[move] = PosBottle->get(move).asDouble();
+			HeadTimes[move]     = TimeBottle->get(move).asDouble();
 		}
-
-		//-- Linearly space the time for each angle position.
-		linspace_step = ( trialLen - 0.0 ) / ( numMoves );
-		current_step  =  0.0;
-
-		for (int move = 0; move < numMoves; move++) {
-			HeadTimes[move] = current_step;
-			current_step += linspace_step;
-		}
-
 	}
 
 	/* ===========================================================================
@@ -142,10 +137,10 @@ bool AudioRunnerPeriodicThread::configure(yarp::os::ResourceFinder &rf) {
 	yInfo( "\t Trial Data Directory             : %s",       filePath.c_str());
 	yInfo( "\t Robot Movements                  : %s",       movements ? "ENABLED" : "DISABLED");
 	if (movements) {
-	yInfo( "\t trialLen                         : %.3f",     trialLen        );
-	yInfo( "\t numMoves                         : %d",       numMoves        );
-	yInfo( "\t startPos                         : %.3f",     startPos        );
-	yInfo( "\t endPos                           : %.3f",     endPos          );
+	//yInfo( "\t trialLen                         : %.3f",     trialLen        );
+	yInfo( "\t Number of Movements              : %d",       numMoves        );
+	//yInfo( "\t Starting                         : %.3f",     startPos        );
+	//yInfo( "\t endPos                           : %.3f",     endPos          );
 	}
 	yInfo( " " );
 	yInfo( "\t                  [SAMPLING]                  "                );

@@ -86,10 +86,11 @@ class AudioRunnerPeriodicThread : public yarp::os::PeriodicThread {
 	int         endTrial;
 	std::string filePath;
 	bool        movements;
-	double      trialLen;
+	
+	yarp::os::Bottle* PosBottle;  const std::string fallback_pos   = " -40.0 40.0 ";
+	yarp::os::Bottle* TimeBottle; const std::string fallback_times = "   0.0  7.5 ";
+
 	int         numMoves;
-	double      startPos;
-	double      endPos;	
 	int         currentTrial;
 	int         currentMove;
 	int         numFrameSamples;
