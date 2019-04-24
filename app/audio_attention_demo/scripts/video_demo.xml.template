@@ -1,0 +1,284 @@
+<application>
+
+    <name> Video Demo </name>
+
+    <!-->  
+    INTERFACE MODULES.    
+    <!-->
+    <module>
+        <name> yarprobotinterface </name>
+        <parameters> </parameters>
+        <node> pc104 </node>
+    </module>
+
+    <module>
+        <name> yarpmotorgui </name>
+        <parameters> </parameters>
+        <node> icub-mac </node>
+    </module>
+
+    <module>
+        <name> audioPlayer.py </name>
+        <parameters> --special --csv video_demo.csv </parameters>
+        <node> icub-mac </node>
+    </module>
+
+    <module>
+        <name> audioStreamer </name>
+        <parameters> --context audio_attention_demo --from Video_Demo_Config.ini </parameters>
+        <node> icub-mac </node>
+    </module>
+
+    <module>
+        <name> audioRunner </name>
+        <parameters> --context audio_attention_demo --from Video_Demo_Config.ini </parameters>
+        <node> icub </node>
+    </module>
+
+
+    <!-->  
+    PROCESSING MODULES.    
+    <!-->
+    <module>
+        <name> audioPreprocessor </name>
+        <parameters> --context audio_attention_demo --from Video_Demo_Config.ini </parameters>
+        <node> icub </node>
+    </module>
+
+    <module>
+        <name> audioBayesianMap </name>
+        <parameters> --name /ampBayes --context audio_attention_demo --from Video_Demo_Config.ini </parameters>
+        <node> dio </node>
+    </module>
+
+    <module>
+        <name> audioBayesianMap </name>
+        <parameters> --name /envBayes --context audio_attention_demo --from Video_Demo_Config.ini </parameters>
+        <node> dio </node>
+    </module>
+
+    <!-->  
+    VISUALISATION MODULES.    
+    <!-->
+
+    <!-->  
+    RMS of Beamformed Audio.
+    <!-->
+    <module>
+        <name> frequencyVisualisation </name>
+        <parameters> --name /beamformedRmsAudioVisualiser </parameters>
+        <node> dio </node>
+    </module>
+
+    <module>
+        <name> yarpview </name>
+        <parameters> --x 812 --y 0 --h 420 --w 305 --r 33 --name /beamformedRmsAudioView --minimal </parameters>
+        <node> dio </node>
+    </module>
+
+    <!-->  
+    Amp Bayesian Probability Map.
+    <!-->
+    <module>
+        <name> frequencyVisualisation </name>
+        <parameters> --name /ampBayesianProbabilityMapVisualiser --grid vert --gain 100 </parameters>
+        <node> dio </node>
+    </module>
+
+    <module>
+        <name> yarpview </name>
+        <parameters> --x 660 --y 457 --h 500 --w 610 --r 33 --name /ampBayesianProbabilityMapView --minimal </parameters>
+        <node> dio </node>
+    </module>
+
+    <!-->  
+    Amp Bayesian Probability Angle.
+    <!-->
+    <module>
+        <name> frequencyVisualisation </name>
+        <parameters> --name /ampBayesianProbabilityAngleVisualiser --grid vert --gain 100 </parameters>
+        <node> dio </node>
+    </module>
+
+    <module>
+        <name> yarpview </name>
+        <parameters> --x 660 --y 965 --h 110 --w 610 --r 33 --name /ampBayesianProbabilityAngleView --minimal </parameters>
+        <node> dio </node>
+    </module>
+
+    <!-->  
+    RMS of Band Passed Envelope.
+    <!-->
+    <module>
+        <name> frequencyVisualisation </name>
+        <parameters> --name /bandPassedRmsEnvelopeVisualiser </parameters>
+        <node> dio </node>
+    </module>
+
+    <module>
+        <name> yarpview </name>
+        <parameters> --x 1443 --y 0 --h 420 --w 305 --r 33 --name /bandPassedRmsEnvelopeView --minimal </parameters>
+        <node> dio </node>
+    </module>
+
+    <!-->  
+    Env Bayesian Probability Map.
+    <!-->
+    <module>
+        <name> frequencyVisualisation </name>
+        <parameters> --name /envBayesianProbabilityMapVisualiser --grid vert --gain 100 </parameters>
+        <node> dio </node>
+    </module>
+
+    <module>
+        <name> yarpview </name>
+        <parameters> --x 1290 --y 457 --h 500 --w 610 --r 33 --name /envBayesianProbabilityMapView --minimal </parameters>
+        <node> dio </node>
+    </module>
+
+    <!-->  
+    Env Bayesian Probability Angle.
+    <!-->
+    <module>
+        <name> frequencyVisualisation </name>
+        <parameters> --name /envBayesianProbabilityAngleVisualiser --grid vert --gain 100 </parameters>
+        <node> dio </node>
+    </module>
+
+    <module>
+        <name> yarpview </name>
+        <parameters> --x 1290 --y 965 --h 110 --w 610 --r 33 --name /envBayesianProbabilityAngleView --minimal </parameters>
+        <node> dio </node>
+    </module>
+    
+
+    <!-->  
+    CONNECTIONS.
+    <!-->
+    <connection>
+        <from> /audioStreamer/rawAudio:o   </from>
+        <to>   /audioRunner/rawAudio:i     </to>
+        <protocol> tcp </protocol>
+    </connection>
+
+    <connection>
+        <from> /audioPlayer/broadcast:o   </from>
+        <to>   /audioRunner/broadcast:i   </to>
+        <protocol> tcp </protocol>
+    </connection>
+
+    <connection>
+        <from> /audioRunner/commands:o   </from>
+        <to>   /audioPlayer/rpc:i        </to>
+        <protocol> tcp </protocol>
+    </connection>    
+
+    <connection>
+        <from> /audioRunner/headAngle:o   </from>
+        <to>   /audioStreamer/headAngle:i </to>
+        <protocol> tcp </protocol>
+    </connection>    
+
+    <connection>
+        <from> /icub/head/state:o         </from>
+        <to>   /audioRunner/headAngle:i   </to>
+        <protocol> tcp </protocol>
+    </connection>
+
+    <connection>
+        <from> /audioStreamer/rawAudio:o     </from>
+        <to>   /audioPreprocessor/rawAudio:i </to>
+        <protocol> tcp </protocol>
+    </connection>
+
+    <connection>
+        <from> /icub/head/state:o             </from>
+        <to>   /audioPreprocessor/headAngle:i </to>
+        <protocol> tcp </protocol>
+    </connection>
+
+    <connection>
+        <from> /audioPreprocessor/allocentricAudio:o </from>
+        <to>   /ampBayes/allocentricAudio:i          </to>
+        <protocol> tcp </protocol>
+    </connection>
+
+    <connection>
+        <from> /audioPreprocessor/allocentricEnvelope:o </from>
+        <to>   /envBayes/allocentricAudio:i             </to>
+        <protocol> tcp </protocol>
+    </connection>
+
+    <connection>
+        <from> /audioPreprocessor/beamformedRmsAudio:o </from>
+        <to>   /beamformedRmsAudioVisualiser/map:i     </to>
+        <protocol> tcp </protocol>
+    </connection> 
+
+    <connection>
+        <from> /beamformedRmsAudioVisualiser/img:o  </from>
+        <to>   /beamformedRmsAudioView              </to>
+        <protocol> tcp </protocol>
+    </connection>
+
+    <connection>
+        <from> /ampBayes/bayesianProbabilityMap:o            </from>
+        <to>   /ampBayesianProbabilityMapVisualiser/map:i    </to>
+        <protocol> tcp </protocol>
+    </connection> 
+
+    <connection>
+        <from> /ampBayesianProbabilityMapVisualiser/img:o  </from>
+        <to>   /ampBayesianProbabilityMapView              </to>
+        <protocol> tcp </protocol>
+    </connection>
+
+    <connection>
+        <from> /ampBayes/bayesianProbabilityAngle:o            </from>
+        <to>   /ampBayesianProbabilityAngleVisualiser/map:i    </to>
+        <protocol> tcp </protocol>
+    </connection> 
+
+    <connection>
+        <from> /ampBayesianProbabilityAngleVisualiser/img:o  </from>
+        <to>   /ampBayesianProbabilityAngleView              </to>
+        <protocol> tcp </protocol>
+    </connection>
+
+    <connection>
+        <from> /audioPreprocessor/bandPassedRmsEnvelope:o </from>
+        <to>   /bandPassedRmsEnvelopeVisualiser/map:i     </to>
+        <protocol> tcp </protocol>
+    </connection> 
+
+    <connection>
+        <from> /bandPassedRmsEnvelopeVisualiser/img:o  </from>
+        <to>   /bandPassedRmsEnvelopeView              </to>
+        <protocol> tcp </protocol>
+    </connection>
+
+    <connection>
+        <from> /envBayes/bayesianProbabilityMap:o            </from>
+        <to>   /envBayesianProbabilityMapVisualiser/map:i    </to>
+        <protocol> tcp </protocol>
+    </connection> 
+
+    <connection>
+        <from> /envBayesianProbabilityMapVisualiser/img:o  </from>
+        <to>   /envBayesianProbabilityMapView              </to>
+        <protocol> tcp </protocol>
+    </connection>
+
+    <connection>
+        <from> /envBayes/bayesianProbabilityAngle:o            </from>
+        <to>   /envBayesianProbabilityAngleVisualiser/map:i    </to>
+        <protocol> tcp </protocol>
+    </connection> 
+
+    <connection>
+        <from> /envBayesianProbabilityAngleVisualiser/img:o  </from>
+        <to>   /envBayesianProbabilityAngleView              </to>
+        <protocol> tcp </protocol>
+    </connection>
+
+</application>
