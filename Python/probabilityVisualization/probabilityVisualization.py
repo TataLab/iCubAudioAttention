@@ -12,8 +12,8 @@ yarp.Network.init()
 
 def get_args():
     parser = argparse.ArgumentParser(description='probabilityVisualization')
-    parser.add_argument('-n', '--name',    default='/probVis',                 help='Name for the module.                              (default: {})'.format('/probVis'))
-    parser.add_argument('-v', '--verbose', default=False, action='store_true', help='Print out the yaw position.                       (default: {})'.format(False))
+    parser.add_argument('-n', '--name',    default='/probVis',                 help='Name for the module.         (default: {})'.format('/probVis'))
+    parser.add_argument('-v', '--verbose', default=False, action='store_true', help='Print out the yaw position.  (default: {})'.format(False))
     args = parser.parse_args()
     
     return args
@@ -33,6 +33,7 @@ class probabilityVisualization(object):
 
         # Create a plot.
         self.fig = plt.figure()
+        self.fig.canvas.set_window_title(self.port_name)
         plt.subplots_adjust( top=1.0, bottom=0.0, left=0.0, right=1.0, hspace=0.2, wspace=0.2 )
         
 
@@ -65,8 +66,7 @@ class probabilityVisualization(object):
 
         # Plot the data.
         self.fig.clear()
-        #plt.axis('off')
-        plt.xlim(-5,365)
+        plt.xlim(0,360)
         plt.grid(color='grey', linestyle='-', linewidth=0.75, alpha=0.5)
         for mat in numpy_mat:
             plt.plot(mat)
@@ -96,7 +96,7 @@ def main():
     # Get parameters from a user.
     args = get_args()
     
-    # Initialize the mapper module.
+    # Initialize the visualization module.
     probVis = probabilityVisualization(args)
 
     # Begin running the module.
