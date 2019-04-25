@@ -18,6 +18,19 @@
     </module>
 
     <module>
+        <name> iCubHeadMapper.py </name>
+        <parameters> </parameters>
+        <node> icub-mac </node>
+    </module>
+    
+    <module>
+        <name> iCubGui </name>
+        <parameters> </parameters>
+        <node> dio </node>
+    </module>
+    
+
+    <module>
         <name> audioPlayer.py </name>
         <parameters> --special --csv video_demo.csv </parameters>
         <node> icub-mac </node>
@@ -95,17 +108,12 @@
     Amp Bayesian Probability Angle.
     <!-->
     <module>
-        <name> frequencyVisualisation </name>
-        <parameters> --name /ampBayesianProbabilityAngleVisualiser --grid vert --gain 100 </parameters>
+        <name> probabilityVisualization.py </name>
+        <parameters> --name /ampProbVis </parameters>
         <node> dio </node>
     </module>
-
-    <module>
-        <name> yarpview </name>
-        <parameters> --x 660 --y 965 --h 110 --w 610 --r 33 --name /ampBayesianProbabilityAngleView --minimal </parameters>
-        <node> dio </node>
-    </module>
-
+         
+    
     <!-->  
     RMS of Band Passed Envelope.
     <!-->
@@ -140,14 +148,8 @@
     Env Bayesian Probability Angle.
     <!-->
     <module>
-        <name> frequencyVisualisation </name>
-        <parameters> --name /envBayesianProbabilityAngleVisualiser --grid vert --gain 100 </parameters>
-        <node> dio </node>
-    </module>
-
-    <module>
-        <name> yarpview </name>
-        <parameters> --x 1290 --y 965 --h 110 --w 610 --r 33 --name /envBayesianProbabilityAngleView --minimal </parameters>
+        <name> probabilityVisualization.py </name>
+        <parameters> --name /envProbVis </parameters>
         <node> dio </node>
     </module>
     
@@ -155,6 +157,19 @@
     <!-->  
     CONNECTIONS.
     <!-->
+    <connection>
+        <from> /icub/head/state:o         </from>
+        <to>   /iCubHeadMapper/state:i    </to>
+        <protocol> tcp </protocol>
+    </connection>
+
+
+    <connection>
+        <from> /iCubHeadMapper/state:o  </from>
+        <to>   /iCubGui/head:i          </to>
+        <protocol> tcp </protocol>
+    </connection>
+
     <connection>
         <from> /audioStreamer/rawAudio:o   </from>
         <to>   /audioRunner/rawAudio:i     </to>
@@ -234,16 +249,10 @@
     </connection>
 
     <connection>
-        <from> /ampBayes/bayesianProbabilityAngle:o            </from>
-        <to>   /ampBayesianProbabilityAngleVisualiser/map:i    </to>
+        <from> /ampBayes/bayesianProbabilityAngle:o   </from>
+        <to>   /ampProbVis:i                          </to>
         <protocol> tcp </protocol>
     </connection> 
-
-    <connection>
-        <from> /ampBayesianProbabilityAngleVisualiser/img:o  </from>
-        <to>   /ampBayesianProbabilityAngleView              </to>
-        <protocol> tcp </protocol>
-    </connection>
 
     <connection>
         <from> /audioPreprocessor/bandPassedRmsEnvelope:o </from>
@@ -270,15 +279,9 @@
     </connection>
 
     <connection>
-        <from> /envBayes/bayesianProbabilityAngle:o            </from>
-        <to>   /envBayesianProbabilityAngleVisualiser/map:i    </to>
+        <from> /envBayes/bayesianProbabilityAngle:o   </from>
+        <to>   /envProbVis:i                          </to>
         <protocol> tcp </protocol>
     </connection> 
-
-    <connection>
-        <from> /envBayesianProbabilityAngleVisualiser/img:o  </from>
-        <to>   /envBayesianProbabilityAngleView              </to>
-        <protocol> tcp </protocol>
-    </connection>
 
 </application>
