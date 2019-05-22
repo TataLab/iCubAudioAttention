@@ -12,16 +12,25 @@ import argparse
 
 def get_args():
     parser = argparse.ArgumentParser(description='player')
-    parser.add_argument('-r', '--root',   default='CODE',                        help='Environmental variable to datas root.       (default: {})'.format('CODE'))
-    parser.add_argument('-d', '--data',   default='data/audio_source',           help='Which data folder to stream from.           (default: {})'.format('data/audio_source'))
-    parser.add_argument('-t', '--target', default='complex_samples',             help='Target samples directory.                   (default: {})'.format('complex_samples'))
-    parser.add_argument('-n', '--noise',  default='noise_samples',               help='Noise samples directory.                    (default: {})'.format('noise_samples'))
-    parser.add_argument('-b', '--balan',  default=True, action='store_false',    help='Balance the number of set sizes.            (default: {})'.format(True))
-    parser.add_argument('-s', '--save',   default='experiment_04.csv',           help='Folder to save processed matrix to.         (default: {})'.format('experiment_04.csv'))
-    parser.add_argument('-c', '--chan',   default=2,   type=int,                 help='Number of Channels to expect.               (default: {})'.format(2))
-    parser.add_argument('-x', '--seed',   default=123, type=int,                 help='Seed for Numpy RNG.                         (default: {})'.format(123))
+    parser.add_argument('-r', '--root',   default='CODE',                          help='Environmental variable to datas root.              (default:{})'.format('CODE'))
+    parser.add_argument('-d', '--data',   default='data/audio_source',             help='Which data folder to stream from.                  (default:{})'.format('data/audio_source'))
+    parser.add_argument('-t', '--target', default='complex_samples',               help='Target samples directory.                          (default:{})'.format('complex_samples'))
+    parser.add_argument('-n', '--noise',  default='noise_samples',                 help='Noise samples directory.                           (default:{})'.format('noise_samples'))
+    parser.add_argument('-p', '--prefix', default='',                              help='Prefix of the noise samples that should be used.   (default:{})'.format('NONE'))
+    parser.add_argument('-b', '--balan',  default=True, action='store_false',      help='Balance the number of set sizes.                   (default:{})'.format(True))
+    parser.add_argument('-m', '--max',    default=float('inf'),        type=float, help='Max number of trials per set sizes. (inf=no max).  (default:{})'.format(float('inf')))
+    parser.add_argument('-s', '--save',   default='experiment_04.csv',             help='Folder to save processed matrix to.                (default:{})'.format('experiment_04.csv'))
+    parser.add_argument('-c', '--chan',   default=2,                   type=int,   help='Number of Channels to expect.                      (default:{})'.format(2))
+    parser.add_argument('-x', '--seed',   default=123,                 type=int,   help='Seed for Numpy RNG.                                (default:{})'.format(123))
     args = parser.parse_args()
     return args
+
+def getFiles(data_path, pattern):
+    p_files = []
+    files = sorted(list(os.walk(data_path))[0][2])
+    [ f.startswith(pattern) and p_files.append(f) for f in files ]
+    return sorted(p_files), len(p_files)
+
 
 args = get_args()
 
@@ -48,6 +57,11 @@ for idx in range(args.chan):
 if args.balan:
     trials_per_set_size = [ np.max(trials_per_set_size) ] * args.chan
 
+# Convert to a numpy array and set the max for trials.
+trials_per_set_size = np.asarray(trials_per_set_size, dtype=np.float32)
+trials_per_set_size[ trials_per_set_size > args.max ] = args.max
+trials_per_set_size = trials_per_set_size.astype(np.int32)
+
 # Keep a running tally.
 trials_tally = [ 0 ] * args.chan
 print("Set Sizes to Make : {}".format(trials_per_set_size))
@@ -56,14 +70,21 @@ print("Set Sizes to Make : {}".format(trials_per_set_size))
 np.random.seed(args.seed)
 
 # Pull the path to the targets.
-target_files = list(os.walk(target_dir))[0][2]
-numTarget    = len(target_files)
-useTarget    = np.arange(numTarget)
+target_files, numTarget = getFiles(target_dir, '')
+useTarget = np.arange(numTarget)
 
 # Pull the path to the noise.
-noise_files = list(os.walk(noise_dir))[0][2]
-numNoise    = len(noise_files)
-useNoise    = np.arange(numNoise)
+noise_files, numNoise = getFiles(noise_dir, args.prefix)
+useNoise = np.arange(numNoise)
+
+# Do some quick error checking.
+if numTarget == 0 or numNoise == 0:
+    print("Could not find any {} samples!!".format(
+        'Target or Noise' if (numTarget == 0 and numNoise == 0) else ( 'Target' if numTarget == 0 else 'Noise' ))
+    )
+    exit()
+
+print("\nFound {} Target Samples and {} Noise Samples to pull from.\n".format(numTarget, numNoise))
 
 # Write the output to a csv.
 with open(args.save, 'w') as csvfile:
