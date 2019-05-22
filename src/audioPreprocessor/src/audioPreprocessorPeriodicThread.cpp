@@ -580,7 +580,7 @@ void AudioPreprocessorPeriodicThread::publishOutPorts() {
 	if (outBeamformedAudioPort.getOutputCount()) {
 		
 		//-- This Matrix can be very big. Down sample if enabled.
-		AudioUtil::downSampleMatrix(BeamformedAudioMatrix.submatrix(56*numBeams, 64*numBeams, 0, numFrameSamples), outBeamformedAudioPort.prepare(), downSampVis);
+		AudioUtil::downSampleMatrix(BeamformedAudioMatrix, outBeamformedAudioPort.prepare(), downSampVis);
 		outBeamformedAudioPort.setEnvelope(timeStamp);
 		outBeamformedAudioPort.write();
 
@@ -613,7 +613,7 @@ void AudioPreprocessorPeriodicThread::publishOutPorts() {
 	if (outHilbertEnvelopePort.getOutputCount()) {
 
 		//-- This Matrix can be very big. Down sample if enabled.
-		AudioUtil::downSampleMatrix(HilbertEnvelopeMatrix.submatrix(0, 8*numBeams, 0, numFrameSamples), outHilbertEnvelopePort.prepare(), downSampVis);
+		AudioUtil::downSampleMatrix(HilbertEnvelopeMatrix, outHilbertEnvelopePort.prepare(), downSampVis);
 		outHilbertEnvelopePort.setEnvelope(timeStamp);
 		outHilbertEnvelopePort.write();
 
@@ -622,7 +622,7 @@ void AudioPreprocessorPeriodicThread::publishOutPorts() {
 	if (outBandPassedEnvelopePort.getOutputCount()) {
 
 		//-- This Matrix can be very big. Down sample if enabled.
-		AudioUtil::downSampleMatrix(BandPassedEnvelopeMatrix.submatrix(0, 8*numBeams, 0, numFrameSamples), outBandPassedEnvelopePort.prepare(), downSampVis);
+		AudioUtil::downSampleMatrix(BandPassedEnvelopeMatrix, outBandPassedEnvelopePort.prepare(), downSampVis);
 		outBandPassedEnvelopePort.setEnvelope(timeStamp);
 		outBandPassedEnvelopePort.write();
 
