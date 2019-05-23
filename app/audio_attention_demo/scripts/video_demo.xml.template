@@ -28,6 +28,18 @@
         <parameters> </parameters>
         <node> dio </node>
     </module>
+
+    <module>
+        <name> probabilityVisualization.py </name>
+        <parameters> --name /ampProbVis </parameters>
+        <node> dio </node>
+    </module>
+
+    <module>
+        <name> probabilityVisualization.py </name>
+        <parameters> --name /envProbVis </parameters>
+        <node> dio </node>
+    </module>
     
 
     <module>
@@ -79,7 +91,7 @@
     <!-->
     <module>
         <name> frequencyVisualisation </name>
-        <parameters> --name /beamformedRmsAudioVisualiser </parameters>
+        <parameters> --name /beamformedRmsAudioVisualiser --gain 2 </parameters>
         <node> dio </node>
     </module>
 
@@ -100,7 +112,7 @@
 
     <module>
         <name> yarpview </name>
-        <parameters> --x 660 --y 457 --h 500 --w 610 --r 33 --name /ampBayesianProbabilityMapView --minimal </parameters>
+        <parameters> --x 660 --y 457 --h 420 --w 610 --r 33 --name /ampBayesianProbabilityMapView --minimal </parameters>
         <node> dio </node>
     </module>
 
@@ -108,8 +120,14 @@
     Amp Bayesian Probability Angle.
     <!-->
     <module>
-        <name> probabilityVisualization.py </name>
-        <parameters> --name /ampProbVis </parameters>
+        <name> frequencyVisualisation </name>
+        <parameters> --name /ampBayesianProbabilityAngleVisualiser --grid vert --gain 100 </parameters>
+        <node> dio </node>
+    </module>
+
+    <module>
+        <name> yarpview </name>
+        <parameters> --x 660 --y 965 --h 110 --w 610 --r 33 --name /ampBayesianProbabilityAngleView --minimal </parameters>
         <node> dio </node>
     </module>
          
@@ -119,7 +137,7 @@
     <!-->
     <module>
         <name> frequencyVisualisation </name>
-        <parameters> --name /bandPassedRmsEnvelopeVisualiser </parameters>
+        <parameters> --name /bandPassedRmsEnvelopeVisualiser --gain 10 </parameters>
         <node> dio </node>
     </module>
 
@@ -140,7 +158,7 @@
 
     <module>
         <name> yarpview </name>
-        <parameters> --x 1290 --y 457 --h 500 --w 610 --r 33 --name /envBayesianProbabilityMapView --minimal </parameters>
+        <parameters> --x 1290 --y 457 --h 420 --w 610 --r 33 --name /envBayesianProbabilityMapView --minimal </parameters>
         <node> dio </node>
     </module>
 
@@ -148,8 +166,14 @@
     Env Bayesian Probability Angle.
     <!-->
     <module>
-        <name> probabilityVisualization.py </name>
-        <parameters> --name /envProbVis </parameters>
+        <name> frequencyVisualisation </name>
+        <parameters> --name /envBayesianProbabilityAngleVisualiser --grid vert --gain 100 </parameters>
+        <node> dio </node>
+    </module>
+
+    <module>
+        <name> yarpview </name>
+        <parameters> --x 1290 --y 965 --h 110 --w 610 --r 33 --name /envBayesianProbabilityAngleView --minimal </parameters>
         <node> dio </node>
     </module>
     
@@ -162,7 +186,6 @@
         <to>   /iCubHeadMapper/state:i    </to>
         <protocol> tcp </protocol>
     </connection>
-
 
     <connection>
         <from> /iCubHeadMapper/state:o  </from>
@@ -249,10 +272,16 @@
     </connection>
 
     <connection>
-        <from> /ampBayes/bayesianProbabilityAngle:o   </from>
-        <to>   /ampProbVis:i                          </to>
+        <from> /ampBayes/bayesianProbabilityAngle:o            </from>
+        <to>   /ampBayesianProbabilityAngleVisualiser/map:i    </to>
         <protocol> tcp </protocol>
     </connection> 
+
+    <connection>
+        <from> /ampBayesianProbabilityAngleVisualiser/img:o  </from>
+        <to>   /ampBayesianProbabilityAngleView              </to>
+        <protocol> tcp </protocol>
+    </connection>
 
     <connection>
         <from> /audioPreprocessor/bandPassedRmsEnvelope:o </from>
@@ -279,8 +308,26 @@
     </connection>
 
     <connection>
-        <from> /envBayes/bayesianProbabilityAngle:o   </from>
-        <to>   /envProbVis:i                          </to>
+        <from> /envBayes/bayesianProbabilityAngle:o            </from>
+        <to>   /envBayesianProbabilityAngleVisualiser/map:i    </to>
+        <protocol> tcp </protocol>
+    </connection> 
+
+    <connection>
+        <from> /envBayesianProbabilityAngleVisualiser/img:o  </from>
+        <to>   /envBayesianProbabilityAngleView              </to>
+        <protocol> tcp </protocol>
+    </connection>
+
+    <connection>
+        <from> /ampBayes/bayesianProbabilityAngle:o            </from>
+        <to>   /ampProbVis:i    </to>
+        <protocol> tcp </protocol>
+    </connection> 
+
+    <connection>
+        <from> /envBayes/bayesianProbabilityAngle:o            </from>
+        <to>   /envProbVis:i    </to>
         <protocol> tcp </protocol>
     </connection> 
 
