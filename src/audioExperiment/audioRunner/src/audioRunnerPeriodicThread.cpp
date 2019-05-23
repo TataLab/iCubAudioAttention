@@ -282,13 +282,13 @@ void AudioRunnerPeriodicThread::run() {
 	if (currentTrial > endTrial) {
 
 		//-- Move the head back to home at the end of a trial.
-		//if (movements) {
-		//	yarp::os::Bottle& head_command = outHeadMovePort.prepare();
-		//	head_command.clear();
-		//	head_command.addString("move");
-		//	head_command.addDouble(0.0);
-		//	outHeadMovePort.write();
-		//}
+		if (movements) {
+			yarp::os::Bottle& head_command = outHeadMovePort.prepare();
+			head_command.clear();
+			head_command.addString("move");
+			head_command.addDouble(0.0);
+			outHeadMovePort.write();
+		}
 
 		yInfo("Completed All Trials . . . Good Bye!");
 
@@ -308,20 +308,20 @@ bool AudioRunnerPeriodicThread::processing() {
 		/* ===========================================================================
 		 *  Init the trial by sending the head to the starting position.
 		 * =========================================================================== */
-		//currentMove = 0;
-		//yarp::os::Bottle& head_command = outHeadMovePort.prepare();
-		//head_command.clear();
-		//head_command.addString("move");
-		//head_command.addDouble(HeadPositions[currentMove]);
-		//outHeadMovePort.write();
-		//
-		//currentMove++;
+		currentMove = 0;
+		yarp::os::Bottle& head_command = outHeadMovePort.prepare();
+		head_command.clear();
+		head_command.addString("move");
+		head_command.addDouble(HeadPositions[currentMove]);
+		outHeadMovePort.write();
+		
+		currentMove++;
 
 		//-- Sleep for five second.
-		//usleep(5000000);
+		usleep(5000000);
 
 		//-- Sleep for twenty second.
-		usleep(20000000);
+		//usleep(20000000);
 	}
 
 	/* ===========================================================================
@@ -339,16 +339,16 @@ bool AudioRunnerPeriodicThread::processing() {
 	while (true) {
 		
 		//-- Move the head if time.
-		//if (movements && currentMove < numMoves) {
-		//	if (trialTimeBegin + HeadTimes[currentMove] < yarp::os::Time::now()) {
-		//		yarp::os::Bottle& head_command = outHeadMovePort.prepare();
-		//		head_command.clear();
-		//		head_command.addString("move");
-		//		head_command.addDouble(HeadPositions[currentMove]);
-		//		outHeadMovePort.write();
-		//		currentMove++;
-		//	}
-		//}
+		if (movements && currentMove < numMoves) {
+			if (trialTimeBegin + HeadTimes[currentMove] < yarp::os::Time::now()) {
+				yarp::os::Bottle& head_command = outHeadMovePort.prepare();
+				head_command.clear();
+				head_command.addString("move");
+				head_command.addDouble(HeadPositions[currentMove]);
+				outHeadMovePort.write();
+				currentMove++;
+			}
+		}
 
 		//-- Read in Audio.
 		inputSound = inRawAudioPort.read(true);
