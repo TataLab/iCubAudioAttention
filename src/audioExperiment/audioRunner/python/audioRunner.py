@@ -22,7 +22,8 @@ def get_args():
     parser.add_argument('-f', '--frame',   default=16384, type=int,                    help='Length of frames to stream.                                (default: {})'.format(16384))
     parser.add_argument('-R', '--rate',    default=48000, type=int,                    help='Sampling rate audio was recorded at.                       (default: {})'.format(48000))
     parser.add_argument('-m', '--move',    default=False, action='store_true',         help='Enable recorded movements to be sent to processing.        (default: {})'.format(False))
-    parser.add_argument('-b', '--begin',   default=1,     type=int,                    help='Trial to begin streaming from.                             (default: {})'.format(1))
+    parser.add_argument('-B', '--begin',   default=1,     type=int,                    help='Trial to begin streaming from.                             (default: {})'.format(1))
+    parser.add_argument('-E', '--end',     default=-1,    type=int,                    help='Trial to end streaming at.                                 (default: {})'.format(-1))
     parser.add_argument('-S', '--strat',   default=2,     type=int,                    help='Head movement sending strategy. [1, 2]                     (default: {})'.format(2))
     parser.add_argument('-O', '--over',    default=0,     type=int,                    help='Number of samples to overlap for strategy 2.               (default: {})'.format(0))
     parser.add_argument('-T', '--thresh',  default=0.5,   type=float,                  help='Threshold of head position differences.                    (default: {})'.format(0.5))
@@ -54,6 +55,7 @@ class audioRunner(object):
         self.sampling_rate  = args.rate
         self.movements      = args.move
         self.trial_start    = args.begin-1
+        self.trial_end      = args.end
         self.strategy       = args.strat
         self.overlap        = args.over
         self.threshold      = args.thresh
@@ -72,6 +74,7 @@ class audioRunner(object):
         if not os.path.exists(self.target_dir):
             os.makedirs(self.target_dir)
 
+        print("\n")
         print("Source Directory : {}".format(self.source_dir))
         print("Target Directory : {}".format(self.target_dir), "\n\n")
 
@@ -176,8 +179,9 @@ class audioRunner(object):
         files_pos = sorted(files_pos)
 
         num_files = len(files_sound)
+        num_trials = self.trial_end if self.trial_end > 0 else num_files
 
-        for trial in range(self.trial_start, num_files):
+        for trial in range(self.trial_start, num_trials):
             
             # Work out file names
             sound_name = files_sound[trial]
