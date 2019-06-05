@@ -22,6 +22,12 @@
         <parameters> --special --csv experiment_01.csv </parameters>
         <node> icub-mac </node>
     </module>
+
+    <module>
+        <name> haltCatcher </name>
+        <parameters> --waitTime 30.0 </parameters>
+        <node> icub-mac </node>
+    </module>
     
 
     <!-->  
@@ -55,6 +61,18 @@
         <from> /icub/head/state:o         </from>
         <to>   /audioRunner/headAngle:i   </to>
         <protocol> tcp </protocol>
-    </connection>    
+    </connection>   
+
+    <connection>
+        <from> /audioPlayer/broadcast:o   </from>
+        <to>   /haltCatcher:i             </to>
+        <protocol> tcp </protocol>
+    </connection>  
+
+    <connection>
+        <from> /haltCatcher:o   </from>
+        <to>   /messenger:i     </to>
+        <protocol> tcp </protocol>
+    </connection>  
 
 </application>

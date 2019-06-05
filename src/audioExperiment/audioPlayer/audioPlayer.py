@@ -89,8 +89,8 @@ class audioPlayer(object):
             # Kill this script.
             if cmd == "quit" or cmd == "--quit" or cmd == "-q" or cmd == "-Q":
                 reply.addString("Good Bye!")
-                self.input_port.reply(reply)
-                return
+                #self.input_port.reply(reply) # Don't return yet.
+                #return
 
             # Get a help Message.
             elif cmd == "help" or cmd == "--help" or cmd == "-h" or cmd == "-H":
@@ -168,6 +168,10 @@ class audioPlayer(object):
                 broadcast.clear()
                 broadcast.fromString(reply.toString())
                 self.output_port.write()
+
+            # Leave loop if requested.
+            if reply.get(0).asString() == "Good Bye!":
+                return
 
 
 

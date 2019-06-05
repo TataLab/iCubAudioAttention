@@ -87,8 +87,7 @@ int main(int argc, char * argv[]) {
     while (true) {
 
         //-- Don't do any work until everything is connected.
-        if (inMonitorPort.getInputCount()  &&
-            outMonitorPort.getOutputCount()) {
+        if (outMonitorPort.getOutputCount()) {
 
             yarp::os::Bottle* command = inMonitorPort.read(false);
             if (command != NULL) {
@@ -129,7 +128,7 @@ int main(int argc, char * argv[]) {
             if (!inMonitorPort.getInputCount())   { msg += "Input Port; ";  }
             if (!outMonitorPort.getOutputCount()) { msg += "Output Port; "; }
             msg += ". . .";
-            yInfo("%s", msg.c_str());
+            //yInfo("%s", msg.c_str());
 
             //-- Sleep for one second.
             usleep(1000000);
@@ -138,6 +137,9 @@ int main(int argc, char * argv[]) {
             runningTime = yarp::os::Time::now();
         }
     }
+
+    //-- Sleep for one second before shutting down.
+    usleep(1000000);
 
     //-- Tell the recipient we are closing everything.
     yarp::os::Bottle& reply = outMonitorPort.prepare();
