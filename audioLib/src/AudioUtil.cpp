@@ -152,7 +152,7 @@ std::string AudioUtil::MatrixToString(const yMatrix& source, const int precision
     size_t row, col;
 
     //-- If the width is less than 1, use tabs, else use width number of spaces.
-    std::string spacer((width<0) ? 1 : width, (width<0) ? '\t' : ' ');
+    std::string spacer((width<0) ? "\t" : " ");
 
     //-- Buffering.
     std::string target = "";
@@ -167,7 +167,7 @@ std::string AudioUtil::MatrixToString(const yMatrix& source, const int precision
         if (row) { target += endRowStr; }
         for (col = 0; col < ColSize; col++) {
             if (col) { target += spacer; }
-            sprintf(buffer, "%.*lf", precision, *src); src++;
+            sprintf(buffer, "%*.*lf", width, precision, *src); src++;
             target += buffer;
         }
     }
