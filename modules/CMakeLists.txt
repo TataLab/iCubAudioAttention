@@ -4,4 +4,12 @@
 
 cmake_minimum_required(VERSION 3.5)
 
-add_subdirectory ( audio_attention )
+if( ENABLE_COMPILE_ON_PC104 )
+
+    #add_subdirectory( remoteInterface )
+
+else( ENABLE_COMPILE_ON_PC104 )
+    
+    add_subdirectory( audioPreprocessor )
+
+endif( ENABLE_COMPILE_ON_PC104 )
