@@ -1,7 +1,7 @@
 // -*- mode:C++; tab-width:4; c-basic-offset:4; indent-tabs-mode:nil -*-
 
 /*
- * Copyright (C) 2018 Department of Neuroscience - University of Lethbridge
+ * Copyright (C) 2019 Department of Neuroscience - University of Lethbridge
  * Author: Austin Kothig, Francesco Rea, Marko Ilievski, Matt Tata
  * email: kothiga@uleth.ca, francesco.reak@iit.it, marko.ilievski@uwaterloo.ca, matthew.tata@uleth.ca
  * 
@@ -19,13 +19,15 @@
 */
 
 /* ===========================================================================
- * @file  interauralCues.cpp
+ * @file  beamformer.cpp
  * @brief Implementation of the interaural cues calculator (see header file).
  * =========================================================================== */
 
-#include <iCub/interauralCues.h>
+#include <iCub/filters/beamformer.h>
 
-InterauralCues::InterauralCues(int mics, double dist, double c, int rate, int samples, int bands, int beamsPerHemi, int resolution) : 
+using namespace Filters;
+
+Beamformer::Beamformer(int mics, double dist, double c, int rate, int samples, int bands, int beamsPerHemi, int resolution) : 
 	numMics(mics), 
     micDistance(dist),
     speedOfSound(c),
@@ -46,12 +48,12 @@ InterauralCues::InterauralCues(int mics, double dist, double c, int rate, int sa
 }
 
 
-InterauralCues::~InterauralCues() {
+Beamformer::~Beamformer() {
 	
 }
 
 
-void InterauralCues::getBeamformedAudio(const yarp::sig::Matrix& FilterBank, yarp::sig::Matrix& BeamformedAudio) {
+void Beamformer::getBeamformedAudio(const yarp::sig::Matrix& FilterBank, yarp::sig::Matrix& BeamformedAudio) {
 
     //-- Ensure space is allocated for this.
 	BeamformedAudio.resize(numBands * numBeams, numFrameSamples);
@@ -87,7 +89,7 @@ void InterauralCues::getBeamformedAudio(const yarp::sig::Matrix& FilterBank, yar
 }
 
 /*
-void InterauralCues::getBeamformedRmsAudio(const yarp::sig::Matrix& FilterBank, yarp::sig::Matrix& BeamformedAudio) {
+void Beamformer::getBeamformedRmsAudio(const yarp::sig::Matrix& FilterBank, yarp::sig::Matrix& BeamformedAudio) {
 
     //-- Ensure space is allocated for this.
 	BeamformedAudio.resize(numBands, numBeams);
@@ -129,7 +131,7 @@ void InterauralCues::getBeamformedRmsAudio(const yarp::sig::Matrix& FilterBank, 
 */
 
 
-void InterauralCues::getBeamformedRmsPower(const yarp::sig::Matrix& BeamformedAudio, yarp::sig::Matrix& BeamPower) {
+void Beamformer::getBeamformedRmsPower(const yarp::sig::Matrix& BeamformedAudio, yarp::sig::Matrix& BeamPower) {
 
     //-- Ensure space is allocated for the powermap.
 	BeamPower.resize(numBands, numMics);
@@ -156,7 +158,7 @@ void InterauralCues::getBeamformedRmsPower(const yarp::sig::Matrix& BeamformedAu
 }
 
 
-void InterauralCues::getAngleNormalAudioMap(const yarp::sig::Matrix& BeamformedRmsAudio, yarp::sig::Matrix& AngleNormalAudio, const double Offset) {
+void Beamformer::getAngleNormalAudioMap(const yarp::sig::Matrix& BeamformedRmsAudio, yarp::sig::Matrix& AngleNormalAudio, const double Offset) {
 
     /* ===========================================================================
      *  Step 1) Interpolate the rms of the beamformed audio to get 
@@ -180,12 +182,12 @@ void InterauralCues::getAngleNormalAudioMap(const yarp::sig::Matrix& BeamformedR
 }
 
 
-inline double InterauralCues::lininterp(const double x, const double x1, const double y1, const double x2, const double y2) { 
+inline double Beamformer::lininterp(const double x, const double x1, const double y1, const double x2, const double y2) { 
     return y1 + ((y2 - y1) * (x - x1)) / (x2 - x1); 
 }
 
 
-void InterauralCues::interpolateFrontFieldBeamsRms(const yarp::sig::Matrix& BeamformedRmsAudio, yarp::sig::Matrix& FrontFieldAudio) {
+void Beamformer::interpolateFrontFieldBeamsRms(const yarp::sig::Matrix& BeamformedRmsAudio, yarp::sig::Matrix& FrontFieldAudio) {
 
     //-- Ensure space is allocated for the audio map.
     FrontFieldAudio.resize(numBands, numFrontFieldAngles);
@@ -220,7 +222,7 @@ void InterauralCues::interpolateFrontFieldBeamsRms(const yarp::sig::Matrix& Beam
 }
 
 
-void InterauralCues::mirrorFrontField(const yarp::sig::Matrix& FrontFieldAudio, yarp::sig::Matrix& FullFieldAudio, const int offset) {
+void Beamformer::mirrorFrontField(const yarp::sig::Matrix& FrontFieldAudio, yarp::sig::Matrix& FullFieldAudio, const int offset) {
 
     //-- Get the number of rows for the front field audio.
     const int numRow = FrontFieldAudio.rows();
@@ -259,7 +261,7 @@ void InterauralCues::mirrorFrontField(const yarp::sig::Matrix& FrontFieldAudio, 
 }
 
 
-void InterauralCues::setFrontFieldBeamAngles() {
+void Beamformer::setFrontFieldBeamAngles() {
 
     //-- Ensure space is allocated for the angle positions.
     frontFieldBeamAngles.resize(numBeams);
@@ -275,7 +277,7 @@ void InterauralCues::setFrontFieldBeamAngles() {
 }
 
 
-void InterauralCues::setFrontFieldRealAngles() {
+void Beamformer::setFrontFieldRealAngles() {
 
     //-- Ensure space is allocated for the angle positions.
     frontFieldRealAngles.resize(numFrontFieldAngles);

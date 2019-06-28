@@ -1,7 +1,7 @@
 // -*- mode:C++; tab-width:4; c-basic-offset:4; indent-tabs-mode:nil -*-
 
 /*
- * Copyright (C) 2018 Department of Neuroscience - University of Lethbridge
+ * Copyright (C) 2019 Department of Neuroscience - University of Lethbridge
  * Author: Austin Kothig, Francesco Rea, Marko Ilievski, Matt Tata
  * email: kothiga@uleth.ca, francesco.reak@iit.it, marko.ilievski@uwaterloo.ca, matthew.tata@uleth.ca
  * 
@@ -19,15 +19,15 @@
 */
 
 /* ===========================================================================
- * @file  butterworth.cpp
+ * @file  butterworthFilter.cpp
  * @brief Implementation of the butterworth filter (see header file).
  * =========================================================================== */
 
-#include <iCub/filters/butterworth.h>
+#include <iCub/filters/butterworthFilter.h>
 
 using namespace Filters;
 
-Butterworth::Butterworth(int rate, double q) :
+ButterworthFilter::ButterworthFilter(int rate, double q) :
     samplingRate(rate),
     q_scale(q) {
 
@@ -37,11 +37,11 @@ Butterworth::Butterworth(int rate, double q) :
     CenterFreq_bn = -1; //-- filter type.
 }
 
-Butterworth::~Butterworth() {
+ButterworthFilter::~ButterworthFilter() {
 
 }
 
-void Butterworth::getLowPassedAudio(const yMatrix& AudioSource, yMatrix& AudioTarget, const double CenterFrequency) {
+void ButterworthFilter::getLowPassedAudio(const yMatrix& AudioSource, yMatrix& AudioTarget, const double CenterFrequency) {
 
     if (CenterFreq_lp != CenterFrequency) {
         updateLowPassCoefficients(CenterFrequency);
@@ -75,7 +75,7 @@ void Butterworth::getLowPassedAudio(const yMatrix& AudioSource, yMatrix& AudioTa
 }
 
 
-void Butterworth::getHighPassedAudio(const yMatrix& AudioSource, yMatrix& AudioTarget, const double CenterFrequency) {
+void ButterworthFilter::getHighPassedAudio(const yMatrix& AudioSource, yMatrix& AudioTarget, const double CenterFrequency) {
 
     if (CenterFreq_hp != CenterFrequency) {
         updateHighPassCoefficients(CenterFrequency);
@@ -109,7 +109,7 @@ void Butterworth::getHighPassedAudio(const yMatrix& AudioSource, yMatrix& AudioT
 }
 
 
-void Butterworth::getBandPassedAudio(const yMatrix& AudioSource, yMatrix& AudioTarget, const double CenterFrequency) {
+void ButterworthFilter::getBandPassedAudio(const yMatrix& AudioSource, yMatrix& AudioTarget, const double CenterFrequency) {
 
     if (CenterFreq_bp != CenterFrequency) {
         updateBandPassCoefficients(CenterFrequency);
@@ -143,7 +143,7 @@ void Butterworth::getBandPassedAudio(const yMatrix& AudioSource, yMatrix& AudioT
 }
 
 
-void Butterworth::getBandNochedAudio(const yMatrix& AudioSource, yMatrix& AudioTarget, const double CenterFrequency) {
+void ButterworthFilter::getBandNochedAudio(const yMatrix& AudioSource, yMatrix& AudioTarget, const double CenterFrequency) {
 
     if (CenterFreq_bn != CenterFrequency) {
         updateBandNochCoefficients(CenterFrequency);
@@ -177,7 +177,7 @@ void Butterworth::getBandNochedAudio(const yMatrix& AudioSource, yMatrix& AudioT
 }
 
 
-void Butterworth::setQscale(const double new_q) {
+void ButterworthFilter::setQscale(const double new_q) {
 
     q_scale = new_q;
 
@@ -188,7 +188,7 @@ void Butterworth::setQscale(const double new_q) {
 }
 
 
-void Butterworth::bilinearTransformation(const double* AudioSource, double* AudioTarget, const size_t numSamples, const double a0, const double a1, const double a2, const double b1, const double b2) {
+void ButterworthFilter::bilinearTransformation(const double* AudioSource, double* AudioTarget, const size_t numSamples, const double a0, const double a1, const double a2, const double b1, const double b2) {
 
     //-- Filter buffer.
 	double p0i = 0.0, p1i = 0.0, p2i = 0.0;
@@ -212,7 +212,7 @@ void Butterworth::bilinearTransformation(const double* AudioSource, double* Audi
 }
 
 
-void Butterworth::updateLowPassCoefficients(const double CenterFrequency) {
+void ButterworthFilter::updateLowPassCoefficients(const double CenterFrequency) {
     
     //-- Compute the coeff for the given center frequency.
     lp_c  = 1.0 / tan(_pi * CenterFrequency / samplingRate);
@@ -229,7 +229,7 @@ void Butterworth::updateLowPassCoefficients(const double CenterFrequency) {
 }
 
 
-void Butterworth::updateHighPassCoefficients(const double CenterFrequency) {
+void ButterworthFilter::updateHighPassCoefficients(const double CenterFrequency) {
     
     //-- Compute the coeff for the given center frequency.
     hp_c  =  tan(_pi * CenterFrequency / samplingRate);
@@ -246,7 +246,7 @@ void Butterworth::updateHighPassCoefficients(const double CenterFrequency) {
 }
 
 
-void Butterworth::updateBandPassCoefficients(const double CenterFrequency) {
+void ButterworthFilter::updateBandPassCoefficients(const double CenterFrequency) {
 
     //-- Compute the coeff for the given center frequency.
     bp_bw =  q_scale;
@@ -264,7 +264,7 @@ void Butterworth::updateBandPassCoefficients(const double CenterFrequency) {
 }
 
 
-void Butterworth::updateBandNochCoefficients(const double CenterFrequency) {
+void ButterworthFilter::updateBandNochCoefficients(const double CenterFrequency) {
 
     //-- Compute the coeff for the given center frequency.
     bn_bw =  q_scale;

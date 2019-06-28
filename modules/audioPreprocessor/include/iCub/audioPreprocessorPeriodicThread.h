@@ -1,7 +1,7 @@
 // -*- mode:C++; tab-width:4; c-basic-offset:4; indent-tabs-mode:nil -*-
 
 /*
- * Copyright (C) 2018 Department of Neuroscience - University of Lethbridge
+ * Copyright (C) 2019 Department of Neuroscience - University of Lethbridge
  * Author: Austin Kothig, Francesco Rea, Marko Ilievski, Matt Tata
  * email: kothiga@uleth.ca, francesco.reak@iit.it, marko.ilievski@uwaterloo.ca, matthew.tata@uleth.ca
  * 
@@ -44,18 +44,15 @@
 #endif
 
 #include <iCub/util/audioUtil.h>
-#include <iCub/filters/butterworth.h>
-
-#include <iCub/gammatoneFilterBank.h>
-#include <iCub/interauralCues.h>
-#include <iCub/hilbertTransform.h>
+#include <iCub/filters/beamformer.h>
+#include <iCub/filters/butterworthFilter.h>
+#include <iCub/filters/gammatoneFilterBank.h>
+#include <iCub/filters/hilbertTransform.h>
 
 typedef yarp::sig::Matrix                           yMatrix;
-typedef yarp::sig::ImageOf< yarp::sig::PixelFloat > yImageOfFloat;
 
 typedef yarp::os::BufferedPort< yarp::sig::Sound  > ySoundBuffer;
 typedef yarp::os::BufferedPort< yMatrix           > yMatrixBuffer;
-typedef yarp::os::BufferedPort< yImageOfFloat     > yImageOfFloatBuffer;
 
 class AudioPreprocessorPeriodicThread : public yarp::os::PeriodicThread {
 
@@ -132,10 +129,10 @@ private:
 	/* ===========================================================================
 	 *  Encapsulated objects to perform processing.
 	 * =========================================================================== */
-	GammatoneFilterBank*  gammatoneFilterBank;
-	InterauralCues*       interauralCues;
-	HilbertTransform*     hilbertTransform;
-	Filters::Butterworth* butterworthFilter;
+	Filters::GammatoneFilterBank*  gammatoneFilterBank;
+	Filters::Beamformer*           beamformer;
+	Filters::HilbertTransform*     hilbertTransform;
+	Filters::ButterworthFilter*    butterworthFilter;
 	
 
 	/* ===========================================================================

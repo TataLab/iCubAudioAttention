@@ -9,9 +9,23 @@ project(${LIB_NAME} LANGUAGES CXX C VERSION 1.0.0)
 
 ############################################################
 
+option(ENABLE_OMP "Do you want to link against OpenMP?" OFF)
+if( ENABLE_OMP )
+
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp")
+    add_definitions( -DWITH_OMP )
+
+endif( ENABLE_OMP )
+
+############################################################
+
 set(${PROJECT_NAME}_SRC
     src/audioUtil.cpp
-    src/butterworth.cpp
+    src/beamformer.cpp
+    src/butterworthFilter.cpp
+    src/gammatoneFilterBank.cpp
+    src/hilbertTransform.cpp
+    
     #src/Sound.cpp
     #src/SoundFile.cpp
     #src/spatialSound.cpp
@@ -19,7 +33,11 @@ set(${PROJECT_NAME}_SRC
 
 set(${PROJECT_NAME}_HDR
     include/iCub/util/audioUtil.h
-    include/iCub/filters/butterworth.h
+    include/iCub/filters/beamformer.h
+    include/iCub/filters/butterworthFilter.h
+    include/iCub/filters/gammatoneFilterBank.h
+    include/iCub/filters/hilbertTransform.h
+
     #include/iCub/audio/Sound.h
     #include/iCub/audio/SoundFile.h
     #include/iCub/audio/spatialSound.h
@@ -40,14 +58,16 @@ set_target_properties(
 
 target_link_libraries(
     ${PROJECT_NAME}   
-    PUBLIC  ${YARP_LIBRARIES} 
-    PRIVATE ${OpenCV_LIBRARIES}
+    ${YARP_LIBRARIES} 
+    fftw3
 )
 
 target_include_directories(
-    ${PROJECT_NAME} 
-    PUBLIC "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>"
-           "$<INSTALL_INTERFACE:${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_INCLUDEDIR}>"
+    ${PROJECT_NAME}
+    PRIVATE ${PROJECT_SOURCE_DIR}/include ${fftw_SOURCE_DIR}/api
+    PUBLIC  "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>"
+            "$<INSTALL_INTERFACE:${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_INCLUDEDIR}>"
+           
 )
 
 ############################################################

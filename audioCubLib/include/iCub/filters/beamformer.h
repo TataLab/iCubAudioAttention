@@ -1,7 +1,7 @@
 // -*- mode:C++; tab-width:4; c-basic-offset:4; indent-tabs-mode:nil -*-
 
 /*
- * Copyright (C) 2018 Department of Neuroscience - University of Lethbridge
+ * Copyright (C) 2019 Department of Neuroscience - University of Lethbridge
  * Author: Austin Kothig, Francesco Rea, Marko Ilievski, Matt Tata
  * email: kothiga@uleth.ca, francesco.reak@iit.it, marko.ilievski@uwaterloo.ca, matthew.tata@uleth.ca
  * 
@@ -19,13 +19,12 @@
 */
 
 /* ===========================================================================
- * @file  interauralCues.h
- * @brief Object for processing filtered audio into various 
- *          different interaural cues (ITD, ILD, IPD, etc.).
+ * @file  beamformer.h
+ * @brief Object for spatially separated audio using a delay-and-sum beamformer.
  * =========================================================================== */
 
-#ifndef _INTERAURAL_CUES_H_
-#define _INTERAURAL_CUES_H_
+#ifndef _BEAMFORMER_H_
+#define _BEAMFORMER_H_
 
 #include <yarp/math/Math.h>
 #include <yarp/sig/all.h>
@@ -37,7 +36,12 @@
 
 #include <iCub/util/audioUtil.h>
 
-class InterauralCues { 
+namespace Filters {
+    class Beamformer;
+} 
+
+
+class Filters::Beamformer { 
 
   private:
     
@@ -88,13 +92,13 @@ class InterauralCues {
      * @param beamsPerHemi : Number of Beams in a single hemi field.
 	 * @param resolution   : Number of positions one degree should cover.
 	 * =========================================================================== */
-	InterauralCues(int mics, double dist, double c, int rate, int samples, int bands, int beamsPerHemi, int resolution);
+	Beamformer(int mics, double dist, double c, int rate, int samples, int bands, int beamsPerHemi, int resolution);
 
 
 	/* ===========================================================================
 	 *  Destructor.
 	 * =========================================================================== */
-	~InterauralCues();
+	~Beamformer();
 	
 
     /* ===========================================================================
@@ -180,6 +184,6 @@ class InterauralCues {
     void setFrontFieldRealAngles();
 };
 
-#endif //_INTERAURAL_CUES_H_
+#endif //_BEAMFORMER_H_
 
 //----- end-of-file --- ( next line intentionally left blank ) ------------------

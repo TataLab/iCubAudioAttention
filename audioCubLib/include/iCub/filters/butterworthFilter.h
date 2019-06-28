@@ -1,7 +1,7 @@
 // -*- mode:C++; tab-width:4; c-basic-offset:4; indent-tabs-mode:nil -*-
 
 /*
- * Copyright (C) 2018 Department of Neuroscience - University of Lethbridge
+ * Copyright (C) 2019 Department of Neuroscience - University of Lethbridge
  * Author: Austin Kothig, Francesco Rea, Marko Ilievski, Matt Tata
  * email: kothiga@uleth.ca, francesco.reak@iit.it, marko.ilievski@uwaterloo.ca, matthew.tata@uleth.ca
  * 
@@ -19,7 +19,7 @@
 */
 
 /* ===========================================================================
- * @file  butterworth.h
+ * @file  butterworthFilter.h
  * @brief Definition of a butterworth filter that receives raw audio data 
  *          from and applies different butterworth filters to it.
  * =========================================================================== */
@@ -45,11 +45,11 @@
 typedef yarp::sig::Matrix yMatrix;
 
 namespace Filters {
-    class Butterworth;
+    class ButterworthFilter;
 } 
 
 
-class Filters::Butterworth {
+class Filters::ButterworthFilter {
 
 	private:
 	
@@ -85,13 +85,13 @@ class Filters::Butterworth {
 	/* ===========================================================================
 	 *  Default Constructor.
 	 * =========================================================================== */
-	Butterworth(int rate, double q);
+	ButterworthFilter(int rate, double q);
 
 
     /* ===========================================================================
 	 *  Destructor.
 	 * =========================================================================== */
-	~Butterworth();
+	~ButterworthFilter();
 
 
     /* ===========================================================================

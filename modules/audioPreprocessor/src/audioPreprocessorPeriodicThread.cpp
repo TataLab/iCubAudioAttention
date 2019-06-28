@@ -1,7 +1,7 @@
 // -*- mode:C++; tab-width:4; c-basic-offset:4; indent-tabs-mode:nil -*-
 
 /*
- * Copyright (C) 2018 Department of Neuroscience - University of Lethbridge
+ * Copyright (C) 2019 Department of Neuroscience - University of Lethbridge
  * Author: Austin Kothig, Francesco Rea, Marko Ilievski, Matt Tata
  * email: kothiga@uleth.ca, francesco.reak@iit.it, marko.ilievski@uwaterloo.ca, matthew.tata@uleth.ca
  * 
@@ -46,7 +46,7 @@ AudioPreprocessorPeriodicThread::AudioPreprocessorPeriodicThread(std::string _ro
 
 AudioPreprocessorPeriodicThread::~AudioPreprocessorPeriodicThread() {
 	delete gammatoneFilterBank;
-	delete interauralCues;
+	delete beamformer;
 	delete hilbertTransform;
 	delete butterworthFilter;
 }
@@ -165,10 +165,10 @@ bool AudioPreprocessorPeriodicThread::configure(yarp::os::ResourceFinder &rf) {
 	/* ===========================================================================
 	 *  Initialize the processing objects.
 	 * =========================================================================== */
-	gammatoneFilterBank = new GammatoneFilterBank(numMics, samplingRate, numFrameSamples, numBands, lowCf, highCf, halfRec, erbSpaced);
-	interauralCues      = new InterauralCues(numMics, micDistance, speedOfSound, samplingRate, numFrameSamples, numBands, numBeamsPerHemifield, angleRes);
-	hilbertTransform    = new HilbertTransform(numBands * numBeams, numFrameDownSamples);
-	butterworthFilter   = new Filters::Butterworth(samplingRate / downSampEnv, bandPassWidth);
+	gammatoneFilterBank = new Filters::GammatoneFilterBank(numMics, samplingRate, numFrameSamples, numBands, lowCf, highCf, halfRec, erbSpaced);
+	beamformer          = new Filters::Beamformer(numMics, micDistance, speedOfSound, samplingRate, numFrameSamples, numBands, numBeamsPerHemifield, angleRes);
+	hilbertTransform    = new Filters::HilbertTransform(numBands * numBeams, numFrameDownSamples);
+	butterworthFilter   = new Filters::ButterworthFilter(samplingRate / downSampEnv, bandPassWidth);
 
 
 	/* ===========================================================================
@@ -447,7 +447,7 @@ bool AudioPreprocessorPeriodicThread::processing() {
 	 *  Apply a delay and sum beamformer with RMS applied 
 	 *    across the frame onto the filtered left and right channel. 
 	 * =========================================================================== */
-	interauralCues->getBeamformedAudio (
+	beamformer->getBeamformedAudio (
 		/* Basilar Memb Res = */ GammatoneFilteredAudioMatrix,
 		/* Beamformered     = */ BeamformedAudioMatrix
 	);
@@ -467,7 +467,7 @@ bool AudioPreprocessorPeriodicThread::processing() {
 		);
 
 		if (processAll || outBeamformedRmsPowerPort.getOutputCount()) {
-			interauralCues->getBeamformedRmsPower (
+			beamformer->getBeamformedRmsPower (
 				/* RMS Beamformer = */ BeamformedRmsAudioMatrix,
 				/* Power of Beams = */ BeamformedRmsPowerMatrix
 			);
@@ -477,7 +477,7 @@ bool AudioPreprocessorPeriodicThread::processing() {
 			/* ===========================================================================
 			 *  Interpolate over, and mirror the front field auditory scene
 			 * =========================================================================== */
-			interauralCues->getAngleNormalAudioMap (
+			beamformer->getAngleNormalAudioMap (
 				/* Source = */ BeamformedRmsAudioMatrix,
 				/* Target = */ AllocentricAudioMatrix,
 				/* Offset = */ headOffset
@@ -537,7 +537,7 @@ bool AudioPreprocessorPeriodicThread::processing() {
 	 *      as these matrices share the same shape ).
 	 * =========================================================================== */
 	if (processAll || outBandPassedRmsPowerPort.getOutputCount()) {
-		interauralCues->getBeamformedRmsPower (
+		beamformer->getBeamformedRmsPower (
 			/* RMS Envelope = */ BandPassedRmsEnvelopeMatrix,
 			/* Power of Env = */ BandPassedRmsPowerMatrix
 		);
@@ -547,7 +547,7 @@ bool AudioPreprocessorPeriodicThread::processing() {
 	/* ===========================================================================
 	 *  Interpolate over, and mirror the front field auditory scene
 	 * =========================================================================== */
-	interauralCues->getAngleNormalAudioMap (
+	beamformer->getAngleNormalAudioMap (
 		/* Source = */ BandPassedRmsEnvelopeMatrix,
 		/* Target = */ AllocentricEnvelopeMatrix,
 		/* Offset = */ headOffset

@@ -9,10 +9,11 @@ project(${MODULE_NAME} LANGUAGES CXX C)
 
 ############################################################
 
-option(ENABLE_OMP "Do you want to link against OpenMP?" OFF)
 if( ENABLE_OMP )
+
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp")
     add_definitions( -DWITH_OMP )
+
 endif( ENABLE_OMP )
 
 ############################################################
@@ -41,7 +42,6 @@ if (folder_source)
     target_link_libraries(
         ${PROJECT_NAME}
         audioCub
-        fftw3
         ${YARP_LIBRARIES}
     )
     

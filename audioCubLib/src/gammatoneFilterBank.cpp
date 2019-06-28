@@ -1,7 +1,7 @@
 // -*- mode:C++; tab-width:4; c-basic-offset:4; indent-tabs-mode:nil -*-
 
 /*
- * Copyright (C) 2018 Department of Neuroscience - University of Lethbridge
+ * Copyright (C) 2019 Department of Neuroscience - University of Lethbridge
  * Author: Austin Kothig, Francesco Rea, Marko Ilievski, Matt Tata
  * email: kothiga@uleth.ca, francesco.reak@iit.it, marko.ilievski@uwaterloo.ca, matthew.tata@uleth.ca
  * 
@@ -23,7 +23,9 @@
  * @brief Implementation of the gammatone filter bank (see header file).
  * =========================================================================== */
 
-#include <iCub/gammatoneFilterBank.h>
+#include <iCub/filters/gammatoneFilterBank.h>
+
+using namespace Filters;
 
 GammatoneFilterBank::GammatoneFilterBank(int mics, int rate, int samples, int bands, double lcf, double hcf, bool hrec, bool erbs) : 
 	numMics(mics), 

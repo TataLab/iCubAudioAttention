@@ -1,7 +1,7 @@
 // -*- mode:C++; tab-width:4; c-basic-offset:4; indent-tabs-mode:nil -*-
 
 /*
- * Copyright (C) 2018 Department of Neuroscience - University of Lethbridge
+ * Copyright (C) 2019 Department of Neuroscience - University of Lethbridge
  * Author: Austin Kothig, Francesco Rea, Marko Ilievski, Matt Tata
  * email: kothiga@uleth.ca, francesco.reak@iit.it, marko.ilievski@uwaterloo.ca, matthew.tata@uleth.ca
  * 
@@ -23,8 +23,9 @@
  * @brief Implementation of the hilbert transform (see header file).
  * =========================================================================== */
 
-#include <iCub/hilbertTransform.h>
+#include <iCub/filters/hilbertTransform.h>
 
+using namespace Filters;
 
 HilbertTransform::HilbertTransform(int rows, int samples) :
     numRows(rows),
