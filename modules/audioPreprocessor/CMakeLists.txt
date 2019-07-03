@@ -26,7 +26,7 @@ source_group("Header Files" FILES ${folder_header})
 
 ############################################################
 
-if (folder_source)
+if( folder_source )
 
     add_executable(
         ${PROJECT_NAME}
@@ -51,10 +51,10 @@ if (folder_source)
         DESTINATION bin    
     )
 
-else (folder_source)
+else( folder_source )
     
     message(FATAL_ERROR "No source code files found. Please add something.")
 
-endif (folder_source)
+endif( folder_source )
 
 ############################################################
