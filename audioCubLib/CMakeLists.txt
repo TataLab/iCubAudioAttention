@@ -68,11 +68,22 @@ set_target_properties(
     PUBLIC_HEADER "${${PROJECT_NAME}_HDR}"
 )
 
-target_link_libraries(
-    ${PROJECT_NAME}   
-    ${YARP_LIBRARIES} 
-    fftw3
-)
+if ( ENABLE_COMPILE_ON_PC104 )
+
+    target_link_libraries(
+        ${PROJECT_NAME}   
+        ${YARP_LIBRARIES}
+    )
+
+else( ENABLE_COMPILE_ON_PC104 )
+
+    target_link_libraries(
+        ${PROJECT_NAME}   
+        ${YARP_LIBRARIES}
+        fftw3
+    )
+
+endif( ENABLE_COMPILE_ON_PC104 )
 
 target_include_directories(
     ${PROJECT_NAME}

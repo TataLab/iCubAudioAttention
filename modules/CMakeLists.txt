@@ -6,7 +6,7 @@ cmake_minimum_required(VERSION 3.5)
 
 if( ENABLE_COMPILE_ON_PC104 )
 
-    #add_subdirectory( remoteInterface )
+    add_subdirectory( remoteInterface )
 
 else( ENABLE_COMPILE_ON_PC104 )
     
