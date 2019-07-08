@@ -75,3 +75,13 @@ add_subdirectory( modules      )
 add_subdirectory( app          )
 
 ############################################################
+
+#option(COMPILE_BINDINGS "Compile optional language bindings" OFF)
+#
+#if( COMPILE_BINDINGS )
+#
+#    add_subdirectory( bindings )
+#
+#endif( )
+
+############################################################
