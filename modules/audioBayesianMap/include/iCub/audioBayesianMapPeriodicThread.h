@@ -41,7 +41,7 @@
 #include <yarp/os/PeriodicThread.h>
 #include <yarp/os/Log.h>
 
-#include <iCub/util/AudioUtil.h>
+#include <iCub/util/audioUtil.h>
 
 typedef yarp::sig::Matrix                 yMatrix;
 typedef yarp::os::BufferedPort< yMatrix > yMatrixBuffer;

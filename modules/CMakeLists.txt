@@ -10,6 +10,8 @@ if( ENABLE_COMPILE_ON_PC104 )
 
 else( ENABLE_COMPILE_ON_PC104 )
     
-    add_subdirectory( audioPreprocessor )
+    add_subdirectory( audioBayesianMap       )
+    add_subdirectory( audioPreprocessor      )
+    add_subdirectory( frequencyVisualisation )
 
 endif( ENABLE_COMPILE_ON_PC104 )
