@@ -9,6 +9,15 @@ project(${MODULE_NAME} LANGUAGES CXX C)
 
 ############################################################
 
+if( ENABLE_OMP )
+
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp")
+    add_definitions( -DWITH_OMP )
+
+endif( ENABLE_OMP )
+
+############################################################
+
 file(GLOB folder_source src/*.cpp src/*.cc src/*.c)
 file(GLOB folder_header include/iCub/*.h)
 
