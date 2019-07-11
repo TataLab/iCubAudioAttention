@@ -36,9 +36,10 @@ int main(int argc, char *argv[]) {
     rf.setDefaultContext("audio_attention");               // overridden by --context parameter
     rf.configure(argc, argv);  
     
-    int samplingRate    = rf.findGroup("sampling").check("samplingRate",    Value(48000),  "frame samples (int)"        ).asInt();
-    int numFrameSamples = rf.findGroup("sampling").check("numFrameSamples", Value(4096),   "sampling rate of mics (int)").asInt();
-    
+    int samplingRate     = rf.findGroup("sampling").check("samplingRate",     yarp::os::Value(48000),  "Frame samples (int)"                    ).asInt();
+    int numFrameSamples  = rf.findGroup("sampling").check("numFrameSamples",  yarp::os::Value(4096),   "Sampling rate of mics (int)"            ).asInt();
+    int sampleBufferSize = rf.findGroup("sampling").check("sampleBufferSize", yarp::os::Value(8192),   "Number of samples to buffer in PO (int)").asInt();
+
     Port p;
     p.open("/sender");
     
@@ -46,7 +47,7 @@ int main(int argc, char *argv[]) {
     Property conf;
     conf.put("device", "portaudioRecorder");
     conf.put("rate",    samplingRate);
-    conf.put("samples", numFrameSamples);
+    conf.put("samples", sampleBufferSize);
     
 
     // opening the polydriver and relative IAudioGrabberSound			
@@ -96,10 +97,10 @@ int main(int argc, char *argv[]) {
         //dataAnalysis = (short*) dataSound;
         #endif
 
-        //yInfo(" ");
-        //yInfo(" Rate      : %d ", s.getFrequency());
-        //yInfo(" Samples   : %d ", s.getSamples());
-        //yInfo(" Channels  : %d ", s.getChannels());
+        yInfo(" ");
+        yInfo(" Rate      : %d ", s.getFrequency());
+        yInfo(" Samples   : %ld ", s.getSamples());
+        yInfo(" Channels  : %ld ", s.getChannels());
 
         p.setEnvelope(ts);
         p.write(s);
