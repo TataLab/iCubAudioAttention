@@ -45,6 +45,8 @@
 
 typedef yarp::sig::Matrix yMatrix;
 typedef yarp::sig::ImageOf< yarp::sig::PixelFloat > yImageOfFloat;
+typedef std::reference_wrapper< short int > ySample;
+
 
 namespace AudioUtil {
 

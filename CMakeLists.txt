@@ -31,14 +31,15 @@ set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 ############################################################
 
 find_package(ICUBcontrib REQUIRED)
-find_package(YCM         REQUIRED)
+#find_package(YCM         REQUIRED)
 find_package(YARP        REQUIRED)
 find_package(ICUB        REQUIRED) 
 find_package(OpenCV      REQUIRED)
 
 list(APPEND CMAKE_MODULE_PATH ${ICUBCONTRIB_MODULE_PATH})
-list(APPEND CMAKE_MODULE_PATH ${YCM_MODULE_PATH})
+#list(APPEND CMAKE_MODULE_PATH ${YCM_MODULE_PATH})
 list(APPEND CMAKE_MODULE_PATH ${ICUB_MODULE_PATH})
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
 include(ICUBcontribOptions)
 include(ICUBcontribHelpers)

@@ -420,6 +420,7 @@ bool AudioPreprocessorPeriodicThread::processing() {
 	//-- Separate the sound into left and right channels.	
 	AudioUtil::SoundToMatrix(inputSound, RawAudioMatrix);
 
+	std::cout << RawAudioMatrix.toString() << "\n\n" << std::endl;
 
 	/* ===========================================================================
 	 *  Apply a 4th order gammatone filter onto the raw audio for the 

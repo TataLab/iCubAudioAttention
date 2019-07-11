@@ -225,45 +225,71 @@ void AudioUtil::RootMeanSquareMatrix(const yMatrix& source, yMatrix& target, con
 }
 
 
- void AudioUtil::SoundToMatrix(const yarp::sig::Sound* source, yMatrix& target) {
+void AudioUtil::SoundToMatrix(const yarp::sig::Sound* source, yMatrix& target) {
     
+    ///  //-- Get information about the audio.
+    ///  const size_t BytesPerSample = source->getBytesPerSample();
+    ///  const size_t numSamples     = source->getSamples();
+    ///  const size_t numChannels    = source->getChannels();
+    ///  
+    ///  //-- Derive number of bits, and normalisation values.
+    ///  //const size_t padding        = ((numSamples % 8 == 0) ? 0 : 8 - (numSamples % 8)); // TODO: padding might not be needed. Look into.
+    ///  const size_t numBitsTotal   = BytesPerSample * 8;
+    ///  const double _norm          = (1 << numBitsTotal); // 2^numBits
+    ///  
+    ///  
+    ///  //-- Ensure appropriate space is allocated. 
+    ///  target.resize(numChannels, numSamples);
+    ///  
+    ///  //-- Get pointers to data memory.
+    ///  const unsigned char* src = NULL; //source->getRawData(); // this function was made private. look into solutions later.
+    ///  double*              trg = target.data();
+    ///  
+    ///  //-- Init a var to bit shift on.
+    ///  uint32_t current_sample = 0;
+    ///  
+    ///  for (int ch = 0; ch < numChannels; ch++) {
+    ///      for (int samp = 0; samp < numSamples; samp++) {
+    ///          
+    ///          //-- Reset.
+    ///          current_sample = 0;
+    ///  
+    ///          for (int bitshift = 0; bitshift < numBitsTotal; bitshift += 8) {
+    ///              
+    ///              //-- Bit shift the variable at source,
+    ///              //-- bitwise or with the variable.
+    ///              current_sample |= (*src << bitshift); src++;
+    ///          }
+    ///  
+    ///          *trg = current_sample / _norm;
+    ///          trg++;         
+    ///      }
+    ///      //src += padding;
+    ///  }
+
     //-- Get information about the audio.
     const size_t BytesPerSample = source->getBytesPerSample();
     const size_t numSamples     = source->getSamples();
     const size_t numChannels    = source->getChannels();
 
     //-- Derive number of bits, and normalisation values.
-    //const size_t padding        = ((numSamples % 8 == 0) ? 0 : 8 - (numSamples % 8)); // TODO: padding might not be needed. Look into.
-    const size_t numBitsTotal   = BytesPerSample * 8;
-    const double _norm          = (1 << numBitsTotal); // 2^numBits
+    const size_t numBitsTotal = BytesPerSample * 1;
+    const double _norm        = (1 << numBitsTotal); // 2^numBits
     
-
     //-- Ensure appropriate space is allocated. 
     target.resize(numChannels, numSamples);
 
-    //-- Get pointers to data memory.
-    const unsigned char* src = NULL; //source->getRawData(); // this function was made private. look into solutions later.
-    double*              trg = target.data();
+    //-- Get a pointer to the internal representation of the data.
+    double* trg = target.data();
 
-    //-- Init a var to bit shift on.
-    uint32_t current_sample = 0;
+    //-- Cycle through and copy the data to the target.
+    std::vector< ySample > sourceSamples = source->getNonInterleavedAudioRawData();
+    std::vector< ySample >::iterator src = sourceSamples.begin();
 
-    for (int ch = 0; ch < numChannels; ch++) {
+    for (int chan = 0; chan < numChannels; chan++) {
         for (int samp = 0; samp < numSamples; samp++) {
-            
-            //-- Reset.
-            current_sample = 0;
-
-            for (int bitshift = 0; bitshift < numBitsTotal; bitshift += 8) {
-                
-                //-- Bit shift the variable at source,
-                //-- bitwise or with the variable.
-                current_sample |= (*src << bitshift); src++;
-            }
-
-            *trg = current_sample / _norm;
-            trg++;         
+            *trg = *src / _norm;
+            trg++; src++;
         }
-        //src += padding;
     }
  }
