@@ -146,6 +146,18 @@ namespace AudioUtil {
      *  Convert a yarp sound object into a yarp matrix.
      * ================================================================ */
     void SoundToMatrix(const yarp::sig::Sound* source, yMatrix& target, const double sampleNormaliser);
+
+
+    /* ================================================================
+     *  Slide a window over some source matrix. 
+     * 
+     * @param source       : Source of matrix. 
+     * @param target       : Target of windowd matrix.
+     * @param windowLength : The length of each window.
+     * @param hopLength    : How far to shift the window.
+     * @param flag         : Operation to do on each window ( mean | rms ).
+     * ================================================================ */
+    void WindowMatrix(const yMatrix& source, yMatrix& target, const size_t windowLength, const size_t hopLength, const std::string flag);
 }
 
 #endif  //_AUDIO_UTIL_H

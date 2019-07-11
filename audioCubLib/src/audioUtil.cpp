@@ -369,3 +369,56 @@ void AudioUtil::SoundToMatrix(const yarp::sig::Sound* source, yMatrix& target, c
         }
     }
  }
+
+void AudioUtil::WindowMatrix(const yMatrix& source, yMatrix& target, const size_t windowLength, const size_t hopLength, const std::string flag) {
+
+    //-- Get information about the source.
+    const size_t numRows = source.rows();
+    const size_t numCols = source.cols();
+
+    //-- Ensure appropriate space is allocated.
+    target.resize(numRows, numCols / hopLength);
+
+    if (flag == "mean") {
+
+        for (size_t row = 0; row < numRows; row++) {
+            for (size_t window = 0; window < numCols-windowLength; window += hopLength) {
+
+                //-- Hold onto a running total.
+                double currentSample = 0.0;
+
+                //-- Take the sum of the current window.
+                for (size_t col = window; col < window+windowLength; col++) {
+                    currentSample += source[row][col];
+                }
+
+                //-- Find the mean of the window.
+                target[row][window/hopLength] = currentSample / windowLength;
+            }
+        }
+
+    } else if (flag == "rms") {
+
+        for (size_t row = 0; row < numRows; row++) {
+            for (size_t window = 0; window < numCols-windowLength; window += hopLength) {
+
+                //-- Hold onto a running total.
+                double currentSample = 0.0;
+
+                //-- Take the sum of squares for the current window.
+                for (size_t col = window; col < window+windowLength; col++) {
+                    currentSample += source[row][col] * source[row][col];
+                }
+
+                //-- Find the root of the mean for the window.
+                target[row][window/hopLength] = sqrt( currentSample / windowLength );
+            }
+        }
+
+    } else {
+
+        yInfo("WindowMatrix has nothing implemented for ``%s``!!", flag.c_str());
+
+    }
+}
+
