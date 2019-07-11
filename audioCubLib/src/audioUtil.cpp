@@ -74,7 +74,7 @@ int AudioUtil::myMod_int(const int a, const int b) {
 }
 
 
-void AudioUtil::downSampleMatrix(const yMatrix& source, yMatrix& target, const size_t downSamp) {
+void AudioUtil::downSampleMatrix(const yMatrix& source, yMatrix& target, const size_t downSamp, const std::string flag) {
 
     //-- Don't do any down sampling. Standard Copy.
     if (downSamp == 1) { target = source; return; }
@@ -91,15 +91,92 @@ void AudioUtil::downSampleMatrix(const yMatrix& source, yMatrix& target, const s
     //-- Set a pointer to the source.
     const double *src = source.data();
 
-    for (size_t row = 0; row < RowSize; row++) {
-        for (size_t col = 0; col < ColSize; col++) {
-            //-- Dereference and copy data.
-            *trg = *src;
-            trg++; src += downSamp;
+    if (flag == "rms") { // Take the Root Mean Square of the source samples
+
+        for (size_t row = 0; row < RowSize; row++) {
+
+            //-- Hold onto some running values.
+            double currentSample = 0.0;
+            int    sampleCounter = 0;
+
+            for (size_t col = 0; col < ColSize; col++) {
+
+                currentSample += (*src * *src); src++;
+                sampleCounter++;
+                
+                //-- Reached the threshold.
+                if (sampleCounter == downSamp) {
+
+                    //-- Set the data for target.
+                    *trg = sqrt( currentSample / (double) sampleCounter );
+                    *trg++;
+
+                    //-- Reset the holders.
+                    currentSample = 0.0;
+                    sampleCounter = 0;
+                }
+            }
+
+            //-- Skip any remaining points at the end of the row.
+            src += offset;
         }
-        //-- Skip any remaining points at the end of the row.
-        src += offset;
+
+    } else if (flag == "mean") { // Take the Mean of the source samples
+
+        for (size_t row = 0; row < RowSize; row++) {
+
+            //-- Hold onto some running values.
+            double currentSample = 0.0;
+            int    sampleCounter = 0;
+
+            for (size_t col = 0; col < ColSize; col++) {
+
+                currentSample += *src; src++;
+                sampleCounter++;
+                
+                //-- Reached the threshold.
+                if (sampleCounter == downSamp) {
+
+                    //-- Set the data for target.
+                    *trg = currentSample / (double) sampleCounter;
+                    *trg++;
+
+                    //-- Reset the holders.
+                    currentSample = 0.0;
+                    sampleCounter = 0;
+                }
+            }
+
+            //-- Skip any remaining points at the end of the row.
+            src += offset;
+        }
+
+    } else { // Drop data.
+
+        for (size_t row = 0; row < RowSize; row++) {
+            for (size_t col = 0; col < ColSize; col++) {
+                //-- Dereference and copy data.
+                *trg = *src;
+                trg++; src += downSamp;
+            }
+            //-- Skip any remaining points at the end of the row.
+            src += offset;
+        }
     }
+}
+
+void AudioUtil::downSampleMatrix(const yMatrix& source, yMatrix& target, const size_t downSamp) {
+    AudioUtil::downSampleMatrix(source, target, downSamp, "");
+}
+
+
+yMatrix AudioUtil::downSampleMatrix(const yMatrix& source, const size_t downSamp, const std::string flag) {
+    
+    //-- Run the function with a blank matrix as the target.
+    yMatrix temporaryMatrix;
+    AudioUtil::downSampleMatrix(source, temporaryMatrix, downSamp, flag);
+    
+    return temporaryMatrix;
 }
 
 
@@ -107,7 +184,7 @@ yMatrix AudioUtil::downSampleMatrix(const yMatrix& source, const size_t downSamp
     
     //-- Run the function with a blank matrix as the target.
     yMatrix temporaryMatrix;
-    AudioUtil::downSampleMatrix(source, temporaryMatrix, downSamp);
+    AudioUtil::downSampleMatrix(source, temporaryMatrix, downSamp, "");
     
     return temporaryMatrix;
 }
@@ -225,7 +302,7 @@ void AudioUtil::RootMeanSquareMatrix(const yMatrix& source, yMatrix& target, con
 }
 
 
-void AudioUtil::SoundToMatrix(const yarp::sig::Sound* source, yMatrix& target) {
+void AudioUtil::SoundToMatrix(const yarp::sig::Sound* source, yMatrix& target, const double sampleNormaliser) {
     
     ///  //-- Get information about the audio.
     ///  const size_t BytesPerSample = source->getBytesPerSample();
@@ -272,9 +349,8 @@ void AudioUtil::SoundToMatrix(const yarp::sig::Sound* source, yMatrix& target) {
     const size_t numSamples     = source->getSamples();
     const size_t numChannels    = source->getChannels();
 
-    //-- Derive number of bits, and normalisation values.
-    const size_t numBitsTotal = BytesPerSample * 1;
-    const double _norm        = (1 << numBitsTotal); // 2^numBits
+    //-- Set a normalisation value.
+    //const double _norm = (1 << (BytesPerSample*5)); // 2^(nBytes*norm)
     
     //-- Ensure appropriate space is allocated. 
     target.resize(numChannels, numSamples);
@@ -288,7 +364,7 @@ void AudioUtil::SoundToMatrix(const yarp::sig::Sound* source, yMatrix& target) {
 
     for (int chan = 0; chan < numChannels; chan++) {
         for (int samp = 0; samp < numSamples; samp++) {
-            *trg = *src / _norm;
+            *trg = *src / sampleNormaliser;
             trg++; src++;
         }
     }

@@ -63,21 +63,23 @@ bool AudioPreprocessorPeriodicThread::configure(yarp::os::ResourceFinder &rf) {
 	numMics     = rf.findGroup("robotspec").check("numMics",     yarp::os::Value(2),     "number of mics (int)"              ).asInt();
 	micDistance = rf.findGroup("robotspec").check("micDistance", yarp::os::Value(0.145), "distance between the mics (double)").asDouble();
 
-	speedOfSound    = rf.findGroup("sampling").check("speedOfSound",    yarp::os::Value(336.628), "speed of sound (double)"               ).asDouble();
-	samplingRate    = rf.findGroup("sampling").check("samplingRate",    yarp::os::Value(48000),   "sampling rate of mics (int)"           ).asInt();
-	numFrameSamples = rf.findGroup("sampling").check("numFrameSamples", yarp::os::Value(4096),    "number of frame samples received (int)").asInt();
+	speedOfSound     = rf.findGroup("sampling").check("speedOfSound",     yarp::os::Value(336.628), "speed of sound (double)"                ).asDouble();
+	samplingRate     = rf.findGroup("sampling").check("samplingRate",     yarp::os::Value(48000),   "sampling rate of mics (int)"            ).asInt();
+	numFrameSamples  = rf.findGroup("sampling").check("numFrameSamples",  yarp::os::Value(4096),    "number of frame samples received (int)" ).asInt();
+	sampleNormaliser = rf.findGroup("sampling").check("sampleNormaliser", yarp::os::Value(1024.0),  "normalisation value for samples (double").asDouble();
 
-	numBands      = rf.findGroup("processing").check("numBands",      yarp::os::Value(128),    "number of frequency bands (int)"                       ).asInt();
-	lowCf         = rf.findGroup("processing").check("lowCf",         yarp::os::Value(380.0),  "lowest center frequency (double)"                      ).asDouble();
-	highCf        = rf.findGroup("processing").check("highCf",        yarp::os::Value(2800.0), "highest center frequency (double)"                     ).asDouble();
-	halfRec       = rf.findGroup("processing").check("halfRec",       yarp::os::Value(false),  "half wave rectifying (boolean)"                        ).asBool();
-	erbSpaced     = rf.findGroup("processing").check("erbSpaced",     yarp::os::Value(true),   "ERB spaced centre frequencies (boolean)"               ).asBool();
-	exitEarly     = rf.findGroup("processing").check("exitEarly",     yarp::os::Value(false),  "exit process without computing hilbert trans (boolean)").asBool();
-	bandPassFreq  = rf.findGroup("processing").check("bandPassFreq",  yarp::os::Value(5.0),    "frequency to use in band pass filter (double)"         ).asDouble();
-	bandPassWidth = rf.findGroup("processing").check("bandPassWidth", yarp::os::Value(0.5),    "bandwidth allowed for band pass filter (double)"       ).asDouble();
-	angleRes      = rf.findGroup("processing").check("angleRes",      yarp::os::Value(1),      "degree resolution for a single position (int)"         ).asInt();
-	downSampEnv   = rf.findGroup("processing").check("downSampEnv",   yarp::os::Value(1),      "rate to down sample pre-envelope mat by (int)"         ).asInt();
-	numOmpThreads = rf.findGroup("processing").check("numOmpThreads", yarp::os::Value(4),      "if enabled, the number of omp threads (int)"           ).asInt();
+	numBands        = rf.findGroup("processing").check("numBands",        yarp::os::Value(128),    "number of frequency bands (int)"                ).asInt();
+	lowCf           = rf.findGroup("processing").check("lowCf",           yarp::os::Value(380.0),  "lowest center frequency (double)"               ).asDouble();
+	highCf          = rf.findGroup("processing").check("highCf",          yarp::os::Value(2800.0), "highest center frequency (double)"              ).asDouble();
+	halfRec         = rf.findGroup("processing").check("halfRec",         yarp::os::Value(false),  "half wave rectifying (boolean)"                 ).asBool();
+	erbSpaced       = rf.findGroup("processing").check("erbSpaced",       yarp::os::Value(true),   "ERB spaced centre frequencies (boolean)"        ).asBool();
+	computeEnvelope = rf.findGroup("processing").check("computeEnvelope", yarp::os::Value(false),  "should envelope computation be done (boolean)"  ).asBool();
+	bandPassFreq    = rf.findGroup("processing").check("bandPassFreq",    yarp::os::Value(5.0),    "frequency to use in band pass filter (double)"  ).asDouble();
+	bandPassWidth   = rf.findGroup("processing").check("bandPassWidth",   yarp::os::Value(0.5),    "bandwidth allowed for band pass filter (double)").asDouble();
+	angleRes        = rf.findGroup("processing").check("angleRes",        yarp::os::Value(1),      "degree resolution for a single position (int)"  ).asInt();
+	downSampEnv     = rf.findGroup("processing").check("downSampEnv",     yarp::os::Value(1),      "rate to down sample pre-envelope mat by (int)"  ).asInt();
+	downSampMethod  = rf.findGroup("processing").check("downSampMethod",  yarp::os::Value(""),     "method for down sampling (string)"              ).asString();
+	numOmpThreads   = rf.findGroup("processing").check("numOmpThreads",   yarp::os::Value(4),      "if enabled, the number of omp threads (int)"    ).asInt();
 
 	downSampVis   = rf.findGroup("other").check("downSampVis",   yarp::os::Value(1),      "rate to down sample visualisation by (int)"               ).asInt();
 	saveMatrices  = rf.findGroup("other").check("saveMatrices",  yarp::os::Value("NONE"), "if specified, will save all matrices to this dir (string)").asString();
@@ -209,11 +211,14 @@ bool AudioPreprocessorPeriodicThread::configure(yarp::os::ResourceFinder &rf) {
 	yInfo( "\t Number of Front Field Beams      : %d",       numBeams                            );
 	yInfo( "\t Number of Front Field Angles     : %d",       numFrontFieldAngles                 );
 	yInfo( "\t Number of Full Field Angles      : %d",       numFullFieldAngles                  );
-	yInfo( "\t Exit Early                       : %s",       exitEarly ? "ENABLED"  : "DISABLED" );
+	yInfo( "\t Compute Envelope of Beamformer   : %s",       computeEnvelope ? "ENABLED"  : "DISABLED" );
+	if (computeEnvelope) {
 	yInfo( "\t Band Pass Frequency              : %.2f Hz",  bandPassFreq                        );
 	yInfo( "\t Band Pass Width                  : %.2f",     bandPassWidth                       );
 	yInfo( "\t Pre-envelope Matrix Down Sample  : %d",       downSampEnv                         );
 	yInfo( "\t Number Down Samples per Frame    : %d",       numFrameDownSamples                 );
+	yInfo( "\t Down Sampling Method             : %s",       downSampMethod == "" ? "Drop" : downSampMethod.c_str());
+	}
 	#ifdef WITH_OMP
 	yInfo( "\t Number of OpenMP Threads         : %d",       numOmpThreads                       );
 	#else
@@ -277,7 +282,7 @@ bool AudioPreprocessorPeriodicThread::threadInit() {
 		return false;
 	}
 
-	if (!exitEarly) {
+	if (computeEnvelope) {
 
 		if (!outHilbertEnvelopePort.open(getName("/hilbertEnvelope:o").c_str())) {
 			yError("Unable to open port for sending the Hilbert Envelope of the Filter bank.");
@@ -418,9 +423,9 @@ bool AudioPreprocessorPeriodicThread::processing() {
 	#endif
 
 	//-- Separate the sound into left and right channels.	
-	AudioUtil::SoundToMatrix(inputSound, RawAudioMatrix);
-
-	std::cout << RawAudioMatrix.toString() << "\n\n" << std::endl;
+	AudioUtil::SoundToMatrix(inputSound, RawAudioMatrix, sampleNormaliser);
+	
+	// std::cout << RawAudioMatrix.toString() << "\n\n" << std::endl;
 
 	/* ===========================================================================
 	 *  Apply a 4th order gammatone filter onto the raw audio for the 
@@ -486,7 +491,7 @@ bool AudioPreprocessorPeriodicThread::processing() {
 		}
 	}
 
-	if (exitEarly) {
+	if (!computeEnvelope) {
 		//-- Leave the processing loop early to avoid processing hilbert transform.
 		return true;
 	}
@@ -497,7 +502,8 @@ bool AudioPreprocessorPeriodicThread::processing() {
 	AudioUtil::downSampleMatrix(
 		/* Source = */ BeamformedAudioMatrix,
 		/* Target = */ BeamformedDownSampAudioMatrix,
-		/* Reduce = */ downSampEnv
+		/* Reduce = */ downSampEnv,
+		/* Method = */ downSampMethod
 	);
 
 
@@ -564,7 +570,7 @@ void AudioPreprocessorPeriodicThread::publishOutPorts() {
 	if (outGammatoneFilteredAudioPort.getOutputCount()) {
 
 		//-- This Matrix can be very big. Down sample if enabled.
-		AudioUtil::downSampleMatrix(GammatoneFilteredAudioMatrix, outGammatoneFilteredAudioPort.prepare(), downSampVis);
+		AudioUtil::downSampleMatrix(GammatoneFilteredAudioMatrix, outGammatoneFilteredAudioPort.prepare(), downSampVis, downSampMethod);
 		outGammatoneFilteredAudioPort.setEnvelope(timeStamp);
 		outGammatoneFilteredAudioPort.write();
 
@@ -581,7 +587,7 @@ void AudioPreprocessorPeriodicThread::publishOutPorts() {
 	if (outBeamformedAudioPort.getOutputCount()) {
 		
 		//-- This Matrix can be very big. Down sample if enabled.
-		AudioUtil::downSampleMatrix(BeamformedAudioMatrix, outBeamformedAudioPort.prepare(), downSampVis);
+		AudioUtil::downSampleMatrix(BeamformedAudioMatrix, outBeamformedAudioPort.prepare(), downSampVis, downSampMethod);
 		outBeamformedAudioPort.setEnvelope(timeStamp);
 		outBeamformedAudioPort.write();
 
@@ -614,7 +620,7 @@ void AudioPreprocessorPeriodicThread::publishOutPorts() {
 	if (outHilbertEnvelopePort.getOutputCount()) {
 
 		//-- This Matrix can be very big. Down sample if enabled.
-		AudioUtil::downSampleMatrix(HilbertEnvelopeMatrix, outHilbertEnvelopePort.prepare(), downSampVis);
+		AudioUtil::downSampleMatrix(HilbertEnvelopeMatrix, outHilbertEnvelopePort.prepare(), downSampVis, downSampMethod);
 		outHilbertEnvelopePort.setEnvelope(timeStamp);
 		outHilbertEnvelopePort.write();
 
@@ -623,7 +629,7 @@ void AudioPreprocessorPeriodicThread::publishOutPorts() {
 	if (outBandPassedEnvelopePort.getOutputCount()) {
 
 		//-- This Matrix can be very big. Down sample if enabled.
-		AudioUtil::downSampleMatrix(BandPassedEnvelopeMatrix, outBandPassedEnvelopePort.prepare(), downSampVis);
+		AudioUtil::downSampleMatrix(BandPassedEnvelopeMatrix, outBandPassedEnvelopePort.prepare(), downSampVis, downSampMethod);
 		outBandPassedEnvelopePort.setEnvelope(timeStamp);
 		outBandPassedEnvelopePort.write();
 
@@ -668,7 +674,7 @@ void AudioPreprocessorPeriodicThread::saveOutPorts() {
 	);
 	AudioUtil::MatrixToFile(BeamformedRmsAudioMatrix,        saveMatrices + "BeamformedRmsAudio_"     +AudioUtil::leadingZeros(totalIterations,4)+".data");
 	AudioUtil::MatrixToFile(AllocentricAudioMatrix,          saveMatrices + "AllocentricAudio_"       +AudioUtil::leadingZeros(totalIterations,4)+".data");
-	if (!exitEarly) {
+	if (computeEnvelope) {
 		AudioUtil::MatrixToFile(HilbertEnvelopeMatrix,       saveMatrices + "HilbertEnvelope_"        +AudioUtil::leadingZeros(totalIterations,4)+".data");
 		AudioUtil::MatrixToFile(BandPassedEnvelopeMatrix,    saveMatrices + "BandPassedEnvelope_"     +AudioUtil::leadingZeros(totalIterations,4)+".data");
 		AudioUtil::MatrixToFile(BandPassedRmsEnvelopeMatrix, saveMatrices + "BandPassedRmsEnvelope_"  +AudioUtil::leadingZeros(totalIterations,4)+".data");

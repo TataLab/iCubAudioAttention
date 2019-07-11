@@ -54,7 +54,9 @@ namespace AudioUtil {
      *  Down sample the columns of a yarp matrix. 
      *  - Note: The number of rows is same as source.
      * ================================================================ */
+    void downSampleMatrix(const yMatrix& source, yMatrix& target, const size_t downSamp, const std::string flag);
     void downSampleMatrix(const yMatrix& source, yMatrix& target, const size_t downSamp);
+    yMatrix downSampleMatrix(const yMatrix& source, const size_t downSamp, const std::string flag);
     yMatrix downSampleMatrix(const yMatrix& source, const size_t downSamp);
 
 
@@ -143,7 +145,7 @@ namespace AudioUtil {
     /* ================================================================
      *  Convert a yarp sound object into a yarp matrix.
      * ================================================================ */
-    void SoundToMatrix(const yarp::sig::Sound* source, yMatrix& target);
+    void SoundToMatrix(const yarp::sig::Sound* source, yMatrix& target, const double sampleNormaliser);
 }
 
 #endif  //_AUDIO_UTIL_H

@@ -145,18 +145,20 @@ private:
 	double speedOfSound;
 	int    samplingRate;
 	int    numFrameSamples;
+	double sampleNormaliser;
 
-	int    numBands;
-	double lowCf;
-	double highCf;
-	bool   halfRec;
-	bool   erbSpaced;
-	bool   exitEarly;
-	double bandPassFreq;
-	double bandPassWidth;
-	int    angleRes;
-	int    downSampEnv;
-	int    numOmpThreads;
+	int         numBands;
+	double      lowCf;
+	double      highCf;
+	bool        halfRec;
+	bool        erbSpaced;
+	bool        computeEnvelope;
+	double      bandPassFreq;
+	double      bandPassWidth;
+	int         angleRes;
+	int         downSampEnv;
+	std::string downSampMethod;
+	int         numOmpThreads;
 	
 	int         downSampVis;
 	std::string saveMatrices;
