@@ -93,11 +93,13 @@ bool FreqVisualisationPeriodicThread::configure(yarp::os::ResourceFinder &rf) {
 	 * =========================================================================== */
 	yInfo( "Loading Configuration File." );
 
-    int         inGain = rf.check("gain", yarp::os::Value(1),      "Gain for visualization (int)"  ).asInt();
-    std::string inGrid = rf.check("grid", yarp::os::Value("none"), "Visualisation of grid (string)").asString();
+    int         inGain  = rf.check("gain",  yarp::os::Value(1),      "Gain for visualization (int)"  ).asInt();
+    std::string inGrid  = rf.check("grid",  yarp::os::Value("none"), "Visualisation of grid (string)").asString();
+    bool        inTrans = rf.check("trans", yarp::os::Value(false),  "Transposes the image (boolean)").asBool();
     
     this->setGain(inGain);
     this->setGrid(inGrid);
+    this->setTranspose(inTrans);
 
 
     /* =========================================================================== 
@@ -108,6 +110,7 @@ bool FreqVisualisationPeriodicThread::configure(yarp::os::ResourceFinder &rf) {
 	yInfo( "\t ============================================ "               );
 	yInfo( "\t Gain Value                       : %d",       inGain         );
 	yInfo( "\t Grid Style                       : %s",       inGrid.c_str() );
+    yInfo( "\t Transpose Image                  : %s",       (inTrans ? "ENABLED" : "DISABLED"));
 	yInfo( " " );
 
     return true;
@@ -172,9 +175,15 @@ void FreqVisualisationPeriodicThread::run() {
 
         yarp::sig::Matrix* mat = inputPort.read(false);   //blocking reading for synchr with the input
         
-        if (mat!=NULL) {
+        if (mat != NULL) {
             //yDebug("matrix is not null");
             if (outputPort.getOutputCount()) {
+                
+                //-- Transpose the matrix if requested.
+                if (transpose) {
+                    *mat = mat->transposed();
+                }
+
                 //yDebug("preparing the image %d %d",mat->cols(),mat->rows() );
                 outputImage = &outputPort.prepare();
                 outputImage->resize(mat->cols(),mat->rows());
@@ -322,4 +331,9 @@ void FreqVisualisationPeriodicThread::setGrid(std::string str) {
     } else {
         grid = 0;
     }
+}
+
+
+void FreqVisualisationPeriodicThread::setTranspose(bool trans) {
+    transpose = trans;
 }
