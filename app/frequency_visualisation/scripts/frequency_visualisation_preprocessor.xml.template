@@ -1,6 +1,6 @@
 <application>
 
-<name> Frequency Visualisation All </name>
+<name> Frequency Visualisation Preprocessor </name>
 
     <!-->  
 
@@ -39,6 +39,22 @@
         <node> icub </node>
     </module>
 
+
+    <!-->  
+    Gammatone Filtered Window.
+    <!-->
+    <module>
+        <name> frequencyVisualisation </name>
+        <parameters> --name /gammatoneFilteredWindowVisualiser </parameters>
+        <node> icub </node>
+    </module>
+
+    <module>
+        <name> yarpview </name>
+        <parameters> --x 100 --y 100 --h 320 --w 240 --r 33 --name /gammatoneFilteredWindowView </parameters>
+        <node> icub </node>
+    </module>
+
   
     <!-->  
     Beamformed Audio.
@@ -52,6 +68,22 @@
     <module>
         <name> yarpview </name>
         <parameters> --x 100 --y 100 --h 320 --w 240 --r 33 --name /beamformedAudioView </parameters>
+        <node> icub </node>
+    </module>
+
+
+    <!-->  
+    Beamformed Window.
+    <!-->
+    <module>
+        <name> frequencyVisualisation </name>
+        <parameters> --name /beamformedWindowVisualiser </parameters>
+        <node> icub </node>
+    </module>
+
+    <module>
+        <name> yarpview </name>
+        <parameters> --x 100 --y 100 --h 320 --w 240 --r 33 --name /beamformedWindowView </parameters>
         <node> icub </node>
     </module>
 
@@ -121,6 +153,22 @@
 
 
     <!-->  
+    Hilbert Envelope Window.
+    <!-->
+    <module>
+        <name> frequencyVisualisation </name>
+        <parameters> --name /hilbertEnvelopeWindowVisualiser </parameters>
+        <node> icub </node>
+    </module>
+
+    <module>
+        <name> yarpview </name>
+        <parameters> --x 100 --y 100 --h 320 --w 240 --r 33 --name /hilbertEnvelopeWindowView </parameters>
+        <node> icub </node>
+    </module>
+
+
+    <!-->  
     Band Passed Envelope.
     <!-->
     <module>
@@ -132,6 +180,22 @@
     <module>
         <name> yarpview </name>
         <parameters> --x 100 --y 100 --h 320 --w 240 --r 33 --name /bandPassedEnvelopeView </parameters>
+        <node> icub </node>
+    </module>
+
+
+    <!-->  
+    Band Passed Envelope Window.
+    <!-->
+    <module>
+        <name> frequencyVisualisation </name>
+        <parameters> --name /bandPassedEnvelopeWindowVisualiser </parameters>
+        <node> icub </node>
+    </module>
+
+    <module>
+        <name> yarpview </name>
+        <parameters> --x 100 --y 100 --h 320 --w 240 --r 33 --name /bandPassedEnvelopeWindowView </parameters>
         <node> icub </node>
     </module>
 
@@ -153,6 +217,22 @@
 
 
     <!-->  
+    RMS of Band Passed Power.
+    <!-->
+    <module>
+        <name> frequencyVisualisation </name>
+        <parameters> --name /bandPassedRmsPowerVisualiser </parameters>
+        <node> icub </node>
+    </module>
+
+    <module>
+        <name> yarpview </name>
+        <parameters> --x 100 --y 100 --h 320 --w 240 --r 33 --name /bandPassedRmsPowerView </parameters>
+        <node> icub </node>
+    </module>
+
+
+    <!-->  
     Allocentric Envelope Map.
     <!-->
     <module>
@@ -169,128 +249,11 @@
 
 
     <!-->  
-    Bayesian Probability Map.
-    <!-->
-    <module>
-        <name> frequencyVisualisation </name>
-        <parameters> --name /bayesianProbabilityMapVisualiser --grid vert --gain 100 </parameters>
-        <node> icub </node>
-    </module>
-
-    <module>
-        <name> yarpview </name>
-        <parameters> --x 100 --y 100 --h 320 --w 240 --r 33 --name /bayesianProbabilityMapView </parameters>
-        <node> icub </node>
-    </module>
-
-
-
-    <!-->  
-    Bayesian Probability Angle.
-    <!-->
-    <module>
-        <name> frequencyVisualisation </name>
-        <parameters> --name /bayesianProbabilityAngleVisualiser --grid vert --gain 100 </parameters>
-        <node> icub </node>
-    </module>
-
-    <module>
-        <name> yarpview </name>
-        <parameters> --x 100 --y 100 --h 320 --w 240 --r 33 --name /bayesianProbabilityAngleView </parameters>
-        <node> icub </node>
-    </module>
-
-
-
-    <!-->  
-    Power Probability
-    <!-->
-    <module>
-        <name> frequencyVisualisation </name>
-        <parameters> --name /probabilityPowerVisualiser --gain 100 </parameters>
-        <node> icub </node>
-    </module>
-
-    <module>
-        <name> yarpview </name>
-        <parameters> --x 100 --y 100 --h 320 --w 240 --r 33 --name /probabilityPowerView </parameters>
-        <node> icub </node>
-    </module>
-
-
-
-    <!-->  
-    Probability Power Map
-    <!-->
-    <module>
-        <name> frequencyVisualisation </name>
-        <parameters> --name /probabilityPowerMapVisualiser --grid vert --gain 100 </parameters>
-        <node> icub </node>
-    </module>
-
-    <module>
-        <name> yarpview </name>
-        <parameters> --x 100 --y 100 --h 320 --w 240 --r 33 --name /probabilityPowerMapView </parameters>
-        <node> icub </node>
-    </module>
-
-
-
-    <!-->  
-    Probability Power Angle
-    <!-->
-    <module>
-        <name> frequencyVisualisation </name>
-        <parameters> --name /probabilityPowerAngleVisualiser --grid vert --gain 100 </parameters>
-        <node> icub </node>
-    </module>
-
-    <module>
-        <name> yarpview </name>
-        <parameters> --x 100 --y 100 --h 320 --w 240 --r 33 --name /probabilityPowerAngleView </parameters>
-        <node> icub </node>
-    </module>
-
-
-
-    <!-->  
-    Instantaneous Power Map
-    <!-->
-    <module>
-        <name> frequencyVisualisation </name>
-        <parameters> --name /instantaneousPowerProbabilityMapVisualiser --grid vert --gain 100 </parameters>
-        <node> icub </node>
-    </module>
-
-    <module>
-        <name> yarpview </name>
-        <parameters> --x 100 --y 100 --h 320 --w 240 --r 33 --name /instantaneousPowerProbabilityMapView </parameters>
-        <node> icub </node>
-    </module>
-
-
-
-    <!-->  
-    Instantaneous Power Angle
-    <!-->
-    <module>
-        <name> frequencyVisualisation </name>
-        <parameters> --name /instantaneousPowerProbabilityAngleVisualiser --grid vert --gain 100 </parameters>
-        <node> icub </node>
-    </module>
-
-    <module>
-        <name> yarpview </name>
-        <parameters> --x 100 --y 100 --h 320 --w 240 --r 33 --name /instantaneousPowerProbabilityAngleView </parameters>
-        <node> icub </node>
-    </module>
-
-
-    <!-->  
 
         Connections for Ports. 
 
     <!-->
+
 
     <!--> ############# Gammatone Filtered Audio ############# <!-->
     <connection>
@@ -320,6 +283,20 @@
     </connection>
 
 
+    <!--> ############# Gammatone Filtered Window ############ <!-->
+    <connection>
+        <from> /audioPreprocessor/gammatoneFilteredWindow:o </from>
+        <to>   /gammatoneFilteredWindowVisualiser/map:i     </to>
+        <protocol> tcp </protocol>
+    </connection> 
+
+    <connection>
+        <from> /gammatoneFilteredWindowVisualiser/img:o  </from>
+        <to>   /gammatoneFilteredWindowView              </to>
+        <protocol> tcp </protocol>
+    </connection>
+
+
     <!--> ################# Beamformed Audio ################# <!-->
     <connection>
         <from> /audioPreprocessor/beamformedAudio:o </from>
@@ -330,6 +307,20 @@
     <connection>
         <from> /beamformedAudioVisualiser/img:o  </from>
         <to>   /beamformedAudioView              </to>
+        <protocol> tcp </protocol>
+    </connection>
+
+
+    <!--> ################# Beamformed Window ################ <!-->
+    <connection>
+        <from> /audioPreprocessor/beamformedWindow:o </from>
+        <to>   /beamformedWindowVisualiser/map:i     </to>
+        <protocol> tcp </protocol>
+    </connection> 
+
+    <connection>
+        <from> /beamformedWindowVisualiser/img:o  </from>
+        <to>   /beamformedWindowView              </to>
         <protocol> tcp </protocol>
     </connection>
 
@@ -389,6 +380,20 @@
         <protocol> tcp </protocol>
     </connection>
 
+
+    <!--> ############## Hilbert Envelope Window ############# <!-->
+    <connection>
+        <from> /audioPreprocessor/hilbertEnvelopeWindow:o </from>
+        <to>   /hilbertEnvelopeWindowVisualiser/map:i     </to>
+        <protocol> tcp </protocol>
+    </connection> 
+
+    <connection>
+        <from> /hilbertEnvelopeWindowVisualiser/img:o  </from>
+        <to>   /hilbertEnvelopeWindowView              </to>
+        <protocol> tcp </protocol>
+    </connection>
+
     
     <!--> ############### Band Passed Envelope ############### <!-->
     <connection>
@@ -400,6 +405,20 @@
     <connection>
         <from> /bandPassedEnvelopeVisualiser/img:o  </from>
         <to>   /bandPassedEnvelopeView              </to>
+        <protocol> tcp </protocol>
+    </connection>
+
+
+    <!--> ############ Band Passed Envelope Window ########### <!-->
+    <connection>
+        <from> /audioPreprocessor/bandPassedEnvelopeWindow:o </from>
+        <to>   /bandPassedEnvelopeWindowVisualiser/map:i     </to>
+        <protocol> tcp </protocol>
+    </connection> 
+
+    <connection>
+        <from> /bandPassedEnvelopeWindowVisualiser/img:o  </from>
+        <to>   /bandPassedEnvelopeWindowView              </to>
         <protocol> tcp </protocol>
     </connection>
 
@@ -418,6 +437,20 @@
     </connection>
 
 
+    <!--> ############ Reduced Band Passed Power ############# <!-->
+    <connection>
+        <from> /audioPreprocessor/bandPassedRmsPower:o </from>
+        <to>   /bandPassedRmsPowerVisualiser/map:i     </to>
+        <protocol> tcp </protocol>
+    </connection> 
+
+    <connection>
+        <from> /bandPassedRmsPowerVisualiser/img:o  </from>
+        <to>   /bandPassedRmsPowerView              </to>
+        <protocol> tcp </protocol>
+    </connection>
+
+
     <!--> ############### Allocentric Envelope ############### <!-->
     <connection>
         <from> /audioPreprocessor/allocentricEnvelope:o </from>
@@ -428,104 +461,6 @@
     <connection>
         <from> /allocentricEnvelopeVisualiser/img:o  </from>
         <to>   /allocentricEnvelopeView              </to>
-        <protocol> tcp </protocol>
-    </connection>
-
-    <!--> #################################################### <!-->
-    
-    <connection>
-        <from> /audioBayesianMap/bayesianProbabilityMap:o </from>
-        <to>   /bayesianProbabilityMapVisualiser/map:i    </to>
-        <protocol> tcp </protocol>
-    </connection> 
-
-    <connection>
-        <from> /bayesianProbabilityMapVisualiser/img:o  </from>
-        <to>   /bayesianProbabilityMapView              </to>
-        <protocol> tcp </protocol>
-    </connection>
-
-    <!--> #################################################### <!-->
-
-    <connection>
-        <from> /audioBayesianMap/bayesianProbabilityAngle:o </from>
-        <to>   /bayesianProbabilityAngleVisualiser/map:i    </to>
-        <protocol> tcp </protocol>
-    </connection> 
-
-    <connection>
-        <from> /bayesianProbabilityAngleVisualiser/img:o  </from>
-        <to>   /bayesianProbabilityAngleView              </to>
-        <protocol> tcp </protocol>
-    </connection>
-
-    <!--> #################################################### <!-->
-
-    <connection>
-        <from> /audioPowerMap/probabilityPower:o </from>
-        <to>   /probabilityPowerVisualiser/map:i </to>
-        <protocol> tcp </protocol>
-    </connection> 
-
-    <connection>
-        <from> /probabilityPowerVisualiser/img:o </from>
-        <to>   /probabilityPowerView             </to>
-        <protocol> tcp </protocol>
-    </connection>
-
-    <!--> #################################################### <!-->
-
-    <connection>
-        <from> /audioPowerMap/probabilityPowerMap:o </from>
-        <to>   /probabilityPowerMapVisualiser/map:i </to>
-        <protocol> tcp </protocol>
-    </connection> 
-
-    <connection>
-        <from> /probabilityPowerMapVisualiser/img:o </from>
-        <to>   /probabilityPowerMapView             </to>
-        <protocol> tcp </protocol>
-    </connection>
-
-    <!--> #################################################### <!-->
-
-    <connection>
-        <from> /audioPowerMap/probabilityPowerAngle:o </from>
-        <to>   /probabilityPowerAngleVisualiser/map:i </to>
-        <protocol> tcp </protocol>
-    </connection> 
-
-    <connection>
-        <from> /probabilityPowerAngleVisualiser/img:o </from>
-        <to>   /probabilityPowerAngleView             </to>
-        <protocol> tcp </protocol>
-    </connection>
-
-    <!--> #################################################### <!-->
-    
-    <connection>
-        <from> /audioPowerMap/instantaneousPowerProbabilityMap:o </from>
-        <to>   /instantaneousPowerProbabilityMapVisualiser/map:i </to>
-        <protocol> tcp </protocol>
-    </connection> 
-
-    <connection>
-        <from> /instantaneousPowerProbabilityMapVisualiser/img:o </from>
-        <to>   /instantaneousPowerProbabilityMapView             </to>
-        <protocol> tcp </protocol>
-    </connection>
-    
-    <!--> #################################################### <!-->
-    
-    <connection>
-        <from> /audioPowerMap/instantaneousPowerProbabilityAngle:o </from>
-        <to>   /instantaneousPowerProbabilityAngleVisualiser/map:i </to>
-        <protocol> tcp </protocol>
-    </connection> 
-
-    <connection>
-        <from> /instantaneousPowerProbabilityAngleVisualiser/img:o </from>
-        <to>   /instantaneousPowerProbabilityAngleView             </to>
         <protocol> tcp </protocol>
     </connection>
 

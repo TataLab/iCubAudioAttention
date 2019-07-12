@@ -4,4 +4,8 @@
 
 cmake_minimum_required(VERSION 3.5)
 
-add_subdirectory ( audio_attention )
+add_subdirectory ( audio_attention         )
+add_subdirectory ( audio_attention_demo    )
+add_subdirectory ( audio_experiment        )
+add_subdirectory ( frequency_visualisation )
+add_subdirectory ( robot_initialize        )

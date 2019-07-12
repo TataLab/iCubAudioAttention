@@ -1,6 +1,6 @@
 <application>
 
-  <name> iCub Start Up </name>
+  <name> Robot Initialize </name>
   
   <module>
 	<name> iCub_SIM </name>
