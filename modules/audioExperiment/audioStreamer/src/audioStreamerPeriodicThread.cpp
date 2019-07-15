@@ -1,7 +1,7 @@
 // -*- mode:C++; tab-width:4; c-basic-offset:4; indent-tabs-mode:nil -*-
 
 /*
- * Copyright (C) 2018 Department of Neuroscience - University of Lethbridge
+ * Copyright (C) 2019 Department of Neuroscience - University of Lethbridge
  * Author: Austin Kothig, Francesco Rea, Marko Ilievski, Matt Tata
  * email: kothiga@uleth.ca, francesco.reak@iit.it, marko.ilievski@uwaterloo.ca, matthew.tata@uleth.ca
  * 
@@ -72,8 +72,9 @@ bool AudioStreamerPeriodicThread::configure(yarp::os::ResourceFinder &rf) {
 
 	movements  = rf.findGroup("experiment").check("movements", yarp::os::Value(false), "enable robot head movements (boolean)").asBool();
 
-	samplingRate    = rf.findGroup("sampling").check("samplingRate",    yarp::os::Value(48000), "sampling rate of mics (int)"           ).asInt();
-	numFrameSamples = rf.findGroup("sampling").check("numFrameSamples", yarp::os::Value(4096),  "number of frame samples received (int)").asInt();
+	samplingRate     = rf.findGroup("sampling").check("samplingRate",     yarp::os::Value(48000), "sampling rate of mics (int)"            ).asInt();
+	numFrameSamples  = rf.findGroup("sampling").check("numFrameSamples",  yarp::os::Value(4096),  "number of frame samples received (int)" ).asInt();
+	sampleBufferSize = rf.findGroup("sampling").check("sampleBufferSize", yarp::os::Value(8192),  "Number of samples to buffer in PO (int)").asInt();
 	
 
 	/* ===========================================================================
@@ -130,10 +131,10 @@ bool AudioStreamerPeriodicThread::configure(yarp::os::ResourceFinder &rf) {
 	 *  Initialize Connection to Microphones on Head.
 	 * =========================================================================== */
 	yarp::os::Property RobotMicOptions;
-	RobotMicOptions.put("device",  "portaudio");
+	RobotMicOptions.put("device",  "portaudioRecorder");
     RobotMicOptions.put("read",    "");
-    RobotMicOptions.put("samples", numFrameSamples);
     RobotMicOptions.put("rate",    samplingRate);
+	RobotMicOptions.put("samples", sampleBufferSize);
 
 	robotMic = new yarp::dev::PolyDriver(RobotMicOptions);
 
@@ -184,6 +185,7 @@ bool AudioStreamerPeriodicThread::configure(yarp::os::ResourceFinder &rf) {
 	yInfo( "\t ============================================ "                );
 	yInfo( "\t Sampling Rate                    : %d Hz",    samplingRate    );
 	yInfo( "\t Number Samples per Frame         : %d",       numFrameSamples );
+	yInfo( "\t Number of Samples to buffer      : %d",       sampleBufferSize);
 	yInfo( " " );
 
 	return true;
@@ -290,7 +292,7 @@ bool AudioStreamerPeriodicThread::processing() {
 		}
 	}
 
-	if(!robotSound->getSound(RawAudio)) {
+	if(!robotSound->getSound(RawAudio, numFrameSamples, numFrameSamples, 0.0)) {
 		yError("Failed to Capture Audio!?");
 		return false;
 	}
