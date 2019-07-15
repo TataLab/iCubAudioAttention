@@ -9,3 +9,9 @@ add_subdirectory ( audio_attention_demo    )
 add_subdirectory ( audio_experiment        )
 add_subdirectory ( frequency_visualisation )
 add_subdirectory ( robot_initialize        )
+
+if( COMPILE_TESTS )
+
+    add_subdirectory( tests )
+
+endif( )

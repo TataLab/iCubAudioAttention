@@ -32,7 +32,7 @@ int main(int argc, char * argv[]) {
 
 	yarp::os::ResourceFinder rf;
 	rf.setVerbose(true);
-	rf.setDefaultConfigFile("Audio_Experiment_Config.ini"); // overridden by --from parameter
+	rf.setDefaultConfigFile("audio_experiment_config.ini"); // overridden by --from parameter
 	rf.setDefaultContext("audio_experiment");               // overridden by --context parameter
 	rf.configure(argc, argv);  
  

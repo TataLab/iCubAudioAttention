@@ -4,7 +4,7 @@
 
 cmake_minimum_required(VERSION 3.5)
 
-set(MODULE_NAME audioRunner)
+set(MODULE_NAME preprocessor_test)
 project(${MODULE_NAME} LANGUAGES CXX C)
 
 ############################################################
@@ -58,3 +58,4 @@ else( folder_source )
 endif( folder_source )
 
 ############################################################
+

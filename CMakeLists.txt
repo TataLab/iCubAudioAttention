@@ -88,6 +88,16 @@ add_subdirectory( app          )
 
 ############################################################
 
+option(COMPILE_TESTS "Compile optional tests" OFF)
+
+if( COMPILE_TESTS )
+
+    add_subdirectory( tests )
+
+endif( )
+
+############################################################
+
 #option(COMPILE_BINDINGS "Compile optional language bindings" OFF)
 #
 #if( COMPILE_BINDINGS )
