@@ -63,14 +63,14 @@ int main(int argc, char * argv[]) {
     
     //-- Testing.
     std::string readFrom, saveTo, connectTo, connectFrom;
-    readFrom    = rf.findGroup("testing").check("readFrom",    yarp::os::Value("./in.wav"),    "wav file to read from (string)"    ).asString();
-    saveTo      = rf.findGroup("testing").check("saveTo",      yarp::os::Value("./out.data"),  "raw data file to write to (string)").asString();
-    connectTo   = rf.findGroup("testing").check("connectTo",   yarp::os::Value("/rawAudio:i"), "port to send wav file to (string)" ).asString();
-    connectFrom = rf.findGroup("testing").check("connectFrom", yarp::os::Value("/port:o"),     "port to read data from (string)"   ).asString();
+    readFrom    = rf.check("readFrom",    yarp::os::Value("./in.wav"),    "wav file to read from (string)"    ).asString();
+    saveTo      = rf.check("saveTo",      yarp::os::Value("./out.data"),  "raw data file to write to (string)").asString();
+    connectTo   = rf.check("connectTo",   yarp::os::Value("/rawAudio:i"), "port to send wav file to (string)" ).asString();
+    connectFrom = rf.check("connectFrom", yarp::os::Value("/port:o"),     "port to read data from (string)"   ).asString();
 
     //-- Expand environmental variables if they're present.
-    if (readFrom[0] == '$') { readFrom = AudioUtil::expandEnvironmentVariables(readFrom); }
-    if (saveTo[0]   == '$') { saveTo   = AudioUtil::expandEnvironmentVariables(saveTo);   }
+    if (readFrom.find('$') != std::string::npos) { readFrom = AudioUtil::expandEnvironmentVariables(readFrom); }
+    if (saveTo.find('$')   != std::string::npos) { saveTo   = AudioUtil::expandEnvironmentVariables(saveTo);   }
 
 
     /* =========================================================================== 
@@ -151,11 +151,20 @@ int main(int argc, char * argv[]) {
     yarp::sig::Sound& outRawAudio = outTestPort.prepare();
     outRawAudio = source.subSound(0, numFrameSamples);
     outTestPort.write();
-    yInfo("Wrote to port . . . Waiting for response.");
+    yInfo("Wrote to port. Waiting for response . . .");
 
     yarp::sig::Matrix* inProcessedMatrix = inTestPort.read();
-    yInfo("Got a response! Saving to file . . .");
+
+    yInfo(" ");
+    yInfo("Got a response!");
+    yInfo("Number of Rows    : %ld", inProcessedMatrix->rows());
+    yInfo("Number of Columns : %ld", inProcessedMatrix->cols());
+    yInfo(" ");
+
+    yInfo("Saving to file . . .");
     AudioUtil::MatrixToFile(*inProcessedMatrix, saveTo);
+    yInfo("Successfully saved file as ``%s``", saveTo.c_str());
+    yInfo(" ");
     
 
     /* ===========================================================================
@@ -174,7 +183,7 @@ int main(int argc, char * argv[]) {
     yInfo(" ");
     yInfo("End of Test . . . ");
     yInfo(" ");
-    yInfo("\t Total Time : %.2f", yarp::os::Time::now() - firstStartTime);
+    yInfo("\t Total Time : %.5f", yarp::os::Time::now() - firstStartTime);
     yInfo(" ");
 
 

@@ -13,7 +13,7 @@
 
     <module>
         <name> audioPreprocessor </name>
-        <parameters> --context preprocessor_test --parameter preprocessor_test_config.ini </parameters>
+        <parameters> --context preprocessor_test --from preprocessor_test_config.ini </parameters>
         <node> icub </node>
     </module>
 
