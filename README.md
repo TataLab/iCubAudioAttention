@@ -1,5 +1,6 @@
-![iCubAudioAttention](doc/images/ULETH_iCub_head.png?raw=true "iCubAudioAttention")
-&#1F916; iCubAudioAttention  
+![iCubAudioAttention](doc/images/ULETH_iCub_head.png?raw=false "iCubAudioAttention")
+
+:robot: iCubAudioAttention :loud_sound:
 ===
 
 A collection of signal processing algorithms and audio capture tools implemented using YARP for the iCub humanoid robot.
@@ -8,8 +9,8 @@ A collection of signal processing algorithms and audio capture tools implemented
 Installation
 ------------
 
-* This repository depends on [YARP](https://github.com/robotology/yarp) (minimum version 3.2), [icub-main](https://github.com/robotology/icub-main), and [icub-contrib-common](https://github.com/robotology/icub-contrib-common), which can both be found on the robotology github. [OpenCV](https://github.com/opencv/opencv) is an optional dependency, for compiling visualisation tools. [YCM](https://github.com/robotology/ycm) (YARP CMake) is another optional dependency that offers extra CMake modules for YARP. If YCM is not found, local versions of the YCM modules will be used.
-* For step-by-step installation instructions from a fresh install, you can follow our guide [here]().
+* This repository depends on [YARP](https://github.com/robotology/yarp) (minimum version 3.2), [icub-main](https://github.com/robotology/icub-main), and [icub-contrib-common](https://github.com/robotology/icub-contrib-common), which can all be found on the robotology github. [OpenCV](https://github.com/opencv/opencv) is an optional dependency, for compiling visualisation tools. [YCM](https://github.com/robotology/ycm) (YARP CMake) is another optional dependency that offers extra CMake modules for YARP. If YCM is not found, local versions of the YCM modules will be used.
+* For step-by-step installation instructions from a fresh install, you can follow our guide [here](https://github.com/TataLab/iCubAudioAttention/blob/refact/doc/installation_instructions/fresh_install.md).
 
 ```bash
 git clone https://github.com/TataLab/iCubAudioAttention.git
@@ -36,13 +37,13 @@ Applications for yarpmanager will be installed in the ICUBcontrib directory in t
 Modules Description
 -------------------
 
-[Audio Preprocessor]() : Used to spectrally and spatially decompose a yarp sound object. Can optionally do additional processing to isolate for acoustic dynamics found in natural human speech.
+[Audio Preprocessor](https://github.com/TataLab/iCubAudioAttention/blob/refact/modules/audioPreprocessor/doc/README.md) : Used to spectrally and spatially decompose a yarp sound object. Can optionally do additional processing to isolate for acoustic dynamics found in natural human speech.
 
-[Audio Bayesian Map]() : Takes output from the audioPreprocessor in the form of an allocentric map, and performs Bayesian updates by combining new evidence with a running prior knowledge of the auditory scene.
+[Audio Bayesian Map](https://github.com/TataLab/iCubAudioAttention/blob/refact/modules/audioBayesianMap/doc/README.md) : Takes output from the audioPreprocessor in the form of an allocentric map, and performs Bayesian updates by combining new evidence with a running prior knowledge of the auditory scene.
 
-[Audio Experiment]() : Contains a variety of tools and modules to streamline the process of recording audio and running experiments.
+[Audio Experiment](https://github.com/TataLab/iCubAudioAttention/blob/refact/modules/audioExperiment/doc/README.md) : Contains a variety of tools and modules to streamline the process of recording audio and running experiments.
 
-[Frequency Visualisation]() : A module that receives a yarp matrix, and plots it as a yarp image. Allows live visualisation of the modules.
+[Frequency Visualisation](https://github.com/TataLab/iCubAudioAttention/blob/refact/modules/frequencyVisualisation/doc/README.md) : A module that receives a yarp matrix, and plots it as a yarp image. Allows live visualisation of the modules.
 
-[Remote Interface]() : A simple straight forward interface for streaming yarp sound objects recorded from the microphones on the robots head.
+[Remote Interface](https://github.com/TataLab/iCubAudioAttention/blob/refact/modules/remoteInterface/doc/README.md) : A simple straight forward interface for streaming yarp sound objects recorded from the microphones on the robots head.
 
