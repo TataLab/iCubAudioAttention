@@ -1,0 +1,20 @@
+<application>
+
+    <name> Preprocessor Test </name>
+
+    <!-->  
+    MODULES.    
+    <!-->
+    <module>
+        <name> preprocessor_test </name>
+        <parameters> </parameters>
+        <node> icub </node>
+    </module>
+
+    <module>
+        <name> audioPreprocessor </name>
+        <parameters> --context preprocessor_test --from preprocessor_test_config.ini </parameters>
+        <node> icub </node>
+    </module>
+
+</application>

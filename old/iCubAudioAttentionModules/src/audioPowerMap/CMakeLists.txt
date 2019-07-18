@@ -1,20 +1,50 @@
-# Copyright (C)2018  Department of Neuroscience - University of Lethbridge
-# Author: Austin Kothig, Matt Tata
+# Copyright (C) 2018 Department of Neuroscience - University of Lethbridge
+# Authors: Austin Kothig
 # CopyPolicy: Released under the terms of the GNU GPL v2.0.
+
+cmake_minimum_required(VERSION 2.8.9)
+
+if(COMMAND cmake_policy)
+    cmake_policy(SET CMP0003 NEW)
+endif(COMMAND cmake_policy)
 
 SET(KEYWORD "audioPowerMap")
 PROJECT(${KEYWORD})
-cmake_minimum_required(VERSION 2.6)
 
+find_package(YARP REQUIRED)
+find_package(ICUB REQUIRED)
 
-set(ICUB_CONTRIB_DIRS $ENV{ICUB_DIR}/include)
+list(APPEND CMAKE_MODULE_PATH ${YARP_MODULE_PATH})
+list(APPEND CMAKE_MODULE_PATH ${ICUB_MODULE_PATH})
+include(YarpInstallationHelpers)
+
+find_package(ICUBcontrib REQUIRED)
+list(APPEND CMAKE_MODULE_PATH ${ICUBCONTRIB_MODULE_PATH})
+
+set(CMAKE_MODULE_PATH
+  ${CMAKE_MODULE_PATH}
+  ${YARP_MODULE_PATH}
+  ${ICUB_MODULE_PATH}
+  ${ICUBCONTRIB_MODULE_PATH}
+)
+
+include(ICUBcontribHelpers)
+list(APPEND CMAKE_MODULE_PATH ${ICUBCONTRIB_MODULE_PATH})
+include(ICUBcontribHelpers)
+include(ICUBcontribOptions)
+icubcontrib_set_default_prefix()
+
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
+
+add_definitions(${YARP_DEFINES})
+include(YarpInstallationHelpers)
 
 INCLUDE_DIRECTORIES(
     ${PROJECT_SOURCE_DIR}/include
     ${YARP_INCLUDE_DIRS} 	
     ${ICUB_INCLUDE_DIRS}	
     ${ICUB_CONTRIB_DIRS}
-    ${ATTENTIONLIB_INCLUDE_DIRS}
+    ${audioLib_INCLUDE_DIRS}
 )
 
 # Search for source code.
@@ -30,8 +60,8 @@ IF (folder_source)
         ${folder_header}
     )
 
-    TARGET_LINK_LIBRARIES(${KEYWORD}        
-
+    TARGET_LINK_LIBRARIES(${KEYWORD}  
+      audioLib      
       ${YARP_LIBRARIES}
       )	
 

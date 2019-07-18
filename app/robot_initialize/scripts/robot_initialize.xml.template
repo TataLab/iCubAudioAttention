@@ -1,0 +1,24 @@
+<application>
+
+  <name> Robot Initialize </name>
+  
+  <module>
+	<name> iCub_SIM </name>
+	<parameters></parameters>
+	<node> tatalab-dell </node>
+  </module>
+
+  <module>
+	<name> iKinGazeCtrl </name>
+	<parameters> --robot icubSim </parameters>
+	<node> icub </node>
+  </module>
+
+  <module>
+	<name> yarprobotinterface </name>
+	<parameters></parameters>
+	<node> pc104 </node>
+  </module>
+
+</application>
+
