@@ -70,7 +70,7 @@ bool AudioPreprocessorPeriodicThread::configure(yarp::os::ResourceFinder &rf) {
 
 	numBands        = rf.findGroup("processing").check("numBands",        yarp::os::Value(128),    "number of frequency bands (int)"                    ).asInt();
 	lowCf           = rf.findGroup("processing").check("lowCf",           yarp::os::Value(380.0),  "lowest center frequency (double)"                   ).asDouble();
-	highCf          = rf.findGroup("processing").check("highCf",          yarp::os::Value(2800.0), "highest center frequency (double)"                  ).asDouble();
+	highCf          = rf.findGroup("processing").check("highCf",          yarp::os::Value(6800.0), "highest center frequency (double)"                  ).asDouble();
 	halfRec         = rf.findGroup("processing").check("halfRec",         yarp::os::Value(false),  "half wave rectifying (boolean)"                     ).asBool();
 	erbSpaced       = rf.findGroup("processing").check("erbSpaced",       yarp::os::Value(true),   "ERB spaced centre frequencies (boolean)"            ).asBool();
 	windowLength    = rf.findGroup("processing").check("windowLength",    yarp::os::Value(128),    "number of samples in a single window (int)"         ).asInt();
@@ -80,7 +80,7 @@ bool AudioPreprocessorPeriodicThread::configure(yarp::os::ResourceFinder &rf) {
 	bandPassFreq    = rf.findGroup("processing").check("bandPassFreq",    yarp::os::Value(5.0),    "frequency to use in band pass filter (double)"      ).asDouble();
 	bandPassWidth   = rf.findGroup("processing").check("bandPassWidth",   yarp::os::Value(0.5),    "bandwidth allowed for band pass filter (double)"    ).asDouble();
 	angleRes        = rf.findGroup("processing").check("angleRes",        yarp::os::Value(1),      "degree resolution for a single position (int)"      ).asInt();
-	downSampEnv     = rf.findGroup("processing").check("downSampEnv",     yarp::os::Value(1),      "rate to down sample pre-envelope mat by (int)"      ).asInt();
+	downSampEnv     = rf.findGroup("processing").check("downSampEnv",     yarp::os::Value(4),      "rate to down sample pre-envelope mat by (int)"      ).asInt();
 	downSampMethod  = rf.findGroup("processing").check("downSampMethod",  yarp::os::Value(""),     "method for down sampling (string)"                  ).asString();
 	numOmpThreads   = rf.findGroup("processing").check("numOmpThreads",   yarp::os::Value(4),      "if enabled, the number of omp threads (int)"        ).asInt();
 

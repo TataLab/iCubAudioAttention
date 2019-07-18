@@ -1,6 +1,6 @@
-![iCubAudioAttention](doc/images/ULETH_iCub_head.png?raw=false "iCubAudioAttention")
+![iCubAudioAttention](/doc/images/ULETH_iCub_head.png?raw=false "iCubAudioAttention")
 
-:robot: iCubAudioAttention :loud_sound:
+:robot:  iCubAudioAttention  :loud_sound:
 ===
 
 A collection of signal processing algorithms and audio capture tools implemented using YARP for the iCub humanoid robot.
@@ -19,12 +19,12 @@ ccmake ..
 ```
 
 * In the CCMake interface you can enable/disable flags
-    * BUILD_SHARED_LIBS &rightarrow; Compiles audioCubLib as a shared object, instead of static.
-    * COMPILE_TESTS &rightarrow; Compiles some modules for testing other modules.
-    * ENABLE_COMPILE_ON_PC104 &rightarrow; Only compiles modules that would be run on the robot.
-    * ENABLE_OMP &rightarrow; Compiles processing modules with OpenMP multithreading.
-    * ICUBCONTRIB_INSTALL_WITH_RPATH &rightarrow; Sets an rpath after installing modules.
-    * ICUBCONTRIB_SHARED_LIBRARY &rightarrow; Compiles audioCubLib as a shared object, instead of static.
+    * ```BUILD_SHARED_LIBS``` &rightarrow; Compiles ```audioCubLib``` as a shared object, instead of static.
+    * ```COMPILE_TESTS``` &rightarrow; Compiles some modules for testing other modules.
+    * ```ENABLE_COMPILE_ON_PC104``` &rightarrow; Only compiles modules that would be run on the robot.
+    * ```ENABLE_OMP``` &rightarrow; Compiles processing modules with OpenMP multithreading.
+    * ```ICUBCONTRIB_INSTALL_WITH_RPATH``` &rightarrow; Sets an rpath after installing modules.
+    * ```ICUBCONTRIB_SHARED_LIBRARY``` &rightarrow; Compiles ```audioCubLib``` as a shared object, instead of static.
 
 ```bash
 make -j
