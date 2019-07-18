@@ -158,31 +158,29 @@ private:
 	int         numBands;
 	double      lowCf;
 	double      highCf;
-	bool        halfRec;
 	bool        erbSpaced;
-	int         windowLength;
-	int         hopLength;
-	std::string windowMethod;
+	bool        halfRec;
 	bool        computeEnvelope;
+	int         downSampEnv;
+	std::string downSampMethod;
 	double      bandPassFreq;
 	double      bandPassWidth;
 	int         angleRes;
-	int         downSampEnv;
-	std::string downSampMethod;
+	int         windowLength;
+	int         hopLength;
+	std::string windowMethod;
+	int         downSampOut;
 	int         numOmpThreads;
 	
-	int         downSampVis;
-	std::string saveMatrices;
 
 	/* ===========================================================================
 	 *  Derive variables from resource finders variables.
 	 * =========================================================================== */
-	int  numBeamsPerHemifield;
-	int  numBeams;
-    int  numFrontFieldAngles;
-    int  numFullFieldAngles;
-	int  numFrameDownSamples;
-	bool processAll;
+	int numBeamsPerHemifield;
+	int numBeams;
+    int numFrontFieldAngles;
+    int numFullFieldAngles;
+	int numFrameDownSamples;
 
 	/* ===========================================================================
 	 *  Constant variables.
@@ -280,12 +278,6 @@ private:
 	 *  Write data to out going ports if something is connected.
 	 * =========================================================================== */
 	void publishOutPorts();
-
-
-	/* ===========================================================================
-	 *  Write data to out going ports if something is connected.
-	 * =========================================================================== */
-	void saveOutPorts();
 
 
 	/* ===========================================================================
