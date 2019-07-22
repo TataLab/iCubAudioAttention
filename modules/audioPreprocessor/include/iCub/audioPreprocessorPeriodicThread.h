@@ -146,7 +146,7 @@ private:
 	/* ===========================================================================
 	 *  Variables received from the resource finder.
 	 * =========================================================================== */
-	int    panAngle;
+	int    azimuthIndex;
 	int    numMics;
 	double micDistance;
 

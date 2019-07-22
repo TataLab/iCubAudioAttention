@@ -59,9 +59,9 @@ bool AudioPreprocessorPeriodicThread::configure(yarp::os::ResourceFinder &rf) {
 	 * =========================================================================== */
 	yInfo( "Loading Configuration File." );
 
-	panAngle    = rf.findGroup("robotspec").check("panAngle",    yarp::os::Value(2),     "index of pan joint (int)"          ).asInt();
-	numMics     = rf.findGroup("robotspec").check("numMics",     yarp::os::Value(2),     "number of mics (int)"              ).asInt();
-	micDistance = rf.findGroup("robotspec").check("micDistance", yarp::os::Value(0.145), "distance between the mics (double)").asDouble();
+	azimuthIndex = rf.findGroup("robotspec").check("azimuthIndex",    yarp::os::Value(2), "index of azimuth (or pan joint) (int)").asInt();
+	numMics      = rf.findGroup("robotspec").check("numMics",     yarp::os::Value(2),     "number of mics (int)"                 ).asInt();
+	micDistance  = rf.findGroup("robotspec").check("micDistance", yarp::os::Value(0.145), "distance between the mics (double)"   ).asDouble();
 
 	speedOfSound     = rf.findGroup("sampling").check("speedOfSound",     yarp::os::Value(336.628), "speed of sound (double)"                ).asDouble();
 	samplingRate     = rf.findGroup("sampling").check("samplingRate",     yarp::os::Value(48000),   "sampling rate of mics (int)"            ).asInt();
@@ -176,7 +176,7 @@ bool AudioPreprocessorPeriodicThread::configure(yarp::os::ResourceFinder &rf) {
 	yInfo( " " );
 	yInfo( "\t               [ROBOT SPECIFIC]               "                                    );
 	yInfo( "\t ============================================ "                                    );
-	yInfo( "\t Index of Pan Joint               : %d",       panAngle                            );
+	yInfo( "\t Index of Pan Joint               : %d",       azimuthIndex                        );
 	yInfo( "\t Number of Microphones            : %d",       numMics                             );
 	yInfo( "\t Microphone Distance              : %.3f m",   micDistance                         );
 	yInfo( " " );
@@ -400,7 +400,7 @@ void AudioPreprocessorPeriodicThread::run() {
 		headOffset = 0.0;
 		if (inHeadAnglePort.getInputCount()) {
 			headAngleBottle = inHeadAnglePort.read(true);
-			headOffset += headAngleBottle->get(panAngle).asDouble();
+			headOffset += headAngleBottle->get(azimuthIndex).asDouble();
 		}
 
 		AudioUtil::makeTimeStamp(totalReading, timeReading, startTime, stopTime);
