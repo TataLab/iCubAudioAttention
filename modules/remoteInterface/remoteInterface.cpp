@@ -41,7 +41,7 @@ int main(int argc, char *argv[]) {
     int sampleBufferSize = rf.findGroup("sampling").check("sampleBufferSize", yarp::os::Value(8192),   "Number of samples to buffer in PO (int)").asInt();
 
     Port p;
-    p.open("/sender");
+    p.open("/rawAudio:o");
     
     // Get a portaudio read device.
     Property conf;

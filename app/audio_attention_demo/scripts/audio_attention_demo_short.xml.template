@@ -1,0 +1,174 @@
+<application>
+
+    <name> Audio Attention Demo Long Frame </name>
+
+    <!-->  
+    MODULES.    
+    <!-->
+    <module>
+        <name> yarprobotinterface </name>
+        <parameters> </parameters>
+        <node> pc104 </node>
+    </module>
+
+    <module>
+        <name> remoteInterface </name>
+        <parameters> --context audio_attention_demo --from audio_attention_demo_short_config.ini </parameters>
+        <node> pc104 </node>
+    </module>
+
+    <module>
+        <name> audioPreprocessor </name>
+        <parameters> --name /audioPreprocessor_Demo_Short --context audio_attention_demo --from audio_attention_demo_short_config.ini </parameters>
+        <node> icub </node>
+    </module>
+
+    <module>
+        <name> audioBayesianMap </name>
+        <parameters> --name /audioBayesianMap_Demo_Short --context audio_attention_demo --from audio_attention_demo_short_config.ini </parameters>
+        <node> icub </node>
+    </module>
+    
+
+    <!-->  
+    CONNECTIONS.
+    <!-->
+    <connection>
+        <from> /rawAudio:o                             </from>
+        <to>   /audioPreprocessor_Demo_Short/rawAudio:i </to>
+        <protocol> tcp </protocol>
+    </connection>
+
+    <connection>
+        <from> /icub/head/state:o                       </from>
+        <to>   /audioPreprocessor_Demo_Short/headAngle:i </to>
+        <protocol> tcp </protocol>
+    </connection>
+
+    <connection>
+        <from> /audioPreprocessor_Demo_Short/allocentricAudio:o </from>
+        <to>   /audioBayesianMap_Demo_Short/allocentricMap:i    </to>
+        <protocol> tcp </protocol>
+    </connection>
+
+
+
+
+
+    <!-->  
+    Beamformed Audio.
+    <!-->
+    <module>
+        <name> frequencyVisualisation </name>
+        <parameters> --name /beamformedAudioShortVisualiser </parameters>
+        <node> icub </node>
+    </module>
+
+    <module>
+        <name> yarpview </name>
+        <parameters> --x 0 --y 0 --h 320 --w 1080 --r 33 --name /beamformedAudioShortView --compact </parameters>
+        <node> icub </node>
+    </module>
+
+    <!-->  
+    Allocentric Audio Map.
+    <!-->
+    <module>
+        <name> frequencyVisualisation </name>
+        <parameters> --name /allocentricAudioShortVisualiser --grid vert </parameters>
+        <node> icub </node>
+    </module>
+
+    <module>
+        <name> yarpview </name>
+        <parameters> --x 1080 --y 0 --h 280 --w 840 --r 33 --name /allocentricAudioShortView --compact </parameters>
+        <node> icub </node>
+    </module>
+
+    <!-->  
+    Bayesian Probability Map.
+    <!-->
+    <module>
+        <name> frequencyVisualisation </name>
+        <parameters> --name /bayesianProbabilityMapShortVisualiser --grid vert --gain 100 </parameters>
+        <node> icub </node>
+    </module>
+
+    <module>
+        <name> yarpview </name>
+        <parameters> --x 1080 --y 680 --h 280 --w 840 --r 33 --name /bayesianProbabilityMapShortView --compact </parameters>
+        <node> icub </node>
+    </module>
+
+    <!-->  
+    Bayesian Probability Angle.
+    <!-->
+    <module>
+        <name> frequencyVisualisation </name>
+        <parameters> --name /bayesianProbabilityAngleShortVisualiser --grid vert --gain 100 </parameters>
+        <node> icub </node>
+    </module>
+
+    <module>
+        <name> yarpview </name>
+        <parameters> --x 1080 --y 1000 --h 90 --w 840 --r 33 --name /bayesianProbabilityAngleShortView --compact </parameters>
+        <node> icub </node>
+    </module>
+
+
+
+    <!--> ################# Beamformed Audio ################# <!-->
+    <connection>
+        <from> /audioPreprocessor_Demo_Short/beamformedAudio:o </from>
+        <to>   /beamformedAudioShortVisualiser/map:i     </to>
+        <protocol> tcp </protocol>
+    </connection> 
+
+    <connection>
+        <from> /beamformedAudioShortVisualiser/img:o  </from>
+        <to>   /beamformedAudioShortView              </to>
+        <protocol> tcp </protocol>
+    </connection>
+
+    <!--> ################# Allocentric Audio ################ <!-->
+    <connection>
+        <from> /audioPreprocessor_Demo_Short/allocentricAudio:o </from>
+        <to>   /allocentricAudioShortVisualiser/map:i     </to>
+        <protocol> tcp </protocol>
+    </connection> 
+
+    <connection>
+        <from> /allocentricAudioShortVisualiser/img:o  </from>
+        <to>   /allocentricAudioShortView              </to>
+        <protocol> tcp </protocol>
+    </connection>
+
+    <!--> #################################################### <!-->
+    
+    <connection>
+        <from> /audioBayesianMap_Demo_Short/bayesianProbabilityMap:o </from>
+        <to>   /bayesianProbabilityMapShortVisualiser/map:i    </to>
+        <protocol> tcp </protocol>
+    </connection> 
+
+    <connection>
+        <from> /bayesianProbabilityMapShortVisualiser/img:o  </from>
+        <to>   /bayesianProbabilityMapShortView              </to>
+        <protocol> tcp </protocol>
+    </connection>
+
+    <!--> #################################################### <!-->
+
+    <connection>
+        <from> /audioBayesianMap_Demo_Short/bayesianProbabilityAngle:o </from>
+        <to>   /bayesianProbabilityAngleShortVisualiser/map:i    </to>
+        <protocol> tcp </protocol>
+    </connection> 
+
+    <connection>
+        <from> /bayesianProbabilityAngleShortVisualiser/img:o  </from>
+        <to>   /bayesianProbabilityAngleShortView              </to>
+        <protocol> tcp </protocol>
+    </connection>
+
+</application>

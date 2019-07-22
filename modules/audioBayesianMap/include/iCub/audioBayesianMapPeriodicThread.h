@@ -60,7 +60,7 @@ class AudioBayesianMapPeriodicThread : public yarp::os::PeriodicThread {
 	yarp::os::Stamp timeStamp;  //-- Time stamp updated by yarp network.
 
 	double startTime;           //-- Used for keeping time and reporting temporal
-  double stopTime;            //-- events to the user via command line.
+    double stopTime;            //-- events to the user via command line.
 	
 	double timeDelay,        totalDelay;        //-- Hold on to and store time
 	double timeReading,      totalReading;	    //-- events for clean display
@@ -73,7 +73,7 @@ class AudioBayesianMapPeriodicThread : public yarp::os::PeriodicThread {
 	/* ===========================================================================
 	 *  Yarp Ports for Sending and Receiving Data from this Periodic Thread.
 	 * =========================================================================== */
-	yMatrixBuffer inAllocentricAudioPort;
+	yMatrixBuffer inAllocentricMapPort;
 	yMatrixBuffer outProbabilityMapPort;
 	yMatrixBuffer outProbabilityAnglePort;
 
@@ -81,14 +81,14 @@ class AudioBayesianMapPeriodicThread : public yarp::os::PeriodicThread {
 	 *  Yarp Matrices used for Modules Computation. 
 	 *    Objects passed around to encapsulated objects.
 	 * =========================================================================== */
-	yMatrix AllocentricAudioMatrix;
+	yMatrix AllocentricMapMatrix;
 	yMatrix ProbabilityMapMatrix;
 	yMatrix ProbabilityAngleMatrix;
 
 	/* ===========================================================================
 	 *  Buffer for ``remembering`` some number of states.
 	 * =========================================================================== */
-	std::queue< yMatrix > bufferedAudioMatrix;
+	std::queue< yMatrix > bufferedMapMatrix;
 
 	/* ===========================================================================
 	 *  Variables received from the resource finder.

@@ -6,20 +6,26 @@
     MODULES.    
     <!-->
     <module>
+        <name> yarprobotinterface </name>
+        <parameters> </parameters>
+        <node> pc104 </node>
+    </module>
+
+    <module>
         <name> remoteInterface </name>
-        <parameters> --context audio_attention_demo --from Audio_Attention_Demo_Long_Config.ini </parameters>
+        <parameters> --context audio_attention_demo --from audio_attention_demo_long_config.ini </parameters>
         <node> pc104 </node>
     </module>
 
     <module>
         <name> audioPreprocessor </name>
-        <parameters> --name /audioPreprocessor_Demo_Long --context audio_attention_demo --from Audio_Attention_Demo_Long_Config.ini </parameters>
+        <parameters> --name /audioPreprocessor_Demo_Long --context audio_attention_demo --from audio_attention_demo_long_config.ini </parameters>
         <node> icub </node>
     </module>
 
     <module>
         <name> audioBayesianMap </name>
-        <parameters> --name /audioBayesianMap_Demo_Long --context audio_attention_demo --from Audio_Attention_Demo_Long_Config.ini </parameters>
+        <parameters> --name /audioBayesianMap_Demo_Long --context audio_attention_demo --from audio_attention_demo_long_config.ini </parameters>
         <node> icub </node>
     </module>
     
@@ -28,7 +34,7 @@
     CONNECTIONS.
     <!-->
     <connection>
-        <from> /sender                                 </from>
+        <from> /rawAudio:o                             </from>
         <to>   /audioPreprocessor_Demo_Long/rawAudio:i </to>
         <protocol> tcp </protocol>
     </connection>
@@ -40,14 +46,8 @@
     </connection>
 
     <connection>
-        <from> /audioPreprocessor_Demo_Long/allocentricAudio:o </from>
-        <to>   /audioBayesianMap_Demo_Long/allocentricAudio:i  </to>
-        <protocol> tcp </protocol>
-    </connection>
-
-    <connection>
         <from> /audioPreprocessor_Demo_Long/allocentricEnvelope:o </from>
-        <to>   /audioBayesianMap_Demo_Long/allocentricAudio:i  </to>
+        <to>   /audioBayesianMap_Demo_Long/allocentricMap:i       </to>
         <protocol> tcp </protocol>
     </connection>
 

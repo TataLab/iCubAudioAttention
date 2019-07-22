@@ -88,8 +88,8 @@ bool AudioBayesianMapPeriodicThread::configure(yarp::os::ResourceFinder &rf) {
 	/* ===========================================================================
 	 *  Initialize the matrices used for data processing.
 	 * =========================================================================== */
-	AllocentricAudioMatrix.resize(numBands, numFullFieldAngles);
-	AllocentricAudioMatrix.zero();
+	AllocentricMapMatrix.resize(numBands, numFullFieldAngles);
+	AllocentricMapMatrix.zero();
 
 	ProbabilityMapMatrix.resize(numBands, numFullFieldAngles);
 	ProbabilityMapMatrix.zero();
@@ -140,7 +140,7 @@ bool AudioBayesianMapPeriodicThread::threadInit() {
 	 *    let RFModule know initialization was unsuccessful.
 	 * =========================================================================== */
 
-	if (!inAllocentricAudioPort.open(getName("/allocentricAudio:i").c_str())) {
+	if (!inAllocentricMapPort.open(getName("/allocentricMap:i").c_str())) {
 		yError("Unable to open port for receiving an allocentric map of the auditory environment.");
 		return false;
 	}
@@ -166,12 +166,12 @@ bool AudioBayesianMapPeriodicThread::threadInit() {
 void AudioBayesianMapPeriodicThread::threadRelease() {
 
 	//-- Stop all threads.
-	inAllocentricAudioPort.interrupt();
+	inAllocentricMapPort.interrupt();
 	outProbabilityMapPort.interrupt();
 	outProbabilityAnglePort.interrupt();
 
 	//-- Close the threads.
-	inAllocentricAudioPort.close();
+	inAllocentricMapPort.close();
 	outProbabilityMapPort.close();
 	outProbabilityAnglePort.close();
 
@@ -199,13 +199,13 @@ void AudioBayesianMapPeriodicThread::setInputPortName(std::string InpPort) {
 
 void AudioBayesianMapPeriodicThread::run() {    
 	
-	if (inAllocentricAudioPort.getInputCount()) {
+	if (inAllocentricMapPort.getInputCount()) {
 
 		AudioUtil::makeTimeStamp(totalDelay, timeDelay, startTime, stopTime);
 		
 		//-- Get Input.
-		AllocentricAudioMatrix = *inAllocentricAudioPort.read(true);
-		inAllocentricAudioPort.getEnvelope(timeStamp);
+		AllocentricMapMatrix = *inAllocentricMapPort.read(true);
+		inAllocentricMapPort.getEnvelope(timeStamp);
 
 		AudioUtil::makeTimeStamp(totalReading, timeReading, startTime, stopTime);
 
@@ -240,9 +240,9 @@ bool AudioBayesianMapPeriodicThread::processing() {
 	 *    met, the oldest information will be removed.
 	 * =========================================================================== */
 	updateBayesianProbabilities (
-		/* Source = */ AllocentricAudioMatrix,
+		/* Source = */ AllocentricMapMatrix,
 		/* Target = */ ProbabilityMapMatrix, 
-		/* Buffer = */ bufferedAudioMatrix,
+		/* Buffer = */ bufferedMapMatrix,
 		/* Length = */ bufferSize
 	);
 
@@ -362,8 +362,8 @@ void AudioBayesianMapPeriodicThread::clearProbabilities() {
 	AudioUtil::ones(ProbabilityMapMatrix);   //-- Set all positions to one.
 	
 	//-- Clear out the buffer.
-	while (!bufferedAudioMatrix.empty()) {
-		bufferedAudioMatrix.pop();
+	while (!bufferedMapMatrix.empty()) {
+		bufferedMapMatrix.pop();
 	}
 }
 

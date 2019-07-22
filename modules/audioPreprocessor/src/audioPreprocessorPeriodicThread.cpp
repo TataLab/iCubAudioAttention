@@ -70,7 +70,7 @@ bool AudioPreprocessorPeriodicThread::configure(yarp::os::ResourceFinder &rf) {
 
 	numBands        = rf.findGroup("processing").check("numBands",        yarp::os::Value(128),    "number of frequency bands (int)"                    ).asInt();
 	lowCf           = rf.findGroup("processing").check("lowCf",           yarp::os::Value(380.0),  "lowest center frequency (double)"                   ).asDouble();
-	highCf          = rf.findGroup("processing").check("highCf",          yarp::os::Value(6800.0), "highest center frequency (double)"                  ).asDouble();
+	highCf          = rf.findGroup("processing").check("highCf",          yarp::os::Value(7800.0), "highest center frequency (double)"                  ).asDouble();
 	erbSpaced       = rf.findGroup("processing").check("erbSpaced",       yarp::os::Value(true),   "ERB spaced centre frequencies (boolean)"            ).asBool();
 	halfRec         = rf.findGroup("processing").check("halfRec",         yarp::os::Value(false),  "half wave rectifying (boolean)"                     ).asBool();
 	computeEnvelope = rf.findGroup("processing").check("computeEnvelope", yarp::os::Value(false),  "should envelope computation be done (boolean)"      ).asBool();

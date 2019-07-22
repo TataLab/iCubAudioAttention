@@ -50,13 +50,13 @@
 
     <module>
         <name> audioStreamer </name>
-        <parameters> --context audio_attention_demo --from Video_Demo_Config.ini </parameters>
+        <parameters> --context audio_attention_demo --from video_demo_config.ini </parameters>
         <node> icub-mac </node>
     </module>
 
     <module>
         <name> audioRunner </name>
-        <parameters> --context audio_attention_demo --from Video_Demo_Config.ini </parameters>
+        <parameters> --context audio_attention_demo --from video_demo_config.ini </parameters>
         <node> icub </node>
     </module>
 
@@ -66,19 +66,19 @@
     <!-->
     <module>
         <name> audioPreprocessor </name>
-        <parameters> --context audio_attention_demo --from Video_Demo_Config.ini </parameters>
+        <parameters> --context audio_attention_demo --from video_demo_config.ini </parameters>
         <node> icub </node>
     </module>
 
     <module>
         <name> audioBayesianMap </name>
-        <parameters> --name /ampBayes --context audio_attention_demo --from Video_Demo_Config.ini </parameters>
+        <parameters> --name /ampBayes --context audio_attention_demo --from video_demo_config.ini </parameters>
         <node> dio </node>
     </module>
 
     <module>
         <name> audioBayesianMap </name>
-        <parameters> --name /envBayes --context audio_attention_demo --from Video_Demo_Config.ini </parameters>
+        <parameters> --name /envBayes --context audio_attention_demo --from video_demo_config.ini </parameters>
         <node> dio </node>
     </module>
 
@@ -237,13 +237,13 @@
 
     <connection>
         <from> /audioPreprocessor/allocentricAudio:o </from>
-        <to>   /ampBayes/allocentricAudio:i          </to>
+        <to>   /ampBayes/allocentricMap:i            </to>
         <protocol> tcp </protocol>
     </connection>
 
     <connection>
         <from> /audioPreprocessor/allocentricEnvelope:o </from>
-        <to>   /envBayes/allocentricAudio:i             </to>
+        <to>   /envBayes/allocentricMap:i               </to>
         <protocol> tcp </protocol>
     </connection>
 

@@ -37,7 +37,7 @@ The parameters found in the configuration file are organised by groups. They are
 ```processing```
 * ```numBands``` ( int ) &rightarrow; the number of center-frequencies to use for the gammatone filter bank. The center-frequencies are dynamically set beased one the ```lowCf``` and ```highCf``` values. [Default is 128]
 * ```lowCf``` ( double ) &rightarrow; used to set the lowest center-frequency used by the gammatone filter bank. [Default is 380.0]
-* ```highCf``` ( double ) &rightarrow; used to set the highest center-frequency used by the gammatone filter bank. [Default is 6800.0]
+* ```highCf``` ( double ) &rightarrow; used to set the highest center-frequency used by the gammatone filter bank. [Default is 7800.0]
 * ```erbSpaced``` ( boolean ) &rightarrow; if enabled, gives the ```numBands```-center-frequencies an equivalent rectangular bandwidth distribution. If disabled, gives a linear distribution to the center-frequencies. [Defaut is true]
 * ```halfRec``` ( boolean ) &rightarrow; enables half-wave rectifying which drops negative values from the basilar membrane response. [Default is false]
 * ```computeEnvelope``` ( boolean ) &rightarrow; if enabled computes the envelope and does a band-pass of each band-by-beam pairing before extrapolating. When used, the ```numFrameSamples``` should be increased to 16384 or 32768 and the ```numBands``` should be reduced to 64 (this computation can be used to isolate for natural human speech). [Default is false]
