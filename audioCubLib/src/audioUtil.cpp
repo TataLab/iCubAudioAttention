@@ -109,7 +109,7 @@ void AudioUtil::downSampleMatrix(const yMatrix& source, yMatrix& target, const s
 
                     //-- Set the data for target.
                     *trg = sqrt( currentSample / (double) sampleCounter );
-                    *trg++;
+                    trg++;
 
                     //-- Reset the holders.
                     currentSample = 0.0;
@@ -139,7 +139,7 @@ void AudioUtil::downSampleMatrix(const yMatrix& source, yMatrix& target, const s
 
                     //-- Set the data for target.
                     *trg = currentSample / (double) sampleCounter;
-                    *trg++;
+                    trg++;
 
                     //-- Reset the holders.
                     currentSample = 0.0;

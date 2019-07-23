@@ -209,6 +209,7 @@ bool AudioPreprocessorPeriodicThread::configure(yarp::os::ResourceFinder &rf) {
 	yInfo( "\t Hop Length of Window             : %d",       hopLength                           );	
 	yInfo( "\t Window processing method         : %s",       windowMethod.c_str()                );
 	yInfo( "\t Matrix Visualisation Down Sample : %d",       downSampOut                         );
+	yInfo( "\t Number Down Samples per Frame    : %d",       numFrameSamples / downSampOut       );
 	#ifdef WITH_OMP
 	yInfo( "\t Number of OpenMP Threads         : %d",       numOmpThreads                       );
 	#else
@@ -640,7 +641,7 @@ void AudioPreprocessorPeriodicThread::publishOutPorts() {
 	if (outGammatoneFilteredAudioPort.getOutputCount()) {
 
 		//-- This Matrix can be very big. Down sample if enabled.
-		AudioUtil::downSampleMatrix(GammatoneFilteredAudioMatrix, outGammatoneFilteredAudioPort.prepare(), downSampOut, downSampMethod);
+		AudioUtil::downSampleMatrix(GammatoneFilteredAudioMatrix, outGammatoneFilteredAudioPort.prepare(), downSampOut); //, downSampMethod);
 		outGammatoneFilteredAudioPort.setEnvelope(timeStamp);
 		outGammatoneFilteredAudioPort.write();
 
@@ -664,7 +665,7 @@ void AudioPreprocessorPeriodicThread::publishOutPorts() {
 	if (outBeamformedAudioPort.getOutputCount()) {
 		
 		//-- This Matrix can be very big. Down sample if enabled.
-		AudioUtil::downSampleMatrix(BeamformedAudioMatrix, outBeamformedAudioPort.prepare(), downSampOut, downSampMethod);
+		AudioUtil::downSampleMatrix(BeamformedAudioMatrix, outBeamformedAudioPort.prepare(), downSampOut); //, downSampMethod);
 		outBeamformedAudioPort.setEnvelope(timeStamp);
 		outBeamformedAudioPort.write();
 
@@ -704,7 +705,7 @@ void AudioPreprocessorPeriodicThread::publishOutPorts() {
 	if (outHilbertEnvelopePort.getOutputCount()) {
 
 		//-- This Matrix can be very big. Down sample if enabled.
-		AudioUtil::downSampleMatrix(HilbertEnvelopeMatrix, outHilbertEnvelopePort.prepare(), downSampOut, downSampMethod);
+		AudioUtil::downSampleMatrix(HilbertEnvelopeMatrix, outHilbertEnvelopePort.prepare(), downSampOut); //, downSampMethod);
 		outHilbertEnvelopePort.setEnvelope(timeStamp);
 		outHilbertEnvelopePort.write();
 
@@ -720,7 +721,7 @@ void AudioPreprocessorPeriodicThread::publishOutPorts() {
 	if (outBandPassedEnvelopePort.getOutputCount()) {
 
 		//-- This Matrix can be very big. Down sample if enabled.
-		AudioUtil::downSampleMatrix(BandPassedEnvelopeMatrix, outBandPassedEnvelopePort.prepare(), downSampOut, downSampMethod);
+		AudioUtil::downSampleMatrix(BandPassedEnvelopeMatrix, outBandPassedEnvelopePort.prepare(), downSampOut); //, downSampMethod);
 		outBandPassedEnvelopePort.setEnvelope(timeStamp);
 		outBandPassedEnvelopePort.write();
 
