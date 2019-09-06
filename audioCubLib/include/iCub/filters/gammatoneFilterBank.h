@@ -118,6 +118,25 @@ class Filters::GammatoneFilterBank {
     void getGammatoneFilteredPower(const yarp::sig::Matrix& FilterBank, yarp::sig::Matrix& BankPower);
 
 
+    /* ===========================================================================
+	 *  Resynthesize audio from output of gammatone filterbank.
+	 * 
+	 * @param FilterBank : The filtered audio (number of mics * number of bands, number of samples).
+	 * @param ResynthesizedAudio  : The resynthesized audio.
+	 * =========================================================================== */
+	void resynthesizeAudio(const yarp::sig::Matrix& FilterBank, yarp::sig::Matrix& ResynthesizedAudio);
+
+
+    /* ===========================================================================
+	 *  Mask the output of the gammatone filterbank and resynthesize audio.
+	 * 
+	 * @param FilterBank : The filtered audio (number of mics * number of bands, number of samples).
+	 * @param Mask : The mask to apply to the filtered audio (number of mics * number of bands, number of samples).
+	 * @param ResynthesizedAudio  : The resynthesized audio.
+	 * =========================================================================== */
+	void maskAndResynthesizeAudio(const yarp::sig::Matrix& FilterBank, const yarp::sig::Matrix& Mask, yarp::sig::Matrix& ResynthesizedAudio);
+
+
   private:
 	
 	/* ===========================================================================
@@ -136,6 +155,12 @@ class Filters::GammatoneFilterBank {
 	void singleGammatoneFilter(const double* RawAudio, double* BasilarMembrane, double* Envelope, double* Phase, const double CenterFrequency, const bool IncludeEnvelope, const bool IncludePhase);
 	
 
+	/* ===========================================================================
+	 *  Reverse filterbank output matrix.
+	 * =========================================================================== */
+	void reverseGammatoneMatrix(yarp::sig::Matrix& FilterBank);
+	
+	
 	/* ===========================================================================
 	 *  Fill the vector cfs with erb spaced center frequencies.
 	 * =========================================================================== */

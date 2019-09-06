@@ -100,7 +100,7 @@ void GammatoneFilterBank::getGammatoneFilteredAudio(const yarp::sig::Matrix& Raw
 	EnvelopeBank.resize(numMics * numBands, numFrameSamples);
 	_proxyPhase.resize(numMics * numBands, numFrameSamples);
 
-	//-- Loop variabes.
+	//-- Loop variables.
 	int itrBandMic;
 	int numBandMic = numMics * numBands;
 	
@@ -177,6 +177,108 @@ void GammatoneFilterBank::getGammatoneFilteredPower(const yarp::sig::Matrix& Fil
 
 			//-- Take the root of the mean.
 			BankPower[band][mic] = sqrt( bandSum / (double) numFrameSamples );
+		}
+	}
+}
+
+
+void GammatoneFilterBank::resynthesizeAudio(const yarp::sig::Matrix& FilterBank, yarp::sig::Matrix& ResynthesizeAudio) {
+	yMatrix TmpFilterBank(FilterBank);
+
+	//ensure proper space is allocated.
+	TmpFilterBank.resize(numMics * numBands, numFrameSamples);
+	ResynthesizeAudio.resize(numMics, numFrameSamples);
+	_proxyEnvelope.resize(numMics * numBands, numFrameSamples);
+	_proxyPhase.resize(numMics * numBands, numFrameSamples);
+
+	//-- Loop variables.
+	int itrBandMic;
+	int numBandMic = numMics * numBands;
+
+	//reverse filtered audio.
+	reverseGammatoneMatrix(TmpFilterBank);
+	
+	#ifdef WITH_OMP
+	#pragma omp parallel \
+  	 private (itrBandMic)
+	#pragma omp for schedule(guided)
+	#endif
+	for (itrBandMic = 0; itrBandMic < numBandMic; itrBandMic++) {
+
+		singleGammatoneFilter (
+			/* Channel of Audio = */ FilterBank     [itrBandMic],
+			/* Basilar Membrane = */ TmpFilterBank  [itrBandMic],
+			/* Hilbert Envelope = */ _proxyEnvelope [itrBandMic],
+			/* Filters Phase    = */ _proxyPhase    [itrBandMic],
+			/* Center Frequency = */ cfs            [itrBandMic % numBands],
+			/* Include Envelope = */ false,
+			/* Include Phase    = */ false
+		);
+	}
+
+	//re-reverse refiltered audio.
+	reverseGammatoneMatrix(TmpFilterBank);
+
+	//add bands together.
+	for (itrBandMic = 0; itrBandMic < numBandMic; itrBandMic++) {
+		for (int sample = 0; sample < numFrameSamples; sample++) {
+			ResynthesizeAudio[itrBandMic/numBands][sample] += FilterBank[itrBandMic][sample];
+		}
+	}
+}
+
+
+void GammatoneFilterBank::maskAndResynthesizeAudio(const yarp::sig::Matrix& FilterBank, const yarp::sig::Matrix& Mask, yarp::sig::Matrix& OutAudio) {
+	yMatrix TmpFilterBank(FilterBank);
+
+	//-- Ensure space is allocated for the filtered audio.
+	TmpFilterBank.resize(numMics * numBands, numFrameSamples);
+	OutAudio.resize(numMics, numFrameSamples);
+	_proxyEnvelope.resize(numMics * numBands, numFrameSamples);
+	_proxyPhase.resize(numMics * numBands, numFrameSamples);
+
+	//get max val of mask.
+	double maskMaxVal = 0.0;
+
+	for(int i=0; i<Mask.rows(); i++)
+		for(int j=0; j<Mask.cols(); j++)
+			maskMaxVal = std::max(maskMaxVal, Mask(i, j));
+
+	//-- Loop variables.
+	int itrBandMic;
+	int numBandMic = numMics * numBands;
+
+	//reverse filtered audio.
+	reverseGammatoneMatrix(TmpFilterBank);
+	
+	#ifdef WITH_OMP
+	#pragma omp parallel \
+  	 private (itrBandMic)
+	#pragma omp for schedule(guided)
+	#endif
+	for (itrBandMic = 0; itrBandMic < numBandMic; itrBandMic++) {
+
+		singleGammatoneFilter (
+			/* Channel of Audio = */ FilterBank     [itrBandMic],
+			/* Basilar Membrane = */ TmpFilterBank  [itrBandMic],
+			/* Hilbert Envelope = */ _proxyEnvelope [itrBandMic],
+			/* Filters Phase    = */ _proxyPhase    [itrBandMic],
+			/* Center Frequency = */ cfs            [itrBandMic % numBands],
+			/* Include Envelope = */ false,
+			/* Include Phase    = */ false
+		);
+	}
+
+	//re-reverse filtered audio.
+	reverseGammatoneMatrix(TmpFilterBank);
+
+	//mask and add bands together.
+	for (itrBandMic = 0; itrBandMic < numBandMic; itrBandMic++) {
+		for (int sample = 0; sample < numFrameSamples; sample++) {
+			int timeStep = (sample/(numFrameSamples*1.0))*Mask.cols();
+			double scaledMaskVal = (1.0/maskMaxVal)*Mask(itrBandMic/numMics, timeStep);
+
+			OutAudio[itrBandMic/numBands][sample] += FilterBank[itrBandMic][sample]*scaledMaskVal;
 		}
 	}
 }
@@ -296,6 +398,18 @@ void GammatoneFilterBank::singleGammatoneFilter(const double* RawAudio, double* 
 		//-- Update coefficients.
 		qcos = coscf * (oldcs = qcos) + sincf * qsin;
 		qsin = coscf * qsin - sincf * oldcs;
+	}
+}
+
+
+void GammatoneFilterBank::reverseGammatoneMatrix(yarp::sig::Matrix& FilterBank) {
+	int itrBandMic;
+	int numBandMic = numMics * numBands;
+	
+	for (itrBandMic = 0; itrBandMic < numBandMic; itrBandMic++) {
+		for (int sample = 0; sample < numFrameSamples/2; sample++) {
+			std::swap(FilterBank[itrBandMic][sample], FilterBank[itrBandMic][numFrameSamples-sample-1]);
+		}
 	}
 }
 
