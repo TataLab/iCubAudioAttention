@@ -15,5 +15,6 @@ else( ENABLE_COMPILE_ON_PC104 )
     add_subdirectory( audioPreprocessor      )
     add_subdirectory( frequencyVisualisation )
     add_subdirectory( remoteInterface        )
+    add_subdirectory( rosAudioRemapper       )
 
 endif( ENABLE_COMPILE_ON_PC104 )
