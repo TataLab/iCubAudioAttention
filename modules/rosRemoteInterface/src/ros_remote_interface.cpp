@@ -1,6 +1,6 @@
 /*
-* Copyright: (C) 2010 RobotCub Consortium
-* Authors: Paul Fitzpatrick, Francesco Nori
+* Copyright: (C) 2019 RobotCub Consortium
+* Authors: Lukas Grasse, Austin Kothig, Paul Fitzpatrick, Francesco Nori
 * CopyPolicy: Released under the terms of the LGPLv2.1 or later, see LGPL.TXT
 */
 
@@ -10,7 +10,7 @@
 #include <yarp/os/Property.h>
 #include <yarp/os/NetInt16.h>
 #include <yarp/os/ResourceFinder.h>
-
+#include <typeinfo>
 #include <yarp/os/Network.h>
 #include <yarp/os/Port.h>
 #include <yarp/os/Log.h>
@@ -19,7 +19,7 @@
 #include <yarp/os/BufferedPort.h>
 #include <ros/ros.h>
 //#define DEBUG
-
+#include <ros_remote_interface/Sound.h>
 using namespace yarp::os;
 using namespace yarp::sig;
 using namespace yarp::dev;
@@ -37,14 +37,11 @@ int main(int argc, char *argv[]) {
     int numFrameSamples  = rf.findGroup("sampling").check("numFrameSamples",  yarp::os::Value(4096),   "Sampling rate of mics (int)"            ).asInt();
     int sampleBufferSize = rf.findGroup("sampling").check("sampleBufferSize", yarp::os::Value(8192),   "Number of samples to buffer in PO (int)").asInt();
 
-    //Port p;
-    //p.open("/rawAudio:o");
-
     ros::init(argc, argv, "audio");
 
     ros::NodeHandle n;
 
-    ros::Publisher audio_pub = n.advertise<yarp::sig::Sound>("rawAudio", 1000);
+    ros::Publisher audio_pub = n.advertise<ros_remote_interface::Sound>("rawAudio", 1000);
 
     // Get a portaudio read device.
     Property conf;
@@ -72,6 +69,7 @@ int main(int argc, char *argv[]) {
     
     //Grab and send
     Sound s;
+    
     double t1, t2, tdiff;
     
     //unsigned char* dataSound;
@@ -105,10 +103,32 @@ int main(int argc, char *argv[]) {
         yInfo(" Samples   : %ld ", s.getSamples());
         yInfo(" Channels  : %ld ", s.getChannels());
 
-        //p.setEnvelope(ts);
-        //p.write(s);
-	audio_pub.publish(s);
-	ros::spinOnce();
+        ros_remote_interface::Sound msg;
+
+        //set ros msg params to sound object params
+        msg.n_samples = s.getSamples();
+        msg.n_channels = s.getChannels();
+        msg.n_frequency = s.getFrequency();
+        
+        //set left channel
+        msg.l_channel_data.resize(msg.n_samples);
+        
+        for(int i=0; i<s.getSamples(); i++)
+            msg.l_channel_data[i] = s.get(i, 0);
+
+        //if we have right channel set as well
+        if(msg.n_channels > 1) {
+            msg.r_channel_data.resize(msg.n_samples);
+
+            for(int i=0; i<msg.n_samples; i++) 
+                msg.r_channel_data[i] = s.get(i, 1);
+        }
+
+        //set timestamp
+        msg.time = ts.getTime();
+
+        audio_pub.publish(msg);
+        ros::spinOnce();
 
         t2 = yarp::os::Time::now();
         tdiff = t2-t1;
