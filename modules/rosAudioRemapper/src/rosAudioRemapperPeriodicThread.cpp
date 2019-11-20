@@ -135,8 +135,20 @@ void RosAudioRemapperPeriodicThread::run() {
 		if (outRawAudioPort.getOutputCount()) {
 
 			//-- This Matrix can be very big. Down sample if enabled.
+			timeStamp.update(inputSound->time);
 			outRawAudioPort.setEnvelope(timeStamp);
-			outRawAudioPort.write();
+
+			outputSound->setFrequency(inputSound->n_frequency);
+			outputSound->resize(inputSound->n_samples, inputSound->n_channels);
+
+			for(int ch=0; ch < inputSound->n_channels; ch++) {
+				for(int i=0; i<inputSound->n_samples; i++) {
+					auto val = (ch == 0 ? inputSound->l_channel_data[i] : inputSound->r_channel_data[i]);
+					outputSound->set(val, i, ch);
+				}
+			}
+			
+			outRawAudioPort.write(outputSound);
 		}
 
 		//-- Give time stats to the user.

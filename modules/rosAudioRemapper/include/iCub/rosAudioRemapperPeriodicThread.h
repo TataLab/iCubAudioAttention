@@ -38,8 +38,10 @@
 #include <yarp/dev/all.h>
 #include <yarp/os/PeriodicThread.h>
 #include <yarp/os/Log.h>
+#include <iCub/rostypes/Sound.h>
 
 typedef yarp::os::BufferedPort< yarp::sig::Sound  > ySoundBuffer;
+typedef yarp::os::BufferedPort< yarp::rosmsg::Sound  > rosSoundBuffer;
 
 class RosAudioRemapperPeriodicThread : public yarp::os::PeriodicThread {
 
@@ -69,7 +71,7 @@ private:
 	/* ===========================================================================
 	 *  Yarp Ports for Sending and Receiving Data from this Periodic Thread.
 	 * =========================================================================== */
-	ySoundBuffer  inRosAudioPort;
+	rosSoundBuffer  inRosAudioPort;
 	ySoundBuffer outRawAudioPort;
 
 
@@ -77,16 +79,9 @@ private:
 	 *  Yarp Matrices used for Modules Computation. 
 	 *    Objects passed around to encapsulated objects.
 	 * =========================================================================== */
-	yarp::sig::Sound* inputSound;
+	yarp::rosmsg::Sound* inputSound;
 	yarp::sig::Sound* outputSound;
 	
-
-	/* ===========================================================================
-	 *  Variables received from the resource finder.
-	 * =========================================================================== */
-	int    azimuthIndex;
-
-
 public:
 	/* ===========================================================================
 	 *  Default Constructor.
