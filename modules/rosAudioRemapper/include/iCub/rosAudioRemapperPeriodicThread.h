@@ -40,7 +40,6 @@
 #include <yarp/os/Log.h>
 #include <iCub/rostypes/Sound.h>
 
-typedef yarp::os::BufferedPort< yarp::sig::Sound  > ySoundBuffer;
 typedef yarp::os::Subscriber< yarp::rosmsg::Sound  > rosSoundSubscriber;
 
 class RosAudioRemapperPeriodicThread : public yarp::os::PeriodicThread {
@@ -59,20 +58,11 @@ private:
 	double startTime;           //-- Used for keeping time and reporting temporal
     double stopTime;            //-- events to the user via command line.
 	
-	double timeDelay,        totalDelay;        //-- Hold on to and store time
-	double timeReading,      totalReading;	    //-- events for clean display
-	double timeProcessing,   totalProcessing;   //-- at the end of a loop.
-	double timeTransmission, totalTransmission; //-- Include stats on the average execution
-	double timeTotal,        totalTime;         //-- when the RFModule is closed.
-
-	int    totalIterations;
-
-
 	/* ===========================================================================
 	 *  Yarp Ports for Sending and Receiving Data from this Periodic Thread.
 	 * =========================================================================== */
 	rosSoundSubscriber inRosAudioSubscriber;
-	ySoundBuffer outRawAudioPort;
+	yarp::os::Port outRawAudioPort;
 
 
 	/* ===========================================================================

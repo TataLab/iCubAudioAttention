@@ -55,16 +55,6 @@ bool RosAudioRemapperPeriodicThread::configure(yarp::os::ResourceFinder &rf) {
 	 * =========================================================================== */
 	yInfo( "Loading Configuration File." );
 	
-	/* ===========================================================================
-	 *  Initialize time counters to zero.
-	 * =========================================================================== */
-	totalDelay        = 0.0;
-	totalReading      = 0.0;
-	totalProcessing   = 0.0;
-	totalTransmission = 0.0;
-	totalTime         = 0.0;
-	totalIterations   = 0;
-
 	outputSound = new yarp::sig::Sound();
 
 	return true;
@@ -76,7 +66,7 @@ bool RosAudioRemapperPeriodicThread::threadInit() {
 	 *  Initialize all ports. If any fail to open, return false to 
 	 *    let RFModule know initialization was unsuccessful.
 	 * =========================================================================== */
-	
+
 	if (!inRosAudioSubscriber.topic(getName("/rosAudio@").c_str())) {
 		yError("Unable to open subscriber for receiving raw audio from ROS.");
 		return false;
@@ -144,7 +134,10 @@ void RosAudioRemapperPeriodicThread::run() {
 			}
 		}
 
-		outRawAudioPort.write(inputSound);
+		outputSound->resize(4096, 2);
+
+		outRawAudioPort.write(*outputSound);
+			
 		yInfo(" ");
 		yInfo("Rate      : %d", inputSound->n_frequency);
 		yInfo("Samples   : %d", inputSound->n_samples);
