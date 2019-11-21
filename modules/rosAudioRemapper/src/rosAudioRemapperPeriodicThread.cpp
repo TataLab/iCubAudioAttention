@@ -45,12 +45,11 @@ RosAudioRemapperPeriodicThread::RosAudioRemapperPeriodicThread(std::string _robo
 
 
 RosAudioRemapperPeriodicThread::~RosAudioRemapperPeriodicThread() {
-
+	delete outputSound;
 }
 
 
 bool RosAudioRemapperPeriodicThread::configure(yarp::os::ResourceFinder &rf) {
-
 	/* ===========================================================================
 	 *  Pull variables for this module from the resource finder.
 	 * =========================================================================== */
@@ -66,43 +65,36 @@ bool RosAudioRemapperPeriodicThread::configure(yarp::os::ResourceFinder &rf) {
 	totalTime         = 0.0;
 	totalIterations   = 0;
 
+	outputSound = new yarp::sig::Sound();
+
 	return true;
 }
 
 
 bool RosAudioRemapperPeriodicThread::threadInit() {
-
 	/* ===========================================================================
 	 *  Initialize all ports. If any fail to open, return false to 
 	 *    let RFModule know initialization was unsuccessful.
 	 * =========================================================================== */
-
-	if (!inRosAudioPort.open(getName("/rosAudio:i").c_str())) {
-		yError("Unable to open port for receiving raw audio from ROS.");
+	
+	if (!inRosAudioSubscriber.topic(getName("/rosAudio@").c_str())) {
+		yError("Unable to open subscriber for receiving raw audio from ROS.");
 		return false;
 	}
 
-	if (!outRawAudioPort.open(getName("/rawAudio:o").c_str())) {
+	if (!outRawAudioPort.open(getName("/remappedAudio:o").c_str())) {
 		yError("Unable to open port for sending the output audio.");
 		return false;
 	}
-
-	stopTime = yarp::os::Time::now();
-	yInfo("Initialization of the processing thread correctly ended. Elapsed Time: %f.", stopTime - startTime);
-	startTime = stopTime;
 
 	return true;
 }
 
 
 void RosAudioRemapperPeriodicThread::threadRelease() {
-
 	//-- Stop all threads.
-	inRosAudioPort.interrupt();
+	inRosAudioSubscriber.interrupt();
 	outRawAudioPort.interrupt();
-
-	//-- Print thread stats.
-	endOfProcessingStats();	
 }
 
 
@@ -124,56 +116,39 @@ void RosAudioRemapperPeriodicThread::setInputPortName(std::string InpPort) {
 
 
 void RosAudioRemapperPeriodicThread::run() {    
-	
-	if (inRosAudioPort.getInputCount()) {
+	//-- Get Input.
+	inputSound = inRosAudioSubscriber.read(true);
 
-		//-- Get Input.
-		inputSound = inRosAudioPort.read(true);
-		inRosAudioPort.getEnvelope(timeStamp);
+	//-- Write to Active Ports.
+	if (outRawAudioPort.getOutputCount()) {
 
-				//-- Write to Active Ports.
-		if (outRawAudioPort.getOutputCount()) {
+		//set timestamp to original audio timestamp
+		timeStamp.update(inputSound->time);
+		outRawAudioPort.setEnvelope(timeStamp);
 
-			//-- This Matrix can be very big. Down sample if enabled.
-			timeStamp.update(inputSound->time);
-			outRawAudioPort.setEnvelope(timeStamp);
+		outputSound->setFrequency(inputSound->n_frequency);
+		
+		outputSound->resize(inputSound->n_samples, inputSound->n_channels);
 
-			outputSound->setFrequency(inputSound->n_frequency);
-			outputSound->resize(inputSound->n_samples, inputSound->n_channels);
-
-			for(int ch=0; ch < inputSound->n_channels; ch++) {
-				for(int i=0; i<inputSound->n_samples; i++) {
-					auto val = (ch == 0 ? inputSound->l_channel_data[i] : inputSound->r_channel_data[i]);
-					outputSound->set(val, i, ch);
-				}
+		for(int ch=0; ch < inputSound->n_channels; ch++) {
+			for(int i=0; i<inputSound->n_samples; i++) {
+				short int val;
+				
+				//set channel based on left or right
+				if(ch == 0)
+					inputSound->l_channel_data[i];
+				else
+					inputSound->r_channel_data[i];
+				
+				outputSound->set(val, i, ch);
 			}
-			
-			outRawAudioPort.write(outputSound);
 		}
 
-		//-- Give time stats to the user.
-		timeTotal  = timeDelay + timeReading + timeProcessing + timeTransmission;
-		totalTime += timeTotal;
-		totalIterations++;
-		yInfo("End of Loop %d, TS %d: Delay  %f  |  Reading  %f  |  Processing  %f  |  Transmission  %f  |  Total  %f  |", totalIterations, timeStamp.getCount(), timeDelay, timeReading, timeProcessing, timeTransmission, timeTotal);
+		outRawAudioPort.write(inputSound);
+		yInfo(" ");
+		yInfo("Rate      : %d", inputSound->n_frequency);
+		yInfo("Samples   : %d", inputSound->n_samples);
+		yInfo("Channels  : %d", inputSound->n_channels);
+		yInfo("Timestamp : %f", inputSound->time);
 	}
-}
-
-void RosAudioRemapperPeriodicThread::endOfProcessingStats() {
-
-	//-- Display Execution stats.
-	yInfo(" ");
-	yInfo("End of Thread . . . ");
-	yInfo(" ");
-	yInfo("\t Total Iterations : %d", totalIterations);
-	yInfo("\t Total Time       : %.2f", totalTime);
-	yInfo(" ");
-	yInfo("Average Stats . . . ");
-	yInfo(" ");
-	yInfo("\t Delay        : %f", totalDelay        / (double) totalIterations );
-	yInfo("\t Reading      : %f", totalReading      / (double) totalIterations );
-	yInfo("\t Processing   : %f", totalProcessing   / (double) totalIterations );
-	yInfo("\t Transmission : %f", totalTransmission / (double) totalIterations );
-	yInfo("\t Loop Time    : %f", totalTime         / (double) totalIterations );
-	yInfo(" ");
 }

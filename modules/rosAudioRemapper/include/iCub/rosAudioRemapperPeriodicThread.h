@@ -41,7 +41,7 @@
 #include <iCub/rostypes/Sound.h>
 
 typedef yarp::os::BufferedPort< yarp::sig::Sound  > ySoundBuffer;
-typedef yarp::os::BufferedPort< yarp::rosmsg::Sound  > rosSoundBuffer;
+typedef yarp::os::Subscriber< yarp::rosmsg::Sound  > rosSoundSubscriber;
 
 class RosAudioRemapperPeriodicThread : public yarp::os::PeriodicThread {
 
@@ -71,7 +71,7 @@ private:
 	/* ===========================================================================
 	 *  Yarp Ports for Sending and Receiving Data from this Periodic Thread.
 	 * =========================================================================== */
-	rosSoundBuffer  inRosAudioPort;
+	rosSoundSubscriber inRosAudioSubscriber;
 	ySoundBuffer outRawAudioPort;
 
 

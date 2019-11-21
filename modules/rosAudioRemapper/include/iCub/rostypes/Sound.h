@@ -10,9 +10,9 @@
 
 // Generated from the following "Sound" msg definition:
 //   float64 time
-//   int16 n_samples
-//   int16 n_channels
-//   int16    n_frequency
+//   int32 n_samples
+//   int32 n_channels
+//   int32    n_frequency
 //   int16[] l_channel_data
 //   int16[] r_channel_data
 //   
@@ -35,9 +35,9 @@ class Sound : public yarp::os::idl::WirePortable
 {
 public:
     yarp::conf::float64_t time;
-    std::int16_t n_samples;
-    std::int16_t n_channels;
-    std::int16_t n_frequency;
+    std::int32_t n_samples;
+    std::int32_t n_channels;
+    std::int32_t n_frequency;
     std::vector<std::int16_t> l_channel_data;
     std::vector<std::int16_t> r_channel_data;
 
@@ -78,13 +78,13 @@ public:
         time = connection.expectFloat64();
 
         // *** n_samples ***
-        n_samples = connection.expectInt16();
+        n_samples = connection.expectInt32();
 
         // *** n_channels ***
-        n_channels = connection.expectInt16();
+        n_channels = connection.expectInt32();
 
         // *** n_frequency ***
-        n_frequency = connection.expectInt16();
+        n_frequency = connection.expectInt32();
 
         // *** l_channel_data ***
         int len = connection.expectInt32();
@@ -115,13 +115,13 @@ public:
         time = reader.expectFloat64();
 
         // *** n_samples ***
-        n_samples = reader.expectInt16();
+        n_samples = reader.expectInt32();
 
         // *** n_channels ***
-        n_channels = reader.expectInt16();
+        n_channels = reader.expectInt32();
 
         // *** n_frequency ***
-        n_frequency = reader.expectInt16();
+        n_frequency = reader.expectInt32();
 
         // *** l_channel_data ***
         if (connection.expectInt32() != (BOTTLE_TAG_LIST|BOTTLE_TAG_INT16)) {
@@ -159,13 +159,13 @@ public:
         connection.appendFloat64(time);
 
         // *** n_samples ***
-        connection.appendInt16(n_samples);
+        connection.appendInt32(n_samples);
 
         // *** n_channels ***
-        connection.appendInt16(n_channels);
+        connection.appendInt32(n_channels);
 
         // *** n_frequency ***
-        connection.appendInt16(n_frequency);
+        connection.appendInt32(n_frequency);
 
         // *** l_channel_data ***
         connection.appendInt32(l_channel_data.size());
@@ -192,16 +192,16 @@ public:
         connection.appendFloat64(time);
 
         // *** n_samples ***
-        connection.appendInt32(BOTTLE_TAG_INT16);
-        connection.appendInt16(n_samples);
+        connection.appendInt32(BOTTLE_TAG_INT32);
+        connection.appendInt32(n_samples);
 
         // *** n_channels ***
-        connection.appendInt32(BOTTLE_TAG_INT16);
-        connection.appendInt16(n_channels);
+        connection.appendInt32(BOTTLE_TAG_INT32);
+        connection.appendInt32(n_channels);
 
         // *** n_frequency ***
-        connection.appendInt32(BOTTLE_TAG_INT16);
-        connection.appendInt16(n_frequency);
+        connection.appendInt32(BOTTLE_TAG_INT32);
+        connection.appendInt32(n_frequency);
 
         // *** l_channel_data ***
         connection.appendInt32(BOTTLE_TAG_LIST|BOTTLE_TAG_INT16);
@@ -237,14 +237,14 @@ public:
     static constexpr const char* typeName = "Sound";
 
     // The checksum for this message, ROS will need this
-    static constexpr const char* typeChecksum = "455ee9abb1c807ca3f5f1a7345999324";
+    static constexpr const char* typeChecksum = "80a1e9d0908ccdb5fc99d2c6e4316b63";
 
     // The source text for this message, ROS will need this
     static constexpr const char* typeText = "\
 float64 time\n\
-int16 n_samples\n\
-int16 n_channels\n\
-int16    n_frequency\n\
+int32 n_samples\n\
+int32 n_channels\n\
+int32    n_frequency\n\
 int16[] l_channel_data\n\
 int16[] r_channel_data\n\
 \n\

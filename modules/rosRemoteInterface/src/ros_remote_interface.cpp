@@ -41,7 +41,7 @@ int main(int argc, char *argv[]) {
 
     ros::NodeHandle n;
 
-    ros::Publisher audio_pub = n.advertise<ros_remote_interface::Sound>("rawAudio", 1000);
+    ros::Publisher audio_pub = n.advertise<ros_remote_interface::Sound>("/rosAudioRemapper/rosAudio", 1000);
 
     // Get a portaudio read device.
     Property conf;
@@ -108,8 +108,7 @@ int main(int argc, char *argv[]) {
         //set ros msg params to sound object params
         msg.n_samples = s.getSamples();
         msg.n_channels = s.getChannels();
-        msg.n_frequency = s.getFrequency();
-        
+
         //set left channel
         msg.l_channel_data.resize(msg.n_samples);
         
@@ -124,6 +123,8 @@ int main(int argc, char *argv[]) {
                 msg.r_channel_data[i] = s.get(i, 1);
         }
 
+        msg.n_frequency = s.getFrequency();
+        
         //set timestamp
         msg.time = ts.getTime();
 
