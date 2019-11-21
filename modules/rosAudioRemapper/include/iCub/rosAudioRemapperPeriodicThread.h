@@ -52,7 +52,7 @@ private:
 	std::string robot;          //-- Name of the robot.
 	std::string configFile;     //-- Name of the configFile where the parameter of the camera are set.
 	std::string inputPortName;  //-- Name of input port for incoming events, typically from aexGrabber.
-
+	std::string rosTopicName;
 	yarp::os::Stamp timeStamp;  //-- Time stamp updated by yarp network.
 
 	double startTime;           //-- Used for keeping time and reporting temporal

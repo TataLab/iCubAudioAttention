@@ -1,0 +1,14 @@
+<application>
+
+    <name> Ros Audio Remapper </name>
+
+    <!-->  
+    MODULES.    
+    <!-->
+    <module>
+        <name> rosAudioRemapper </name>
+        <parameters> </parameters>
+        <node> icub14 </node>
+    </module>
+
+</application>

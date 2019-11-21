@@ -44,7 +44,6 @@ class RosAudioRemapperModule : public yarp::os::RFModule {
   
 	std::string moduleName;          //-- Name of the module.
 	std::string robotName;           //-- Name of the robot .
-	std::string robotPortName;       //-- Name of robot port.
 	std::string inputPortName;       //-- Name of the input port for events.
 	std::string outputPortName;      //-- Name of output port.
 	std::string handlerPortName;     //-- Name of handler port.

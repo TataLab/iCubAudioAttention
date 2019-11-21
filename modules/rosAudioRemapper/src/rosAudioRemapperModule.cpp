@@ -36,14 +36,6 @@ bool RosAudioRemapperModule::configure(yarp::os::ResourceFinder &rf) {
 	setName(moduleName.c_str());
 
 	/* ===========================================================================
-	 *  Get the robot name which will form the stem of the robot ports names
-	 *  and append the specific part and device required.
-	 * =========================================================================== */
-	robotName = rf.check("robot", yarp::os::Value("icub"), "Robot name (string)").asString();
-	robotPortName = "/" + robotName + "/head";
-	inputPortName = rf.check("inputPortName", yarp::os::Value(":i"), "Input port name (string)").asString();
-	
-	/* ===========================================================================
 	 *  Attach a port of the same name as the module (prefixed with a /) 
 	 *  to the module so that messages received from the port are 
 	 *  redirected to the respond method.

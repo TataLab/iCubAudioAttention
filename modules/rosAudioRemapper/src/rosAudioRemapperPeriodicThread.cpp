@@ -54,7 +54,7 @@ bool RosAudioRemapperPeriodicThread::configure(yarp::os::ResourceFinder &rf) {
 	 *  Pull variables for this module from the resource finder.
 	 * =========================================================================== */
 	yInfo( "Loading Configuration File." );
-	
+	rosTopicName = rf.findGroup("rosinfo").check("topic", yarp::os::Value("/rosAudio@"), "ros topic").asString();
 	outputSound = new yarp::sig::Sound();
 
 	return true;
@@ -67,7 +67,7 @@ bool RosAudioRemapperPeriodicThread::threadInit() {
 	 *    let RFModule know initialization was unsuccessful.
 	 * =========================================================================== */
 
-	if (!inRosAudioSubscriber.topic(getName("/rosAudio@").c_str())) {
+	if (!inRosAudioSubscriber.topic(getName(rosTopicName.c_str()).c_str())) {
 		yError("Unable to open subscriber for receiving raw audio from ROS.");
 		return false;
 	}
