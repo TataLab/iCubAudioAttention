@@ -1,0 +1,18 @@
+<launch>
+ 
+  <arg name="sampling_rate" default="48000"/>
+  <arg name="num_frame_samples" default="4096"/>
+  <arg name="sample_buffer_size" default="8192"/>
+  <arg name="topic_name" default="/rosAudioRemapper/rosAudio"/>
+  <arg name="ns" default="ros_remote_interface"/>
+
+  <group ns="$(arg ns)">
+    <node name="ros_remote_interface" pkg="ros_remote_interface" type="ros_remote_interface_node">
+      <param name="sampling_rate" value="$(arg sampling_rate)"/>
+      <param name="num_frame_samples" value="$(arg num_frame_samples)"/>
+      <param name="sample_buffer_size" value="$(arg sample_buffer_size)"/>
+      <param name="topic_name" value="$(arg topic_name)"/>
+    </node>
+  </group>
+
+</launch>

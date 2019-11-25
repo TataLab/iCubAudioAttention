@@ -25,23 +25,25 @@ using namespace yarp::sig;
 using namespace yarp::dev;
 
 int main(int argc, char *argv[]) {
+
+    ros::init(argc, argv, "ros_remote_interface");
   
     // initialization
-    ResourceFinder rf;
-    rf.setVerbose(true);
-    rf.setDefaultConfigFile("audio_attention_config.ini"); // overridden by --from parameter
-    rf.setDefaultContext("audio_attention");               // overridden by --context parameter
-    rf.configure(argc, argv);  
-    
-    int samplingRate     = rf.findGroup("sampling").check("samplingRate",     yarp::os::Value(48000),  "Frame samples (int)"                    ).asInt();
-    int numFrameSamples  = rf.findGroup("sampling").check("numFrameSamples",  yarp::os::Value(4096),   "Sampling rate of mics (int)"            ).asInt();
-    int sampleBufferSize = rf.findGroup("sampling").check("sampleBufferSize", yarp::os::Value(8192),   "Number of samples to buffer in PO (int)").asInt();
+    int samplingRate;
+    ros::param::param<int>("~sampling_rate", samplingRate, 48000);
 
-    ros::init(argc, argv, "audio");
+    int numFrameSamples; 
+    ros::param::param<int>("~num_frame_samples", numFrameSamples, 4096);
+
+    int sampleBufferSize;
+    ros::param::param<int>("~sample_buffer_size", sampleBufferSize, 8192);
+
+    std::string topicName;
+    ros::param::param<std::string>("~topic_name", topicName, "/rosAudioRemapper/rosAudio");
 
     ros::NodeHandle n;
 
-    ros::Publisher audio_pub = n.advertise<ros_remote_interface::Sound>("/rosAudioRemapper/rosAudio", 1000);
+    ros::Publisher audio_pub = n.advertise<ros_remote_interface::Sound>(topicName, 1000);
 
     // Get a portaudio read device.
     Property conf;
@@ -124,7 +126,7 @@ int main(int argc, char *argv[]) {
         }
 
         msg.n_frequency = s.getFrequency();
-        
+
         //set timestamp
         msg.time = ts.getTime();
 
