@@ -125,9 +125,9 @@ void RosAudioRemapperPeriodicThread::run() {
 			
 			//set channel based on left or right
 			if(ch == 0)
-				inputSound->l_channel_data[i];
+				val = inputSound->l_channel_data[i];
 			else
-				inputSound->r_channel_data[i];
+				val = inputSound->r_channel_data[i];
 			
 			outputSound->set(val, i, ch);
 		}
