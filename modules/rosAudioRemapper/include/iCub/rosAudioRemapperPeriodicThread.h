@@ -38,7 +38,7 @@
 #include <yarp/dev/all.h>
 #include <yarp/os/PeriodicThread.h>
 #include <yarp/os/Log.h>
-#include <iCub/rostypes/Sound.h>
+#include <iCub/Sound.h>
 
 typedef yarp::os::Subscriber< yarp::rosmsg::Sound  > rosSoundSubscriber;
 

@@ -54,7 +54,7 @@ bool RosAudioRemapperPeriodicThread::configure(yarp::os::ResourceFinder &rf) {
 	 *  Pull variables for this module from the resource finder.
 	 * =========================================================================== */
 	yInfo( "Loading Configuration File." );
-	rosTopicName = rf.findGroup("rosinfo").check("topic", yarp::os::Value("/rosAudio@"), "ros topic").asString();
+	
 	outputSound = new yarp::sig::Sound();
 
 	return true;
@@ -66,8 +66,8 @@ bool RosAudioRemapperPeriodicThread::threadInit() {
 	 *  Initialize all ports. If any fail to open, return false to 
 	 *    let RFModule know initialization was unsuccessful.
 	 * =========================================================================== */
-
-	if (!inRosAudioSubscriber.topic(getName(rosTopicName.c_str()).c_str())) {
+	
+	if (!inRosAudioSubscriber.topic(getName("/rosAudio-@").c_str())) {
 		yError("Unable to open subscriber for receiving raw audio from ROS.");
 		return false;
 	}
@@ -107,41 +107,37 @@ void RosAudioRemapperPeriodicThread::setInputPortName(std::string InpPort) {
 
 void RosAudioRemapperPeriodicThread::run() {    
 	//-- Get Input.
+	
 	inputSound = inRosAudioSubscriber.read(true);
 
 	//-- Write to Active Ports.
-	if (outRawAudioPort.getOutputCount()) {
+	//set timestamp to original audio timestamp
+	timeStamp.update(inputSound->time);
+	outRawAudioPort.setEnvelope(timeStamp);
 
-		//set timestamp to original audio timestamp
-		timeStamp.update(inputSound->time);
-		outRawAudioPort.setEnvelope(timeStamp);
+	outputSound->setFrequency(inputSound->n_frequency);
+	
+	outputSound->resize(inputSound->n_samples, inputSound->n_channels);
 
-		outputSound->setFrequency(inputSound->n_frequency);
-		
-		outputSound->resize(inputSound->n_samples, inputSound->n_channels);
-
-		for(int ch=0; ch < inputSound->n_channels; ch++) {
-			for(int i=0; i<inputSound->n_samples; i++) {
-				short int val;
-				
-				//set channel based on left or right
-				if(ch == 0)
-					inputSound->l_channel_data[i];
-				else
-					inputSound->r_channel_data[i];
-				
-				outputSound->set(val, i, ch);
-			}
-		}
-
-		outputSound->resize(4096, 2);
-
-		outRawAudioPort.write(*outputSound);
+	for(int ch=0; ch < inputSound->n_channels; ch++) {
+		for(int i=0; i<inputSound->n_samples; i++) {
+			short int val;
 			
-		yInfo(" ");
-		yInfo("Rate      : %d", inputSound->n_frequency);
-		yInfo("Samples   : %d", inputSound->n_samples);
-		yInfo("Channels  : %d", inputSound->n_channels);
-		yInfo("Timestamp : %f", inputSound->time);
+			//set channel based on left or right
+			if(ch == 0)
+				inputSound->l_channel_data[i];
+			else
+				inputSound->r_channel_data[i];
+			
+			outputSound->set(val, i, ch);
+		}
 	}
+
+	outRawAudioPort.write(*outputSound);
+	yInfo(" ");
+	yInfo("Rate      : %d", inputSound->n_frequency);
+	yInfo("Samples   : %d", inputSound->n_samples);
+	yInfo("Channels  : %d", inputSound->n_channels);
+	yInfo("Timestamp : %f", inputSound->time);
+
 }
