@@ -81,6 +81,7 @@ void AudioUtil::downSampleMatrix(const yMatrix& source, yMatrix& target, const s
 
     //-- Allocate space for the down sampled matrix.
     const size_t RowSize = source.rows();
+    const size_t SourceColSize = source.cols();
     const size_t ColSize = source.cols() / downSamp;
     const size_t offset  = source.cols() % downSamp;
     target.resize(RowSize, ColSize);
@@ -99,7 +100,7 @@ void AudioUtil::downSampleMatrix(const yMatrix& source, yMatrix& target, const s
             double currentSample = 0.0;
             int    sampleCounter = 0;
 
-            for (size_t col = 0; col < ColSize; col++) {
+            for (size_t col = 0; col < SourceColSize; col++) {
 
                 currentSample += (*src * *src); src++;
                 sampleCounter++;
@@ -129,7 +130,7 @@ void AudioUtil::downSampleMatrix(const yMatrix& source, yMatrix& target, const s
             double currentSample = 0.0;
             int    sampleCounter = 0;
 
-            for (size_t col = 0; col < ColSize; col++) {
+            for (size_t col = 0; col < SourceColSize; col++) {
 
                 currentSample += *src; src++;
                 sampleCounter++;
@@ -421,4 +422,5 @@ void AudioUtil::WindowMatrix(const yMatrix& source, yMatrix& target, const size_
 
     }
 }
+
 
