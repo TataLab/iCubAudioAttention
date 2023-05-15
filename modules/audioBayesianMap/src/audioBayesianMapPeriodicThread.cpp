@@ -57,10 +57,10 @@ bool AudioBayesianMapPeriodicThread::configure(yarp::os::ResourceFinder &rf) {
 	 * =========================================================================== */
 	yInfo( "Loading Configuration File." );
 
-	numBands = rf.findGroup("processing").check("numBands", yarp::os::Value(128), "number of frequency bands (int)"            ).asInt();
-	angleRes = rf.findGroup("processing").check("angleRes", yarp::os::Value(1),   "degree resolution for single position (int)").asInt();
+	numBands = rf.findGroup("processing").check("numBands", yarp::os::Value(128), "number of frequency bands (int)"            ).asInt16();
+	angleRes = rf.findGroup("processing").check("angleRes", yarp::os::Value(1),   "degree resolution for single position (int)").asInt16();
 
-	bufferSize = rf.findGroup("bayesianmap").check("bufferSize", yarp::os::Value(100), "number of audio maps to remember (int)").asInt();
+	bufferSize = rf.findGroup("bayesianmap").check("bufferSize", yarp::os::Value(100), "number of audio maps to remember (int)").asInt16();
 	
 	saveMatrices = rf.findGroup("other").check("saveMatrices",  yarp::os::Value("NONE"), "if specified, will save all matrices to this dir (string)").asString();
 

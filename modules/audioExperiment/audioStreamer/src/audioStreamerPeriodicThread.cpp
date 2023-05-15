@@ -64,17 +64,17 @@ bool AudioStreamerPeriodicThread::configure(yarp::os::ResourceFinder &rf) {
 	 * =========================================================================== */
 	yInfo( "Loading Configuration File." );
 
-	panAngle   = rf.findGroup("robotspec").check("panAngle",   yarp::os::Value( 2),    "index of pan joint (int)"             ).asInt();
-	numMics    = rf.findGroup("robotspec").check("numMics",    yarp::os::Value( 2),    "number of mics (int)"                 ).asInt();
-	minDegree  = rf.findGroup("robotspec").check("minDegree",  yarp::os::Value(-40.0), "minimum degree for the robot (double)").asDouble();
-	maxDegree  = rf.findGroup("robotspec").check("maxDegree",  yarp::os::Value( 40.0), "maximum degree for the robot (double)").asDouble();
-	motorSpeed = rf.findGroup("robotspec").check("motorSpeed", yarp::os::Value( 30.0), "speed for the robot motors (double)"  ).asDouble();
+	panAngle   = rf.findGroup("robotspec").check("panAngle",   yarp::os::Value( 2),    "index of pan joint (int)"             ).asInt16();
+	numMics    = rf.findGroup("robotspec").check("numMics",    yarp::os::Value( 2),    "number of mics (int)"                 ).asInt16();
+	minDegree  = rf.findGroup("robotspec").check("minDegree",  yarp::os::Value(-40.0), "minimum degree for the robot (double)").asFloat64();
+	maxDegree  = rf.findGroup("robotspec").check("maxDegree",  yarp::os::Value( 40.0), "maximum degree for the robot (double)").asFloat64();
+	motorSpeed = rf.findGroup("robotspec").check("motorSpeed", yarp::os::Value( 30.0), "speed for the robot motors (double)"  ).asFloat64();
 
 	movements  = rf.findGroup("experiment").check("movements", yarp::os::Value(false), "enable robot head movements (boolean)").asBool();
 
-	samplingRate     = rf.findGroup("sampling").check("samplingRate",     yarp::os::Value(48000), "sampling rate of mics (int)"            ).asInt();
-	numFrameSamples  = rf.findGroup("sampling").check("numFrameSamples",  yarp::os::Value(4096),  "number of frame samples received (int)" ).asInt();
-	sampleBufferSize = rf.findGroup("sampling").check("sampleBufferSize", yarp::os::Value(8192),  "Number of samples to buffer in PO (int)").asInt();
+	samplingRate     = rf.findGroup("sampling").check("samplingRate",     yarp::os::Value(48000), "sampling rate of mics (int)"            ).asInt16();
+	numFrameSamples  = rf.findGroup("sampling").check("numFrameSamples",  yarp::os::Value(4096),  "number of frame samples received (int)" ).asInt16();
+	sampleBufferSize = rf.findGroup("sampling").check("sampleBufferSize", yarp::os::Value(8192),  "Number of samples to buffer in PO (int)").asInt16();
 	
 
 	/* ===========================================================================
@@ -283,7 +283,7 @@ bool AudioStreamerPeriodicThread::processing() {
 			if (command->get(0).asString() == "move") {
 
 				std::string response = "";
-				moveRobotHead(command->get(1).asDouble(), response);
+				moveRobotHead(command->get(1).asFloat64(), response);
 				if (response != "") { yInfo("%s", response.c_str()); }
 
 			} else {

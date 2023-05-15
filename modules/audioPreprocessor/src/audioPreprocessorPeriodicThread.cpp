@@ -59,31 +59,31 @@ bool AudioPreprocessorPeriodicThread::configure(yarp::os::ResourceFinder &rf) {
 	 * =========================================================================== */
 	yInfo( "Loading Configuration File." );
 
-	azimuthIndex = rf.findGroup("robotspec").check("azimuthIndex",    yarp::os::Value(2), "index of azimuth (or pan joint) (int)").asInt();
-	numMics      = rf.findGroup("robotspec").check("numMics",     yarp::os::Value(2),     "number of mics (int)"                 ).asInt();
-	micDistance  = rf.findGroup("robotspec").check("micDistance", yarp::os::Value(0.145), "distance between the mics (double)"   ).asDouble();
+	azimuthIndex = rf.findGroup("robotspec").check("azimuthIndex",    yarp::os::Value(2), "index of azimuth (or pan joint) (int)").asInt16();
+	numMics      = rf.findGroup("robotspec").check("numMics",     yarp::os::Value(2),     "number of mics (int)"                 ).asInt16();
+	micDistance  = rf.findGroup("robotspec").check("micDistance", yarp::os::Value(0.145), "distance between the mics (double)"   ).asFloat64();
 
-	speedOfSound     = rf.findGroup("sampling").check("speedOfSound",     yarp::os::Value(336.628), "speed of sound (double)"                ).asDouble();
-	samplingRate     = rf.findGroup("sampling").check("samplingRate",     yarp::os::Value(48000),   "sampling rate of mics (int)"            ).asInt();
-	numFrameSamples  = rf.findGroup("sampling").check("numFrameSamples",  yarp::os::Value(4096),    "number of frame samples received (int)" ).asInt();
-	sampleNormaliser = rf.findGroup("sampling").check("sampleNormaliser", yarp::os::Value(1024.0),  "normalisation value for samples (double").asDouble();
+	speedOfSound     = rf.findGroup("sampling").check("speedOfSound",     yarp::os::Value(336.628), "speed of sound (double)"                ).asFloat64();
+	samplingRate     = rf.findGroup("sampling").check("samplingRate",     yarp::os::Value(48000),   "sampling rate of mics (int)"            ).asInt16();
+	numFrameSamples  = rf.findGroup("sampling").check("numFrameSamples",  yarp::os::Value(4096),    "number of frame samples received (int)" ).asInt16();
+	sampleNormaliser = rf.findGroup("sampling").check("sampleNormaliser", yarp::os::Value(1024.0),  "normalisation value for samples (double").asFloat64();
 
-	numBands        = rf.findGroup("processing").check("numBands",        yarp::os::Value(128),    "number of frequency bands (int)"                    ).asInt();
-	lowCf           = rf.findGroup("processing").check("lowCf",           yarp::os::Value(380.0),  "lowest center frequency (double)"                   ).asDouble();
-	highCf          = rf.findGroup("processing").check("highCf",          yarp::os::Value(7800.0), "highest center frequency (double)"                  ).asDouble();
+	numBands        = rf.findGroup("processing").check("numBands",        yarp::os::Value(128),    "number of frequency bands (int)"                    ).asInt16();
+	lowCf           = rf.findGroup("processing").check("lowCf",           yarp::os::Value(380.0),  "lowest center frequency (double)"                   ).asFloat64();
+	highCf          = rf.findGroup("processing").check("highCf",          yarp::os::Value(7800.0), "highest center frequency (double)"                  ).asFloat64();
 	erbSpaced       = rf.findGroup("processing").check("erbSpaced",       yarp::os::Value(true),   "ERB spaced centre frequencies (boolean)"            ).asBool();
 	halfRec         = rf.findGroup("processing").check("halfRec",         yarp::os::Value(false),  "half wave rectifying (boolean)"                     ).asBool();
 	computeEnvelope = rf.findGroup("processing").check("computeEnvelope", yarp::os::Value(false),  "should envelope computation be done (boolean)"      ).asBool();
-	downSampEnv     = rf.findGroup("processing").check("downSampEnv",     yarp::os::Value(4),      "rate to down sample pre-envelope mat by (int)"      ).asInt();
+	downSampEnv     = rf.findGroup("processing").check("downSampEnv",     yarp::os::Value(4),      "rate to down sample pre-envelope mat by (int)"      ).asInt16();
 	downSampMethod  = rf.findGroup("processing").check("downSampMethod",  yarp::os::Value(""),     "method for down sampling (string)"                  ).asString();
-	bandPassFreq    = rf.findGroup("processing").check("bandPassFreq",    yarp::os::Value(5.0),    "frequency to use in band pass filter (double)"      ).asDouble();
-	bandPassWidth   = rf.findGroup("processing").check("bandPassWidth",   yarp::os::Value(0.5),    "bandwidth allowed for band pass filter (double)"    ).asDouble();
-	angleRes        = rf.findGroup("processing").check("angleRes",        yarp::os::Value(1),      "degree resolution for a single position (int)"      ).asInt();
-	windowLength    = rf.findGroup("processing").check("windowLength",    yarp::os::Value(128),    "number of samples in a single window (int)"         ).asInt();
-	hopLength       = rf.findGroup("processing").check("hopLength",       yarp::os::Value(128),    "number of samples to jump for the next window (int)").asInt();
+	bandPassFreq    = rf.findGroup("processing").check("bandPassFreq",    yarp::os::Value(5.0),    "frequency to use in band pass filter (double)"      ).asFloat64();
+	bandPassWidth   = rf.findGroup("processing").check("bandPassWidth",   yarp::os::Value(0.5),    "bandwidth allowed for band pass filter (double)"    ).asFloat64();
+	angleRes        = rf.findGroup("processing").check("angleRes",        yarp::os::Value(1),      "degree resolution for a single position (int)"      ).asInt16();
+	windowLength    = rf.findGroup("processing").check("windowLength",    yarp::os::Value(128),    "number of samples in a single window (int)"         ).asInt16();
+	hopLength       = rf.findGroup("processing").check("hopLength",       yarp::os::Value(128),    "number of samples to jump for the next window (int)").asInt16();
 	windowMethod    = rf.findGroup("processing").check("windowMethod",    yarp::os::Value("rms"),  "operation to do over the samples in window (string)").asString();
-	downSampOut     = rf.findGroup("processing").check("downSampOut",     yarp::os::Value(1),      "rate to down sample visualisation by (int)"         ).asInt();
-	numOmpThreads   = rf.findGroup("processing").check("numOmpThreads",   yarp::os::Value(4),      "if enabled, the number of omp threads (int)"        ).asInt();
+	downSampOut     = rf.findGroup("processing").check("downSampOut",     yarp::os::Value(1),      "rate to down sample visualisation by (int)"         ).asInt16();
+	numOmpThreads   = rf.findGroup("processing").check("numOmpThreads",   yarp::os::Value(4),      "if enabled, the number of omp threads (int)"        ).asInt16();
 	
 	/* ===========================================================================
 	 *  Derive additional variables given the ones above.
@@ -401,7 +401,7 @@ void AudioPreprocessorPeriodicThread::run() {
 		headOffset = 0.0;
 		if (inHeadAnglePort.getInputCount()) {
 			headAngleBottle = inHeadAnglePort.read(true);
-			headOffset += headAngleBottle->get(azimuthIndex).asDouble();
+			headOffset += headAngleBottle->get(azimuthIndex).asFloat64();
 		}
 
 		AudioUtil::makeTimeStamp(totalReading, timeReading, startTime, stopTime);

@@ -56,17 +56,17 @@ bool AudioRunnerPeriodicThread::configure(yarp::os::ResourceFinder &rf) {
 	 * =========================================================================== */
 	yInfo( "Loading Configuration File." );
 
-	panAngle   = rf.findGroup("robotspec").check("panAngle",   yarp::os::Value( 2),    "index of pan joint       (int)"    ).asInt();
-	numMics    = rf.findGroup("robotspec").check("numMics",    yarp::os::Value( 2),    "number of mics           (int)"    ).asInt();
+	panAngle   = rf.findGroup("robotspec").check("panAngle",   yarp::os::Value( 2),    "index of pan joint       (int)"    ).asInt16();
+	numMics    = rf.findGroup("robotspec").check("numMics",    yarp::os::Value( 2),    "number of mics           (int)"    ).asInt16();
 
-	beginTrial = rf.findGroup("experiment").check("begin",     yarp::os::Value(1),     "first trial to begin     (int)"    ).asInt();
-	endTrial   = rf.findGroup("experiment").check("end",       yarp::os::Value(5),     "last trial to end        (int)"    ).asInt();
+	beginTrial = rf.findGroup("experiment").check("begin",     yarp::os::Value(1),     "first trial to begin     (int)"    ).asInt16();
+	endTrial   = rf.findGroup("experiment").check("end",       yarp::os::Value(5),     "last trial to end        (int)"    ).asInt16();
 	filePath   = rf.findGroup("experiment").check("saveTo",    yarp::os::Value("./"),  "path for saving files    (string)" ).asString();
 	movements  = rf.findGroup("experiment").check("movements", yarp::os::Value(false), "should movements be used (bool)"   ).asBool();
 	PosBottle  = rf.findGroup("experiment").find( "movePos"                                                                ).asList();
 	TimeBottle = rf.findGroup("experiment").find( "moveTime"                                                               ).asList();
     
-	numFrameSamples = rf.findGroup("sampling").check("numFrameSamples", yarp::os::Value(4096), "number of frame samples received (int)").asInt();
+	numFrameSamples = rf.findGroup("sampling").check("numFrameSamples", yarp::os::Value(4096), "number of frame samples received (int)").asInt16();
 
 	//-- Set the first trial.
 	currentTrial = beginTrial;
@@ -105,8 +105,8 @@ bool AudioRunnerPeriodicThread::configure(yarp::os::ResourceFinder &rf) {
 
 		//-- Set the movements in the vectors.
 		for (int move = 0; move < numMoves; move++) {
-			HeadPositions[move] = PosBottle->get(move).asDouble();
-			HeadTimes[move]     = TimeBottle->get(move).asDouble();
+			HeadPositions[move] = PosBottle->get(move).asFloat64();
+			HeadTimes[move]     = TimeBottle->get(move).asFloat64();
 		}
 	}
 
@@ -286,7 +286,7 @@ void AudioRunnerPeriodicThread::run() {
 			yarp::os::Bottle& head_command = outHeadMovePort.prepare();
 			head_command.clear();
 			head_command.addString("move");
-			head_command.addDouble(0.0);
+			head_command.addFloat64(0.0);
 			outHeadMovePort.write();
 		}
 
@@ -312,7 +312,7 @@ bool AudioRunnerPeriodicThread::processing() {
 		yarp::os::Bottle& head_command = outHeadMovePort.prepare();
 		head_command.clear();
 		head_command.addString("move");
-		head_command.addDouble(HeadPositions[currentMove]);
+		head_command.addFloat64(HeadPositions[currentMove]);
 		outHeadMovePort.write();
 		
 		currentMove++;
@@ -330,7 +330,7 @@ bool AudioRunnerPeriodicThread::processing() {
 	yarp::os::Bottle& command = outPlayerCommandsPort.prepare();
 	command.clear();
 	command.addString("trial");
-	command.addInt(currentTrial);
+	command.addInt16(currentTrial);
 	outPlayerCommandsPort.write();
 
 	int targetAt;
@@ -344,7 +344,7 @@ bool AudioRunnerPeriodicThread::processing() {
 				yarp::os::Bottle& head_command = outHeadMovePort.prepare();
 				head_command.clear();
 				head_command.addString("move");
-				head_command.addDouble(HeadPositions[currentMove]);
+				head_command.addFloat64(HeadPositions[currentMove]);
 				outHeadMovePort.write();
 				currentMove++;
 			}
@@ -360,14 +360,14 @@ bool AudioRunnerPeriodicThread::processing() {
 		//-- Read the Head Angle.
 		if (movements) {
 			inputAngles = inHeadAnglePort.read(true);
-			PositionBuffer.push_back(inputAngles->get(panAngle).asDouble());
+			PositionBuffer.push_back(inputAngles->get(panAngle).asFloat64());
 		}
 
 		//-- See if Trial has finished.
 		yarp::os::Bottle* reply = inBroadcastPort.read(false);
 		if (reply != NULL) {
 			//yInfo("%s", reply->toString().c_str());
-			targetAt = reply->get(1).asInt();
+			targetAt = reply->get(1).asInt16();
 			break;
 		}
 	}
