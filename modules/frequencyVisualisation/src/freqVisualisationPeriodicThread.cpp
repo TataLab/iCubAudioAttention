@@ -93,7 +93,7 @@ bool FreqVisualisationPeriodicThread::configure(yarp::os::ResourceFinder &rf) {
 	 * =========================================================================== */
 	yInfo( "Loading Configuration File." );
 
-    int         inGain  = rf.check("gain",  yarp::os::Value(1),      "Gain for visualization (int)"  ).asInt();
+    int         inGain  = rf.check("gain",  yarp::os::Value(1),      "Gain for visualization (int)"  ).asInt16();
     std::string inGrid  = rf.check("grid",  yarp::os::Value("none"), "Visualisation of grid (string)").asString();
     bool        inTrans = rf.check("trans", yarp::os::Value(false),  "Transposes the image (boolean)").asBool();
     
@@ -305,8 +305,8 @@ bool FreqVisualisationPeriodicThread::processing(yarp::os::Bottle* b) {
 
     // here goes the processing...
     yDebug("length %ld ", b->size());
-    int intA = b->get(0).asInt();
-    int intB = b->get(1).asInt();
+    int intA = b->get(0).asInt16();
+    int intB = b->get(1).asInt16();
     
     yarp::os::Bottle* subBottle = b->get(2).asList();
     

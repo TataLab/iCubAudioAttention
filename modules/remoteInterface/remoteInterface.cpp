@@ -36,9 +36,9 @@ int main(int argc, char *argv[]) {
     rf.setDefaultContext("audio_attention");               // overridden by --context parameter
     rf.configure(argc, argv);  
     
-    int samplingRate     = rf.findGroup("sampling").check("samplingRate",     yarp::os::Value(48000),  "Frame samples (int)"                    ).asInt();
-    int numFrameSamples  = rf.findGroup("sampling").check("numFrameSamples",  yarp::os::Value(4096),   "Sampling rate of mics (int)"            ).asInt();
-    int sampleBufferSize = rf.findGroup("sampling").check("sampleBufferSize", yarp::os::Value(8192),   "Number of samples to buffer in PO (int)").asInt();
+    int samplingRate     = rf.findGroup("sampling").check("samplingRate",     yarp::os::Value(48000),  "Frame samples (int)"                    ).asInt16();
+    int numFrameSamples  = rf.findGroup("sampling").check("numFrameSamples",  yarp::os::Value(4096),   "Sampling rate of mics (int)"            ).asInt16();
+    int sampleBufferSize = rf.findGroup("sampling").check("sampleBufferSize", yarp::os::Value(8192),   "Number of samples to buffer in PO (int)").asInt16();
 
     Port p;
     p.open("/rawAudio:o");
